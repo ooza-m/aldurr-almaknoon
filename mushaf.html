@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>المصحف — الدرّ المكنون · v57</title>
-<script id="DURR_V57_ESCAPE_IFRAME">
+<title>المصحف — الدرّ المكنون · v58</title>
+<script id="DURR_V58_ESCAPE_IFRAME">
 /* v56: حماية من أي index قديم مخزّن في الكاش ما زال يفتح المصحف داخل iframe. */
 try{
   if(window.self!==window.top){
@@ -496,7 +496,7 @@ body.reciting .screen{height:var(--app-vh)!important}
   <button data-app-route="map"><svg viewBox="0 0 24 24"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg><span>الخريطة</span></button>
   <button data-app-route="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>المزيد</span></button>
 </nav>
-<script id="DURR_V57_VIEWPORT">
+<script id="DURR_V58_VIEWPORT">
 (function(){
   function sync(){
     const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
@@ -619,8 +619,8 @@ function fitPane(pane){
     const normalH=baseFull;
     const targetBlock=availH*0.985;
     const normalBlock=normalLines.length*normalH;
-    const wantedHdr=baseFull*1.28;
-    const wantedBism=baseFull*1.10;
+    const wantedHdr=baseFull*1.42;
+    const wantedBism=baseFull*1.20;
     const wantedSpecial=hdrLines.length*wantedHdr+bismLines.length*wantedBism;
     const room=Math.max(baseFull*specialCount,targetBlock-normalBlock);
     const scale=wantedSpecial>room?room/wantedSpecial:1;
@@ -649,20 +649,33 @@ function fitPane(pane){
   // نسبة أعرض سطرٍ إلى العمود (تُستثنى العناوين والبسملة)
   const measure=()=>{let m=0;lines.forEach(l=>{if(l.querySelector('.surah-frame')||l.classList.contains('bism'))return;const a=l.clientWidth;if(a>0)m=Math.max(m,l.scrollWidth/a);});return m;};
   // حجم القرآن يعتمد على ارتفاع السطر العادي فقط، فلا تكبّر مساحة العنوان النص القرآني.
-  const cap=rowH*0.62;
+  const cap=rowH*((specialCount&&!openingPage)?0.57:0.62);
   let size=cap;words.forEach(w=>w.style.fontSize=size+'px');
   for(let i=0;i<6;i++){const r=measure();if(!r)break;const ns=Math.min(cap,size/r*0.995);if(Math.abs(ns-size)<0.25){size=ns;break;}size=ns;words.forEach(w=>w.style.fontSize=size+'px');}
   words.forEach(w=>w.style.fontSize=size+'px');
 
   pane.querySelectorAll('.bism span').forEach(s=>{
     const line=s.parentElement;
+    if(specialCount&&!openingPage){line.style.paddingBlock=(Math.max(1,rowH*0.04))+'px';}else{line.style.paddingBlock='';}
     const lh=parseFloat(line.style.height)||rowH;
     let fs=Math.min(size*0.95,lh*0.72);
     s.style.fontSize=fs+'px';
     if(s.scrollWidth>line.clientWidth){fs=fs*0.93*line.clientWidth/s.scrollWidth;s.style.fontSize=fs+'px';}
   });
   pane.querySelectorAll('.sname').forEach(s=>{
-    const fr=s.closest('.surah-frame');const mw=fr.clientWidth*0.50,mh=fr.clientHeight*0.56;
+    const fr=s.closest('.surah-frame');
+    const line=fr.closest('.qline');
+    if(specialCount&&!openingPage){
+      const lh=parseFloat(line.style.height)||rowH;
+      fr.style.height=(lh*0.78)+'px';
+      fr.style.width='auto';
+      fr.style.maxWidth='88%';
+    }else{
+      fr.style.height='';
+      fr.style.width='';
+      fr.style.maxWidth='';
+    }
+    const mw=fr.clientWidth*0.50,mh=fr.clientHeight*0.56;
     let fs=mh;s.style.fontSize=fs+'px';if(s.scrollWidth>mw)fs=fs*mw/s.scrollWidth;s.style.fontSize=fs+'px';
   });
 }
@@ -1156,7 +1169,7 @@ setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
 })();
 </script>
 <script>
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=57').then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=58').then(r=>r.update()).catch(()=>{}));}
 </script>
 </body>
 </html>
