@@ -1,4 +1,4 @@
-const CACHE='durr-v73';
+const CACHE='durr-v74';
 const STATIC=[
   './manifest.json','./icon.png','./icon-180.png',
   './data/mushaf-data.json','./data/mushaf-search.json',
@@ -25,6 +25,16 @@ self.addEventListener('fetch',event=>{
   if(url.origin!==self.location.origin)return;
 
   const isHTML=event.request.mode==='navigate'||url.pathname.endsWith('.html')||url.pathname.endsWith('/');
+  const isRuntimeConfig=url.pathname.endsWith('/config.js')||url.pathname.endsWith('config.js');
+
+  if(isRuntimeConfig){
+    event.respondWith(
+      fetch(event.request,{cache:'no-store'})
+        .then(resp=>resp)
+        .catch(()=>caches.match(event.request))
+    );
+    return;
+  }
 
   if(isHTML){
     // مهم: الشبكة أولًا حتى لا تبقى index/mushaf قديمة محبوسة في Safari.
