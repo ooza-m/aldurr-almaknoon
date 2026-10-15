@@ -454,6 +454,11 @@ main{padding-top:0!important}
 /* v60 · صفحة اليوم كمركز تنفيذ */
 .v60-today-title{margin-bottom:8px}.v60-today-title b{display:block;font-size:.93rem;color:var(--ink)}.v60-today-title small{display:block;font-size:.67rem;color:var(--muted);margin-top:2px}
 .v60-task{align-items:center}.v60-task .v50-task-main{min-width:0}.v60-task .v50-task-main small{line-height:1.55}.v60-mini-progress{height:4px;border-radius:99px;background:rgba(94,58,77,.07);overflow:hidden;margin-top:8px;width:min(230px,100%)}.v60-mini-progress i{display:block;height:100%;border-radius:inherit}
+
+.pg{position:relative;cursor:pointer}
+.pg.fixing{box-shadow:inset 0 0 0 2px rgba(200,155,60,.88)}
+.pg.partial{box-shadow:inset 0 0 0 1px rgba(126,107,139,.35)}
+.pg .fix-dot{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff;right:3px;top:3px;box-shadow:0 0 0 1px rgba(94,58,77,.15)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -941,8 +946,10 @@ window.FIREBASE_CONFIG = {
   <h3 id="pmTitle">الوجه</h3><p class="msub" id="pmSub"></p>
   <div id="pmReviewInfo" style="margin-bottom:12px"></div>
   <div id="pmStateInfo" style="margin-bottom:12px"></div>
+  <div id="pmLearningInfo" style="margin-bottom:12px"></div>
   <div id="pmErrors" style="margin-top:6px"></div>
-  <button class="btn btn-gold btn-sm" id="pmAddErr" style="width:100%;margin-top:10px">+ تسجيل خطأ في هذا الوجه</button>
+  <button class="btn btn-primary btn-sm" id="pmOpenMushaf" style="width:100%;margin-top:10px">فتح هذا الوجه في المصحف</button>
+  <button class="btn btn-gold btn-sm" id="pmAddErr" style="width:100%;margin-top:8px">+ تسجيل خطأ في هذا الوجه</button>
 </div></div>
 
 <div class="modal-bg" id="rangeModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('rangeModal').classList.remove('open')" aria-label="إغلاق">✕</button>
@@ -1021,7 +1028,7 @@ window.FIREBASE_CONFIG = {
     <div class="amiri" style="font-size:1rem;color:var(--ink)">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div>
     <div style="font-size:.8rem;color:var(--muted);margin-top:8px">الدُّرُّ المكنون · رحلة حفظ القرآن الكريم ومراجعته</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:2px;opacity:.8">مصحف المدينة — طبعة الملك فهد · حفص عن عاصم · إصدار ٦</div>
-    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v61</div>
+    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v62</div>
   </div>
 </div></div>
 
@@ -1327,7 +1334,9 @@ const DEF={pages:{},logs:[],stages:[],tajweed:[],errors:[],tafsir:[],khatma:null
   weekStart:0,                                // بداية الأسبوع: ٠=الأحد، ١=الاثنين
   mreviewDays:{},                             // {'YYYY-MM': dayNum} أيام المراجعة الشهرية اليدوية
   notif:{wird:false,wirdTime:'06:00',tafsir:false,tafsirTime:'21:00'}, // تذكيرات الورد
-  reviewSched:{},                             // {surahId: {due:'YYYY-MM-DD', level:0}} جدولة المراجعة الذكية
+  reviewSched:{},                             // جدولة قديمة على مستوى السورة
+  pageReviewSched:{},                          // v62 جدولة المراجعة على مستوى الوجه
+  faceLearning:{},                             // v61 حالات السماع/التفسير/الحفظ/التسميع
   recitationSessions:[],                       // v51 جلسات التسميع التفصيلية
   verseReview:{},                              // {surah:ayah:{lastReview,lastScore,page,...}}
   activityEvents:[],                           // سجل أحداث دقيق قابل للتوسّع للسماع/التفسير
@@ -1430,11 +1439,81 @@ function v50Svg(kind){
 function todayLogV50(){return S.logs.find(l=>l.date===todayKey())||{};}
 function rangeSetV50(items,filter){const set=new Set();(items||[]).filter(x=>!filter||filter(x)).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)set.add(p);});return set;}
 function firstMemDateMapV50(){const out={};[...S.logs].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(l=>{(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)if(!out[p])out[p]=l.date;});});(S.recitationSessions||[]).filter(x=>x&&x.task==='new').sort((a,b)=>(a.endedAt||0)-(b.endedAt||0)).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now()));(rs.pages||[]).filter(pg=>pg.complete&&pg.coverage>=.95).forEach(pg=>{if(!out[pg.page])out[pg.page]=d;});});return out;}
-function fixationPagesV50(){const m=firstMemDateMapV50(),arr=[];Object.keys(m).forEach(k=>{const d=daysBetween(m[k],todayKey());if(d>=1&&d<=30)arr.push(+k);});return arr.sort((a,b)=>a-b);}
-function reviewBucketsV50(){const fix=new Set(fixationPagesV50()),near=[],far=[];for(let p=2;p<=604;p++){if(fix.has(p))continue;const info=autoPageInfo(p);if(info.state==='due')near.push({p,days:info.days||0});else if(info.state==='weak')far.push({p,days:info.days||0});}near.sort((a,b)=>b.days-a.days);far.sort((a,b)=>b.days-a.days);return{near,far};}
+const NEAR_INTERVALS_V62=[3,7,14],FAR_INTERVALS_V62=[30,60,90,120];
+function addDaysKeyV62(k,n){const d=parseKey(k);d.setDate(d.getDate()+n);return keyOf(d);}
+function completeReviewTodayV62(p){
+  const day=todayKey();
+  return (S.recitationSessions||[]).some(rs=>{
+    const d=keyOf(new Date(rs.endedAt||rs.startedAt||0));if(d!==day)return false;
+    return (rs.pages||[]).some(pg=>+pg.page===+p&&pg.complete&&pg.coverage>=.95);
+  });
+}
+function firstMemDateV62(p){
+  const f=S.faceLearning&&S.faceLearning[p]&&S.faceLearning[p].hifz;
+  if(f&&f.first)return f.first;
+  return firstMemDateMapV50()[p]||null;
+}
+function ensurePageSchedV62(p){
+  S.pageReviewSched=S.pageReviewSched||{};
+  let x=S.pageReviewSched[p];const first=firstMemDateV62(p);if(!first)return null;
+  const age=daysBetween(first,todayKey());
+  if(!x){
+    x={page:+p,firstMemDate:first,phase:age<=30?'fix':'near',nearLevel:0,farLevel:0,nextDue:age<=30?todayKey():todayKey(),lastReview:null,updatedAt:Date.now()};
+    S.pageReviewSched[p]=x;
+  }else if(!x.firstMemDate)x.firstMemDate=first;
+  if(age<=30){x.phase='fix';x.nextDue=todayKey();}
+  else if(x.phase==='fix'){x.phase='near';x.nearLevel=0;x.nextDue=x.nextDue&&x.nextDue>first?x.nextDue:todayKey();}
+  return x;
+}
+function reviewEngineStateV62(p){
+  const first=firstMemDateV62(p);if(!first)return{phase:'unseen',due:false,firstMemDate:null};
+  const age=Math.max(0,daysBetween(first,todayKey())),doneToday=completeReviewTodayV62(p);
+  const x=ensurePageSchedV62(p);
+  if(age<=30)return{phase:'fix',day:Math.min(30,Math.max(1,age)),due:age>=1&&!doneToday,doneToday,firstMemDate:first,nextDue:doneToday?addDaysKeyV62(todayKey(),1):todayKey(),schedule:x};
+  const phase=x&&x.phase==='far'?'far':'near',dueDate=(x&&x.nextDue)||todayKey();
+  return{phase,due:!doneToday&&dueDate<=todayKey(),doneToday,firstMemDate:first,nextDue:dueDate,overdueDays:dueDate<=todayKey()?Math.max(0,daysBetween(dueDate,todayKey())):0,schedule:x};
+}
+function updateReviewEngineV62(p,task,date,pg){
+  if(!p||!date)return;
+  S.pageReviewSched=S.pageReviewSched||{};
+  const first=firstMemDateV62(p)||date,age=Math.max(0,daysBetween(first,date));
+  let x=S.pageReviewSched[p]||{page:+p,firstMemDate:first,phase:'fix',nearLevel:0,farLevel:0,nextDue:addDaysKeyV62(date,1)};
+  x.firstMemDate=x.firstMemDate||first;x.lastReview=date;x.lastScore=+(pg&&pg.score||0);x.lastErrors=+(pg&&pg.errorCount||0);x.updatedAt=Date.now();
+  if(task==='new'||age<=30){
+    x.phase=age>=30?'near':'fix';x.nearLevel=x.nearLevel||0;
+    x.nextDue=age>=30?addDaysKeyV62(date,NEAR_INTERVALS_V62[0]):addDaysKeyV62(date,1);
+  }else{
+    const difficult=(+(pg&&pg.score||0)<75)||(+((pg&&pg.errorCount)||0)>=3);
+    if((x.phase||'near')==='near'){
+      let level=Math.max(0,+x.nearLevel||0);
+      if(difficult)x.nextDue=addDaysKeyV62(date,2);
+      else if(level<NEAR_INTERVALS_V62.length-1){level++;x.nearLevel=level;x.nextDue=addDaysKeyV62(date,NEAR_INTERVALS_V62[level]);}
+      else{x.phase='far';x.farLevel=0;x.nextDue=addDaysKeyV62(date,FAR_INTERVALS_V62[0]);}
+    }else{
+      let level=Math.max(0,+x.farLevel||0);
+      if(difficult)x.nextDue=addDaysKeyV62(date,7);
+      else{level=Math.min(level+1,FAR_INTERVALS_V62.length-1);x.farLevel=level;x.nextDue=addDaysKeyV62(date,FAR_INTERVALS_V62[level]);}
+    }
+  }
+  S.pageReviewSched[p]=x;
+}
+function fixationPagesV50(){
+  const m=firstMemDateMapV50(),arr=[];Object.keys(m).forEach(k=>{const d=daysBetween(m[k],todayKey());if(d>=1&&d<=30)arr.push(+k);});
+  return arr.sort((a,b)=>a-b);
+}
+function reviewBucketsV50(){
+  const near=[],far=[],m=firstMemDateMapV50();
+  Object.keys(m).forEach(k=>{
+    const p=+k,age=daysBetween(m[k],todayKey());if(age<=30)return;
+    const st=reviewEngineStateV62(p);if(!st.due)return;
+    const o={p,days:st.overdueDays||0,due:st.nextDue};
+    (st.phase==='far'?far:near).push(o);
+  });
+  near.sort((a,b)=>b.days-a.days||a.p-b.p);far.sort((a,b)=>b.days-a.days||a.p-b.p);return{near,far};
+}
 function lastActivityPageV50(){const rs=[...(S.recitationSessions||[])].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0))[0];if(rs&&rs.pages&&rs.pages.length){const p=rs.pages[rs.pages.length-1].page;if(p)return Math.max(1,Math.min(604,+p));}const logs=[...S.logs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));for(const l of logs){const all=[...(l.memList||[]),...(l.revList||[])];for(let i=all.length-1;i>=0;i--){const r=(all[i].from&&all[i].to)?[all[i].from,all[i].to]:pagesOfSurah(all[i].surahId);if(r)return Math.max(1,Math.min(604,r[1]));}}return 1;}
 function nextNewPageV50(){const l=lastActivityPageV50();const dir=S.profile&&S.profile.pathDir==='down'?-1:1;return Math.max(1,Math.min(604,l+dir));}
-function priorityV50(){const b=reviewBucketsV50(),fix=fixationPagesV50();if(b.far.length){const o=b.far[0],s=surahOfPage(o.p);return{page:o.p,title:'سورة '+s[1]+' · الوجه '+o.p,sub:'متأخر عن المراجعة منذ '+o.days+' يومًا',kind:'بعيدة',taskId:'far'};}if(b.near.length){const o=b.near[0],s=surahOfPage(o.p);return{page:o.p,title:'سورة '+s[1]+' · الوجه '+o.p,sub:'حان موعد مراجعته · آخر مراجعة منذ '+o.days+' أيام',kind:'قريبة',taskId:'near'};}if(fix.length){const p=fix[0],s=surahOfPage(p),age=daysBetween(firstMemDateMapV50()[p],todayKey());return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:'اليوم '+age+' من مرحلة التثبيت',kind:'تثبيت',taskId:'fix'};}const p=lastActivityPageV50();return{page:p,title:'تابعي من الوجه '+p,sub:'لا توجد مراجعات متأخرة حاليًا',kind:'متابعة',taskId:'free'};}
+function priorityV50(){const b=reviewBucketsV50(),fix=taskPagesV60('fix');if(b.far.length){const o=b.far[0],s=surahOfPage(o.p);return{page:o.p,title:'سورة '+s[1]+' · الوجه '+o.p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة بعيدة مستحقة اليوم',kind:'بعيدة',taskId:'far'};}if(b.near.length){const o=b.near[0],s=surahOfPage(o.p);return{page:o.p,title:'سورة '+s[1]+' · الوجه '+o.p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة قريبة مستحقة اليوم',kind:'قريبة',taskId:'near'};}if(fix.length){const p=fix[0],s=surahOfPage(p),st=reviewEngineStateV62(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:'اليوم '+st.day+' من 30 · تثبيت يومي',kind:'تثبيت',taskId:'fix'};}const p=lastActivityPageV50();return{page:p,title:'تابعي من الوجه '+p,sub:'لا توجد مراجعات مستحقة حاليًا',kind:'متابعة',taskId:'free'};}
 function recitedPagesTodayV51(task){const set=new Set(),day=todayKey();(S.recitationSessions||[]).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||0));if(d!==day)return;if(task&&rs.task!==task)return;(rs.pages||[]).forEach(pg=>{if(pg.complete&&pg.coverage>=.95)set.add(+pg.page);});});return set;}
 function taskPagesV60(id){
   const log=todayLogV50(),allRev=rangeSetV50(log.revList||[]),nearDone=rangeSetV50(log.revList||[],x=>x.type!=='far'),farDone=rangeSetV50(log.revList||[],x=>x.type==='far');
@@ -1447,7 +1526,7 @@ function taskPagesV60(id){
     while(out.length<remain&&p>=1&&p<=604){out.push(p);p+=dir;}
     return out;
   }
-  if(id==='fix')return fixationPagesV50().filter(p=>!allRev.has(p)&&!doneAuto.has(p));
+  if(id==='fix')return fixationPagesV50().filter(p=>reviewEngineStateV62(p).due&&!allRev.has(p)&&!doneAuto.has(p));
   const bucket=reviewBucketsV50();
   if(id==='near')return bucket.near.filter(x=>!nearDone.has(x.p)&&!allRev.has(x.p)&&!doneAuto.has(x.p)).map(x=>x.p);
   if(id==='far'){
@@ -1478,7 +1557,7 @@ function tasksV50(){
   return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=61&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=62&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -1486,7 +1565,7 @@ function startTaskSessionV60(taskId){
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
   const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=61&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=62&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
@@ -1578,7 +1657,8 @@ function ingestRecitationSessionV51(raw){if(!raw||!raw.id)return;if(!S.recitatio
   }else{
     const type=task==='far'?'far':'near';sids.forEach(sid=>pushExactRangeV51(log.revList,sid,p,type));
   }
-}else if((pg.coverage||0)>0){partial++;}S.activityEvents.push({id:rs.id+':'+p,type:'recitation',date,ts:rs.endedAt||Date.now(),page:p,task,coverage:+(pg.coverage||0),score:+(pg.score||0),complete:!!pg.complete});});save();mirrorFaceLearningV61();refreshV50();showV51Toast('سُجّلت جلسة التسميع تلقائيًا',full+(full===1?' وجه مكتمل':' أوجه مكتملة')+(partial?' · '+partial+' جزئي':'')+(errAdded?' · '+errAdded+' خطأ':'') );}
+}else if((pg.coverage||0)>0){partial++;}if(pg.complete&&pg.coverage>=.95)updateReviewEngineV62(p,task,date,pg);
+S.activityEvents.push({id:rs.id+':'+p,type:'recitation',date,ts:rs.endedAt||Date.now(),page:p,task,coverage:+(pg.coverage||0),score:+(pg.score||0),complete:!!pg.complete});});save();mirrorFaceLearningV61();refreshV50();showV51Toast('سُجّلت جلسة التسميع تلقائيًا',full+(full===1?' وجه مكتمل':' أوجه مكتملة')+(partial?' · '+partial+' جزئي':'')+(errAdded?' · '+errAdded+' خطأ':'') );}
 window.addEventListener('message',e=>{if(e.origin!==location.origin)return;const d=e.data||{};if(d.type==='durr:recitation-complete')ingestRecitationSessionV51(d.payload);});
 function consumePendingRecitationV55(){try{const raw=localStorage.getItem('durr-pending-recitation');if(!raw)return;const p=JSON.parse(raw);localStorage.removeItem('durr-pending-recitation');if(p&&p.id)ingestRecitationSessionV51(p);}catch(e){console.warn('pending recitation',e);}}
 
@@ -2119,6 +2199,34 @@ document.getElementById('td-tafsir-save').addEventListener('click',()=>{
 
 /* ============ خريطة الأجزاء ============ */
 let openJuz=new Set();
+function latestPageResultV62(p,sid){
+  let best=null,bestTs=0;
+  (S.recitationSessions||[]).forEach(rs=>{
+    const ts=rs.endedAt||rs.startedAt||0;if(ts<bestTs)return;
+    (rs.pages||[]).forEach(pg=>{
+      if(+pg.page!==+p)return;
+      let verses=pg.verses||[];
+      if(sid!=null)verses=verses.filter(v=>String(v.vk||'').split(':')[0]===String(sid));
+      if(!verses.length&&sid!=null)return;
+      let total=0,cov=0,errs=0,assist=0;
+      if(verses.length)verses.forEach(v=>{total+=+v.totalWords||0;cov+=+v.coveredWords||0;errs+=+v.errorWords||0;assist+=+v.assistedWords||0;});
+      else{total=+pg.wordsTotal||0;cov=+pg.wordsCovered||0;errs=+pg.errorCount||0;assist=Math.round((+pg.assistRate||0)*total);}
+      if(!total)return;
+      best={date:keyOf(new Date(ts)),ts,coverage:cov/total,score:+pg.score||0,errorCount:errs,assistRate:assist/total,task:rs.task||'free',complete:(cov/total)>=.95&&assist/total<=.35};bestTs=ts;
+    });
+  });
+  return best;
+}
+function mapPageMetaV62(p,sid){
+  const first=firstMemDateV62(p),eng=reviewEngineStateV62(p),res=latestPageResultV62(p,sid),base=autoPageInfo(p,sid);
+  const partial=!!(res&&res.coverage>0&&res.coverage<.95);
+  let state=base.state,color=base.color,label='';
+  if(first&&eng.phase==='fix'){state='fix';color='var(--gold)';label='تثبيت '+eng.day+'/30';}
+  else if(first&&eng.phase==='near'){state='due';color=base.state==='weak'?base.color:'#C89B3C';label='مراجعة قريبة';}
+  else if(first&&eng.phase==='far'){state=base.state==='weak'?'weak':'fresh';color=base.color;label='مراجعة بعيدة';}
+  if(partial)label='مراجعة جزئية '+Math.round(res.coverage*100)+'٪';
+  return{...base,state,color,label,partial,coverage:res?res.coverage:null,result:res,engine:eng,memorized:!!first};
+}
 // لون الجزء حسب متوسّط حالة أوجهه المحفوظة
 function juzAvgInfo(from,to){
   let seen=0,allFresh=true,anySeen=false,totalDays=0;
@@ -2176,44 +2284,39 @@ function renderMap(){
 let mapFilter='all'; // all | due | weak
 function fillJuzPages(j){
   const [from,to]=JUZ_RANGE[j];const cont=document.getElementById('jp-'+j);if(!cont)return;
-  // اجمعي كل سورة تتقاطع مع نطاق الجزء (تلتقط السور القصيرة التي تتشارك الصفحات)
   const segs=[];
   for(let i=0;i<SURAHS.length;i++){
-    const sid=SURAHS[i][0],sStart=SURAHS[i][2];
-    const sEnd=i<SURAHS.length-1?SURAHS[i+1][2]:604;
+    const sid=SURAHS[i][0],sStart=SURAHS[i][2],sEnd=i<SURAHS.length-1?SURAHS[i+1][2]:604;
     const segStart=Math.max(from,sStart),segEnd=Math.min(to,sEnd);
     if(segStart<=segEnd)segs.push({sur:SURAHS[i],start:segStart,end:segEnd});
   }
   cont.innerHTML=segs.map(seg=>{
     let cells='';
     for(let p=seg.start;p<=seg.end;p++){
-      const info=autoPageInfo(p,seg.sur[0]);const st=pageState(p,seg.sur[0]);
-      const here=st==='new'?' here':'';
-      // خطأ خاصّ بهذه السورة في هذه الصفحة فقط (لا كل سور الصفحة)
-      const err=pageHasActiveErrors(p,seg.sur[0])?' has-err':'';
-      let dim='';
-      if(mapFilter==='due'&&info.state!=='due')dim='opacity:.18;';
-      if(mapFilter==='weak'&&info.state!=='weak')dim='opacity:.18;';
-      const bg=st==='new'?'':`background:${info.color};`;
-      const txtColor=(info.state==='fresh'||info.state==='weak')?'color:#fff;':(info.state==='unseen'?'color:var(--muted);':'color:var(--ink);');
-      cells+=`<div class="pg${here}${err}" data-page="${p}" data-surah="${seg.sur[0]}" title="ص${toAr(p)}" style="${bg}${txtColor}${dim}">${toAr(p)}</div>`;
+      const m=mapPageMetaV62(p,seg.sur[0]),err=pageHasActiveErrors(p,seg.sur[0])?' has-err':'';
+      let dim='';if(mapFilter==='due'&&m.state!=='due')dim='opacity:.18;';if(mapFilter==='weak'&&m.state!=='weak')dim='opacity:.18;';
+      let bg='background:'+m.color+';';
+      if(m.partial){const pc=Math.max(4,Math.round(m.coverage*100));bg='background:linear-gradient(90deg,'+m.color+' 0 '+pc+'%,var(--parch-2) '+pc+'% 100%);';}
+      const txt=(m.state==='fresh'||m.state==='weak')&&!m.partial?'color:#fff;':'color:var(--ink);';
+      const cls=(m.state==='fix'?' fixing':'')+(m.partial?' partial':'');
+      const title='وجه '+p+(m.label?' · '+m.label:'');
+      cells+='<div class="pg'+cls+err+'" data-page="'+p+'" data-surah="'+seg.sur[0]+'" title="'+title+'" style="'+bg+txt+dim+'">'+toAr(p)+(m.state==='fix'?'<i class="fix-dot"></i>':'')+'</div>';
     }
-    return `<div class="surah-group">
-      <div class="surah-label">${seg.sur[1]}</div>
-      <div class="pg-row">${cells}</div>
-    </div>`;
+    return '<div class="surah-group"><div class="surah-label">'+seg.sur[1]+'</div><div class="pg-row">'+cells+'</div></div>';
   }).join('');
   cont.querySelectorAll('.pg').forEach(c=>c.addEventListener('click',ev=>{ev.stopPropagation();openPage(+c.dataset.page,+c.dataset.surah);}));
 }
 function updateMapCount(){
-  const solid=cnt('solid'),review=cnt('review'),weak=cnt('weak');const mem=solid+review+weak;
+  let solid=0,review=0,weak=0,fix=0,partial=0,mem=0;
+  for(let p=1;p<=604;p++){
+    const m=mapPageMetaV62(p,null);if(m.memorized)mem++;
+    if(m.engine&&m.engine.phase==='fix'&&m.memorized)fix++;
+    else if(m.state==='fresh')solid++;else if(m.state==='due')review++;else if(m.state==='weak')weak++;
+    if(m.partial)partial++;
+  }
   const pct=Math.round(mem/604*100);
-  const chip=(lbl,val,color)=>`<span style="display:inline-flex;align-items:center;gap:5px;background:var(--parch-2);border-radius:20px;padding:5px 11px;font-size:.8rem;margin:2px"><i style="width:9px;height:9px;border-radius:50%;background:${color};display:inline-block"></i>${lbl}: <b>${toAr(val)}</b></span>`;
-  document.getElementById('mapCount').innerHTML=
-    `<div style="font-weight:700;font-size:.92rem;color:var(--ink);margin-bottom:8px">محفوظ ${toAr(mem)} من ٦٠٤ وجه <span style="color:var(--gold)">(${toAr(pct)}٪)</span></div>`+
-    `<div style="display:flex;flex-wrap:wrap;gap:2px">`+
-    chip('متقن',solid,'var(--green)')+chip('يحتاج مراجعة',review,'#C89B3C')+
-    chip('متفلّت',weak,'var(--clay)')+`</div>`;
+  const chip=(lbl,val,color)=>'<span style="display:inline-flex;align-items:center;gap:5px;background:var(--parch-2);border-radius:20px;padding:5px 11px;font-size:.8rem;margin:2px"><i style="width:9px;height:9px;border-radius:50%;background:'+color+';display:inline-block"></i>'+lbl+': <b>'+toAr(val)+'</b></span>';
+  document.getElementById('mapCount').innerHTML='<div style="font-weight:700;font-size:.92rem;color:var(--ink);margin-bottom:8px">محفوظ '+toAr(mem)+' من ٦٠٤ وجه <span style="color:var(--gold)">('+toAr(pct)+'٪)</span></div><div style="display:flex;flex-wrap:wrap;gap:2px">'+chip('تثبيت 30 يومًا',fix,'var(--gold)')+chip('متقن',solid,'var(--green)')+chip('قريبة',review,'#C89B3C')+chip('متفلّت',weak,'var(--clay)')+(partial?chip('جزئي',partial,'#A68BB7'):'')+'</div>';
 }
 function cnt(v){let n=0;for(let p=1;p<=604;p++){if(pageState(p)===v)n++;}return n;}
 document.getElementById('btnExpandAll').addEventListener('click',()=>{for(let j=0;j<30;j++)openJuz.add(j);renderMap();});
@@ -2258,30 +2361,34 @@ function renderPageErrors(p){
     toast('أُرشِف الخطأ. يبقى في سجلّ الأخطاء كمُتقَن.');
   }));
 }
-function openPage(p,surahId){curPage=p;curPageSurah=(surahId!=null)?surahId:null;
+function openPage(p,surahId){
+  curPage=p;curPageSurah=(surahId!=null)?surahId:null;
   const s=(surahId!=null)?(SURAHS.find(x=>x[0]===surahId)||surahOfPage(p)):surahOfPage(p);
-  document.getElementById('pmTitle').textContent=`الوجه ${toAr(p)}`;
-  document.getElementById('pmSub').textContent=`سورة ${s[1]} · الجزء ${toAr(juzOfPage(p))}`;
-  // معلومة آخر مراجعة
-  const info=autoPageInfo(p);const ri=document.getElementById('pmReviewInfo');
-  if(info.state==='unseen'){
-    ri.innerHTML=`<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem;color:var(--muted)">لم يُسجَّل هذا الوجه في الحفظ أو المراجعة بعد.</div>`;
+  document.getElementById('pmTitle').textContent='الوجه '+toAr(p);
+  document.getElementById('pmSub').textContent='سورة '+s[1]+' · الجزء '+toAr(juzOfPage(p));
+  const m=mapPageMetaV62(p,surahId),eng=m.engine,ri=document.getElementById('pmReviewInfo');
+  if(!m.memorized){
+    ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem;color:var(--muted)">لم يُثبت حفظ هذا الوجه بعد.</div>';
+  }else if(eng.phase==='fix'){
+    ri.innerHTML='<div style="background:var(--gold-soft);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>مرحلة التثبيت:</b> اليوم '+toAr(eng.day)+' من 30 · '+(eng.doneToday?'أُنجزت مراجعة اليوم':'مطلوب مراجعته اليوم')+'</div>';
   }else{
-    const d=info.days;const when=d===0?'اليوم':d===1?'أمس':`منذ ${toAr(d)} يومًا`;
-    ri.innerHTML=`<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem">
-      <div style="margin-bottom:4px"><b style="color:var(--ink)">آخر تسجيل:</b> ${esc(info.type||'')} · <span style="color:var(--clay)">${when}</span></div>
-    </div>`;
+    const phase=eng.phase==='far'?'مراجعة بعيدة':'مراجعة قريبة',due=eng.nextDue?fmtD(eng.nextDue):null;
+    ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>'+phase+'</b>'+(due?' · الموعد '+due.d+' '+due.m:'')+(eng.due?' · <span style="color:var(--clay)">مستحقة الآن</span>':'')+'</div>';
   }
-  // الحالة التلقائية (شارة)
-  const stateLabels={unseen:['لم يُحفظ','var(--muted)'],fresh:['متقن / حديث المراجعة','var(--green)'],due:['يحتاج مراجعة','#C89B3C'],weak:['متفلّت — راجعيه قريبًا','var(--clay)']};
-  const sl=stateLabels[info.state];
-  document.getElementById('pmStateInfo').innerHTML=`<div style="display:flex;align-items:center;gap:8px;font-size:.9rem">
-    <span style="width:14px;height:14px;border-radius:4px;background:${info.color};display:inline-block;border:1px solid rgba(0,0,0,.1)"></span>
-    <b style="color:${sl[1]}">${sl[0]}</b>
-    <span style="color:var(--muted);font-size:.78rem;margin-inline-start:auto">تُحدَّد الحالة تلقائيًا حسب مراجعتك</span>
-  </div>`;
-  renderPageErrors(p);
-  document.getElementById('pageModal').classList.add('open');}
+  const stateLabels={unseen:['لم يُحفظ','var(--muted)'],fix:['قيد التثبيت','var(--gold)'],fresh:['متقن / حديث المراجعة','var(--green)'],due:['يحتاج مراجعة','#C89B3C'],weak:['متفلّت — راجعيه قريبًا','var(--clay)']};
+  const sl=stateLabels[m.state]||stateLabels.unseen;
+  document.getElementById('pmStateInfo').innerHTML='<div style="display:flex;align-items:center;gap:8px;font-size:.9rem"><span style="width:14px;height:14px;border-radius:4px;background:'+m.color+';display:inline-block;border:1px solid rgba(0,0,0,.1)"></span><b style="color:'+sl[1]+'">'+sl[0]+'</b>'+(m.partial?'<span style="margin-inline-start:auto;color:#7E6B8B;font-size:.76rem">تغطية '+toAr(Math.round(m.coverage*100))+'٪ فقط</span>':'')+'</div>';
+  const f=(S.faceLearning&&S.faceLearning[p])||{},listen=f.listen,tf=f.tafsir||{},h=f.hifz,rec=f.recite;
+  const books=Object.keys(tf).filter(k=>tf[k]&&tf[k].complete);
+  const dot=ok=>'<i style="width:8px;height:8px;border-radius:50%;display:inline-block;background:'+(ok?'var(--green)':'var(--line)')+'"></i>';
+  document.getElementById('pmLearningInfo').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
+    '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(!!listen)+' <b>السماع</b><br><span style="color:var(--muted)">'+(listen?(listen.last||'تم'):'لم يكتمل')+'</span></div>'+
+    '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(books.length>0)+' <b>التفسير</b><br><span style="color:var(--muted)">'+(books.length?toAr(books.length)+' كتاب':'لم يكتمل')+'</span></div>'+
+    '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(!!h)+' <b>الحفظ</b><br><span style="color:var(--muted)">'+(h?(h.first||'تم'):'لم يثبت')+'</span></div>'+
+    '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(!!rec)+' <b>التسميع</b><br><span style="color:var(--muted)">'+(rec?('آخر درجة '+toAr(rec.score||0)+'٪'):'لا جلسة مكتملة')+'</span></div></div>';
+  renderPageErrors(p);document.getElementById('pageModal').classList.add('open');
+}
+document.getElementById('pmOpenMushaf').addEventListener('click',()=>{if(curPage)openMushafAtV50(curPage,'','');});
 document.getElementById('pmAddErr').addEventListener('click',()=>{document.getElementById('pageModal').classList.remove('open');openErr(curPage);});
 (function(){const b=document.getElementById('pmClose');if(b)b.addEventListener('click',()=>document.getElementById('pageModal').classList.remove('open'));})();
 const _mib=document.getElementById('mapInfoBtn');if(_mib)_mib.addEventListener('click',()=>document.getElementById('mapInfoModal').classList.add('open'));
@@ -4072,11 +4179,11 @@ renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=61');
+      const reg=await navigator.serviceWorker.register('sw.js?v=62');
       reg.update().catch(()=>{});
-      let reloaded=sessionStorage.getItem('durr-sw61-reloaded')==='1';
+      let reloaded=sessionStorage.getItem('durr-sw62-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw61-reloaded','1');location.reload();}
+        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw62-reloaded','1');location.reload();}
       });
     }catch(e){}
   });
