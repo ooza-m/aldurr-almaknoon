@@ -467,6 +467,36 @@ main{padding-top:0!important}
 .pm-verse-head{display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px}.pm-verse-head b{display:block;font-size:.85rem;color:var(--ink)}.pm-verse-head small{display:block;font-size:.66rem;color:var(--muted);margin-top:2px}.pm-verse-head>span{font-size:.68rem;color:var(--accent);background:var(--wash-2);border-radius:999px;padding:4px 8px}
 .pm-verse-list{display:flex;flex-direction:column;gap:6px}.pm-verse-row{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 10px;display:grid;grid-template-columns:1fr 72px auto;align-items:center;gap:8px;text-align:right;font-family:inherit;color:var(--ink);cursor:pointer}.pm-verse-row.done{border-color:rgba(74,105,60,.24);background:rgba(232,240,226,.45)}.pm-verse-row.partial{border-color:rgba(126,107,139,.24);background:rgba(166,139,183,.07)}
 .pm-verse-loc b{display:block;font-size:.74rem}.pm-verse-loc small{display:block;color:var(--muted);font-size:.59rem;margin-top:2px}.pm-verse-meter{height:5px;border-radius:99px;background:var(--parch-2);overflow:hidden}.pm-verse-meter i{display:block;height:100%;background:var(--green);border-radius:inherit}.pm-verse-row.partial .pm-verse-meter i{background:#A68BB7}.pm-verse-score{font-size:.66rem;font-weight:800;color:var(--ink-2);white-space:nowrap}.pm-verse-score em{display:block;font-style:normal;font-weight:700;color:var(--clay);font-size:.56rem;margin-top:2px}
+
+/* v64 · خريطة الطريق البصرية */
+#tab-map>.card{background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(250,247,243,.94))}
+#tab-map .map-controls{gap:6px}
+#tab-map .mapfilt{border-radius:999px;padding:6px 11px}
+#tab-map .mapfilt[data-filter="fix"]{color:#9C7825}
+#tab-map .mapfilt[data-filter="partial"]{color:#7E6B8B}
+#tab-map .mapfilt[data-filter="near"]{color:#A37A19}
+#tab-map .mapfilt[data-filter="far"]{color:#58658C}
+#tab-map .mapfilt[data-filter="weak"]{color:var(--clay)}
+#tab-map .mapfilt[data-filter="errors"]{color:var(--purple)}
+#tab-map .mapfilt.on{background:var(--ink);color:#fff!important;border-color:var(--ink)}
+.map-summary-v64{background:linear-gradient(145deg,#fff,#F7F1F3);border:1px solid rgba(107,43,69,.09);border-radius:18px;padding:14px;margin:10px 0 10px;box-shadow:0 8px 24px rgba(94,58,77,.06)}
+.map-sum-main{display:flex;align-items:center;justify-content:space-between;gap:12px}.map-sum-main small{display:block;font-size:.66rem;color:var(--muted);font-weight:700}.map-sum-main b{display:block;font-size:1.35rem;color:var(--ink);margin-top:1px}.map-sum-main b em{font-style:normal;font-size:.68rem;color:var(--muted);font-weight:600}.map-sum-main span{font-size:.68rem;color:var(--muted)}
+.map-sum-ring{--p:0;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),rgba(107,43,69,.08) 0);position:relative;flex:0 0 auto}.map-sum-ring::after{content:"";position:absolute;inset:7px;border-radius:50%;background:#fff}.map-sum-ring strong{position:relative;z-index:1;font-size:.72rem;color:var(--ink)}
+.map-sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}.map-sum-grid>div{background:rgba(255,255,255,.7);border:1px solid var(--line-2);border-radius:12px;padding:8px 5px;text-align:center}.map-sum-grid i{display:block;margin:0 auto 4px}.map-sum-grid b{display:block;font-size:.84rem;color:var(--ink)}.map-sum-grid span{font-size:.58rem;color:var(--muted)}
+.map-sum-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px solid var(--line-2);font-size:.62rem;color:var(--muted)}.map-sum-foot .warn{color:var(--purple);font-weight:700}
+.map-legend-v64{display:flex;gap:7px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}.map-legend-v64::-webkit-scrollbar{display:none}.map-legend-v64 span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:.62rem;color:var(--muted);background:rgba(255,255,255,.7);border:1px solid var(--line-2);padding:5px 8px;border-radius:999px}
+.map-legend-v64 i,.map-guide-v64 i,.map-sum-grid i{width:10px;height:10px;border-radius:3px;display:inline-block;position:relative}
+.lg-fix{background:#E7C878}.lg-near{background:#D7B45B}.lg-far{background:#7482A8}.lg-solid{background:rgb(74,105,60)}.lg-weak{background:var(--clay)}.lg-partial{background:linear-gradient(90deg,#A68BB7 55%,var(--parch-2) 55%)}.lg-error{background:var(--purple);border-radius:50%!important}
+.map-guide-v64{display:flex;flex-direction:column;gap:10px;margin-top:14px}.map-guide-v64>div{display:grid;grid-template-columns:14px auto 1fr;gap:8px;align-items:start}.map-guide-v64 b{font-size:.78rem;color:var(--ink)}.map-guide-v64 span{font-size:.7rem;color:var(--muted);line-height:1.5}
+.juz-block{border-radius:16px;border-color:rgba(107,43,69,.08);box-shadow:0 3px 12px rgba(94,58,77,.035)}.juz-head{padding:13px 12px;background:linear-gradient(180deg,#fff,#FBF8F6)}
+.jz-mini-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.jz-mini{font-size:.53rem;font-weight:700;border-radius:999px;padding:2px 6px;background:var(--parch-2);color:var(--muted)}.jz-mini.fix{background:#F5E8BD;color:#8A671A}.jz-mini.near{background:#F3E4B8;color:#8A671A}.jz-mini.far{background:#E5E8F2;color:#526083}.jz-mini.weak{background:var(--clay-soft);color:#8A3325}.jz-mini.err{background:#EEE7F4;color:#674D79}
+.juz-pages{padding:14px 12px}.surah-group{padding:9px 0;border-bottom:1px dashed rgba(107,43,69,.08);margin-bottom:0}.surah-group:last-child{border-bottom:0}.surah-label{margin-bottom:8px;font-size:.76rem}
+.pg-row{gap:6px}.pg{appearance:none;min-width:38px;height:34px;border:0;border-radius:9px;position:relative;display:grid;place-items:center;font-family:inherit;font-size:.69rem;font-weight:800;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(15,27,36,.06);transition:transform .12s,box-shadow .12s,opacity .18s}.pg>span{position:relative;z-index:3}.pg:active{transform:scale(.95)}
+.pg.phase-fix{box-shadow:inset 0 0 0 2px rgba(156,120,37,.62)}.pg.phase-near{box-shadow:inset 0 0 0 1px rgba(163,122,25,.42)}.pg.phase-far{box-shadow:inset 0 -3px 0 #7482A8,inset 0 0 0 1px rgba(82,96,131,.16)}
+.pg .phase-mark{position:absolute;z-index:4;font-style:normal;pointer-events:none}.pg .phase-mark.fix{top:2px;right:3px;font-size:.45rem;line-height:1;color:#7C5F1B;background:rgba(255,255,255,.72);padding:1px 3px;border-radius:5px}.pg .phase-mark.near{width:5px;height:5px;border-radius:50%;background:#9B741B;bottom:3px;right:3px}.pg .phase-mark.far{width:8px;height:2px;border-radius:2px;background:#536188;bottom:2px;right:4px}
+.pg .cover-bar{position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,#A68BB7 0 var(--cover),rgba(166,139,183,.14) var(--cover) 100%);z-index:4}.pg.partial{background:var(--parch-2)!important}
+.pg.has-err::after{width:8px;height:8px;top:2px;left:2px;z-index:6;border:1.5px solid #fff}
+@media(max-width:430px){.map-sum-grid{gap:4px}.map-sum-grid>div{padding:7px 3px}.pg{min-width:36px;height:33px}.juz-prog{width:54px}.juz-info .jt{font-size:.86rem}.juz-info .js{font-size:.66rem}}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -806,12 +836,23 @@ window.FIREBASE_CONFIG = {
       <div class="map-controls" style="margin-bottom:10px">
         <span style="font-size:.78rem;color:var(--muted);align-self:center">تصفية:</span>
         <button class="btn btn-ghost btn-sm mapfilt on" data-filter="all">الكل</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="fix" style="color:var(--gold)">تثبيت</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="partial" style="color:#7E6B8B">جزئي</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="due" style="color:#C89B3C">قريبة</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="weak" style="color:var(--clay)">متفلّت</button>
+        <button class="btn btn-ghost btn-sm mapfilt" data-filter="fix">تثبيت</button>
+        <button class="btn btn-ghost btn-sm mapfilt" data-filter="partial">جزئي</button>
+        <button class="btn btn-ghost btn-sm mapfilt" data-filter="near">قريبة</button>
+        <button class="btn btn-ghost btn-sm mapfilt" data-filter="far">بعيدة</button>
+        <button class="btn btn-ghost btn-sm mapfilt" data-filter="weak">متفلّت</button>
+        <button class="btn btn-ghost btn-sm mapfilt" data-filter="errors">أخطاء</button>
       </div>
-      <div class="pill" id="mapCount" style="margin-bottom:12px">…</div>
+      <div id="mapCount" class="map-summary-v64">…</div>
+      <div class="map-legend-v64" aria-label="مفتاح الخريطة">
+        <span><i class="lg-fix"></i>تثبيت</span>
+        <span><i class="lg-near"></i>قريبة</span>
+        <span><i class="lg-far"></i>بعيدة</span>
+        <span><i class="lg-solid"></i>متقن</span>
+        <span><i class="lg-weak"></i>متفلّت</span>
+        <span><i class="lg-partial"></i>جزئي</span>
+        <span><i class="lg-error"></i>خطأ نشط</span>
+      </div>
       <div id="juzList"></div>
       <button class="btn btn-ghost btn-sm" id="btnOpenErrors" style="width:100%;margin-top:14px">📝 سجلّ الأخطاء</button>
     </div>
@@ -1042,7 +1083,7 @@ window.FIREBASE_CONFIG = {
     <div class="amiri" style="font-size:1rem;color:var(--ink)">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div>
     <div style="font-size:.8rem;color:var(--muted);margin-top:8px">الدُّرُّ المكنون · رحلة حفظ القرآن الكريم ومراجعته</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:2px;opacity:.8">مصحف المدينة — طبعة الملك فهد · حفص عن عاصم · إصدار ٦</div>
-    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v63</div>
+    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v64</div>
   </div>
 </div></div>
 
@@ -1122,14 +1163,15 @@ document.addEventListener('DOMContentLoaded',()=>{});
 
 <div class="modal-bg" id="mapInfoModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('mapInfoModal').classList.remove('open')" aria-label="إغلاق">✕</button>
   <h3>دليل خريطة الطريق</h3>
-  <p class="hint" style="margin-top:10px">مجمّعة حسب الأجزاء. انقري رأس الجزء لفتحه، وانقري رقم أيّ وجه لرؤية آخر مراجعة. <b>تتلوّن الأوجه تلقائيًّا حسب زمن آخر مراجعة</b>: كلّما راجعتِ الوجه حديثًا اخضرّ أكثر، وكلّما تأخّرتِ عنه احمرّ وغمُق تنبيهًا.</p>
-  <div class="map-legend" style="margin-top:14px">
-    <span><i style="background:rgb(74,105,60)"></i> متقن / حديث المراجعة</span>
-    <span><i style="background:#C89B3C"></i> يحتاج مراجعة (٨–٢٩ يومًا)</span>
-    <span><i style="background:#8a2a34"></i> متفلّت (٣٠ يومًا فأكثر)</span>
-    <span><i style="background:var(--parch-2)"></i> لم يُحفظ بعد</span>
+  <p class="hint" style="margin-top:10px">كل مربع مرتبط مباشرةً بالوجه نفسه في المصحف وبياناته. الضغط على الوجه يفتح ملفّه: مرحلة المراجعة، السماع، التفسير، الحفظ، التسميع، الآيات والأخطاء.</p>
+  <div class="map-guide-v64">
+    <div><i class="lg-fix"></i><b>تثبيت 30 يومًا</b><span>حد ذهبي، ومعه مؤشر يوضّح تقدّم أيام التثبيت.</span></div>
+    <div><i class="lg-near"></i><b>مراجعة قريبة</b><span>وجه خرج من التثبيت وما زال في الفواصل القصيرة.</span></div>
+    <div><i class="lg-far"></i><b>مراجعة بعيدة</b><span>يظهر له شريط أزرق صغير مع بقاء لون الإتقان/التفلّت.</span></div>
+    <div><i class="lg-partial"></i><b>مراجعة جزئية</b><span>يمتلئ أسفل المربع بحسب نسبة الآيات/الكلمات التي راجعتِها فعلًا.</span></div>
+    <div><i class="lg-error"></i><b>خطأ نشط</b><span>نقطة بنفسجية لا تختفي حتى يُؤرشف الخطأ.</span></div>
   </div>
-  <p class="hint" style="margin-top:14px">لون رقم الجزء يعكس <b>متوسّط</b> حالة أوجهه، ولا يصير أخضر خالصًا إلا إذا أُتقنت كلّها. أمّا الشريط المئويّ فيمثّل نسبة المحفوظ.</p>
+  <p class="hint" style="margin-top:14px">في الوجه المشترك بين سورتين تُحسب بيانات كل سورة من آياتها داخل الوجه، فلا يُعتبر الوجه كاملًا مراجعًا إذا راجعتِ جزءًا منه فقط.</p>
 </div></div>
 <div class="modal-bg" id="dayActModal"><div class="modal" style="display:flex;flex-direction:column;max-height:88vh"><button class="modal-x" onclick="document.getElementById('dayActModal').classList.remove('open')" aria-label="إغلاق">✕</button>
   <h3 id="dayActTitle" style="flex-shrink:0"></h3>
@@ -1571,7 +1613,7 @@ function tasksV50(){
   return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=63&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=64&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -1579,7 +1621,7 @@ function startTaskSessionV60(taskId){
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
   const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=63&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=64&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
@@ -2256,48 +2298,55 @@ function juzAvgInfo(from,to){
   const color=colorForDays(avgDays);
   return {color,allFresh,seen};
 }
+function juzStateSummaryV64(from,to){
+  const o={fix:0,near:0,far:0,weak:0,partial:0,errors:0,memorized:0};
+  for(let p=from;p<=to;p++){
+    const m=mapPageMetaV62(p,null);if(m.memorized)o.memorized++;
+    if(m.engine&&m.engine.phase==='fix'&&m.memorized)o.fix++;
+    else if(m.engine&&m.engine.phase==='near'&&m.memorized)o.near++;
+    else if(m.engine&&m.engine.phase==='far'&&m.memorized)o.far++;
+    if(m.state==='weak')o.weak++;
+    if(m.partial)o.partial++;
+    if(pageHasActiveErrors(p))o.errors++;
+  }
+  return o;
+}
 function renderMap(){
   const box=document.getElementById('juzList');box.innerHTML='';
   const js=document.getElementById('jumpSurah');
-  if(js.options.length<=1){SURAHS.forEach(s=>{const o=document.createElement('option');o.value=s[2];o.textContent=`${s[1]} (ص${toAr(s[2])})`;js.appendChild(o);});}
+  if(js.options.length<=1){SURAHS.forEach(s=>{const o=document.createElement('option');o.value=s[2];o.textContent=s[1]+' (ص'+toAr(s[2])+')';js.appendChild(o);});}
   const toOpen=[];
   for(let j=0;j<30;j++){
-    const [from,to]=JUZ_RANGE[j];
-    const pagesInJuz=to-from+1;
-    // العدّ حسب النظام التلقائي: «محفوظ» = وجه له سجلّ مراجعة
-    let memCount=0;for(let p=from;p<=to;p++){if(autoPageInfo(p).state!=='unseen')memCount++;}
-    const pct=Math.round(memCount/pagesInJuz*100);
-    const avg=juzAvgInfo(from,to);
-    const block=document.createElement('div');
+    const [from,to]=JUZ_RANGE[j],pagesInJuz=to-from+1,sum=juzStateSummaryV64(from,to);
+    const pct=Math.round(sum.memorized/pagesInJuz*100),avg=juzAvgInfo(from,to),block=document.createElement('div');
     block.className='juz-block'+(openJuz.has(j)?' open':'');
-    const complete=avg.allFresh&&memCount===pagesInJuz; // كل الأوجه متقنة (خضراء)
-    const badgeStyle=avg.seen?`background:${complete?'rgb(74,105,60)':avg.color};color:#fff`:'';
-    block.innerHTML=`
-      <div class="juz-head" data-j="${j}">
-        <div class="juz-badge" style="${badgeStyle}">${toAr(j+1)}</div>
-        <div class="juz-info">
-          <div class="jt">الجزء ${toAr(j+1)} · ${JUZ_NAME_PICK[j+1]||JUZ_NAME[j]}</div>
-          <div class="js">الأوجه ${toAr(from)} – ${toAr(to)} · ${surahOfPage(from)[1]}</div>
-        </div>
-        <div class="juz-prog"><div class="pbar"><i style="width:${pct}%"></i></div><div class="pnum">${toAr(pct)}٪</div></div>
-        <div class="juz-chevron">▾</div>
-      </div>
-      <div class="juz-pages" id="jp-${j}"></div>`;
-    box.appendChild(block);
-    if(openJuz.has(j))toOpen.push(j);
+    const complete=sum.memorized===pagesInJuz&&sum.fix===0&&sum.near===0&&sum.weak===0;
+    const badgeStyle=avg.seen?'background:'+(complete?'rgb(74,105,60)':avg.color)+';color:#fff':'';
+    const bits=[];
+    if(sum.fix)bits.push('<span class="jz-mini fix">'+toAr(sum.fix)+' تثبيت</span>');
+    if(sum.near)bits.push('<span class="jz-mini near">'+toAr(sum.near)+' قريبة</span>');
+    if(sum.far)bits.push('<span class="jz-mini far">'+toAr(sum.far)+' بعيدة</span>');
+    if(sum.weak)bits.push('<span class="jz-mini weak">'+toAr(sum.weak)+' متفلّت</span>');
+    if(sum.errors)bits.push('<span class="jz-mini err">'+toAr(sum.errors)+' أخطاء</span>');
+    block.innerHTML=
+      '<div class="juz-head" data-j="'+j+'">'+
+        '<div class="juz-badge" style="'+badgeStyle+'">'+toAr(j+1)+'</div>'+
+        '<div class="juz-info"><div class="jt">الجزء '+toAr(j+1)+' · '+(JUZ_NAME_PICK[j+1]||JUZ_NAME[j])+'</div>'+
+        '<div class="js">الأوجه '+toAr(from)+' – '+toAr(to)+' · '+surahOfPage(from)[1]+'</div>'+
+        (bits.length?'<div class="jz-mini-row">'+bits.join('')+'</div>':'')+'</div>'+
+        '<div class="juz-prog"><div class="pbar"><i style="width:'+pct+'%"></i></div><div class="pnum">'+toAr(pct)+'٪</div></div>'+
+        '<div class="juz-chevron">▾</div></div>'+
+      '<div class="juz-pages" id="jp-'+j+'"></div>';
+    box.appendChild(block);if(openJuz.has(j))toOpen.push(j);
   }
-  box.querySelectorAll('.juz-head').forEach(h=>h.addEventListener('click',()=>{
-    const j=+h.dataset.j;if(openJuz.has(j))openJuz.delete(j);else{openJuz.add(j);}
-    renderMap();
-  }));
+  box.querySelectorAll('.juz-head').forEach(h=>h.addEventListener('click',()=>{const j=+h.dataset.j;if(openJuz.has(j))openJuz.delete(j);else openJuz.add(j);renderMap();}));
   updateMapCount();
-  // ارسمي أوجه الأجزاء المفتوحة تدريجيًا (حتى لا تتجمّد الواجهة)
   let i=0;function step(){if(i<toOpen.length){fillJuzPages(toOpen[i]);i++;requestAnimationFrame(step);}}
   if(toOpen.length)requestAnimationFrame(step);
 }
-let mapFilter='all'; // all | due | weak
+let mapFilter='all'; // all | fix | partial | near | far | weak | errors
 function fillJuzPages(j){
-  const [from,to]=JUZ_RANGE[j];const cont=document.getElementById('jp-'+j);if(!cont)return;
+  const [from,to]=JUZ_RANGE[j],cont=document.getElementById('jp-'+j);if(!cont)return;
   const segs=[];
   for(let i=0;i<SURAHS.length;i++){
     const sid=SURAHS[i][0],sStart=SURAHS[i][2],sEnd=i<SURAHS.length-1?SURAHS[i+1][2]:604;
@@ -2307,32 +2356,59 @@ function fillJuzPages(j){
   cont.innerHTML=segs.map(seg=>{
     let cells='';
     for(let p=seg.start;p<=seg.end;p++){
-      const m=mapPageMetaV62(p,seg.sur[0]),err=pageHasActiveErrors(p,seg.sur[0])?' has-err':'';
-      let dim='';
-      const matchFilter=mapFilter==='all'||(mapFilter==='fix'&&m.state==='fix')||(mapFilter==='partial'&&m.partial)||(mapFilter==='due'&&m.state==='due')||(mapFilter==='weak'&&m.state==='weak');
-      if(!matchFilter)dim='opacity:.16;';
+      const m=mapPageMetaV62(p,seg.sur[0]),hasErr=pageHasActiveErrors(p,seg.sur[0]);
+      const phase=m.engine&&m.memorized?m.engine.phase:'unseen';
+      const match=mapFilter==='all'||
+        (mapFilter==='fix'&&phase==='fix')||
+        (mapFilter==='partial'&&m.partial)||
+        (mapFilter==='near'&&phase==='near')||
+        (mapFilter==='far'&&phase==='far')||
+        (mapFilter==='weak'&&m.state==='weak')||
+        (mapFilter==='errors'&&hasErr);
+      const dim=match?'':'opacity:.13;';
+      const cov=m.partial?Math.max(4,Math.round(m.coverage*100)):0;
+      const txt=((m.state==='fresh'||m.state==='weak')&&!m.partial&&phase!=='fix')?'color:#fff;':'color:var(--ink);';
+      const phaseClass=phase==='fix'?' phase-fix':phase==='near'?' phase-near':phase==='far'?' phase-far':'';
+      const cls='pg'+phaseClass+(m.partial?' partial':'')+(hasErr?' has-err':'');
       let bg='background:'+m.color+';';
-      if(m.partial){const pc=Math.max(4,Math.round(m.coverage*100));bg='background:linear-gradient(90deg,'+m.color+' 0 '+pc+'%,var(--parch-2) '+pc+'% 100%);';}
-      const txt=(m.state==='fresh'||m.state==='weak')&&!m.partial?'color:#fff;':'color:var(--ink);';
-      const cls=(m.state==='fix'?' fixing':'')+(m.partial?' partial':'');
-      const title='وجه '+p+(m.label?' · '+m.label:'');
-      cells+='<div class="pg'+cls+err+'" data-page="'+p+'" data-surah="'+seg.sur[0]+'" title="'+title+'" style="'+bg+txt+dim+'">'+toAr(p)+(m.state==='fix'?'<i class="fix-dot"></i>':'')+'</div>';
+      if(phase==='fix')bg='background:linear-gradient(180deg,#F8EDD0,#E7C878);';
+      else if(phase==='near')bg='background:linear-gradient(180deg,#F5E7B8,#D7B45B);';
+      else if(m.partial)bg='background:var(--parch-2);';
+      const phaseMark=phase==='fix'?'<i class="phase-mark fix">'+toAr(m.engine.day)+'</i>':
+        phase==='near'?'<i class="phase-mark near"></i>':
+        phase==='far'?'<i class="phase-mark far"></i>':'';
+      const cover=m.partial?'<i class="cover-bar" style="--cover:'+cov+'%"></i>':'';
+      const title='وجه '+p+(m.label?' · '+m.label:'')+(hasErr?' · خطأ نشط':'');
+      cells+='<button type="button" class="'+cls+'" data-page="'+p+'" data-surah="'+seg.sur[0]+'" title="'+title+'" style="'+bg+txt+dim+'"><span>'+toAr(p)+'</span>'+phaseMark+cover+'</button>';
     }
     return '<div class="surah-group"><div class="surah-label">'+seg.sur[1]+'</div><div class="pg-row">'+cells+'</div></div>';
   }).join('');
   cont.querySelectorAll('.pg').forEach(c=>c.addEventListener('click',ev=>{ev.stopPropagation();openPage(+c.dataset.page,+c.dataset.surah);}));
 }
 function updateMapCount(){
-  let solid=0,review=0,weak=0,fix=0,partial=0,mem=0;
+  let solid=0,near=0,far=0,weak=0,fix=0,partial=0,errors=0,mem=0,dueNow=0;
   for(let p=1;p<=604;p++){
-    const m=mapPageMetaV62(p,null);if(m.memorized)mem++;
-    if(m.engine&&m.engine.phase==='fix'&&m.memorized)fix++;
-    else if(m.state==='fresh')solid++;else if(m.state==='due')review++;else if(m.state==='weak')weak++;
+    const m=mapPageMetaV62(p,null),phase=m.engine&&m.memorized?m.engine.phase:'unseen';
+    if(m.memorized)mem++;
+    if(phase==='fix')fix++;else if(phase==='near')near++;else if(phase==='far')far++;
+    if(m.state==='fresh'&&phase!=='fix')solid++;
+    if(m.state==='weak')weak++;
     if(m.partial)partial++;
+    if(pageHasActiveErrors(p))errors++;
+    if(m.engine&&m.engine.due)dueNow++;
   }
-  const pct=Math.round(mem/604*100);
-  const chip=(lbl,val,color)=>'<span style="display:inline-flex;align-items:center;gap:5px;background:var(--parch-2);border-radius:20px;padding:5px 11px;font-size:.8rem;margin:2px"><i style="width:9px;height:9px;border-radius:50%;background:'+color+';display:inline-block"></i>'+lbl+': <b>'+toAr(val)+'</b></span>';
-  document.getElementById('mapCount').innerHTML='<div style="font-weight:700;font-size:.92rem;color:var(--ink);margin-bottom:8px">محفوظ '+toAr(mem)+' من ٦٠٤ وجه <span style="color:var(--gold)">('+toAr(pct)+'٪)</span></div><div style="display:flex;flex-wrap:wrap;gap:2px">'+chip('تثبيت 30 يومًا',fix,'var(--gold)')+chip('متقن',solid,'var(--green)')+chip('قريبة',review,'#C89B3C')+chip('متفلّت',weak,'var(--clay)')+(partial?chip('جزئي',partial,'#A68BB7'):'')+'</div>';
+  const pct=Math.round(mem/604*100),remaining=604-mem;
+  const box=document.getElementById('mapCount');
+  box.innerHTML=
+    '<div class="map-sum-main"><div><small>المحفوظ</small><b>'+toAr(mem)+' <em>من 604</em></b><span>'+toAr(pct)+'٪ من المصحف</span></div>'+
+    '<div class="map-sum-ring" style="--p:'+pct+'"><strong>'+toAr(pct)+'٪</strong></div></div>'+
+    '<div class="map-sum-grid">'+
+      '<div><i class="lg-fix"></i><b>'+toAr(fix)+'</b><span>تثبيت</span></div>'+
+      '<div><i class="lg-near"></i><b>'+toAr(near)+'</b><span>قريبة</span></div>'+
+      '<div><i class="lg-far"></i><b>'+toAr(far)+'</b><span>بعيدة</span></div>'+
+      '<div><i class="lg-weak"></i><b>'+toAr(weak)+'</b><span>متفلّت</span></div>'+
+    '</div>'+
+    '<div class="map-sum-foot"><span>'+toAr(dueNow)+' وجهًا مستحقًا الآن</span><span>'+toAr(remaining)+' وجهًا متبقيًا للحفظ</span>'+(errors?'<span class="warn">'+toAr(errors)+' بخطأ نشط</span>':'')+'</div>';
 }
 function cnt(v){let n=0;for(let p=1;p<=604;p++){if(pageState(p)===v)n++;}return n;}
 document.getElementById('btnExpandAll').addEventListener('click',()=>{for(let j=0;j<30;j++)openJuz.add(j);renderMap();});
@@ -2345,8 +2421,8 @@ document.querySelectorAll('.mapfilt').forEach(b=>b.addEventListener('click',()=>
     openJuz.clear();
     for(let j=0;j<30;j++){const [from,to]=JUZ_RANGE[j];
       for(let p=from;p<=to;p++){
-        const m=mapPageMetaV62(p,null);
-        const ok=(mapFilter==='fix'&&m.state==='fix')||(mapFilter==='partial'&&m.partial)||(mapFilter==='due'&&m.state==='due')||(mapFilter==='weak'&&m.state==='weak');
+        const m=mapPageMetaV62(p,null),phase=m.engine&&m.memorized?m.engine.phase:'unseen';
+        const ok=(mapFilter==='fix'&&phase==='fix')||(mapFilter==='partial'&&m.partial)||(mapFilter==='near'&&phase==='near')||(mapFilter==='far'&&phase==='far')||(mapFilter==='weak'&&m.state==='weak')||(mapFilter==='errors'&&pageHasActiveErrors(p));
         if(ok){openJuz.add(j);break;}
       }}
   }
@@ -4251,11 +4327,11 @@ renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=63');
+      const reg=await navigator.serviceWorker.register('sw.js?v=64');
       reg.update().catch(()=>{});
-      let reloaded=sessionStorage.getItem('durr-sw63-reloaded')==='1';
+      let reloaded=sessionStorage.getItem('durr-sw64-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw63-reloaded','1');location.reload();}
+        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw64-reloaded','1');location.reload();}
       });
     }catch(e){}
   });
