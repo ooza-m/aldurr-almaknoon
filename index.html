@@ -559,6 +559,11 @@ main{padding-top:0!important}
 .v71-day-route{width:100%;border:0;background:#fff;border-radius:10px;padding:8px 9px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:inherit;text-align:right;color:var(--ink)}.v71-day-route b{font-size:.7rem}.v71-day-route span{font-size:.57rem;color:var(--muted)}.v71-day-empty{background:var(--parch-2);border-radius:13px;padding:18px;text-align:center;color:var(--muted);font-size:.7rem;margin-bottom:12px}
 .v71-day-section{margin:12px 0}.v71-day-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.v71-day-title b{font-size:.72rem}.v71-day-title span{font-size:.55rem;color:var(--muted);background:var(--parch-2);padding:3px 6px;border-radius:999px}.v71-session-row,.v71-error-row{width:100%;border:1px solid var(--line-2);background:#fff;border-radius:11px;padding:8px 9px;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:inherit;text-align:right;color:var(--ink)}.v71-session-row span,.v71-error-row span{flex:1}.v71-session-row b,.v71-error-row b{display:block;font-size:.68rem}.v71-session-row small,.v71-error-row small{display:block;font-size:.53rem;color:var(--muted);margin-top:2px}.v71-session-row em,.v71-error-row em{font-style:normal;font-size:.57rem;color:var(--muted)}.v71-att-row{display:grid;grid-template-columns:1fr 1fr auto;gap:6px}.v71-day-actions{display:flex;flex-direction:column;gap:7px;margin-top:13px}
 .tag.v71-fix{background:#F3E4B8;color:#7E631F}.tag.v71-listen{background:#EEE7F4;color:#674D79}.tag.v71-error{background:var(--clay-soft);color:var(--clay)}.tag.v71-mreview{background:var(--blue-soft);color:#4a4f75}.tag.v71-present{background:var(--green);color:#fff}.tag.v71-absent{background:var(--parch-2);color:var(--muted)}
+
+/* v72 · الرئيسية نظرة عامة، واليوم للتنفيذ */
+.v72-home-today{display:flex;align-items:center;justify-content:space-between;gap:12px}.v72-home-today>div{flex:1;min-width:0}.v72-home-today h3{font-size:.93rem;color:var(--ink);margin:2px 0}.v72-home-today p{font-size:.63rem;color:var(--muted);line-height:1.55;margin:0}.v72-home-today>button{flex:0 0 auto;border:0;background:var(--ink);color:#fff;border-radius:999px;padding:8px 11px;font-family:inherit;font-size:.61rem;font-weight:700}
+.v72-manual-secondary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 2px 0;padding:10px 12px;border-top:1px solid rgba(94,58,77,.08);color:var(--muted)}.v72-manual-secondary span{font-size:.61rem}.v72-manual-secondary button{font-family:inherit;font-size:.61rem;font-weight:700;color:var(--accent);background:none;border:0;padding:4px}
+.v72-priority-done{background:rgba(74,105,60,.08);color:var(--green);border-radius:11px;padding:9px 10px;font-size:.65rem;text-align:center;font-weight:700}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -654,16 +659,7 @@ window.FIREBASE_CONFIG = {
       <div class="v50-glass v50-card" id="homeContinueCard"></div>
       <div class="v50-glass v50-card v65-attention" id="homeAttentionCard"></div>
 
-      <div class="v50-section-head"><h2>ما ينتظرك اليوم</h2><button data-v50-route="today">عرض الكل</button></div>
-      <div class="v50-task-strip" id="homeTaskSummary"></div>
-
-      <div class="v50-section-head"><h2>وصول سريع</h2></div>
-      <div class="v50-mini-grid">
-        <button class="v50-glass v50-mini" data-v50-route="mushaf"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 6.5C10.5 5 7.5 4.4 4 5v13c3.5-.6 6.5 0 8 1.5 1.5-1.5 4.5-2.1 8-1.5V5c-3.5-.6-6.5 0-8 1.5z"/><path d="M12 6.5v13"/></svg></span><b>المصحف</b><small>قراءة واستماع</small></button>
-        <button class="v50-glass v50-mini" id="homeReciteBtn"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><b>التسميع</b><small>جلسة مراجعة</small></button>
-        <button class="v50-glass v50-mini" data-v50-route="map"><span class="ico"><svg viewBox="0 0 24 24"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg></span><b>الخريطة</b><small>حالة الحفظ</small></button>
-        <button class="v50-glass v50-mini" data-v50-route="tafsir"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16l-5-3-5 3V5"/><path d="M8 7h6"/></svg></span><b>التفسير</b><small>الكتب والتقدّم</small></button>
-      </div>
+      <div class="v50-glass v50-card" id="homeTodayCard"></div>
 
       <div class="v50-section-head"><h2>آخر إنجازاتك</h2><button data-v50-route="calendar">السجل</button></div>
       <div class="v50-achievements" id="homeRecent"></div>
@@ -676,19 +672,13 @@ window.FIREBASE_CONFIG = {
       <div class="v50-top">
         <button class="v50-round" data-v50-route="calendar" aria-label="التقويم"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></button>
         <div class="v50-title"><h1>اليوم</h1><p id="todayDateV50"></p></div>
-        <button class="v50-round" id="todayTuneBtn" aria-label="إعدادات الخطة"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4"/></svg></button>
+        <button class="v50-round" id="todayTuneBtn" aria-label="الإعدادات"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4"/></svg></button>
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
       <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
-      <div class="v50-section-head"><h2>خيارات إضافية</h2></div>
-      <div class="v50-extra-grid">
-        <button class="v50-glass v50-extra" data-v50-route="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span>التقويم</span></button>
-        <button class="v50-glass v50-extra" data-v50-route="errors"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3z"/><path d="M12 9v5M12 18h.01"/></svg><span>سجل الأخطاء</span></button>
-        <button class="v50-glass v50-extra" data-v50-route="planning"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>خطة الحفظ</span></button>
-        <button class="v50-glass v50-extra" id="btnManualEntryV50" data-v50-route="manual"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></svg><span>تسجيل يدوي</span></button>
-      </div>
+      <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
     </div>
     
   </section>
@@ -754,7 +744,7 @@ window.FIREBASE_CONFIG = {
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary" id="btnSaveToday">حفظ النِّصاب</button>
         <button class="btn btn-ghost" id="btnAddErr">+ تسجيل خطأ</button>
-        <button class="btn btn-ghost" id="btnClearAll" title="مسح الكل" style="color:var(--clay)">🗑</button>
+        <button class="btn btn-ghost" id="btnClearAll" title="مسح الكل" style="color:var(--clay)">مسح</button>
       </div>
     </div>
   </section>
@@ -849,7 +839,7 @@ window.FIREBASE_CONFIG = {
         <span><i class="lg-error"></i>خطأ نشط</span>
       </div>
       <div id="juzList"></div>
-      <button class="btn btn-ghost btn-sm" id="btnOpenErrors" style="width:100%;margin-top:14px">📝 سجلّ الأخطاء</button>
+      <button class="btn btn-ghost btn-sm" id="btnOpenErrors" style="width:100%;margin-top:14px">سجلّ الأخطاء</button>
     </div>
   </section>
 
@@ -937,7 +927,7 @@ window.FIREBASE_CONFIG = {
   <!-- ===== المزيد v50 ===== -->
   <section class="tab-panel" id="tab-more">
     <div class="v50-page">
-      <div class="v50-top"><span style="width:44px"></span><div class="v50-title"><h1>المزيد</h1><p>الصفحات المساندة خارج التنفيذ اليومي</p></div><button class="v50-round" id="moreSettingsTop" aria-label="الإعدادات"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.2A1.7 1.7 0 0 0 4.7 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.2a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.2a1.7 1.7 0 0 0-1.4 1z"/></svg></button></div>
+      <div class="v50-top"><span style="width:44px"></span><div class="v50-title"><h1>المزيد</h1><p>الصفحات المساندة خارج التنفيذ اليومي</p></div><span style="width:44px"></span></div>
       <div class="v70-more-section"><h3>المتابعة والتحليل</h3><div class="v70-more-row">
         <button data-v50-route="calendar"><b>التقويم</b><small>السجل والمثابرة والحضور</small></button>
         <button data-v50-route="stats"><b>الإحصاءات</b><small>الأداء والاتجاهات</small></button>
@@ -1066,7 +1056,7 @@ window.FIREBASE_CONFIG = {
     <p class="hint" id="ntStatus" style="margin-top:6px"></p>
   </div>
   <div class="v70-set-danger"><b>مسح بيانات التقدّم</b><p>يمسح السجل والخريطة والأخطاء والختمة والمرحليات. لا يمكن التراجع بعد التأكيد.</p><button class="btn btn-sm" id="set-reset">مسح جميع بيانات التقدّم</button></div>
-  <div class="v70-about"><div class="amiri">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div><span>الدُّرُّ المكنون · مصحف المدينة · حفص عن عاصم</span><b>النسخة v71</b></div>
+  <div class="v70-about"><div class="amiri">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div><span>الدُّرُّ المكنون · مصحف المدينة · حفص عن عاصم</span><b>النسخة v72</b></div>
 </div></div>
 
 <div class="modal-bg" id="stageModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('stageModal').classList.remove('open')" aria-label="إغلاق">✕</button>
@@ -1556,7 +1546,14 @@ function reviewBucketsV50(){
 }
 function lastActivityPageV50(){const rs=[...(S.recitationSessions||[])].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0))[0];if(rs&&rs.pages&&rs.pages.length){const p=rs.pages[rs.pages.length-1].page;if(p)return Math.max(1,Math.min(604,+p));}const logs=[...S.logs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));for(const l of logs){const all=[...(l.memList||[]),...(l.revList||[])];for(let i=all.length-1;i>=0;i--){const r=(all[i].from&&all[i].to)?[all[i].from,all[i].to]:pagesOfSurah(all[i].surahId);if(r)return Math.max(1,Math.min(604,r[1]));}}return 1;}
 function nextNewPageV50(){const l=lastActivityPageV50();const dir=S.profile&&S.profile.pathDir==='down'?-1:1;return Math.max(1,Math.min(604,l+dir));}
-function priorityV50(){const b=reviewBucketsV50(),fix=taskPagesV60('fix');if(b.far.length){const o=b.far[0],s=surahOfPage(o.p);return{page:o.p,title:'سورة '+s[1]+' · الوجه '+o.p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة بعيدة مستحقة اليوم',kind:'بعيدة',taskId:'far'};}if(b.near.length){const o=b.near[0],s=surahOfPage(o.p);return{page:o.p,title:'سورة '+s[1]+' · الوجه '+o.p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة قريبة مستحقة اليوم',kind:'قريبة',taskId:'near'};}if(fix.length){const p=fix[0],s=surahOfPage(p),st=reviewEngineStateV62(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:'اليوم '+st.day+' من 30 · تثبيت يومي',kind:'تثبيت',taskId:'fix'};}const p=lastActivityPageV50();return{page:p,title:'تابعي من الوجه '+p,sub:'لا توجد مراجعات مستحقة حاليًا',kind:'متابعة',taskId:'free'};}
+function priorityV50(){
+  const buckets=reviewBucketsV50(),far=taskPagesV60('far'),near=taskPagesV60('near'),fix=taskPagesV60('fix'),fresh=taskPagesV60('new');
+  if(far.length){const p=far[0],o=buckets.far.find(x=>x.p===p)||{},s=surahOfPage(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة بعيدة مستحقة اليوم',kind:'بعيدة',taskId:'far'};}
+  if(near.length){const p=near[0],o=buckets.near.find(x=>x.p===p)||{},s=surahOfPage(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة قريبة مستحقة اليوم',kind:'قريبة',taskId:'near'};}
+  if(fix.length){const p=fix[0],s=surahOfPage(p),st=reviewEngineStateV62(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:'اليوم '+st.day+' من 30 · تثبيت يومي',kind:'تثبيت',taskId:'fix'};}
+  if(fresh.length){const p=fresh[0],s=surahOfPage(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:'الحفظ الجديد المقرر لليوم',kind:'حفظ',taskId:'new'};}
+  const p=lastActivityPageV50();return{page:p,title:'اكتملت مهام الحفظ والمراجعة',sub:'يمكنك متابعة التلاوة أو التفسير من بقية مهام اليوم.',kind:'مكتمل',taskId:'free',complete:true};
+}
 function recitedPagesTodayV51(task){const set=new Set(),day=todayKey();(S.recitationSessions||[]).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||0));if(d!==day)return;if(task&&rs.task!==task)return;(rs.pages||[]).forEach(pg=>{if(pg.complete&&pg.coverage>=.95)set.add(+pg.page);});});return set;}
 function taskPagesV60(id){
   const log=todayLogV50(),allRev=rangeSetV50(log.revList||[]),nearDone=rangeSetV50(log.revList||[],x=>x.type!=='far'),farDone=rangeSetV50(log.revList||[],x=>x.type==='far');
@@ -1593,14 +1590,14 @@ function tasksV50(){
     {id:'near',label:'مراجعة قريبة',done:nearDoneN,target:nearTarget,pages:taskPagesV60('near'),kind:'repeat',action:'ابدئي جلسة المراجعة',color:'var(--clay)'},
     {id:'far',label:'مراجعة بعيدة',done:farDoneN,target:farDaily,pages:taskPagesV60('far'),kind:'far',action:'ابدئي جلسة المراجعة',color:'var(--blue)'},
     {id:'tilawa',label:'ورد التلاوة',done:log.tilawa?1:0,target:1,pages:[S.khatma?Math.max(1,Math.min(604,(S.khatma.current||0)+1)):lastActivityPageV50()],kind:'book',action:'افتحي موضع التلاوة',color:'#A68BB7'},
-    {id:'tafsir',label:'ورد التفسير',done:log.tafsir?1:0,target:1,pages:[lastActivityPageV50()],kind:'tafsir',action:'افتحي تفسير الوجه',color:'#C89B3C'}
+    {id:'tafsir',label:'ورد التفسير',done:(log.tafsir||(S.activityEvents||[]).some(e=>e&&e.type==='tafsir'&&e.date===todayKey()))?1:0,target:1,pages:[lastActivityPageV50()],kind:'tafsir',action:'افتحي تفسير الوجه',color:'#C89B3C'}
   ];
   arr.forEach(t=>t.page=t.pages&&t.pages.length?t.pages[0]:null);
   if(halaqa)arr.push({id:'halaqa',label:'حلقة القرآن',done:attStatus(todayKey())==='present'?1:0,target:1,pages:[],page:null,kind:'people',action:'تسجيل الحضور',color:'var(--pink)'});
   return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=71&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=72&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -1608,101 +1605,35 @@ function startTaskSessionV60(taskId){
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
   const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=71&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=72&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
-  const q=TIPS[Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000)%TIPS.length];
-  const ht=document.getElementById('homeTipText'),hs=document.getElementById('homeTipSource');
+  const q=TIPS[Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000)%TIPS.length],ht=document.getElementById('homeTipText'),hs=document.getElementById('homeTipSource');
   if(ht)ht.textContent=(q.h?'قال رسول الله ﷺ: ':'')+q.t;if(hs)hs.textContent=q.s||'';
-
   let mem=0,fix=0,near=0,far=0,weak=0,partial=0,dueNow=0;
-  for(let pg=1;pg<=604;pg++){
-    const m=mapPageMetaV62(pg,null),phase=m.engine&&m.memorized?m.engine.phase:'unseen';
-    if(m.memorized)mem++;
-    if(phase==='fix')fix++;else if(phase==='near')near++;else if(phase==='far')far++;
-    if(m.state==='weak')weak++;
-    if(m.partial)partial++;
-    if(m.engine&&m.engine.due)dueNow++;
-  }
+  for(let pg=1;pg<=604;pg++){const m=mapPageMetaV62(pg,null),phase=m.engine&&m.memorized?m.engine.phase:'unseen';if(m.memorized)mem++;if(phase==='fix')fix++;else if(phase==='near')near++;else if(phase==='far')far++;if(m.state==='weak')weak++;if(m.partial)partial++;if(m.engine&&m.engine.due)dueNow++;}
   const pct=Math.round(mem/604*100),pr=document.getElementById('homeProgressCard');
-  if(pr)pr.innerHTML=
-    '<div class="v65-journey">'+
-      '<div class="v65-journey-ring" style="--p:'+pct+'"><b>'+pct+'%</b><small>من المصحف</small></div>'+
-      '<div class="v65-journey-main"><div class="v50-kicker">رحلتك في الحفظ</div><h3>'+mem+' وجهًا محفوظًا</h3><p>التثبيت والمراجعة حالات مستقلة؛ ولا يتحول الوجه إلى متقن لمجرد حفظه.</p>'+
-        '<div class="v65-state-row"><span><i class="lg-fix"></i>'+fix+' تثبيت</span><span><i class="lg-near"></i>'+near+' قريبة</span><span><i class="lg-far"></i>'+far+' بعيدة</span><span><i class="lg-weak"></i>'+weak+' متفلّت</span></div>'+
-        '<button class="v50-btn soft" data-v50-route="map">عرض خريطة الأوجه</button>'+
-      '</div>'+
-    '</div>';
-
-  const last=lastActivityPageV50(),s=surahOfPage(last),mLast=mapPageMetaV62(last,null),hc=document.getElementById('homeContinueCard');
-  const lf=(S.faceLearning&&S.faceLearning[last])||{},books=lf.tafsir?Object.keys(lf.tafsir).filter(k=>lf.tafsir[k]&&lf.tafsir[k].complete).length:0;
-  const phaseTxt=mLast.engine&&mLast.engine.phase==='fix'?'تثبيت · اليوم '+mLast.engine.day+' من 30':
-    mLast.engine&&mLast.engine.phase==='near'?'مراجعة قريبة':
-    mLast.engine&&mLast.engine.phase==='far'?'مراجعة بعيدة':
-    mLast.memorized?'محفوظ':'قراءة';
-  if(hc)hc.innerHTML=
-    '<div class="v50-continue v65-continue"><div class="v65-page-token">'+last+'</div><div class="v65-continue-copy"><div class="v50-kicker">مواصلة من حيث توقفتِ</div><h3>سورة '+s[1]+'</h3><p>الوجه '+last+' · '+phaseTxt+'</p>'+
-      '<div class="v65-learning-dots"><span class="'+(lf.listen?'on':'')+'">سماع</span><span class="'+(books?'on':'')+'">تفسير</span><span class="'+(lf.hifz?'on':'')+'">حفظ</span><span class="'+(lf.recite?'on':'')+'">تسميع</span></div></div>'+
-      '<button class="v50-arrow" data-v50-mushaf="'+last+'" aria-label="متابعة">‹</button></div>';
-
+  if(pr)pr.innerHTML='<div class="v65-journey"><div class="v65-journey-ring" style="--p:'+pct+'"><b>'+pct+'%</b><small>من المصحف</small></div><div class="v65-journey-main"><div class="v50-kicker">رحلتك في الحفظ</div><h3>'+mem+' وجهًا محفوظًا</h3><p>الخريطة تفصل بين المحفوظ، والتثبيت، والمراجعة، والإتقان.</p><div class="v65-state-row"><span><i class="lg-fix"></i>'+fix+' تثبيت</span><span><i class="lg-near"></i>'+near+' قريبة</span><span><i class="lg-far"></i>'+far+' بعيدة</span><span><i class="lg-weak"></i>'+weak+' متفلّت</span></div><button class="v50-btn soft" data-v50-route="map">عرض خريطة الأوجه</button></div></div>';
+  const last=lastActivityPageV50(),s=surahOfPage(last),mLast=mapPageMetaV62(last,null),hc=document.getElementById('homeContinueCard'),lf=(S.faceLearning&&S.faceLearning[last])||{},books=lf.tafsir?Object.keys(lf.tafsir).filter(k=>lf.tafsir[k]&&lf.tafsir[k].complete).length:0;
+  const phaseTxt=mLast.engine&&mLast.engine.phase==='fix'?'تثبيت · اليوم '+mLast.engine.day+' من 30':mLast.engine&&mLast.engine.phase==='near'?'مراجعة قريبة':mLast.engine&&mLast.engine.phase==='far'?'مراجعة بعيدة':mLast.memorized?'محفوظ':'قراءة';
+  if(hc)hc.innerHTML='<div class="v50-continue v65-continue"><div class="v65-page-token">'+last+'</div><div class="v65-continue-copy"><div class="v50-kicker">مواصلة من حيث توقفتِ</div><h3>سورة '+s[1]+'</h3><p>الوجه '+last+' · '+phaseTxt+'</p><div class="v65-learning-dots"><span class="'+(lf.listen?'on':'')+'">سماع</span><span class="'+(books?'on':'')+'">تفسير</span><span class="'+(lf.hifz?'on':'')+'">حفظ</span><span class="'+(lf.recite?'on':'')+'">تسميع</span></div></div><button class="v50-arrow" data-v50-mushaf="'+last+'" aria-label="متابعة">‹</button></div>';
+  const tasks=tasksV50(),core=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),target=core.reduce((n,t)=>n+(t.target||0),0),done=core.reduce((n,t)=>n+Math.min(t.done||0,t.target||0),0),remain=core.reduce((n,t)=>n+(t.pages||[]).length,0),tc=document.getElementById('homeTodayCard'),support=tasks.filter(t=>!['new','fix','near','far'].includes(t.id)),supportDone=support.filter(t=>t.target>0&&t.done>=t.target).length;
+  if(tc)tc.innerHTML='<div class="v72-home-today"><div><div class="v50-kicker">اليوم</div><h3>'+(remain?'بقي '+remain+' وجهًا للحفظ والمراجعة':'اكتملت مهام الحفظ والمراجعة')+'</h3><p>'+done+' من '+target+' من متطلبات الحفظ والمراجعة'+(support.length?' · '+supportDone+' من '+support.length+' من المهام المساندة':'')+'</p></div><button data-v50-route="today">فتح مهام اليوم</button></div>';
   const att=document.getElementById('homeAttentionCard'),errs=(S.errors||[]).filter(e=>!e.archived).length;
-  if(att){
-    const items=[];
-    if(dueNow)items.push('<button data-v50-route="today"><i class="lg-near"></i><span><b>'+dueNow+' وجهًا مستحقًا الآن</b><small>ابدئي من مهام اليوم</small></span></button>');
-    if(partial)items.push('<button data-v50-route="map"><i class="lg-partial"></i><span><b>'+partial+' مراجعة جزئية</b><small>راجعي ما لم يكتمل من الآيات</small></span></button>');
-    if(errs)items.push('<button data-v50-route="errors"><i class="lg-error"></i><span><b>'+errs+' موضع خطأ نشط</b><small>راجعي الأخطاء قبل أن تتكرر</small></span></button>');
-    att.innerHTML=items.length?'<div class="v65-att-head"><div><div class="v50-kicker">يحتاج انتباهك</div><h3>الأقرب للعمل الآن</h3></div><button data-v50-route="today">مهام اليوم</button></div><div class="v65-att-list">'+items.slice(0,3).join('')+'</div>':'<div class="v65-clear"><i class="lg-solid"></i><div><b>لا توجد مواضع ملحّة الآن</b><small>كل المراجعات المستحقة منجزة أو مجدولة لاحقًا.</small></div></div>';
-  }
-
-  const summary=document.getElementById('homeTaskSummary');
-  if(summary){
-    const tasks=tasksV50().filter(x=>['new','fix','near','far'].includes(x.id));
-    summary.innerHTML=tasks.map(x=>{
-      const remain=(x.pages||[]).length,done=x.target>0&&x.done>=x.target;
-      return '<button class="v50-glass v50-task-chip v65-task-chip" '+(remain?'data-v60-session="'+x.id+'"':'data-v50-route="today"')+'><i style="background:'+x.color+'"></i><b>'+x.label+'</b><small>'+(done?'مكتمل':remain+' متبقٍ')+'</small></button>';
-    }).join('');
-  }
-
+  if(att){const items=[];if(dueNow)items.push('<button data-v50-route="today"><i class="lg-near"></i><span><b>'+dueNow+' وجهًا مستحقًا الآن</b><small>ضمن مهام المراجعة اليوم</small></span></button>');if(partial)items.push('<button data-v50-route="map"><i class="lg-partial"></i><span><b>'+partial+' مراجعة جزئية</b><small>مواضع لم تكتمل تغطيتها</small></span></button>');if(errs)items.push('<button data-v50-route="errors"><i class="lg-error"></i><span><b>'+errs+' موضع خطأ نشط</b><small>راجعي الأخطاء قبل أن تتكرر</small></span></button>');att.innerHTML=items.length?'<div class="v65-att-head"><div><div class="v50-kicker">يحتاج انتباهك</div><h3>الأهم خارج الملخص العام</h3></div></div><div class="v65-att-list">'+items.slice(0,3).join('')+'</div>':'<div class="v65-clear"><i class="lg-solid"></i><div><b>لا توجد مواضع ملحّة الآن</b><small>لا مراجعات متأخرة ولا أخطاء نشطة تحتاج تدخّلًا.</small></div></div>';}
   const recent=document.getElementById('homeRecent');
-  if(recent){
-    const a=[],streak=calcStreak(),month=pagesMemorizedInMonth();
-    if(streak>0)a.push([streak+' يومًا','سلسلة الاستمرار الحالية']);
-    if(month>0)a.push([month+' وجهًا','حفظ جديد هذا الشهر']);
-    const listen=(S.activityEvents||[]).filter(e=>e&&e.type==='listen').length;
-    const tafsir=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir').length;
-    if(listen)a.push([listen+' جلسة سماع','سُجّلت تلقائيًا']);
-    if(tafsir)a.push([tafsir+' وجه تفسير','أُنجزت قراءته']);
-    if(!a.length)a.push(['ابدئي أول جلسة','سيظهر تقدمك الحقيقي هنا']);
-    recent.innerHTML=a.slice(0,4).map(x=>'<div class="v50-glass v50-ach"><b>'+esc(x[0])+'</b><small>'+esc(x[1])+'</small></div>').join('');
-  }
-  const p=priorityV50(),hb=document.getElementById('homeReciteBtn');
-  if(hb)hb.onclick=()=>{if(p.taskId&&['new','fix','near','far'].includes(p.taskId))startTaskSessionV60(p.taskId);else openMushafAtV50(p.page,'recite',p.taskId||'free');};
+  if(recent){const arr=[],streak=calcStreak(),month=pagesMemorizedInMonth();if(streak>0)arr.push([streak+' يومًا','سلسلة الاستمرار الحالية']);if(month>0)arr.push([month+' وجهًا','حفظ جديد هذا الشهر']);const listen=(S.activityEvents||[]).filter(e=>e&&e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir').length;if(listen)arr.push([listen+' جلسة سماع','سُجّلت تلقائيًا']);if(tf)arr.push([tf+' وجه تفسير','أُنجزت قراءته']);if(!arr.length)arr.push(['ابدئي أول جلسة','سيظهر تقدمك الحقيقي هنا']);recent.innerHTML=arr.slice(0,4).map(x=>'<div class="v50-glass v50-ach"><b>'+esc(x[0])+'</b><small>'+esc(x[1])+'</small></div>').join('');}
 }
 function renderTodayV50(){
-  const d=new Date(),date=document.getElementById('todayDateV50');
-  if(date)date.textContent=AR_DOW[d.getDay()]+'، '+d.getDate()+' '+AR_MONTHS[d.getMonth()]+' '+d.getFullYear();
-  const tasks=tasksV50(),tot=taskTotalsV50(),pct=tot.target?Math.min(100,Math.round(tot.done/tot.target*100)):0,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50');
-  const recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id));
-  const remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
-  if(ov)ov.innerHTML=`<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="${r}" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><b style="font-size:1rem">${pct}%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>${remaining?'بقي '+remaining+' وجهًا للمراجعة':'أنجزتِ مهام المراجعة'}</b><small>التسجيل يتم تلقائيًا من جلسات المصحف</small></div>${recTasks.map(t=>`<div class="v50-legend-row"><i style="background:${t.color}"></i><span>${t.label}</span><b>${t.done}/${t.target}</b></div>`).join('')}</div></div>`;
-  const p=priorityV50(),pc=document.getElementById('todayPriorityV50');
-  const pt=tasks.find(t=>t.id===(p.taskId||'')),canSession=pt&&pt.pages&&pt.pages.length;
-  if(pc)pc.innerHTML=`<div class="v50-priority-top"><div class="v50-kicker">ابدئي من هنا</div><span class="v50-badge">${p.kind}</span></div><h3>${esc(p.title)}</h3><p>${esc(p.sub)}</p><button class="v50-btn primary" style="width:100%" ${canSession?`data-v60-session="${p.taskId}"`:`data-v50-mushaf="${p.page}" data-mode="recite" data-task="${p.taskId||'free'}"`}>${canSession?'ابدئي الجلسة':'افتحي المصحف'}</button>`;
+  const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=AR_DOW[d.getDay()]+'، '+d.getDate()+' '+AR_MONTHS[d.getMonth()]+' '+d.getFullYear();
+  const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
+  if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
+  const p=priorityV50(),pc=document.getElementById('todayPriorityV50'),pt=tasks.find(t=>t.id===(p.taskId||'')),canSession=pt&&pt.pages&&pt.pages.length;
+  if(pc)pc.innerHTML='<div class="v50-priority-top"><div class="v50-kicker">'+(p.complete?'الحفظ والمراجعة':'ابدئي من هنا')+'</div><span class="v50-badge">'+p.kind+'</span></div><h3>'+esc(p.title)+'</h3><p>'+esc(p.sub)+'</p>'+(p.complete?'<div class="v72-priority-done">بقية المهام المساندة موجودة أدناه.</div>':'<button class="v50-btn primary" style="width:100%" '+(canSession?'data-v60-session="'+p.taskId+'"':'data-v50-mushaf="'+p.page+'" data-mode="recite" data-task="'+(p.taskId||'free')+'"')+'>'+(canSession?'ابدئي الجلسة':'افتحي المصحف')+'</button>');
   const list=document.getElementById('todayTasksV50');
-  if(list)list.innerHTML=tasks.map(t=>{
-    const done=(t.target>0&&t.done>=t.target),remain=(t.pages||[]).length,rec=['new','fix','near','far'].includes(t.id);
-    const first=t.page,loc=first?surahOfPage(first):null;
-    let sub=t.target===0?'لا يوجد مطلوب اليوم':(done?'مكتمل لليوم':(rec?(remain+' وجه'+(first?' · التالي: '+(loc?loc[1]+' · ':'')+first:'')):`${t.done} من ${t.target}`));
-    let action='';
-    if(t.id==='halaqa')action=`<button class="v50-task-action" data-v50-halaqa="1">${done?'مكتمل':'تسجيل الحضور'}</button>`;
-    else if(rec)action=`<button class="v50-task-action" ${remain?`data-v60-session="${t.id}"`:'disabled'}>${done?'مكتمل':(t.done?'أكملي الجلسة':t.action)}</button>`;
-    else action=`<button class="v50-task-action" ${first?`data-v50-mushaf="${first}" data-mode="${t.id==='tafsir'?'tafsir':''}" data-task="${t.id}"`:'disabled'}>${done?'مكتمل':t.action}</button>`;
-    const progress=t.target?Math.min(100,Math.round((t.done/t.target)*100)):0;
-    return `<div class="v50-glass v50-task v60-task${done?' done':''}"><div class="v50-task-icon" style="color:${t.color}">${v50Svg(t.kind)}</div><div class="v50-task-main"><b>${t.label}</b><small>${sub}${t.id==='fix'&&t.target?' · يوميًا خلال مرحلة التثبيت':''}</small><div class="v60-mini-progress"><i style="width:${progress}%;background:${t.color}"></i></div></div>${action}</div>`;
-  }).join('');
+  if(list)list.innerHTML=tasks.map(t=>{const done=t.target>0&&t.done>=t.target,remain=(t.pages||[]).length,rec=['new','fix','near','far'].includes(t.id),first=t.page,loc=first?surahOfPage(first):null;let sub=t.target===0?'لا يوجد مطلوب اليوم':done?'مكتمل لليوم':rec?(remain+' وجه'+(first?' · التالي: '+(loc?loc[1]+' · ':'')+first:'')):(t.done+' من '+t.target),action='';if(t.id==='halaqa')action='<button class="v50-task-action" data-v50-halaqa="1">'+(done?'مكتمل':'تسجيل الحضور')+'</button>';else if(t.id==='tilawa'&&!S.khatma)action='<button class="v50-task-action" data-v50-route="khatma">إعداد الختمة</button>';else if(rec)action='<button class="v50-task-action" '+(remain?'data-v60-session="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':t.done?'أكملي الجلسة':t.action)+'</button>';else action='<button class="v50-task-action" '+(first?'data-v50-mushaf="'+first+'" data-mode="'+(t.id==='tafsir'?'tafsir':'')+'" data-task="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':t.action)+'</button>';const progress=t.target?Math.min(100,Math.round((t.done/t.target)*100)):0;return '<div class="v50-glass v50-task v60-task'+(done?' done':'')+'"><div class="v50-task-icon" style="color:'+t.color+'">'+v50Svg(t.kind)+'</div><div class="v50-task-main"><b>'+t.label+'</b><small>'+sub+(t.id==='fix'&&t.target?' · يوميًا خلال مرحلة التثبيت':'')+'</small><div class="v60-mini-progress"><i style="width:'+progress+'%;background:'+t.color+'"></i></div></div>'+action+'</div>';}).join('');
 }
-
 function renderTafsirSummaryV67(){
   const box=document.getElementById('tafsirAutoSummary');if(!box)return;
   const ev=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir'),pages=[...new Set(ev.map(e=>+e.page).filter(Boolean))],books=S.tafsir||[];
@@ -2004,7 +1935,7 @@ function renderSmartReview(){
   const open=smartReviewOpen;
   box.innerHTML=`<div style="background:linear-gradient(160deg,#fff,var(--parch-2));border:1px solid var(--line);border-radius:14px;overflow:hidden">
     <div id="srHead" style="display:flex;align-items:center;gap:8px;padding:14px;cursor:pointer">
-      <span style="font-weight:700;font-size:.9rem;color:var(--ink);flex:1">🎯 اقتراح مراجعة اليوم <span style="color:var(--gold);font-size:.78rem;font-weight:600">(${toAr(sugg.length)})</span></span>
+      <span style="font-weight:700;font-size:.9rem;color:var(--ink);flex:1"> اقتراح مراجعة اليوم <span style="color:var(--gold);font-size:.78rem;font-weight:600">(${toAr(sugg.length)})</span></span>
       <span id="srChev" style="color:var(--muted);transition:.2s;transform:rotate(${open?'180deg':'0'})">▾</span>
     </div>
     <div id="srBody" style="padding:0 14px 14px;${open?'':'display:none'}">
@@ -2022,11 +1953,10 @@ function renderSmartReview(){
 }
 /* ===== إحصاءات ملهمة ===== */
 function pagesMemorizedInMonth(){
-  const now=new Date();const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-  let cnt=0;S.logs.forEach(l=>{if(l.date&&l.date.indexOf(ym)===0){
-    const list=Array.isArray(l.memList)?l.memList:(Array.isArray(l.newSurahs)?l.newSurahs.map(sid=>({surahId:sid})):[]);
-    list.forEach(it=>{const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);if(r)cnt+=(r[1]-r[0]+1);});}});
-  return cnt;
+  const now=new Date(),ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'),set=new Set();
+  (S.logs||[]).filter(l=>l.date&&l.date.startsWith(ym)).forEach(l=>(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1];p++)set.add(+p);}));
+  (S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&keyOf(new Date(r.endedAt||r.startedAt||0)).startsWith(ym)).forEach(r=>(r.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)set.add(+p.page);}));
+  return set.size;
 }
 function longestStreak(){
   if(!S.logs.length)return 0;const days=[...new Set(S.logs.map(l=>l.date))].sort();
@@ -2042,11 +1972,11 @@ function renderInspireStats(){
   const best=longestStreak();
   const bits=[];
   const todayPts=dayActivity(todayKey());
-  if(todayPts>0)bits.push(`⭐ نقاط اليوم: <b>${toAr(todayPts)}</b>`);
-  if(monthPages>0)bits.push(`📖 حفظتِ <b>${facesShort(monthPages)}</b> هذا الشهر`);
-  if(best>1)bits.push(`🔥 أطول تتابع: <b>${toAr(best)}</b> يوم`);
-  if(solid>0)bits.push(`✨ متقن تمامًا: <b>${facesShort(solid)}</b>`);
-  if(mem>0)bits.push(`🌱 أنجزتِ <b>${toAr((mem/604*100).toFixed(0))}٪</b> من المصحف`);
+  if(todayPts>0)bits.push(` نقاط اليوم: <b>${toAr(todayPts)}</b>`);
+  if(monthPages>0)bits.push(` حفظتِ <b>${facesShort(monthPages)}</b> هذا الشهر`);
+  if(best>1)bits.push(` أطول تتابع: <b>${toAr(best)}</b> يوم`);
+  if(solid>0)bits.push(` متقن تمامًا: <b>${facesShort(solid)}</b>`);
+  if(mem>0)bits.push(` أنجزتِ <b>${toAr((mem/604*100).toFixed(0))}٪</b> من المصحف`);
   if(!bits.length){box.innerHTML='';return;}
   box.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:8px">${bits.map(b=>`<span style="background:var(--parch-2);border-radius:20px;padding:6px 12px;font-size:.8rem">${b}</span>`).join('')}</div>`;
 }
@@ -2101,7 +2031,7 @@ function renderDailyGoal(){
         <div style="position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:.85rem;color:var(--ink)">${reached?'✓':toAr(pct)+'٪'}</div>
       </div>
       <div style="flex:1">
-        <div style="font-weight:700;color:var(--ink);font-size:.95rem">${reached?'أتممتِ وردك اليوم 🤍':'وِرد اليوم'}</div>
+        <div style="font-weight:700;color:var(--ink);font-size:.95rem">${reached?'أتممتِ وردك اليوم ':'وِرد اليوم'}</div>
         <div style="font-size:.82rem;color:var(--muted);margin-top:2px">${toAr(done)} من ${facesShort(goal)} ${reached?'— بارك الله فيكِ':'محفوظة اليوم'}</div>
         <button class="btn btn-ghost btn-sm" id="goalEdit" style="margin-top:6px;padding:3px 10px;font-size:.75rem">تعديل الهدف</button>
       </div>
@@ -2227,13 +2157,13 @@ function checkMilestones(before){
   const mem=memCount();
   // عبور محطات الأجزاء (كل ٢٠ صفحة ≈ جزء)
   const juzBefore=Math.floor(before/20),juzNow=Math.floor(mem/20);
-  if(juzNow>juzBefore&&juzNow>0){toast(`ما شاء الله! أتممتِ ما يعادل ${toAr(juzNow)} جزءًا من الحفظ 🌱`);return;}
+  if(juzNow>juzBefore&&juzNow>0){toast(`ما شاء الله! أتممتِ ما يعادل ${toAr(juzNow)} جزءًا من الحفظ `);return;}
   // محطات كل ٥٠ صفحة
   const hb=Math.floor(before/50),hn=Math.floor(mem/50);
-  if(hn>hb&&hn>0){toast(`بارك الله فيكِ! بلغتِ ${toAr(hn*50)} وجهًا محفوظًا ✨`);return;}
+  if(hn>hb&&hn>0){toast(`بارك الله فيكِ! بلغتِ ${toAr(hn*50)} وجهًا محفوظًا `);return;}
   // بلوغ الهدف اليومي
   if(S.goal&&(S.goal.pages||1)>0&&pagesToday()>=(S.goal.pages||1)){
-    toast('أتممتِ وِردك اليوم، تقبّل الله 🤍');
+    toast('أتممتِ وِردك اليوم، تقبّل الله ');
   }
 }
 function val(id){return document.getElementById(id).value.trim();}
@@ -3337,7 +3267,7 @@ const M15B_CONTENT=`
     <li><b>لام الاسم:</b> تكون في بنية الاسم وحكمها الإظهار دائمًا (<span class="quran">سلطان · ألوان</span>).</li>
     <li><b>لام الأمر:</b> اللام الزائدة الجازمة الداخلة على الفعل المضارع، وحكمها الإظهار (<span class="quran">ولْيوفوا · ثمّ لْيقضوا</span>).</li>
   </ul>
-  <p class="ex" style="margin-top:10px">🤍 وبهذا تمّ مقرر «الدُّرّ الفريد» — نسأل الله أن يبارك في حفظك ومراجعتك ويجعله حجّةً لكِ.</p>`;
+  <p class="ex" style="margin-top:10px"> وبهذا تمّ مقرر «الدُّرّ الفريد» — نسأل الله أن يبارك في حفظك ومراجعتك ويجعله حجّةً لكِ.</p>`;
 const M14A_CONTENT=`
   <h5>مدخل</h5>
   <ul>
@@ -4213,7 +4143,7 @@ function changePath(dir){
 document.getElementById('set-path-down').addEventListener('click',()=>changePath('down'));
 document.getElementById('set-path-up').addEventListener('click',()=>changePath('up'));
 document.getElementById('set-reset').addEventListener('click',()=>{
-  if(!confirm('⚠️ هل أنتِ متأكدة من مسح جميع بياناتك؟\n\nسيُحذف: السجلّ، خريطة الحفظ، الأخطاء، الختمة، المرحليّات، وكل التقدّم.\n\nلا يمكن استرجاعها بعد الحذف.'))return;
+  if(!confirm(' هل أنتِ متأكدة من مسح جميع بياناتك؟\n\nسيُحذف: السجلّ، خريطة الحفظ، الأخطاء، الختمة، المرحليّات، وكل التقدّم.\n\nلا يمكن استرجاعها بعد الحذف.'))return;
   if(!confirm('تأكيد أخير: هذا الإجراء نهائيّ ولا رجعة فيه. متابعة المسح؟'))return;
   const name=S.profile?S.profile.name:'';const halaqa=S.halaqa;const prof=S.profile;
   S=JSON.parse(JSON.stringify(DEF));
@@ -4244,11 +4174,11 @@ renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=71');
+      const reg=await navigator.serviceWorker.register('sw.js?v=72');
       reg.update().catch(()=>{});
-      let reloaded=sessionStorage.getItem('durr-sw71-reloaded')==='1';
+      let reloaded=sessionStorage.getItem('durr-sw72-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw71-reloaded','1');location.reload();}
+        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw72-reloaded','1');location.reload();}
       });
     }catch(e){}
   });
