@@ -514,6 +514,16 @@ main{padding-top:0!important}
 .v66-err-card{border:1px solid var(--line-2);border-radius:14px;background:#fff;padding:10px;margin-bottom:8px}.v66-err-card.archived{opacity:.62}.v66-err-open{width:100%;border:0;background:none;display:flex;align-items:center;gap:8px;padding:0;font-family:inherit;text-align:right;color:var(--ink)}.v66-err-open>div{flex:1}.v66-err-open>b{}.v66-err-loc b{display:block;font-size:.75rem}.v66-err-loc small{display:block;font-size:.56rem;color:var(--muted);margin-top:2px}.v66-err-open>span{font-size:.58rem;color:var(--accent);background:var(--wash-2);padding:4px 7px;border-radius:999px}
 .v66-err-desc{margin:9px 0 8px;padding-top:8px;border-top:1px solid var(--line-2)}.v66-err-desc b{display:block;font-size:.72rem}.v66-err-desc small{display:block;font-size:.56rem;color:var(--muted);margin-top:2px}.v66-err-actions{display:flex;gap:5px;flex-wrap:wrap}.v66-err-actions button{border:0;border-radius:9px;background:var(--parch-2);color:var(--ink-2);font-family:inherit;font-size:.58rem;font-weight:700;padding:6px 8px}.v66-err-actions .danger{margin-inline-start:auto;color:var(--clay);background:var(--clay-soft)}
 .v66-arch{margin-top:18px}.v66-arch summary{cursor:pointer;font-size:.7rem;font-weight:700;color:var(--green);padding:8px 0}.v66-clean{padding:20px;text-align:center;color:var(--muted);font-size:.75rem}
+
+/* v67 · فصل المحتوى وإعادة بناء الصفحات */
+.v67-subpage-head{display:flex;align-items:flex-start;gap:11px;margin:8px 0 16px;padding:0 2px}.v67-back{width:38px;height:38px;border-radius:50%;border:1px solid rgba(94,58,77,.1);background:rgba(255,255,255,.82);color:var(--ink);font-size:1.2rem;display:grid;place-items:center;flex:0 0 auto}.v67-subpage-head>div{flex:1;text-align:right}.v67-subpage-head span{display:block;color:var(--accent);font-size:.62rem;font-weight:800}.v67-subpage-head h1{font-size:1.35rem;margin:0;color:var(--ink)}.v67-subpage-head p{font-size:.68rem;color:var(--muted);margin:3px 0 0;line-height:1.5}
+.v67-info-card{background:linear-gradient(145deg,#fff,#F8F3F4)!important}.v67-info-title{display:flex;justify-content:space-between;gap:12px;align-items:center}.v67-info-title span{display:block;font-size:.6rem;color:var(--muted)}.v67-info-title b{display:block;font-size:.9rem;color:var(--ink);margin-top:2px}.v67-info-title strong{font-size:.76rem;color:var(--accent);background:var(--wash-2);padding:5px 8px;border-radius:999px}.v67-info-card>p{font-size:.68rem;line-height:1.7;color:var(--muted);margin:9px 0}.v67-inline-stats{display:flex;gap:7px;flex-wrap:wrap}.v67-inline-stats span{font-size:.64rem;color:var(--muted);background:var(--parch-2);padding:6px 9px;border-radius:999px}.v67-inline-stats b{color:var(--ink)}
+.v67-more-grid{grid-template-columns:1fr 1fr}
+.v67-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}.v67-stat-grid>div{background:linear-gradient(145deg,#fff,#F8F3F4);border:1px solid rgba(94,58,77,.08);border-radius:16px;padding:13px}.v67-stat-grid span{display:block;font-size:.6rem;color:var(--muted)}.v67-stat-grid b{display:block;font-size:1.25rem;color:var(--ink);margin:3px 0}.v67-stat-grid small{font-size:.58rem;color:var(--muted)}
+.v67-stats-card{margin-bottom:10px}.v67-card-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.v67-card-title span{display:block;font-size:.58rem;color:var(--muted)}.v67-card-title b{font-size:.86rem}.v67-card-title strong{font-size:.78rem;color:var(--accent)}
+.v67-bars{display:flex;flex-direction:column;gap:8px}.v67-bars>div{display:grid;grid-template-columns:58px 1fr 28px;gap:7px;align-items:center}.v67-bars span,.v67-bars b{font-size:.62rem}.v67-bars b{text-align:left}.v67-bars i{height:7px;background:var(--parch-2);border-radius:99px;overflow:hidden}.v67-bars em{display:block;height:100%;border-radius:99px}
+.v67-month-chart{height:130px;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end}.v67-month-chart>div{text-align:center;height:100%;display:grid;grid-template-rows:1fr auto auto;gap:3px}.v67-month-chart i{display:flex;align-items:end;justify-content:center;background:linear-gradient(180deg,rgba(167,176,214,.08),rgba(167,176,214,.02));border-radius:8px;padding:3px;overflow:hidden}.v67-month-chart em{display:block;width:70%;min-height:2px;background:var(--blue);border-radius:6px 6px 2px 2px}.v67-month-chart b{font-size:.58rem}.v67-month-chart span{font-size:.5rem;color:var(--muted)}
+#tab-stages #stagesChevron{display:none}#tab-stages #stagesToggle{cursor:default!important}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -617,7 +627,7 @@ window.FIREBASE_CONFIG = {
         <button class="v50-glass v50-mini" data-v50-route="mushaf"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 6.5C10.5 5 7.5 4.4 4 5v13c3.5-.6 6.5 0 8 1.5 1.5-1.5 4.5-2.1 8-1.5V5c-3.5-.6-6.5 0-8 1.5z"/><path d="M12 6.5v13"/></svg></span><b>المصحف</b><small>قراءة واستماع</small></button>
         <button class="v50-glass v50-mini" id="homeReciteBtn"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><b>التسميع</b><small>جلسة مراجعة</small></button>
         <button class="v50-glass v50-mini" data-v50-route="map"><span class="ico"><svg viewBox="0 0 24 24"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg></span><b>الخريطة</b><small>حالة الحفظ</small></button>
-        <button class="v50-glass v50-mini" data-v50-route="awrad"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16l-5-3-5 3V5"/><path d="M8 7h6"/></svg></span><b>التفسير</b><small>الأوراد والكتب</small></button>
+        <button class="v50-glass v50-mini" data-v50-route="tafsir"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16l-5-3-5 3V5"/><path d="M8 7h6"/></svg></span><b>التفسير</b><small>الكتب والتقدّم</small></button>
       </div>
 
       <div class="v50-section-head"><h2>آخر إنجازاتك</h2><button data-v50-route="calendar">السجل</button></div>
@@ -641,7 +651,7 @@ window.FIREBASE_CONFIG = {
       <div class="v50-extra-grid">
         <button class="v50-glass v50-extra" data-v50-route="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span>التقويم</span></button>
         <button class="v50-glass v50-extra" data-v50-route="errors"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3z"/><path d="M12 9v5M12 18h.01"/></svg><span>سجل الأخطاء</span></button>
-        <button class="v50-glass v50-extra" data-v50-route="map"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>الإحصاءات</span></button>
+        <button class="v50-glass v50-extra" data-v50-route="stats"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>الإحصاءات</span></button>
         <button class="v50-glass v50-extra" id="btnManualEntryV50"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></svg><span>تسجيل يدوي</span></button>
       </div>
     </div>
@@ -721,11 +731,11 @@ window.FIREBASE_CONFIG = {
     <div class="card">
       <div class="section-eyebrow">أوراد اليوم · تتزامن مع صفحة الأوراد والختمة</div>
       <h2><span class="em">✦</span> التلاوة والتفسير</h2>
-      <p class="hint">سجّلي هنا تقدّمك اليوم، ويتحدّث تلقائيًا في صفحة «الأوراد والختمة».</p>
+      <p class="hint">سجّلي هنا تقدّمك اليوم، ويتحدّث تلقائيًا في صفحة «الختمة».</p>
       <div id="todayTilawa">
         <label style="font-size:.83rem;font-weight:600;color:var(--ink);display:block;margin-bottom:6px">وِرد التلاوة (الختمة)</label>
         <div id="tilawaNoKhatma" class="hint" style="background:var(--parch-2);border-radius:10px;padding:10px 12px">
-          لم تبدئي ختمة بعد. افتحي «الأوراد والختمة» واختاري نوع الختمة أولًا.
+          لم تبدئي ختمة بعد. افتحي «الختمة» واختاري نوع الختمة أولًا.
         </div>
         <div id="tilawaHasKhatma" style="display:none">
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
@@ -743,7 +753,7 @@ window.FIREBASE_CONFIG = {
       <div id="todayTafsir">
         <label style="font-size:.83rem;font-weight:600;color:var(--ink);display:block;margin-bottom:6px">وِرد قراءة التفسير</label>
         <div id="tafsirNoBook" class="hint" style="background:var(--parch-2);border-radius:10px;padding:10px 12px">
-          لا كتب تفسير بعد. افتحي «الأوراد والختمة» وأضيفي كتابًا أولًا.
+          لا كتب تفسير بعد. افتحي «التفسير» وأضيفي كتابًا أولًا.
         </div>
         <div id="tafsirHasBook" style="display:none">
           <div class="row" style="margin-bottom:0">
@@ -764,6 +774,7 @@ window.FIREBASE_CONFIG = {
 
   <!-- ===== السجل والتقويم ===== -->
   <section class="tab-panel" id="tab-calendar">
+    <div class="v67-subpage-head"><button class="v67-back" data-v50-route="more">‹</button><div><span>السجل</span><h1>التقويم</h1><p>أيام نشاطك، الحضور، والمثابرة عبر الزمن.</p></div></div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div style="text-align:right">
@@ -824,20 +835,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div id="calWeek" class="week-row"></div>
     </div>
-    <div class="card">
-      <button id="stagesToggle" style="width:100%;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:0;font-family:inherit">
-        <span style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
-          <span class="section-eyebrow" style="margin:0">مسار الحفظ</span>
-          <span style="font-size:1.15rem;font-weight:700;color:var(--ink)"><span class="em">✦</span> المرحليّات</span>
-        </span>
-        <span id="stagesChevron" style="font-size:1.2rem;color:var(--gold);transition:.2s">▾</span>
-      </button>
-      <div id="stagesBody" style="display:none;margin-top:16px">
-        <p class="hint" style="margin-bottom:12px">مسار حفظك مقسّمًا إلى مراحل. اضغطي «تعديل» لضبط أيّ مرحلية، أو «اجتزتُها» لتسجيل تاريخ اختبارها.</p>
-        <div id="stageTrack"></div>
-        <button class="btn btn-gold btn-sm" id="btnAddStage" style="margin-top:12px">+ إضافة مرحلية</button>
-      </div>
-    </div>
+    
   </section>
 
   <!-- ===== صفحات القرآن ===== -->
@@ -876,8 +874,10 @@ window.FIREBASE_CONFIG = {
     </div>
   </section>
 
-  <!-- ===== الأوراد والختمة ===== -->
-  <section class="tab-panel" id="tab-awrad">
+
+  <!-- ===== الختمة ===== -->
+  <section class="tab-panel" id="tab-khatma">
+    <div class="v67-subpage-head"><button class="v67-back" data-v50-route="more">‹</button><div><span>التلاوة</span><h1>الختمة</h1><p>مسار ختمتك الجارية وتقدّم القراءة فقط.</p></div></div>
     <div class="khatma-hero">
       <div class="kh-inner">
         <div class="section-eyebrow" style="color:var(--gold-soft)">وِرد التلاوة · الختمة الجارية</div>
@@ -916,6 +916,12 @@ window.FIREBASE_CONFIG = {
         <button class="btn btn-ghost" id="khReset">ختمة جديدة</button>
       </div>
     </div>
+  </section>
+
+  <!-- ===== التفسير ===== -->
+  <section class="tab-panel" id="tab-tafsir">
+    <div class="v67-subpage-head"><button class="v67-back" data-v50-route="more">‹</button><div><span>التدبّر والقراءة</span><h1>التفسير</h1><p>كتب التفسير وتقدّم القراءة، مستقلًا عن الختمة.</p></div></div>
+    <div class="card v67-info-card" id="tafsirAutoSummary"></div>
     <div class="card">
       <div class="section-eyebrow">وِرد قراءة التفسير</div>
       <h2><span class="em">✦</span> كتب التفسير — خط السير</h2>
@@ -924,6 +930,12 @@ window.FIREBASE_CONFIG = {
       <div class="divider"></div>
       <button class="btn btn-gold btn-sm" id="btnAddTafsir">+ إضافة كتاب تفسير</button>
     </div>
+  </section>
+
+  <!-- ===== خطة الحفظ ===== -->
+  <section class="tab-panel" id="tab-planning">
+    <div class="v67-subpage-head"><button class="v67-back" data-v50-route="more">‹</button><div><span>التخطيط</span><h1>خطة الحفظ</h1><p>الهدف اليومي وحاسبة المدة والكمية.</p></div></div>
+    <div class="card v67-info-card" id="planningSummary"></div>
     <div class="card" style="background:linear-gradient(160deg,#fff,var(--parch-2))">
       <div id="calcHead" style="display:flex;align-items:center;gap:8px;cursor:pointer">
         <div style="flex:1">
@@ -946,24 +958,52 @@ window.FIREBASE_CONFIG = {
     </div>
   </section>
 
+  <!-- ===== المرحليات ===== -->
+  <section class="tab-panel" id="tab-stages">
+    <div class="v67-subpage-head"><button class="v67-back" data-v50-route="more">‹</button><div><span>محطات الطريق</span><h1>المرحليات</h1><p>مراحل الحفظ والاختبارات وتواريخ اجتيازها.</p></div></div>
+    <div class="card">
+      <button id="stagesToggle" style="width:100%;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:0;font-family:inherit">
+        <span style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
+          <span class="section-eyebrow" style="margin:0">مسار الحفظ</span>
+          <span style="font-size:1.15rem;font-weight:700;color:var(--ink)"><span class="em">✦</span> المرحليّات</span>
+        </span>
+        <span id="stagesChevron" style="font-size:1.2rem;color:var(--gold);transition:.2s">▾</span>
+      </button>
+      <div id="stagesBody" style="display:block;margin-top:16px">
+        <p class="hint" style="margin-bottom:12px">مسار حفظك مقسّمًا إلى مراحل. اضغطي «تعديل» لضبط أيّ مرحلية، أو «اجتزتُها» لتسجيل تاريخ اختبارها.</p>
+        <div id="stageTrack"></div>
+        <button class="btn btn-gold btn-sm" id="btnAddStage" style="margin-top:12px">+ إضافة مرحلية</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== الإحصاءات ===== -->
+  <section class="tab-panel" id="tab-stats">
+    <div class="v67-subpage-head"><button class="v67-back" data-v50-route="more">‹</button><div><span>تحليل التقدّم</span><h1>الإحصاءات</h1><p>قراءة مستقلة لأداء الحفظ والمراجعة والتسميع.</p></div></div>
+    <div id="statsV67"></div>
+  </section>
 
   <!-- ===== المزيد v50 ===== -->
   <section class="tab-panel" id="tab-more">
     <div class="v50-page">
       <div class="v50-top"><span style="width:44px"></span><div class="v50-title"><h1>المزيد</h1><p>كل ما تحتاجينه خارج مسار اليوم</p></div><button class="v50-round" id="moreSettingsTop" aria-label="الإعدادات"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.2A1.7 1.7 0 0 0 4.7 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.2a1.7 1.7 0 0 0-1.4 1z"/></svg></button></div>
-      <div class="v50-more-grid">
-        <button class="v50-glass v50-more-item" data-v50-route="calendar"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span><span><b>السجل والتقويم</b><small>نشاطك، أيامك، وخريطة المثابرة</small></span></button>
-        <button class="v50-glass v50-more-item" data-v50-route="awrad"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M12 6c-2-2-6-2-8 0v13c2-2 6-2 8 0M12 6c2-2 6-2 8 0v13c-2-2-6-2-8 0M12 6v13"/></svg></span><span><b>الأوراد والختمة</b><small>التلاوة والتفسير وخط السير</small></span></button>
-        <button class="v50-glass v50-more-item" data-v50-route="tajweed"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H6a2 2 0 0 1-2-2z"/><path d="M8 7h5M8 11h5"/></svg></span><span><b>التجويد</b><small>دروس ومتابعة الإنجاز</small></span></button>
-        <button class="v50-glass v50-more-item" data-v50-route="errors"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3z"/><path d="M12 9v5M12 18h.01"/></svg></span><span><b>سجل الأخطاء</b><small>المواضع المتكررة والمتشابهات</small></span></button>
-        <button class="v50-glass v50-more-item" id="moreStagesBtn"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M5 21V10M12 21V3M19 21v-7"/></svg></span><span><b>المرحليات</b><small>مراحل رحلتك والاختبارات</small></span></button>
-        <button class="v50-glass v50-more-item" id="moreSettingsBtn"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.2A1.7 1.7 0 0 0 4.7 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.2a1.7 1.7 0 0 0-1.4 1z"/></svg></span><span><b>الإعدادات</b><small>الحساب، المزامنة، والتفضيلات</small></span></button>
+      <div class="v50-more-grid v67-more-grid">
+        <button class="v50-glass v50-more-item" data-v50-route="calendar"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span><span><b>التقويم</b><small>السجل وخريطة المثابرة</small></span></button>
+        <button class="v50-glass v50-more-item" data-v50-route="khatma"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M12 6c-2-2-6-2-8 0v13c2-2 6-2 8 0M12 6c2-2 6-2 8 0v13c-2-2-6-2-8 0M12 6v13"/></svg></span><span><b>الختمة</b><small>التلاوة وخط السير</small></span></button>
+        <button class="v50-glass v50-more-item" data-v50-route="tafsir"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16l-5-3-5 3V5"/><path d="M8 7h6"/></svg></span><span><b>التفسير</b><small>الكتب وتقدّم القراءة</small></span></button>
+        <button class="v50-glass v50-more-item" data-v50-route="stats"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span><span><b>الإحصاءات</b><small>الأداء والاتجاهات</small></span></button>
+        <button class="v50-glass v50-more-item" data-v50-route="planning"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span><span><b>خطة الحفظ</b><small>الهدف والحاسبة</small></span></button>
+        <button class="v50-glass v50-more-item" data-v50-route="stages"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M5 21V10M12 21V3M19 21v-7"/></svg></span><span><b>المرحليات</b><small>المراحل والاختبارات</small></span></button>
+        <button class="v50-glass v50-more-item" data-v50-route="tajweed"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H6a2 2 0 0 1-2-2z"/><path d="M8 7h5M8 11h5"/></svg></span><span><b>التجويد</b><small>الدروس والإنجاز</small></span></button>
+        <button class="v50-glass v50-more-item" data-v50-route="errors"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3z"/><path d="M12 9v5M12 18h.01"/></svg></span><span><b>سجل الأخطاء</b><small>الأخطاء والمواضع المتكررة</small></span></button>
+        <button class="v50-glass v50-more-item" id="moreSettingsBtn"><span class="v50-more-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.2A1.7 1.7 0 0 0 4.7 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.2a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.2a1.7 1.7 0 0 0-1.4 1z"/></svg></span><span><b>الإعدادات</b><small>الحساب والمزامنة والتفضيلات</small></span></button>
       </div>
     </div>
   </section>
 
   <!-- ===== الأخطاء ===== -->
   <section class="tab-panel" id="tab-errors">
+    <div class="v67-subpage-head"><button class="v67-back" data-v50-route="more">‹</button><div><span>المراجعة</span><h1>سجل الأخطاء</h1><p>المواضع التي تحتاج انتباهًا، مرتبطة بآياتها وأوجهها.</p></div></div>
     <div class="card">
       <button class="btn btn-ghost btn-sm" id="btnBackToMap" style="margin-bottom:12px">‹ العودة إلى خريطة الطريق</button>
       <div class="section-eyebrow">مواضع تحتاج انتباهًا</div>
@@ -978,6 +1018,7 @@ window.FIREBASE_CONFIG = {
   <!-- ===== المرحليّات ===== -->
   <!-- ===== التجويد ===== -->
   <section class="tab-panel" id="tab-tajweed">
+    <div class="v67-subpage-head"><button class="v67-back" data-v50-route="more">‹</button><div><span>التعلّم</span><h1>التجويد</h1><p>دروسك ومتابعة ما راجعتِه من أحكام التلاوة.</p></div></div>
     <div class="card">
       <div class="section-eyebrow">دروس التجويد</div>
       <h2><span class="em">✦</span> التجويد</h2>
@@ -1101,7 +1142,7 @@ window.FIREBASE_CONFIG = {
     <div class="amiri" style="font-size:1rem;color:var(--ink)">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div>
     <div style="font-size:.8rem;color:var(--muted);margin-top:8px">الدُّرُّ المكنون · رحلة حفظ القرآن الكريم ومراجعته</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:2px;opacity:.8">مصحف المدينة — طبعة الملك فهد · حفص عن عاصم · إصدار ٦</div>
-    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v66</div>
+    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v67</div>
   </div>
 </div></div>
 
@@ -1463,7 +1504,7 @@ function switchTab(t){
   }
   document.body.classList.toggle('home-active',t==='home');
   document.body.dataset.page=t;
-  const morePages=['calendar','awrad','tajweed','errors'];
+  const morePages=['calendar','khatma','tafsir','planning','stages','stats','tajweed','errors'];
   const navTab=morePages.includes(t)?'more':t;
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
   document.querySelectorAll('#bottomNav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===navTab));
@@ -1475,10 +1516,14 @@ function switchTab(t){
       if(t==='home'&&typeof renderHomeV50==='function')renderHomeV50();
       else if(t==='today'&&typeof renderTodayV50==='function')renderTodayV50();
       else if(t==='map')renderMap();
-      else if(t==='calendar'){renderCal();renderStages();}
+      else if(t==='calendar')renderCal();
+      else if(t==='khatma')renderKhatma();
+      else if(t==='tafsir'){renderTafsir();renderTafsirSummaryV67();}
+      else if(t==='planning')renderPlanningV67();
+      else if(t==='stages'){renderStages();askPathOnStages();}
+      else if(t==='stats')renderStatsV67();
       else if(t==='tajweed')renderTajweed();
       else if(t==='errors')renderErrors();
-      else if(t==='awrad'){renderKhatma();renderTafsir();}
     }catch(err){console.warn('render error for tab',t,err);}
   });
 }
@@ -1631,7 +1676,7 @@ function tasksV50(){
   return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=66&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=67&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -1639,7 +1684,7 @@ function startTaskSessionV60(taskId){
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
   const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=66&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=67&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
@@ -1733,6 +1778,36 @@ function renderTodayV50(){
     return `<div class="v50-glass v50-task v60-task${done?' done':''}"><div class="v50-task-icon" style="color:${t.color}">${v50Svg(t.kind)}</div><div class="v50-task-main"><b>${t.label}</b><small>${sub}${t.id==='fix'&&t.target?' · يوميًا خلال مرحلة التثبيت':''}</small><div class="v60-mini-progress"><i style="width:${progress}%;background:${t.color}"></i></div></div>${action}</div>`;
   }).join('');
 }
+
+function renderTafsirSummaryV67(){
+  const box=document.getElementById('tafsirAutoSummary');if(!box)return;
+  const ev=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir'),pages=[...new Set(ev.map(e=>+e.page).filter(Boolean))],books={};
+  ev.forEach(e=>{const k=e.book||'saadi';books[k]=(books[k]||0)+1;});
+  box.innerHTML='<div class="v67-info-title"><div><span>من المصحف</span><b>القراءة المسجّلة تلقائيًا</b></div><strong>'+toAr(pages.length)+' وجهًا</strong></div><p>إتمام تفسير الوجه داخل المصحف يُسجَّل هنا تلقائيًا، ولا يُحسب حفظًا أو مراجعة.</p><div class="v67-inline-stats"><span>السعدي <b>'+toAr(books.saadi||0)+'</b></span><span>الميسّر <b>'+toAr(books.muyassar||0)+'</b></span></div>';
+}
+function renderPlanningV67(){
+  const box=document.getElementById('planningSummary');if(!box)return;
+  const goal=Math.max(1,(S.goal&&S.goal.pages)||1),mem=memCount(),remain=Math.max(0,604-mem),days=Math.ceil(remain/goal);
+  box.innerHTML='<div class="v67-info-title"><div><span>الهدف الحالي</span><b>'+toAr(goal)+' '+facesShort(goal)+' يوميًا</b></div><strong>'+toAr(remain)+' متبقٍ</strong></div><p>بهذا المعدّل النظري تحتاجين قرابة '+toAr(days)+' يومًا للحفظ الجديد، قبل احتساب الراحة والتثبيت.</p><button class="btn btn-ghost btn-sm" id="v67GoalEdit">تعديل الهدف اليومي</button>';
+  const b=document.getElementById('v67GoalEdit');if(b)b.onclick=()=>{const n=prompt('كم وجهًا تريدين هدفًا يوميًا؟',goal);if(n===null)return;const v=Math.max(1,Math.min(20,+n||goal));S.goal=S.goal||{};S.goal.pages=v;S.goal.active=true;save();renderPlanningV67();refreshV50();};
+}
+function renderStatsV67(){
+  const box=document.getElementById('statsV67');if(!box)return;
+  let mem=0,fix=0,near=0,far=0,weak=0,due=0,partial=0;
+  for(let p=1;p<=604;p++){const m=mapPageMetaV62(p,null),ph=m.engine&&m.memorized?m.engine.phase:'unseen';if(m.memorized)mem++;if(ph==='fix')fix++;else if(ph==='near')near++;else if(ph==='far')far++;if(m.state==='weak')weak++;if(m.engine&&m.engine.due)due++;if(m.partial)partial++;}
+  const now=Date.now(),cut=now-30*86400000,rs=(S.recitationSessions||[]).filter(x=>(x.endedAt||x.startedAt||0)>=cut),donePages=[];
+  rs.forEach(x=>(x.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)donePages.push(Object.assign({},p,{task:x.task}));}));
+  const avg=donePages.length?Math.round(donePages.reduce((a,p)=>a+(+p.score||0),0)/donePages.length):0,errors=(S.errors||[]).filter(e=>!e.archived);
+  const autoErr=errors.filter(e=>e.source==='recitation').length,months=[],d=new Date();
+  for(let i=5;i>=0;i--){const x=new Date(d.getFullYear(),d.getMonth()-i,1),k=keyOf(x).slice(0,7);let n=0;(S.recitationSessions||[]).filter(r=>r.task==='new'&&keyOf(new Date(r.endedAt||r.startedAt||0)).slice(0,7)===k).forEach(r=>(r.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)n++;}));months.push({k,n});}
+  const maxM=Math.max(1,...months.map(x=>x.n)),listen=(S.activityEvents||[]).filter(e=>e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e.type==='tafsir').length,task=t=>donePages.filter(p=>p.task===t).length;
+  box.innerHTML='<div class="v67-stat-grid"><div><span>المحفوظ</span><b>'+toAr(mem)+'</b><small>من 604 وجه</small></div><div><span>متوسط التسميع</span><b>'+toAr(avg)+'٪</b><small>آخر 30 يومًا</small></div><div><span>مستحق الآن</span><b>'+toAr(due)+'</b><small>وجهًا</small></div><div><span>أخطاء نشطة</span><b>'+toAr(errors.length)+'</b><small>'+toAr(autoErr)+' آلي</small></div></div>'+
+  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>توزيع المحفوظ</span><b>حالة المراجعة الحالية</b></div></div><div class="v67-bars">'+[['تثبيت',fix,'#C89B3C'],['قريبة',near,'#D7B45B'],['بعيدة',far,'#7482A8'],['متفلّت',weak,'#C77486'],['جزئي',partial,'#A68BB7']].map(x=>'<div><span>'+x[0]+'</span><i><em style="width:'+Math.min(100,mem?Math.round(x[1]/mem*100):0)+'%;background:'+x[2]+'"></em></i><b>'+toAr(x[1])+'</b></div>').join('')+'</div></div>'+
+  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>6 أشهر</span><b>الحفظ الجديد</b></div></div><div class="v67-month-chart">'+months.map(x=>{const dt=parseKey(x.k+'-01');return '<div><i><em style="height:'+Math.round(x.n/maxM*100)+'%"></em></i><b>'+toAr(x.n)+'</b><span>'+AR_MONTHS[dt.getMonth()].slice(0,3)+'</span></div>';}).join('')+'</div></div>'+
+  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>آخر 30 يومًا</span><b>جلسات التسميع المكتملة</b></div><strong>'+toAr(donePages.length)+'</strong></div><div class="v67-inline-stats"><span>حفظ <b>'+toAr(task('new'))+'</b></span><span>تثبيت <b>'+toAr(task('fix'))+'</b></span><span>قريبة <b>'+toAr(task('near'))+'</b></span><span>بعيدة <b>'+toAr(task('far'))+'</b></span></div></div>'+
+  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>أنشطة مساندة</span><b>السماع والتفسير</b></div></div><div class="v67-inline-stats"><span>سماع مكتمل <b>'+toAr(listen)+'</b></span><span>تفسير مقروء <b>'+toAr(tf)+'</b></span></div></div>';
+}
+
 function refreshV50(){try{renderHomeV50();renderTodayV50();}catch(e){console.warn('v50 render',e);}}
 
 // تنقّل موحّد للبطاقات الجديدة
@@ -4348,7 +4423,7 @@ document.getElementById('acctChip').addEventListener('click',()=>{
   const r=document.getElementById('todayRefreshV50');if(r)r.addEventListener('click',()=>refreshV50());
   const m=document.getElementById('btnManualEntryV50');if(m)m.addEventListener('click',()=>{const x=document.getElementById('legacyToday');x.classList.toggle('open');if(x.classList.contains('open'))setTimeout(()=>x.scrollIntoView({behavior:'smooth',block:'start'}),30);});
   ['moreSettingsBtn','moreSettingsTop'].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener('click',openSettings);});
-  const st=document.getElementById('moreStagesBtn');if(st)st.addEventListener('click',()=>{switchTab('calendar');setTimeout(()=>{const b=document.getElementById('stagesBody');if(b){b.style.display='';document.getElementById('stagesChevron').style.transform='rotate(180deg)';b.scrollIntoView({behavior:'smooth',block:'start'});}},120);});
+  const st=document.getElementById('moreStagesBtn');if(st)st.addEventListener('click',()=>switchTab('stages'));
 })();
 
 setGateMode('signin');});
@@ -4425,11 +4500,11 @@ renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=66');
+      const reg=await navigator.serviceWorker.register('sw.js?v=67');
       reg.update().catch(()=>{});
-      let reloaded=sessionStorage.getItem('durr-sw66-reloaded')==='1';
+      let reloaded=sessionStorage.getItem('durr-sw67-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw66-reloaded','1');location.reload();}
+        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw67-reloaded','1');location.reload();}
       });
     }catch(e){}
   });
