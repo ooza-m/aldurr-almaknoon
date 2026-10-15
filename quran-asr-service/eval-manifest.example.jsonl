@@ -1,0 +1,6 @@
+{"audio":"samples/correct-clean.wav","reference":"ضع النص القرآني المرجعي هنا","category":"correct_clean"}
+{"audio":"samples/omission.wav","reference":"ضع النص القرآني المرجعي هنا","category":"deliberate_omission"}
+{"audio":"samples/substitution.wav","reference":"ضع النص القرآني المرجعي هنا","category":"deliberate_substitution"}
+{"audio":"samples/repetition.wav","reference":"ضع النص القرآني المرجعي هنا","category":"deliberate_repetition"}
+{"audio":"samples/mutashabih.wav","reference":"ضع النص القرآني المرجعي هنا","category":"mutashabih_jump"}
+{"audio":"samples/noisy-phone.wav","reference":"ضع النص القرآني المرجعي هنا","category":"phone_noise"}
