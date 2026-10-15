@@ -1017,7 +1017,7 @@ window.FIREBASE_CONFIG = {
     <div class="amiri" style="font-size:1rem;color:var(--ink)">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div>
     <div style="font-size:.8rem;color:var(--muted);margin-top:8px">الدُّرُّ المكنون · رحلة حفظ القرآن الكريم ومراجعته</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:2px;opacity:.8">مصحف المدينة — طبعة الملك فهد · حفص عن عاصم · إصدار ٦</div>
-    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v57</div>
+    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v58</div>
   </div>
 </div></div>
 
@@ -1451,7 +1451,7 @@ function tasksV50(){
   ];if(halaqa)arr.push({id:'halaqa',label:'حلقة القرآن',done:attStatus(todayKey())==='present'?1:0,target:1,page:null,kind:'people',action:'تسجيل الحضور',color:'var(--pink)'});return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=57&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=58&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+'&app=1';window.location.assign(q);}
 function renderHomeV50(){
   const q=TIPS[Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000)%TIPS.length];
   const ht=document.getElementById('homeTipText'),hs=document.getElementById('homeTipSource');if(ht){ht.textContent=(q.h?'قال رسول الله ﷺ: ':'')+q.t;}if(hs)hs.textContent=q.s||'';
@@ -3977,11 +3977,11 @@ renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=57');
+      const reg=await navigator.serviceWorker.register('sw.js?v=58');
       reg.update().catch(()=>{});
-      let reloaded=sessionStorage.getItem('durr-sw57-reloaded')==='1';
+      let reloaded=sessionStorage.getItem('durr-sw58-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw57-reloaded','1');location.reload();}
+        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw58-reloaded','1');location.reload();}
       });
     }catch(e){}
   });
