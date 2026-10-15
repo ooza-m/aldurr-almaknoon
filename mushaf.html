@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>المصحف — الدرّ المكنون · v58</title>
-<script id="DURR_V58_ESCAPE_IFRAME">
+<title>المصحف — الدرّ المكنون · v59</title>
+<script id="DURR_V59_ESCAPE_IFRAME">
 /* v56: حماية من أي index قديم مخزّن في الكاش ما زال يفتح المصحف داخل iframe. */
 try{
   if(window.self!==window.top){
@@ -338,6 +338,15 @@ body.app-standalone .screen{position:fixed!important;top:0!important;right:0!imp
 .app-bottom-nav span{font-size:.64rem;font-weight:600;white-space:nowrap}
 body.reciting .app-bottom-nav{opacity:0;pointer-events:none;transform:translate(-50%,110%);transition:.25s}
 body.reciting .screen{height:var(--app-vh)!important}
+
+/* v59 · وضع التركيز: قراءة بملء المساحة على نسق آية */
+body.focus-mode .app-bottom-nav{opacity:0;pointer-events:none;transform:translate(-50%,120%);transition:transform .25s ease,opacity .2s ease}
+body.focus-mode .screen{height:var(--app-vh)!important}
+body.focus-mode .pane{padding:8px 6px 4px}
+body.focus-mode .mini-top{padding:10px 16px 2px}
+body.focus-mode .pagefoot{padding:4px 16px calc(5px + env(safe-area-inset-bottom))}
+body.focus-mode .tap-hint{bottom:10px}
+.ico.focus-on{background:var(--wash);color:var(--accent)}
 @supports not (height:100dvh){:root{--app-vh:100vh}}
 
 </style>
@@ -353,6 +362,7 @@ body.reciting .screen{height:var(--app-vh)!important}
     </div>
     <div class="ttl" id="chromeTtl"></div>
     <div class="side">
+      <button class="ico" id="btnFocus" aria-label="وضع التركيز" title="وضع التركيز"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg></button>
       <button class="ico" id="btnSettings" aria-label="إعدادات"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
   </div>
@@ -496,7 +506,7 @@ body.reciting .screen{height:var(--app-vh)!important}
   <button data-app-route="map"><svg viewBox="0 0 24 24"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg><span>الخريطة</span></button>
   <button data-app-route="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>المزيد</span></button>
 </nav>
-<script id="DURR_V58_VIEWPORT">
+<script id="DURR_V59_VIEWPORT">
 (function(){
   function sync(){
     const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
@@ -515,6 +525,8 @@ body.reciting .screen{height:var(--app-vh)!important}
 const LS=(k,d)=>{try{return localStorage.getItem(k)||d;}catch(e){return d;}};
 const LSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 let numMode=LS('durr-num','ar'), scrollDir=LS('durr-dir','h');
+let focusMode=LS('durr-focus','0')==='1';
+if(focusMode)document.body.classList.add('focus-mode');
 const AR=n=>numMode==='en'?String(n):String(n).replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
 const ARA=n=>String(n).replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]); // عربيّة دائمًا
 const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -1103,6 +1115,18 @@ document.querySelectorAll('#stWrap .state').forEach((st,i)=>{if(i===3)st.onclick
 function closeAll(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('open'));closeSheets();document.body.classList.remove('chrome');}
 $('btnIndex').onclick=e=>{e.stopPropagation();openIndex();};
 $('btnSearch').onclick=e=>{e.stopPropagation();openSearch();};
+function syncFocusButton(){const b=$('btnFocus');if(b)b.classList.toggle('focus-on',focusMode);}
+function refitVisiblePanes(){requestAnimationFrame(()=>{[paneCur,panePrev,paneNext].forEach(p=>p&&fitPane(p));});}
+function toggleFocusMode(){
+  focusMode=!focusMode;LSet('durr-focus',focusMode?'1':'0');
+  document.body.classList.toggle('focus-mode',focusMode);
+  syncFocusButton();
+  document.body.classList.remove('chrome');
+  setTimeout(refitVisiblePanes,40);
+  setTimeout(refitVisiblePanes,280);
+}
+$('btnFocus').onclick=e=>{e.stopPropagation();toggleFocusMode();};
+syncFocusButton();
 $('btnSettings').onclick=e=>{e.stopPropagation();openSettings();};
 $('btnStates').onclick=e=>{e.stopPropagation();$('stTitle').textContent='وجه '+AR(cur);$('stWrap').classList.add('open');};
 $('btnBack').onclick=e=>{e.stopPropagation();if(window.parent===window){window.location.assign('index.html?tab=home');}else{closeAll();}};
@@ -1169,7 +1193,7 @@ setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
 })();
 </script>
 <script>
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=58').then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=59').then(r=>r.update()).catch(()=>{}));}
 </script>
 </body>
 </html>
