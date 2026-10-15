@@ -5,7 +5,7 @@
 window.DURR_CONFIG = Object.assign({}, window.DURR_CONFIG || {}, {
   quranAsr: {
     url: "",
-    mode: "quran-specialized",
-    model: "tarteel-ai/whisper-base-ar-quran"
+    mode: "quran-specialized-streaming",
+    model: "mohammed/fastconformer-quran-ar-onnx-int8"
   }
 });
