@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>المصحف — الدرّ المكنون · v76</title>
-<script id="DURR_V76_ESCAPE_IFRAME">
+<title>المصحف — الدرّ المكنون · v77</title>
+<script id="DURR_V77_ESCAPE_IFRAME">
 /* v56: حماية من أي index قديم مخزّن في الكاش ما زال يفتح المصحف داخل iframe. */
 try{
   if(window.self!==window.top){
@@ -381,7 +381,7 @@ body.face-listening .screen{height:var(--app-vh)!important}
 body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 .qasr-setrow{align-items:flex-start}.qasr-status{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;color:var(--muted)}.qasr-status i{width:9px;height:9px;border-radius:50%;background:#b8b2b5}.qasr-status.ok{color:#49653C}.qasr-status.ok i{background:#6f8a63}.qasr-status.limited{color:#8A671A}.qasr-status.limited i{background:#C89B3C}.qasr-status.bad{color:#9C5362}.qasr-status.bad i{background:#C77486}.qasr-test{width:100%;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-family:inherit;border-radius:12px;padding:9px 12px;font-size:.72rem;font-weight:700;margin-top:8px}
 </style>
-<script src="config.js?v=76"></script>
+<script src="config.js?v=77"></script>
 </head>
 <body class="app-standalone">
 <div class="screen" id="screen">
@@ -559,7 +559,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
   <button data-app-route="map"><svg viewBox="0 0 24 24"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg><span>الخريطة</span></button>
   <button data-app-route="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>المزيد</span></button>
 </nav>
-<script id="DURR_V76_VIEWPORT">
+<script id="DURR_V77_VIEWPORT">
 (function(){
   function sync(){
     const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
@@ -1234,7 +1234,7 @@ let recSeq=[],recPos=0,recWords=[],recWordPos=0,eyeShown=false,recRec=null,recOn
 let recSession=null,recPageState=null,speechRec=null,speechAvailable=!!(window.SpeechRecognition||window.webkitSpeechRecognition),speechStarted=false;
 const QASR_CONFIG=(window.DURR_CONFIG&&window.DURR_CONFIG.quranAsr)||{};
 const QASR_URL=String(QASR_CONFIG.url||LS('durr-quran-asr-url','')||'').replace(/\/$/,'');
-let qasrActive=false,qasrCtx=null,qasrSource=null,qasrNode=null,qasrGain=null,qasrChunks=[],qasrSamples=0,qasrQueue=[],qasrBusy=false,qasrFailures=0;
+let qasrActive=false,qasrCtx=null,qasrSource=null,qasrNode=null,qasrGain=null,qasrChunks=[],qasrSamples=0,qasrQueue=[],qasrBusy=false,qasrFailures=0,qasrSeq=0;
 const qasrAvailable=!!QASR_URL;
 let ERR=[];try{ERR=JSON.parse(LS('durr-errors','[]'))||[];}catch(e){ERR=[];}
 function saveErr(){LSet('durr-errors',JSON.stringify(ERR));}
@@ -1359,38 +1359,55 @@ function f32To16kPcmV73(input,inRate){
 function b64PcmV73(pcm){
   const u=new Uint8Array(pcm.buffer),step=0x6000;let s='';for(let i=0;i<u.length;i+=step)s+=String.fromCharCode.apply(null,u.subarray(i,Math.min(i+step,u.length)));return btoa(s);
 }
-function queueQasrChunkV73(float32,inRate){
-  if(!qasrActive||!QASR_URL||!float32.length)return;
-  const pcm=f32To16kPcmV73(float32,inRate);if(pcm.length<8000)return;
-  qasrQueue.push({audio_b64:b64PcmV73(pcm),sample_rate:16000,page:cur,position:recWordPos,session_id:recSession&&recSession.id||''});pumpQasrV73();
+function queueQasrChunkV73(float32,inRate,final=false){
+  if(!QASR_URL)return;
+  let audio_b64='';
+  if(float32&&float32.length){
+    const pcm=f32To16kPcmV73(float32,inRate);
+    if(pcm.length<3200&&!final)return;
+    audio_b64=b64PcmV73(pcm);
+  }else if(!final)return;
+  qasrQueue.push({audio_b64,sample_rate:16000,page:cur,position:recWordPos,session_id:recSession&&recSession.id||'',seq:qasrSeq++,final:!!final});
+  pumpQasrV73();
 }
 async function pumpQasrV73(){
-  if(qasrBusy||!qasrQueue.length||!qasrActive)return;qasrBusy=true;const item=qasrQueue.shift();
+  if(qasrBusy||!qasrQueue.length)return;qasrBusy=true;const item=qasrQueue.shift();
   try{
     const r=await fetch(QASR_URL+'/transcribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item),cache:'no-store'});
-    if(!r.ok)throw new Error('qasr '+r.status);const j=await r.json(),tx=String(j.transcript||'').trim();
+    if(!r.ok)throw new Error('qasr '+r.status);
+    const j=await r.json(),tx=String(j.transcript_delta||j.transcript||'').trim();
     qasrFailures=0;if(tx)processTranscriptV73(tx,'quran-asr',j);
+    if(item.final&&recSession)recSession.engineStreamFinalized=true;
   }catch(e){
-    qasrFailures++;if(qasrFailures>=2&&qasrActive){stopQuranAsrV73(false);setEngine(speechAvailable?'ok':'','المحرك القرآني غير متاح · وضع محدود');if(speechAvailable)startSpeech();}
-  }finally{qasrBusy=false;if(qasrQueue.length&&qasrActive)pumpQasrV73();}
+    qasrFailures++;
+    if(qasrFailures>=2&&qasrActive){stopQuranAsrV73(false);setEngine(speechAvailable?'ok':'','المحرك القرآني غير متاح · وضع محدود');if(speechAvailable)startSpeech();}
+  }finally{
+    qasrBusy=false;
+    if(qasrQueue.length)pumpQasrV73();
+  }
 }
 async function startQuranAsrV73(stream){
   if(!QASR_URL||!stream)return false;
   try{
     qasrCtx=new (window.AudioContext||window.webkitAudioContext)();qasrSource=qasrCtx.createMediaStreamSource(stream);qasrNode=qasrCtx.createScriptProcessor(4096,1,1);qasrGain=qasrCtx.createGain();qasrGain.gain.value=0;
-    qasrChunks=[];qasrSamples=0;const rate=qasrCtx.sampleRate,target=Math.round(rate*3.2);
+    qasrChunks=[];qasrSamples=0;qasrSeq=0;const rate=qasrCtx.sampleRate,target=Math.round(rate*1.9);
     qasrNode.onaudioprocess=e=>{if(!qasrActive)return;const x=new Float32Array(e.inputBuffer.getChannelData(0));qasrChunks.push(x);qasrSamples+=x.length;if(qasrSamples>=target){const all=new Float32Array(qasrSamples);let o=0;qasrChunks.forEach(c=>{all.set(c,o);o+=c.length;});qasrChunks=[];qasrSamples=0;queueQasrChunkV73(all,rate);}};
     qasrSource.connect(qasrNode);qasrNode.connect(qasrGain);qasrGain.connect(qasrCtx.destination);qasrActive=true;qasrFailures=0;
     if(recSession){recSession.engine='quran-asr';recSession.engineModel=QASR_CONFIG.model||'quran-specialized';}
-    setEngine('live','محرك قرآني مباشر');return true;
+    setEngine('live','محرك قرآني متصل');return true;
   }catch(e){stopQuranAsrV73(false);return false;}
 }
 function stopQuranAsrV73(flush=true){
-  if(flush&&qasrActive&&qasrSamples>=(qasrCtx?qasrCtx.sampleRate:48000)){const all=new Float32Array(qasrSamples);let o=0;qasrChunks.forEach(c=>{all.set(c,o);o+=c.length;});queueQasrChunkV73(all,qasrCtx?qasrCtx.sampleRate:48000);}
-  qasrActive=false;qasrChunks=[];qasrSamples=0;try{qasrNode&&(qasrNode.onaudioprocess=null);qasrNode&&qasrNode.disconnect();qasrSource&&qasrSource.disconnect();qasrGain&&qasrGain.disconnect();qasrCtx&&qasrCtx.close();}catch(e){}
+  const rate=qasrCtx?qasrCtx.sampleRate:48000;
+  if(flush){
+    let all=null;
+    if(qasrSamples>0){all=new Float32Array(qasrSamples);let o=0;qasrChunks.forEach(c=>{all.set(c,o);o+=c.length;});}
+    queueQasrChunkV73(all,rate,true);
+  }
+  qasrActive=false;qasrChunks=[];qasrSamples=0;
+  try{qasrNode&&(qasrNode.onaudioprocess=null);qasrNode&&qasrNode.disconnect();qasrSource&&qasrSource.disconnect();qasrGain&&qasrGain.disconnect();qasrCtx&&qasrCtx.close();}catch(e){}
   qasrCtx=qasrSource=qasrNode=qasrGain=null;
 }
-
 function makePageState(){const vm={};recWords.forEach(w=>{const v=vm[w.vk]||(vm[w.vk]={vk:w.vk,total:0,covered:new Set(),assisted:new Set(),errors:new Set(),suspected:new Set()});v.total++;});return{page:cur,surahIds:[...new Set((DATA.pages[String(cur)]&&DATA.pages[String(cur)].s||[]).map(x=>x.id))],startedAt:Date.now(),wordsTotal:recWords.length,covered:new Set(),assisted:new Set(),errors:new Set(),suspected:new Set(),verses:vm};}
 function markCoverage(s,source){if(!recPageState||!s||s.wi==null)return;const k=s.vk+'#'+s.wi;recPageState.covered.add(k);const v=recPageState.verses[s.vk];if(v)v.covered.add(s.wi);if(source!=='asr'&&source!=='quran-asr'&&source!=='browser-speech'){recPageState.assisted.add(k);if(v)v.assisted.add(s.wi);}}
 function markSessionError(vk,wi,kind){if(!recPageState||wi==null)return;const k=vk+'#'+wi,v=recPageState.verses[vk];if(kind==='suspected'){recPageState.suspected.add(k);if(v)v.suspected.add(wi);return;}recPageState.errors.add(k);recPageState.suspected.delete(k);if(v){v.errors.add(wi);v.suspected.delete(wi);}}
@@ -1552,7 +1569,7 @@ async function qasrHealthV75(force){
   if(!QASR_URL){card.classList.add('limited');card.querySelector('span').textContent='غير مربوط بعد';if(note)note.textContent='المصحف سيستخدم تعرّف المتصفح المحدود إلى أن يُنشر المحرك القرآني ويُضاف رابطه.';return;}
   try{
     const r=await fetch(QASR_URL+'/health',{cache:'no-store'});if(!r.ok)throw new Error('health');const j=await r.json();
-    card.classList.add('ok');card.querySelector('span').textContent='متصل · '+(j.model||QASR_CONFIG.model||'محرك قرآني');if(note)note.textContent='الاتصال بالمحرك القرآني المتخصص يعمل. الحكم على الخطأ يتم بعد المحاذاة مع نص المصحف داخل التطبيق.';
+    card.classList.add('ok');card.querySelector('span').textContent='متصل · '+(j.streaming?'بث قرآني':'محرك قرآني');if(note)note.textContent='النموذج: '+(j.model||QASR_CONFIG.model||'قرآني متخصص')+' · التفريغ صوتي فقط، والحكم على الخطأ يتم بعد المحاذاة مع نص المصحف داخل التطبيق.';
   }catch(e){card.classList.add('bad');card.querySelector('span').textContent='تعذّر الاتصال';if(note)note.textContent='سيعود التطبيق تلقائيًا إلى وضع المتصفح المحدود، ولن يدّعي أن التحليل المتخصص يعمل.';}
 }
 function syncSettings(){$('tgDir').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===scrollDir));$('tgNum').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===numMode));qasrHealthV75(false);}
@@ -1592,7 +1609,7 @@ setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
 })();
 </script>
 <script>
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=76').then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=77').then(r=>r.update()).catch(()=>{}));}
 </script>
 </body>
 </html>
