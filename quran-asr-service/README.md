@@ -2,36 +2,71 @@
 
 Backend for the recitation engine in **الدُّرّ المكنون**.
 
-The browser does **not** decide Quran correctness from generic speech recognition. The service only transcribes recitation with a Quran-specialized ASR model. The web app then aligns the transcript against its canonical Quran text and classifies omissions, substitutions, repetitions, uncertain positions, and possible mutashabihat jumps.
+The architecture is deliberately Quran-specific:
 
-## Default model
+```
+microphone
+  -> Quran ASR
+  -> canonical Quran alignment in the app
+  -> confirmed / uncertain / mutashabihat findings
+  -> active recall and review scheduling
+```
 
-The default backend uses:
+The ASR model only estimates what was recited. It is **not** allowed to decide Quran correctness by itself.
 
-- `tarteel-ai/whisper-base-ar-quran`
-- Quran-specialized Arabic ASR
-- Apache-2.0 model license at the time this integration was designed
+## Production default
+
+The default backend is now:
+
+- `sherpa-fastconformer`
+- `mohammed/fastconformer-quran-ar-onnx-int8`
+- streaming FastConformer / transducer
+- 16 kHz mono PCM
+- CC-BY-4.0 upstream license; keep model attribution
+
+This checkpoint is Quran-specific and distributed as a streaming INT8 ONNX bundle for sherpa-onnx. Its own model card notes that on-device WER verification is still pending, so accuracy must be validated on our recitation test set before claiming parity with Tarteel.
 
 Environment:
+
+```
+QASR_BACKEND=sherpa-fastconformer
+QASR_MODEL=mohammed/fastconformer-quran-ar-onnx-int8
+QASR_PRELOAD=1
+QASR_THREADS=4
+```
+
+## Why this replaced the default Whisper path
+
+`tarteel-ai/whisper-base-ar-quran` remains supported as a fallback, but the web product needs a low-latency Quran-specific streaming path. The sherpa FastConformer service keeps a recognizer stream per recitation session and returns only the new transcript delta for each chunk.
+
+The app then performs constrained Quran alignment. Uncertain positions remain review candidates; they are not silently promoted to confirmed errors.
+
+## Optional backends
+
+### Quran Whisper fallback
+
+Install the optional dependencies:
+
+```
+pip install torch transformers accelerate soundfile
+```
+
+Then:
 
 ```
 QASR_BACKEND=tarteel-whisper
 QASR_MODEL=tarteel-ai/whisper-base-ar-quran
 ```
 
-## Optional stronger FastConformer backend
-
-The adapter also supports NeMo models:
+### Full NeMo FastConformer
 
 ```
 pip install -r requirements-fastconformer.txt
-
 QASR_BACKEND=nemo-fastconformer
-QASR_MODEL=Muno459/fastconformer-quran
-HF_TOKEN=...
+QASR_MODEL=mohammed/fastconformer-quran-ar
 ```
 
-Important: the currently distributed `Muno459/fastconformer-quran` is gated and its current public license must be reviewed/accepted before use. Do not assume a previous license still applies.
+This is heavier than the ONNX path and normally needs a larger container / GPU.
 
 ## Local run
 
@@ -43,10 +78,16 @@ pip install -r requirements.txt
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-Then test:
+Health:
 
 ```
 curl http://localhost:8000/health
+```
+
+Warm model before a live session:
+
+```
+curl -X POST http://localhost:8000/warmup
 ```
 
 ## Docker
@@ -56,33 +97,27 @@ docker build -t durr-quran-asr .
 docker run --rm -p 8000:8000 durr-quran-asr
 ```
 
-For GPU hosting, use a CUDA/PyTorch base image instead of the slim CPU image.
+The first boot downloads the model files from Hugging Face unless they are already in the cache.
 
 ## Browser configuration
 
-The public web app reads `/config.js`. Set only the public service URL:
+The public app reads `/config.js`. Put only the public service URL there:
 
 ```js
 window.DURR_CONFIG = {
   quranAsr: {
     url: "https://YOUR-QURAN-ASR.example.com",
-    mode: "quran-specialized",
-    model: "tarteel-ai/whisper-base-ar-quran"
+    mode: "quran-specialized-streaming",
+    model: "mohammed/fastconformer-quran-ar-onnx-int8"
   }
 };
 ```
 
-Never put provider keys, Hugging Face tokens, OpenAI keys, or other secrets in `config.js`.
+Never put provider keys, Hugging Face tokens, or other secrets in `config.js`.
 
-## API
+## Streaming protocol
 
-### GET /health
-
-Returns active backend/model.
-
-### POST /transcribe
-
-JSON body:
+`POST /transcribe`
 
 ```json
 {
@@ -90,20 +125,39 @@ JSON body:
   "sample_rate": 16000,
   "page": 2,
   "position": 14,
-  "session_id": "rs_..."
+  "session_id": "rs_...",
+  "seq": 3,
+  "final": false
 }
 ```
 
-Response:
+The service preserves the streaming recognizer state by `session_id` and returns both cumulative and delta text:
 
 ```json
 {
   "transcript": "...",
-  "backend": "tarteel-whisper",
-  "model": "tarteel-ai/whisper-base-ar-quran",
+  "transcript_delta": "...",
+  "backend": "sherpa-fastconformer",
+  "model": "mohammed/fastconformer-quran-ar-onnx-int8",
   "quran_specialized": true,
-  "confidence": null
+  "streaming": true,
+  "seq": 3,
+  "final": false
 }
 ```
 
-The service intentionally does not label a Quran word as “wrong”. Error confirmation belongs to the constrained Quran aligner in the application.
+Send the last chunk with `"final": true` so the recognizer can flush and the server can release session state.
+
+## Accuracy rule
+
+Do not market a model-card WER as the app's effective error-detection accuracy. We need our own held-out recordings with:
+
+- correct Hafs recitation
+- deliberate omissions
+- substitutions
+- repetitions
+- pauses and restarts
+- common mutashabihat jumps
+- phone microphones and background noise
+
+The application should stay conservative: low-confidence findings go to active recall instead of becoming confirmed errors.
