@@ -293,6 +293,25 @@ def health():
     }
 
 
+@app.get("/model-info")
+def model_info():
+    return {
+        "backend": BACKEND,
+        "model": MODEL_ID,
+        "quran_specialized": True,
+        "streaming": BACKEND == "sherpa-fastconformer",
+        "sample_rate": 16000,
+        "threads": NUM_THREADS,
+        "session_ttl": SESSION_TTL,
+        "engine_loaded": _engine is not None,
+        "attribution": (
+            "mohammed/fastconformer-quran-ar-onnx-int8 (CC-BY-4.0)"
+            if MODEL_ID.startswith("mohammed/")
+            else MODEL_ID
+        ),
+    }
+
+
 @app.post("/warmup")
 def warmup():
     try:
