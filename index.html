@@ -524,6 +524,11 @@ main{padding-top:0!important}
 .v67-bars{display:flex;flex-direction:column;gap:8px}.v67-bars>div{display:grid;grid-template-columns:58px 1fr 28px;gap:7px;align-items:center}.v67-bars span,.v67-bars b{font-size:.62rem}.v67-bars b{text-align:left}.v67-bars i{height:7px;background:var(--parch-2);border-radius:99px;overflow:hidden}.v67-bars em{display:block;height:100%;border-radius:99px}
 .v67-month-chart{height:130px;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end}.v67-month-chart>div{text-align:center;height:100%;display:grid;grid-template-rows:1fr auto auto;gap:3px}.v67-month-chart i{display:flex;align-items:end;justify-content:center;background:linear-gradient(180deg,rgba(167,176,214,.08),rgba(167,176,214,.02));border-radius:8px;padding:3px;overflow:hidden}.v67-month-chart em{display:block;width:70%;min-height:2px;background:var(--blue);border-radius:6px 6px 2px 2px}.v67-month-chart b{font-size:.58rem}.v67-month-chart span{font-size:.5rem;color:var(--muted)}
 #tab-stages #stagesChevron{display:none}#tab-stages #stagesToggle{cursor:default!important}
+
+/* v68 · اليوم للتنفيذ فقط */
+.v68-manual-note{background:linear-gradient(145deg,#fff,#F8F3F4)!important;border-inline-start:3px solid var(--blue)!important}.v68-manual-note b{display:block;font-size:.82rem;color:var(--ink)}.v68-manual-note p{font-size:.67rem;color:var(--muted);line-height:1.7;margin:5px 0 0}
+.v68-daily-card{background:linear-gradient(155deg,#fff,#FAF6F3)!important}
+#tab-manual .card{margin-bottom:12px}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -651,26 +656,21 @@ window.FIREBASE_CONFIG = {
       <div class="v50-extra-grid">
         <button class="v50-glass v50-extra" data-v50-route="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span>التقويم</span></button>
         <button class="v50-glass v50-extra" data-v50-route="errors"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3z"/><path d="M12 9v5M12 18h.01"/></svg><span>سجل الأخطاء</span></button>
-        <button class="v50-glass v50-extra" data-v50-route="stats"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>الإحصاءات</span></button>
-        <button class="v50-glass v50-extra" id="btnManualEntryV50"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></svg><span>تسجيل يدوي</span></button>
+        <button class="v50-glass v50-extra" data-v50-route="planning"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>خطة الحفظ</span></button>
+        <button class="v50-glass v50-extra" id="btnManualEntryV50" data-v50-route="manual"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></svg><span>تسجيل يدوي</span></button>
       </div>
     </div>
-    <div class="legacy-today" id="legacyToday">
-    <div id="dailyMsg" style="background:#fff;border-radius:14px;border-inline-start:3px solid var(--gold);padding:16px 18px;margin-bottom:14px;box-shadow:0 2px 10px rgba(94,58,77,.06)">
-      <div class="section-eyebrow" style="margin:0 0 8px">رسالة اليوم 🌿</div>
-      <p id="tipText" class="amiri" style="font-size:1.12rem;color:var(--ink);margin:0;line-height:1.9"></p>
-    </div>
-    <div class="card" style="padding-top:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div class="section-eyebrow" style="margin:0">اليوم</div>
-        <div id="todayCalIcon" style="flex-shrink:0"></div>
-      </div>
-      <div id="dailyGoal"></div>
-      <div id="smartReview" style="margin-top:14px"></div>
-      <div style="margin-top:14px" class="stat-grid" id="streakStats"></div>
-      <div id="inspireStats" style="margin-top:12px"></div>
-    </div>
+    
+  </section>
 
+
+  <!-- ===== التسجيل اليدوي ===== -->
+  <section class="tab-panel" id="tab-manual">
+    <div class="v67-subpage-head"><button class="v67-back" data-v50-route="today">‹</button><div><span>خيار احتياطي</span><h1>التسجيل اليدوي</h1><p>لما أُنجز خارج جلسات التطبيق فقط؛ أمّا جلسات المصحف فتُسجّل تلقائيًا.</p></div></div>
+    <div class="card v68-manual-note">
+      <b>الأصل هو التسجيل التلقائي</b>
+      <p>هذه الصفحة تضيف ما تم خارج التطبيق إلى السجل والخريطة، ولا تستبدل بيانات التسميع الدقيقة على مستوى الآيات.</p>
+    </div>
     <div class="card">
       <div class="section-eyebrow">تسجيل النِّصاب</div>
       <h2><span class="em">✦</span> سجّلي وِردك</h2>
@@ -726,49 +726,6 @@ window.FIREBASE_CONFIG = {
         <button class="btn btn-ghost" id="btnAddErr">+ تسجيل خطأ</button>
         <button class="btn btn-ghost" id="btnClearAll" title="مسح الكل" style="color:var(--clay)">🗑</button>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="section-eyebrow">أوراد اليوم · تتزامن مع صفحة الأوراد والختمة</div>
-      <h2><span class="em">✦</span> التلاوة والتفسير</h2>
-      <p class="hint">سجّلي هنا تقدّمك اليوم، ويتحدّث تلقائيًا في صفحة «الختمة».</p>
-      <div id="todayTilawa">
-        <label style="font-size:.83rem;font-weight:600;color:var(--ink);display:block;margin-bottom:6px">وِرد التلاوة (الختمة)</label>
-        <div id="tilawaNoKhatma" class="hint" style="background:var(--parch-2);border-radius:10px;padding:10px 12px">
-          لم تبدئي ختمة بعد. افتحي «الختمة» واختاري نوع الختمة أولًا.
-        </div>
-        <div id="tilawaHasKhatma" style="display:none">
-          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
-            <div class="field" style="flex:1;min-width:150px;margin-bottom:0">
-              <label>آخر صفحة وصلتِ إليها اليوم</label>
-              <input type="number" dir="ltr" inputmode="numeric" id="td-tilawa-page" min="0" max="604" placeholder="مثال: 190">
-            </div>
-            <button class="btn btn-gold btn-sm" id="td-tilawa-save" style="margin-bottom:0">تحديث</button>
-          </div>
-          <div id="td-tilawa-bar" style="margin-top:10px"></div>
-          <p class="hint" id="td-tilawa-info" style="margin:8px 0 0"></p>
-        </div>
-      </div>
-      <div class="divider"></div>
-      <div id="todayTafsir">
-        <label style="font-size:.83rem;font-weight:600;color:var(--ink);display:block;margin-bottom:6px">وِرد قراءة التفسير</label>
-        <div id="tafsirNoBook" class="hint" style="background:var(--parch-2);border-radius:10px;padding:10px 12px">
-          لا كتب تفسير بعد. افتحي «التفسير» وأضيفي كتابًا أولًا.
-        </div>
-        <div id="tafsirHasBook" style="display:none">
-          <div class="row" style="margin-bottom:0">
-            <div class="field" style="margin-bottom:8px"><label>الكتاب</label>
-              <select id="td-tafsir-book"></select></div>
-            <div class="field" style="margin-bottom:8px"><label>الصفحات المنجَزة الآن</label>
-              <div style="display:flex;gap:8px"><input type="number" dir="ltr" inputmode="numeric" id="td-tafsir-done" min="0" style="flex:1">
-                <button class="btn btn-gold btn-sm" id="td-tafsir-save" style="flex-shrink:0">تحديث</button></div>
-            </div>
-          </div>
-          <div id="td-tafsir-bar" style="margin-top:10px"></div>
-          <p class="hint" id="td-tafsir-info" style="margin:2px 0 0"></p>
-        </div>
-      </div>
-    </div>
     </div>
   </section>
 
@@ -916,7 +873,30 @@ window.FIREBASE_CONFIG = {
         <button class="btn btn-ghost" id="khReset">ختمة جديدة</button>
       </div>
     </div>
-  </section>
+  
+    <div class="card v68-daily-card">
+      <div class="section-eyebrow">تحديث اليوم</div>
+      <h2><span class="em">✦</span> وِرد التلاوة</h2>
+      <p class="hint">حدّثي موضع ختمتك لليوم. هذا مستقل عن الحفظ والمراجعة.</p>
+      <div id="todayTilawa">
+        <label style="font-size:.83rem;font-weight:600;color:var(--ink);display:block;margin-bottom:6px">وِرد التلاوة (الختمة)</label>
+        <div id="tilawaNoKhatma" class="hint" style="background:var(--parch-2);border-radius:10px;padding:10px 12px">
+          لم تبدئي ختمة بعد. افتحي «الختمة» واختاري نوع الختمة أولًا.
+        </div>
+        <div id="tilawaHasKhatma" style="display:none">
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+            <div class="field" style="flex:1;min-width:150px;margin-bottom:0">
+              <label>آخر صفحة وصلتِ إليها اليوم</label>
+              <input type="number" dir="ltr" inputmode="numeric" id="td-tilawa-page" min="0" max="604" placeholder="مثال: 190">
+            </div>
+            <button class="btn btn-gold btn-sm" id="td-tilawa-save" style="margin-bottom:0">تحديث</button>
+          </div>
+          <div id="td-tilawa-bar" style="margin-top:10px"></div>
+          <p class="hint" id="td-tilawa-info" style="margin:8px 0 0"></p>
+        </div>
+      </div>
+    </div>
+</section>
 
   <!-- ===== التفسير ===== -->
   <section class="tab-panel" id="tab-tafsir">
@@ -930,7 +910,31 @@ window.FIREBASE_CONFIG = {
       <div class="divider"></div>
       <button class="btn btn-gold btn-sm" id="btnAddTafsir">+ إضافة كتاب تفسير</button>
     </div>
-  </section>
+  
+    <div class="card v68-daily-card">
+      <div class="section-eyebrow">تحديث اليوم</div>
+      <h2><span class="em">✦</span> وِرد قراءة التفسير</h2>
+      <p class="hint">هذا التقدّم خاص بقراءة كتب التفسير، ولا يدخل في حساب الحفظ أو المراجعة.</p>
+      <div id="todayTafsir">
+        <label style="font-size:.83rem;font-weight:600;color:var(--ink);display:block;margin-bottom:6px">وِرد قراءة التفسير</label>
+        <div id="tafsirNoBook" class="hint" style="background:var(--parch-2);border-radius:10px;padding:10px 12px">
+          لا كتب تفسير بعد. افتحي «التفسير» وأضيفي كتابًا أولًا.
+        </div>
+        <div id="tafsirHasBook" style="display:none">
+          <div class="row" style="margin-bottom:0">
+            <div class="field" style="margin-bottom:8px"><label>الكتاب</label>
+              <select id="td-tafsir-book"></select></div>
+            <div class="field" style="margin-bottom:8px"><label>الصفحات المنجَزة الآن</label>
+              <div style="display:flex;gap:8px"><input type="number" dir="ltr" inputmode="numeric" id="td-tafsir-done" min="0" style="flex:1">
+                <button class="btn btn-gold btn-sm" id="td-tafsir-save" style="flex-shrink:0">تحديث</button></div>
+            </div>
+          </div>
+          <div id="td-tafsir-bar" style="margin-top:10px"></div>
+          <p class="hint" id="td-tafsir-info" style="margin:2px 0 0"></p>
+        </div>
+      </div>
+    </div>
+</section>
 
   <!-- ===== خطة الحفظ ===== -->
   <section class="tab-panel" id="tab-planning">
@@ -1142,7 +1146,7 @@ window.FIREBASE_CONFIG = {
     <div class="amiri" style="font-size:1rem;color:var(--ink)">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div>
     <div style="font-size:.8rem;color:var(--muted);margin-top:8px">الدُّرُّ المكنون · رحلة حفظ القرآن الكريم ومراجعته</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:2px;opacity:.8">مصحف المدينة — طبعة الملك فهد · حفص عن عاصم · إصدار ٦</div>
-    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v67</div>
+    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v68</div>
   </div>
 </div></div>
 
@@ -1505,7 +1509,7 @@ function switchTab(t){
   document.body.classList.toggle('home-active',t==='home');
   document.body.dataset.page=t;
   const morePages=['calendar','khatma','tafsir','planning','stages','stats','tajweed','errors'];
-  const navTab=morePages.includes(t)?'more':t;
+  const navTab=t==='manual'?'today':(morePages.includes(t)?'more':t);
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
   document.querySelectorAll('#bottomNav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===navTab));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -1515,10 +1519,11 @@ function switchTab(t){
     try{
       if(t==='home'&&typeof renderHomeV50==='function')renderHomeV50();
       else if(t==='today'&&typeof renderTodayV50==='function')renderTodayV50();
+      else if(t==='manual')renderManualV68();
       else if(t==='map')renderMap();
       else if(t==='calendar')renderCal();
-      else if(t==='khatma')renderKhatma();
-      else if(t==='tafsir'){renderTafsir();renderTafsirSummaryV67();}
+      else if(t==='khatma'){renderKhatma();renderTodayAwrad();}
+      else if(t==='tafsir'){renderTafsir();renderTafsirSummaryV67();renderTodayAwrad();}
       else if(t==='planning')renderPlanningV67();
       else if(t==='stages'){renderStages();askPathOnStages();}
       else if(t==='stats')renderStatsV67();
@@ -1668,15 +1673,15 @@ function tasksV50(){
     {id:'fix',label:'تثبيت 30 يومًا',done:fixDone,target:fix.length,pages:taskPagesV60('fix'),kind:'leaf',action:'ابدئي جلسة التثبيت',color:'var(--gold)'},
     {id:'near',label:'مراجعة قريبة',done:nearDoneN,target:nearTarget,pages:taskPagesV60('near'),kind:'repeat',action:'ابدئي جلسة المراجعة',color:'var(--clay)'},
     {id:'far',label:'مراجعة بعيدة',done:farDoneN,target:farDaily,pages:taskPagesV60('far'),kind:'far',action:'ابدئي جلسة المراجعة',color:'var(--blue)'},
-    {id:'tilawa',label:'ورد التلاوة',done:log.tilawa?1:0,target:1,pages:[lastActivityPageV50()],kind:'book',action:'افتحي المصحف',color:'#A68BB7'},
-    {id:'tafsir',label:'ورد التفسير',done:log.tafsir?1:0,target:1,pages:[lastActivityPageV50()],kind:'tafsir',action:'افتحي التفسير',color:'#C89B3C'}
+    {id:'tilawa',label:'ورد التلاوة',done:log.tilawa?1:0,target:1,pages:[S.khatma?Math.max(1,Math.min(604,(S.khatma.current||0)+1)):lastActivityPageV50()],kind:'book',action:'افتحي موضع التلاوة',color:'#A68BB7'},
+    {id:'tafsir',label:'ورد التفسير',done:log.tafsir?1:0,target:1,pages:[lastActivityPageV50()],kind:'tafsir',action:'افتحي تفسير الوجه',color:'#C89B3C'}
   ];
   arr.forEach(t=>t.page=t.pages&&t.pages.length?t.pages[0]:null);
   if(halaqa)arr.push({id:'halaqa',label:'حلقة القرآن',done:attStatus(todayKey())==='present'?1:0,target:1,pages:[],page:null,kind:'people',action:'تسجيل الحضور',color:'var(--pink)'});
   return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=67&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=68&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -1684,7 +1689,7 @@ function startTaskSessionV60(taskId){
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
   const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=67&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=68&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
@@ -1773,7 +1778,7 @@ function renderTodayV50(){
     let action='';
     if(t.id==='halaqa')action=`<button class="v50-task-action" data-v50-halaqa="1">${done?'مكتمل':'تسجيل الحضور'}</button>`;
     else if(rec)action=`<button class="v50-task-action" ${remain?`data-v60-session="${t.id}"`:'disabled'}>${done?'مكتمل':(t.done?'أكملي الجلسة':t.action)}</button>`;
-    else action=`<button class="v50-task-action" ${first?`data-v50-mushaf="${first}" data-task="${t.id}"`:'disabled'}>${done?'مكتمل':t.action}</button>`;
+    else action=`<button class="v50-task-action" ${first?`data-v50-mushaf="${first}" data-mode="${t.id==='tafsir'?'tafsir':''}" data-task="${t.id}"`:'disabled'}>${done?'مكتمل':t.action}</button>`;
     const progress=t.target?Math.min(100,Math.round((t.done/t.target)*100)):0;
     return `<div class="v50-glass v50-task v60-task${done?' done':''}"><div class="v50-task-icon" style="color:${t.color}">${v50Svg(t.kind)}</div><div class="v50-task-main"><b>${t.label}</b><small>${sub}${t.id==='fix'&&t.target?' · يوميًا خلال مرحلة التثبيت':''}</small><div class="v60-mini-progress"><i style="width:${progress}%;background:${t.color}"></i></div></div>${action}</div>`;
   }).join('');
@@ -1808,7 +1813,7 @@ function renderStatsV67(){
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>أنشطة مساندة</span><b>السماع والتفسير</b></div></div><div class="v67-inline-stats"><span>سماع مكتمل <b>'+toAr(listen)+'</b></span><span>تفسير مقروء <b>'+toAr(tf)+'</b></span></div></div>';
 }
 
-function refreshV50(){try{renderHomeV50();renderTodayV50();}catch(e){console.warn('v50 render',e);}}
+function refreshV50(){try{renderHomeV50();renderTodayV50();const p=document.querySelector('.tab-panel.active');if(p&&p.id==='tab-stats')renderStatsV67();if(p&&p.id==='tab-tafsir'){renderTafsirSummaryV67();renderTodayAwrad();}if(p&&p.id==='tab-khatma')renderTodayAwrad();if(p&&p.id==='tab-planning')renderPlanningV67();}catch(e){console.warn('v50 render',e);}}
 
 // تنقّل موحّد للبطاقات الجديدة
 document.addEventListener('click',e=>{
@@ -2186,22 +2191,13 @@ function renderDailyGoal(){
     S.goal.pages=n;save();renderDailyGoal();
   });
 }
+function renderManualV68(){
+  const d=document.getElementById('in-date');if(!d)return;
+  if(!d.value){d.value=todayKey();if(d._dpSync)d._dpSync();}
+  loadDateEntry();
+}
 function renderToday(){
-  if(!document.getElementById('in-date').value){document.getElementById('in-date').value=todayKey();const i=document.getElementById('in-date');if(i._dpSync)i._dpSync();}
-  {const now=new Date();const doy=Math.floor((now-new Date(now.getFullYear(),0,0))/86400000);const q=TIPS[doy%TIPS.length];
-   const prefix=q.h?'قال رسول الله ﷺ: ':'';
-   const needsQuotes=!/^[«﴿]/.test(q.t.trim());
-   const body=needsQuotes?'«'+q.t+'»':q.t;
-   document.getElementById('tipText').innerHTML=`${prefix?'<span style=\"color:var(--clay);font-weight:600\">'+prefix+'</span>':''}${body}<br><span style="font-size:.82rem;color:var(--gold);font-weight:600">— ${q.s}</span>`;}
-  const mem=memCount();
-  document.getElementById('streakStats').innerHTML=`
-    <div class="stat statNav" data-go="calendar" style="cursor:pointer"><div class="num">${toAr(calcStreak())}</div><div class="lbl">يوم متتالٍ ›</div></div>
-    <div class="stat statNav" data-go="map" style="cursor:pointer"><div class="num">${toAr(mem)}</div><div class="lbl">وجه محفوظ ›</div><div class="bar"><i style="width:${(mem/604*100).toFixed(1)}%"></i></div></div>
-    <div class="stat statNav" data-go="calendar" style="cursor:pointer"><div class="num">${toAr(S.logs.length)}</div><div class="lbl">يوم مسجّل ›</div></div>
-    <div class="stat" id="statErrBtn" style="cursor:pointer"><div class="num">${toAr(S.errors.filter(e=>!e.archived).length)}</div><div class="lbl">خطأ نشط ›</div></div>`;
-  document.querySelectorAll('.statNav').forEach(b=>b.addEventListener('click',()=>{if(typeof switchTab==='function')switchTab(b.dataset.go);}));
-  const seb=document.getElementById('statErrBtn');if(seb)seb.addEventListener('click',()=>{if(typeof showPanel==='function'){showPanel('errors');if(typeof renderErrors==='function')renderErrors();}});
-  loadDateEntry();renderTodayAwrad();renderDailyGoal();renderSmartReview();renderInspireStats();renderTodayCalIcon();
+  renderManualV68();
   if(typeof refreshV50==='function')refreshV50();
 }
 let memList=[]; // [{surahId,from,to}]
@@ -2257,8 +2253,6 @@ function renderRevChips(){
 });})();
 document.getElementById('in-date').addEventListener('change',loadDateEntry);
 document.getElementById('in-date').addEventListener('input',loadDateEntry);
-document.getElementById('in-date').addEventListener('change',renderTodayAwrad);
-document.getElementById('in-date').addEventListener('input',renderTodayAwrad);
 function calcStreak(){if(!S.logs.length)return 0;const days=new Set(S.logs.map(l=>l.date));let s=0;const d=new Date();
   for(;;){const k=keyOf(d);if(days.has(k)){s++;d.setDate(d.getDate()-1);}else if(s===0&&k===todayKey()){d.setDate(d.getDate()-1);}else break;}return s;}
 document.getElementById('btnSaveToday').addEventListener('click',()=>{
@@ -2332,9 +2326,10 @@ function valueOnDate(k,extract){
   return {val,started:true};
 }
 function renderTodayAwrad(){
-  const k=document.getElementById('in-date').value||todayKey();
+  const d=document.getElementById('in-date'),noK=document.getElementById('tilawaNoKhatma'),hasK=document.getElementById('tilawaHasKhatma');
+  if(!noK||!hasK)return;
+  const k=todayKey();
   // التلاوة — للختمة الحالية فقط
-  const noK=document.getElementById('tilawaNoKhatma'),hasK=document.getElementById('tilawaHasKhatma');
   if(S.khatma){noK.style.display='none';hasK.style.display='';
     const inp=document.getElementById('td-tilawa-page');
     // القيمة المسجّلة في هذا التاريخ (أو آخر ما قبله)، ضمن الختمة الحالية
@@ -2364,8 +2359,8 @@ function renderTodayAwrad(){
   }else{noB.style.display='';hasB.style.display='none';}
 }
 function syncTafsirBook(){
-  const sel=document.getElementById('td-tafsir-book');const i=+sel.value||0;const t=S.tafsir[i];if(!t)return;
-  const k=document.getElementById('in-date').value||todayKey();
+  const sel=document.getElementById('td-tafsir-book');if(!sel)return;const i=+sel.value||0;const t=S.tafsir[i];if(!t)return;
+  const k=todayKey();
   const inp=document.getElementById('td-tafsir-done');
   // القيمة المسجّلة لهذا الكتاب في هذا التاريخ (أو آخر ما قبله)
   const res=valueOnDate(k,l=>{
@@ -2390,7 +2385,7 @@ document.getElementById('td-tilawa-save').addEventListener('click',()=>{
   if(!S.khatma)return;const p=+document.getElementById('td-tilawa-page').value;
   if(p<0||p>604){alert("رقم وجه غير صحيح (٠–٦٠٤)");return;}
   S.khatma.current=p;
-  const k=document.getElementById('in-date').value||todayKey();const l=ensureLog(k);l.tilawa=true;l.tilawaTxt=`بلغتُ صفحة ${p}`;
+  const k=todayKey();const l=ensureLog(k);l.tilawa=true;l.tilawaTxt=`بلغتُ صفحة ${p}`;
   save();renderTodayAwrad();renderToday();if(typeof renderCal==='function')try{renderCal();}catch(_){}
   const b=document.getElementById('td-tilawa-save');const o=b.textContent;b.textContent="✓";setTimeout(()=>b.textContent=o,1200);
 });
@@ -2399,7 +2394,7 @@ document.getElementById('td-tafsir-save').addEventListener('click',()=>{
   const sel=document.getElementById('td-tafsir-book');const i=+sel.value||0;const t=S.tafsir[i];if(!t)return;
   const d=+document.getElementById('td-tafsir-done').value;if(d<0){alert("رقم غير صحيح");return;}
   t.done=d;
-  const k=document.getElementById('in-date').value||todayKey();const l=ensureLog(k);l.tafsir=true;l.tafsirTxt=`${t.name}: ص${d}`;
+  const k=todayKey();const l=ensureLog(k);l.tafsir=true;l.tafsirTxt=`${t.name}: ص${d}`;
   save();syncTafsirBook();renderToday();if(typeof renderCal==='function')try{renderCal();}catch(_){}
   const b=document.getElementById('td-tafsir-save');const o=b.textContent;b.textContent="✓";setTimeout(()=>b.textContent=o,1200);
 });
@@ -2724,10 +2719,8 @@ document.getElementById('rgApply').addEventListener('click',()=>{const f=+docume
 let calMode='week',calRef=new Date();
 document.getElementById('vWeek').addEventListener('click',()=>{calMode='week';document.getElementById('vWeek').classList.add('on');document.getElementById('vMonth').classList.remove('on');renderCal();});
 document.getElementById('stagesToggle').addEventListener('click',()=>{
-  const body=document.getElementById('stagesBody');const chev=document.getElementById('stagesChevron');
-  const open=body.style.display!=='none';
-  body.style.display=open?'none':'';chev.style.transform=open?'':'rotate(180deg)';
-  if(!open){renderStages();askPathOnStages();}
+  const body=document.getElementById('stagesBody');if(body)body.style.display='block';
+  renderStages();askPathOnStages();
 });
 document.getElementById('vMonth').addEventListener('click',()=>{calMode='month';document.getElementById('vMonth').classList.add('on');document.getElementById('vWeek').classList.remove('on');renderCal();});
 document.getElementById('calPrev').addEventListener('click',()=>{if(calMode==='week')calRef.setDate(calRef.getDate()-7);else calRef.setMonth(calRef.getMonth()-1);renderCal();});
@@ -3035,9 +3028,8 @@ function openDay(k){
     save();closeDayAct();renderCal();
   });
   box.querySelector('[data-openform]').addEventListener('click',()=>{
-    closeDayAct();
-    document.querySelector('#tabs button[data-tab="today"]').click();
-    document.getElementById('in-date').value=k;{const i=document.getElementById('in-date');if(i._dpSync)i._dpSync();}loadDateEntry();
+    closeDayAct();switchTab('manual');
+    const d=document.getElementById('in-date');if(d){d.value=k;if(d._dpSync)d._dpSync();loadDateEntry();}
     window.scrollTo({top:0,behavior:'smooth'});
   });
   document.getElementById('dayActModal').classList.add('open');
@@ -4421,7 +4413,7 @@ document.getElementById('acctChip').addEventListener('click',()=>{
   const n=document.getElementById('homeNotifBtn');if(n)n.addEventListener('click',()=>openSettings());
   const t=document.getElementById('todayTuneBtn');if(t)t.addEventListener('click',()=>openSettings());
   const r=document.getElementById('todayRefreshV50');if(r)r.addEventListener('click',()=>refreshV50());
-  const m=document.getElementById('btnManualEntryV50');if(m)m.addEventListener('click',()=>{const x=document.getElementById('legacyToday');x.classList.toggle('open');if(x.classList.contains('open'))setTimeout(()=>x.scrollIntoView({behavior:'smooth',block:'start'}),30);});
+  const m=document.getElementById('btnManualEntryV50');
   ['moreSettingsBtn','moreSettingsTop'].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener('click',openSettings);});
   const st=document.getElementById('moreStagesBtn');if(st)st.addEventListener('click',()=>switchTab('stages'));
 })();
@@ -4495,16 +4487,16 @@ function authErr(e){const c=e&&e.code||'';
 setGateMode('signin');
 initCloud();
 
-function renderAll(){document.body.classList.add('home-active');initDatepicks();renderToday();loadPlan();consumePendingLearningV61();consumePendingRecitationV55();mirrorFaceLearningV61();refreshV50();maybeAskPath();const wanted=new URLSearchParams(location.search).get('tab');const allowed=['home','today','map','more','calendar','awrad','tajweed','errors'];switchTab(allowed.includes(wanted)?wanted:'home');if(typeof scheduleNotifs==='function')try{scheduleNotifs();}catch(e){}}
+function renderAll(){document.body.classList.add('home-active');initDatepicks();renderToday();loadPlan();consumePendingLearningV61();consumePendingRecitationV55();mirrorFaceLearningV61();refreshV50();maybeAskPath();const wanted=new URLSearchParams(location.search).get('tab');const allowed=['home','today','manual','map','more','calendar','khatma','tafsir','planning','stages','stats','tajweed','errors'];switchTab(allowed.includes(wanted)?wanted:'home');if(typeof scheduleNotifs==='function')try{scheduleNotifs();}catch(e){}}
 renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=67');
+      const reg=await navigator.serviceWorker.register('sw.js?v=68');
       reg.update().catch(()=>{});
-      let reloaded=sessionStorage.getItem('durr-sw67-reloaded')==='1';
+      let reloaded=sessionStorage.getItem('durr-sw68-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw67-reloaded','1');location.reload();}
+        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw68-reloaded','1');location.reload();}
       });
     }catch(e){}
   });
