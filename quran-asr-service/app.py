@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import os
 import threading
 import time
@@ -16,6 +17,8 @@ MODEL_ID = os.getenv(
 ).strip()
 HF_TOKEN = os.getenv("HF_TOKEN") or None
 SESSION_TTL = int(os.getenv("QASR_SESSION_TTL", "1200"))
+MAX_SESSIONS = max(1, int(os.getenv("QASR_MAX_SESSIONS", "32")))
+MAX_PCM_BYTES = 16000 * 2 * 15
 NUM_THREADS = max(1, int(os.getenv("QASR_THREADS", "4")))
 PRELOAD = os.getenv("QASR_PRELOAD", "1") not in {"0", "false", "False"}
 
@@ -38,17 +41,18 @@ app.add_middleware(
 )
 
 _engine = None
+_engine_error = None
 _engine_lock = threading.Lock()
 _sessions = {}
 _sessions_lock = threading.Lock()
 
 
 class TranscribeRequest(BaseModel):
-    audio_b64: str = ""
+    audio_b64: str = Field(default="", max_length=640000)
     sample_rate: int = Field(default=16000, ge=8000, le=48000)
     page: Optional[int] = Field(default=None, ge=1, le=604)
     position: Optional[int] = Field(default=None, ge=0)
-    session_id: Optional[str] = None
+    session_id: Optional[str] = Field(default=None, max_length=120, pattern=r"^[A-Za-z0-9_-]+$")
     seq: int = Field(default=0, ge=0)
     final: bool = False
 
@@ -65,6 +69,8 @@ def _device_name() -> str:
 
 
 def _decode_pcm(req: TranscribeRequest) -> np.ndarray:
+    if req.sample_rate != 16000:
+        raise HTTPException(status_code=400, detail="sample_rate must be 16000")
     if not req.audio_b64:
         if req.final:
             return np.zeros(0, dtype=np.float32)
@@ -75,16 +81,14 @@ def _decode_pcm(req: TranscribeRequest) -> np.ndarray:
     except Exception as exc:
         raise HTTPException(status_code=400, detail="invalid audio_b64") from exc
 
-    if len(raw) < 800:
-        if req.final:
-            return np.zeros(0, dtype=np.float32)
-        raise HTTPException(status_code=400, detail="audio chunk too short")
+    if len(raw) > MAX_PCM_BYTES:
+        raise HTTPException(status_code=413, detail="audio chunk exceeds 15 seconds")
     if len(raw) % 2:
-        raw = raw[:-1]
+        raise HTTPException(status_code=400, detail="PCM16 requires complete samples")
+    if not raw and not req.final:
+        raise HTTPException(status_code=400, detail="empty audio chunk")
 
     audio = np.frombuffer(raw, dtype="<i2").astype(np.float32) / 32768.0
-    if req.sample_rate != 16000:
-        raise HTTPException(status_code=400, detail="sample_rate must be 16000")
     return audio
 
 
@@ -103,6 +107,8 @@ def _load_sherpa():
     )
     tokens = hf_hub_download(MODEL_ID, "tokens.txt", token=HF_TOKEN)
 
+    _validate_sherpa_bundle(encoder, decoder, joiner)
+
     return sherpa_onnx.OnlineRecognizer.from_transducer(
         encoder=encoder,
         decoder=decoder,
@@ -113,6 +119,38 @@ def _load_sherpa():
         num_threads=NUM_THREADS,
         decoding_method="greedy_search",
     )
+
+
+class IncompatibleModelError(RuntimeError):
+    pass
+
+
+def _validate_sherpa_bundle(encoder: str, decoder: str, joiner: str):
+    """Reject incompatible exports before passing them to the native runtime.
+
+    The selected NeMo streaming implementation requires a cache-aware encoder,
+    a separate prediction network, and a separate two-input joint network.
+    Mislabelled offline/combined exports can otherwise crash C++ inference.
+    """
+    import onnxruntime as ort
+
+    options = ort.SessionOptions()
+    options.intra_op_num_threads = 1
+    options.inter_op_num_threads = 1
+    for path, kind in ((encoder, "encoder"), (decoder, "decoder"), (joiner, "joiner")):
+        session = ort.InferenceSession(path, options, providers=["CPUExecutionProvider"])
+        inputs = {item.name for item in session.get_inputs()}
+        outputs = session.get_outputs()
+        valid = {
+            "encoder": len(inputs) >= 5 and len(outputs) >= 5 and {
+                "cache_last_channel", "cache_last_time", "cache_last_channel_len"
+            }.issubset(inputs),
+            "decoder": len(inputs) == 3 and "encoder_outputs" not in inputs,
+            "joiner": len(inputs) == 2 and len(outputs) == 1,
+        }[kind]
+        del session
+        if not valid:
+            raise IncompatibleModelError(f"{kind} is not a compatible sherpa streaming NeMo export")
 
 
 def _load_whisper():
@@ -140,7 +178,7 @@ def _load_nemo():
 
 
 def _load_engine():
-    global _engine
+    global _engine, _engine_error
     if _engine is not None:
         return _engine
 
@@ -148,14 +186,25 @@ def _load_engine():
         if _engine is not None:
             return _engine
 
-        if BACKEND == "sherpa-fastconformer":
-            _engine = _load_sherpa()
-        elif BACKEND == "tarteel-whisper":
-            _engine = _load_whisper()
-        elif BACKEND == "nemo-fastconformer":
-            _engine = _load_nemo()
-        else:
-            raise RuntimeError(f"Unsupported QASR_BACKEND: {BACKEND}")
+        if _engine_error == "incompatible_model_export":
+            raise IncompatibleModelError("Configured model export is incompatible")
+
+        try:
+            if BACKEND == "sherpa-fastconformer":
+                _engine = _load_sherpa()
+            elif BACKEND == "tarteel-whisper":
+                _engine = _load_whisper()
+            elif BACKEND == "nemo-fastconformer":
+                _engine = _load_nemo()
+            else:
+                raise RuntimeError(f"Unsupported QASR_BACKEND: {BACKEND}")
+            _engine_error = None
+        except IncompatibleModelError:
+            _engine_error = "incompatible_model_export"
+            raise
+        except Exception:
+            _engine_error = "model_load_failed"
+            raise
 
     return _engine
 
@@ -166,27 +215,33 @@ def _cleanup_sessions():
         stale = [
             sid
             for sid, state in _sessions.items()
-            if now - state.get("updated_at", now) > SESSION_TTL
+            if now - state.get("updated_at", now) > (60 if state.get("finished") else SESSION_TTL)
         ]
         for sid in stale:
             _sessions.pop(sid, None)
 
 
-def _delta_text(previous: str, current: str) -> str:
-    previous = (previous or "").strip()
-    current = (current or "").strip()
-    if not previous:
-        return current
-    if current.startswith(previous):
-        return current[len(previous) :].strip()
-
-    prev = previous.split()
-    cur = current.split()
-    best = 0
-    for n in range(1, min(len(prev), len(cur), 12) + 1):
-        if prev[-n:] == cur[:n]:
-            best = n
-    return " ".join(cur[best:]).strip()
+def _stable_delta(state: dict, text: str, final: bool) -> tuple[str, bool]:
+    """Emit only stable whole words; never replay a revised cumulative hypothesis."""
+    current = text.split()
+    committed = state.get("committed_words", [])
+    previous = state.get("previous_words", [])
+    state["previous_words"] = current
+    if current[:len(committed)] != committed:
+        return "", True
+    end = len(current)
+    if not final:
+        end = 0
+        for a, b in zip(previous, current):
+            if a != b:
+                break
+            end += 1
+        # The final token may still be an unfinished Arabic word.
+        end = min(end, max(0, len(current) - 1))
+    end = max(len(committed), end)
+    delta = " ".join(current[len(committed):end])
+    state["committed_words"] = current[:end]
+    return delta, False
 
 
 def _result_text(result) -> str:
@@ -201,8 +256,8 @@ def _result_text(result) -> str:
 
 
 def _transcribe_sherpa(
-    audio: np.ndarray, session_id: str, final: bool
-) -> tuple[str, str]:
+    audio: np.ndarray, session_id: str, final: bool, seq: Optional[int] = None
+) -> tuple[str, str, bool]:
     recognizer = _load_engine()
     _cleanup_sessions()
     sid = session_id or f"oneshot-{time.time_ns()}"
@@ -210,32 +265,57 @@ def _transcribe_sherpa(
     with _sessions_lock:
         state = _sessions.get(sid)
         if state is None:
+            if seq not in (None, 0):
+                raise HTTPException(status_code=409, detail="session expired or chunk out of order")
+            if len(_sessions) >= MAX_SESSIONS:
+                raise HTTPException(status_code=503, detail="session capacity reached")
             state = {
                 "stream": recognizer.create_stream(),
-                "last_text": "",
+                "lock": threading.Lock(),
+                "next_seq": 0,
+                "responses": {},
                 "updated_at": time.time(),
             }
             _sessions[sid] = state
-        stream = state["stream"]
-
-    if audio.size:
-        stream.accept_waveform(16000, audio)
-    if final:
-        stream.input_finished()
-
-    while recognizer.is_ready(stream):
-        recognizer.decode_stream(stream)
-
-    text = _result_text(recognizer.get_result(stream))
-    with _sessions_lock:
-        old = state.get("last_text", "")
-        delta = _delta_text(old, text)
-        state["last_text"] = text
-        state["updated_at"] = time.time()
+    fingerprint = hashlib.sha256(audio.tobytes() + bytes([final])).digest()
+    with state["lock"]:
+        if seq is not None:
+            cached = state["responses"].get(seq)
+            if cached:
+                if cached[0] != fingerprint:
+                    raise HTTPException(status_code=409, detail="chunk sequence reused with different audio")
+                return cached[1]
+            if seq != state["next_seq"] or state.get("finished"):
+                raise HTTPException(status_code=409, detail="chunk out of order")
+        stream = state.get("stream")
+        if stream is None:
+            raise HTTPException(status_code=409, detail="session already finalized")
+        if audio.size:
+            stream.accept_waveform(16000, audio)
         if final:
+            # Allow the encoder's last partial window to produce its tokens.
+            stream.accept_waveform(16000, np.zeros(4800, dtype=np.float32))
+            stream.input_finished()
+        while recognizer.is_ready(stream):
+            recognizer.decode_stream(stream)
+        text = _result_text(recognizer.get_result(stream))
+        delta, revised = _stable_delta(state, text, final)
+        result = (text, delta, revised)
+        state["updated_at"] = time.time()
+        if seq is not None:
+            state["responses"][seq] = (fingerprint, result)
+            state["next_seq"] += 1
+            # A lost response can be retried without feeding audio twice.
+            for old_seq in list(state["responses"]):
+                if old_seq < seq - 2:
+                    del state["responses"][old_seq]
+        if final:
+            state["finished"] = True
+            state.pop("stream", None)
+    if seq is None:
+        with _sessions_lock:
             _sessions.pop(sid, None)
-
-    return text, delta
+    return result
 
 
 def _transcribe_whisper(audio: np.ndarray) -> str:
@@ -285,6 +365,7 @@ def health():
         "quran_specialized": True,
         "streaming": BACKEND == "sherpa-fastconformer",
         "engine_loaded": _engine is not None,
+        "model_error": _engine_error,
         "license_note": (
             "CC-BY-4.0 model; attribution required"
             if MODEL_ID.startswith("mohammed/")
@@ -304,12 +385,20 @@ def model_info():
         "threads": NUM_THREADS,
         "session_ttl": SESSION_TTL,
         "engine_loaded": _engine is not None,
+        "model_error": _engine_error,
         "attribution": (
             "mohammed/fastconformer-quran-ar-onnx-int8 (CC-BY-4.0)"
             if MODEL_ID.startswith("mohammed/")
             else MODEL_ID
         ),
     }
+
+
+@app.get("/ready")
+def ready():
+    if _engine is None:
+        raise HTTPException(status_code=503, detail="Quran ASR model is not ready")
+    return {"ok": True, "engine_loaded": True, "backend": BACKEND, "model": MODEL_ID}
 
 
 @app.post("/warmup")
@@ -332,15 +421,17 @@ def transcribe(req: TranscribeRequest):
 
     try:
         if BACKEND == "sherpa-fastconformer":
-            text, delta = _transcribe_sherpa(
-                audio, req.session_id or "", req.final
+            text, delta, revised = _transcribe_sherpa(
+                audio, req.session_id or "", req.final, req.seq
             )
         elif BACKEND == "nemo-fastconformer":
             text = _transcribe_nemo(audio)
             delta = text
+            revised = False
         else:
             text = _transcribe_whisper(audio)
             delta = text
+            revised = False
     except HTTPException:
         raise
     except Exception as exc:
@@ -349,6 +440,7 @@ def transcribe(req: TranscribeRequest):
     return {
         "transcript": text,
         "transcript_delta": delta,
+        "transcript_revised": revised,
         "backend": BACKEND,
         "model": MODEL_ID,
         "quran_specialized": True,
@@ -356,6 +448,7 @@ def transcribe(req: TranscribeRequest):
         "seq": req.seq,
         "final": req.final,
         "confidence": None,
+        "confidence_calibrated": False,
     }
 
 

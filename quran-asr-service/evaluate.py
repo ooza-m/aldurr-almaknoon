@@ -20,8 +20,10 @@ ARABIC = re.compile(r"[^\u0621-\u064A\s]")
 
 
 def norm(text: str) -> str:
-    text = ARABIC.sub(" ", text or "")
-    text = re.sub(r"[\u064B-\u065F\u0670\u06D6-\u06ED]", "", text)
+    # Strip combining marks before filtering: replacing them with spaces splits words.
+    text = re.sub(r"[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]", "", text or "")
+    text = text.replace("ٱ", "ا")
+    text = ARABIC.sub(" ", text)
     text = (
         text.replace("أ", "ا")
         .replace("إ", "ا")
@@ -53,7 +55,7 @@ def read_wav(path: Path) -> np.ndarray:
 
 def transcribe(audio: np.ndarray, sid: str) -> str:
     if BACKEND == "sherpa-fastconformer":
-        text, _ = _transcribe_sherpa(audio, sid, True)
+        text, _, _ = _transcribe_sherpa(audio, sid, True)
         return text
     if BACKEND == "nemo-fastconformer":
         return _transcribe_nemo(audio)
@@ -76,6 +78,8 @@ def main():
             continue
         item = json.loads(line)
         audio_path = Path(item["audio"])
+        if not audio_path.is_absolute():
+            audio_path = Path(args.manifest).resolve().parent / audio_path
         audio = read_wav(audio_path)
         hyp = transcribe(audio, f"eval-{n}")
         ref_words, hyp_words = norm(item["reference"]).split(), norm(hyp).split()
