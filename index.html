@@ -506,6 +506,14 @@ main{padding-top:0!important}
 .v65-attention{padding-top:14px!important}.v65-att-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.v65-att-head h3{margin:2px 0 0;font-size:.95rem}.v65-att-head>button{border:0;background:none;color:var(--accent);font-family:inherit;font-size:.68rem;font-weight:700}.v65-att-list{display:flex;flex-direction:column;gap:7px;margin-top:11px}.v65-att-list button{display:flex;align-items:center;gap:9px;width:100%;border:0;background:rgba(255,255,255,.58);border-radius:12px;padding:9px 10px;font-family:inherit;text-align:right;color:var(--ink)}.v65-att-list button>i{width:11px;height:11px;border-radius:3px;flex:0 0 auto}.v65-att-list span{display:block;flex:1}.v65-att-list b{display:block;font-size:.74rem}.v65-att-list small{display:block;color:var(--muted);font-size:.59rem;margin-top:2px}.v65-clear{display:flex;align-items:center;gap:10px}.v65-clear i{width:13px;height:13px;border-radius:4px}.v65-clear b{display:block;font-size:.78rem}.v65-clear small{display:block;font-size:.61rem;color:var(--muted);margin-top:2px}
 .v65-task-chip small{font-variant-numeric:tabular-nums}
 @media(max-width:420px){.v65-journey{grid-template-columns:88px 1fr;gap:12px}.v65-journey-ring{width:84px;height:84px}.v65-state-row{gap:4px}.v65-state-row span{padding:3px 5px}}
+
+/* v66 · سجل الأخطاء المرتبط بالمصحف */
+.v66-err-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}.v66-err-summary>div{background:linear-gradient(160deg,#fff,var(--parch-2));border:1px solid var(--line-2);border-radius:13px;padding:10px;text-align:center}.v66-err-summary small{display:block;font-size:.56rem;color:var(--muted)}.v66-err-summary b{display:block;font-size:1rem;color:var(--ink);margin-top:3px}
+.v66-hot{background:rgba(199,116,134,.08);border:1px solid rgba(199,116,134,.15);border-radius:15px;padding:11px;margin-bottom:16px}.v66-hot-head{display:flex;align-items:end;justify-content:space-between;gap:8px;margin-bottom:7px}.v66-hot-head b{font-size:.78rem;color:var(--clay)}.v66-hot-head small{font-size:.55rem;color:var(--muted)}.v66-hot-row{width:100%;border:0;border-top:1px solid rgba(199,116,134,.12);background:none;display:flex;align-items:center;gap:8px;padding:8px 2px;font-family:inherit;text-align:right;color:var(--ink)}.v66-hot-row:first-of-type{border-top:0}.v66-hot-row span{flex:1}.v66-hot-row b{display:block;font-size:.7rem}.v66-hot-row small{display:block;color:var(--muted);font-size:.56rem;margin-top:2px}.v66-hot-row em{font-style:normal;font-weight:800;color:var(--clay);font-size:.7rem}
+.v66-err-section-title{display:flex;align-items:center;justify-content:space-between;margin:5px 0 8px}.v66-err-section-title b{font-size:.8rem}.v66-err-section-title span{font-size:.6rem;background:var(--wash-2);padding:3px 7px;border-radius:999px;color:var(--accent)}
+.v66-err-card{border:1px solid var(--line-2);border-radius:14px;background:#fff;padding:10px;margin-bottom:8px}.v66-err-card.archived{opacity:.62}.v66-err-open{width:100%;border:0;background:none;display:flex;align-items:center;gap:8px;padding:0;font-family:inherit;text-align:right;color:var(--ink)}.v66-err-open>div{flex:1}.v66-err-open>b{}.v66-err-loc b{display:block;font-size:.75rem}.v66-err-loc small{display:block;font-size:.56rem;color:var(--muted);margin-top:2px}.v66-err-open>span{font-size:.58rem;color:var(--accent);background:var(--wash-2);padding:4px 7px;border-radius:999px}
+.v66-err-desc{margin:9px 0 8px;padding-top:8px;border-top:1px solid var(--line-2)}.v66-err-desc b{display:block;font-size:.72rem}.v66-err-desc small{display:block;font-size:.56rem;color:var(--muted);margin-top:2px}.v66-err-actions{display:flex;gap:5px;flex-wrap:wrap}.v66-err-actions button{border:0;border-radius:9px;background:var(--parch-2);color:var(--ink-2);font-family:inherit;font-size:.58rem;font-weight:700;padding:6px 8px}.v66-err-actions .danger{margin-inline-start:auto;color:var(--clay);background:var(--clay-soft)}
+.v66-arch{margin-top:18px}.v66-arch summary{cursor:pointer;font-size:.7rem;font-weight:700;color:var(--green);padding:8px 0}.v66-clean{padding:20px;text-align:center;color:var(--muted);font-size:.75rem}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1093,7 +1101,7 @@ window.FIREBASE_CONFIG = {
     <div class="amiri" style="font-size:1rem;color:var(--ink)">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div>
     <div style="font-size:.8rem;color:var(--muted);margin-top:8px">الدُّرُّ المكنون · رحلة حفظ القرآن الكريم ومراجعته</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:2px;opacity:.8">مصحف المدينة — طبعة الملك فهد · حفص عن عاصم · إصدار ٦</div>
-    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v65</div>
+    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v66</div>
   </div>
 </div></div>
 
@@ -1623,7 +1631,7 @@ function tasksV50(){
   return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=65&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=66&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -1631,7 +1639,7 @@ function startTaskSessionV60(taskId){
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
   const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=65&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=66&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
@@ -3245,8 +3253,9 @@ document.getElementById('erSave').addEventListener('click',()=>{
   const page=+document.getElementById('erPage').value||null;
   if(!surId){alert('اختاري السورة.');return;}
   if(!page||page<1||page>604){alert('أدخلي رقم الوجه (١–٦٠٤) — إلزاميّ لربط الخطأ بموضعه.');return;}
-  const e={surah:sur?sur[1]:'',surahId:surId,page:page,
-    ayah:+document.getElementById('erAyah').value||null,
+  const ayah=+document.getElementById('erAyah').value||null;
+  const e={surah:sur?sur[1]:'',surahId:surId,page:page,ayah,
+    verseKey:ayah?(surId+':'+ayah):null,source:'manual',
     type:document.getElementById('erType').value,desc:val('erDesc'),date:document.getElementById('erDate').value||todayKey()};
   S.errors.push(e);S.errors.sort((a,b)=>b.date.localeCompare(a.date));
   // إن كان الوجه متقنًا ووُجد فيه خطأ، أنزليه إلى «يحتاج مراجعة»
@@ -3258,34 +3267,55 @@ document.getElementById('erSave').addEventListener('click',()=>{
   const b=document.getElementById('btnAddErr');if(b){const o=b.textContent;b.textContent="✓ سُجّل الخطأ";setTimeout(()=>b.textContent=o,1400);}
 });
 function renderErrors(){
-  const hot=document.getElementById('errHot'),list=document.getElementById('errList');
-  if(!S.errors.length){hot.innerHTML='';list.innerHTML='<div class="empty"><span class="em">✎</span>لا أخطاء مسجّلة. سجّلي أخطاءك لتتبّع المواضع المتكرّرة.</div>';return;}
-  const active=S.errors.filter(e=>!e.archived),archived=S.errors.filter(e=>e.archived);
-  // المواضع المتكرّرة حسب السورة (النشطة فقط)
-  const freq={};active.forEach(e=>{freq[e.surah]=(freq[e.surah]||0)+1;});
-  const hotList=Object.entries(freq).filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]);
-  hot.innerHTML=hotList.length?`<div style="background:var(--clay-soft);border-radius:12px;padding:12px 14px;margin-bottom:16px">
-    <div style="font-weight:700;font-size:.85rem;color:#8a3325;margin-bottom:6px">⚠ مواضع متكرّرة — ركّزي عليها</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px">${hotList.map(([s,n])=>`<span class="err-freq">${esc(s)}: ${toAr(n)} مرات</span>`).join('')}</div></div>`:'';
-  const rowHtml=(e)=>{const i=S.errors.indexOf(e);const f=fmtD(e.date);
-    return `<div class="err-item"${e.archived?' style="opacity:.62"':''}>
-      <div class="err-loc">${esc(e.surah)}${e.page?'<br>ص'+toAr(e.page):''}</div>
-      <div class="err-body"><div class="et">${esc(e.desc||e.type)} ${e.archived?'<span style=\"color:var(--green);font-size:.72rem\">✓ مُتقَن</span>':''}</div>
-        <div class="em2">${esc(e.type)} · ${f.d} ${f.m}</div></div>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        ${e.archived?`<button class="del" data-undo="${i}" style="color:var(--blue)">تراجع</button>`:''}
-        <button class="del" data-del="${i}">حذف</button>
-      </div>
-    </div>`;};
-  let html=active.length?active.map(rowHtml).join(''):'<p class="msub">لا أخطاء نشطة حاليًّا — أحسنتِ!</p>';
-  if(archived.length){html+=`<div style="margin-top:18px;padding-top:12px;border-top:1px solid var(--line)">
-    <div style="font-weight:700;font-size:.82rem;color:var(--green);margin-bottom:8px">✓ أخطاء أُتقنت (مؤرشفة · ${toAr(archived.length)})</div>
-    ${archived.map(rowHtml).join('')}</div>`;}
-  list.innerHTML=html;
-  list.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{if(confirm("حذف الخطأ نهائيًّا؟")){S.errors.splice(+b.dataset.del,1);save();renderErrors();}}));
-  list.querySelectorAll('[data-undo]').forEach(b=>b.addEventListener('click',()=>{const e=S.errors[+b.dataset.undo];if(e){e.archived=false;delete e.archivedDate;save();renderErrors();if(typeof renderMap==='function')try{renderMap();}catch(_){}}}));
-}
+  const hot=document.getElementById('errHot'),list=document.getElementById('errList'),all=S.errors||[];
+  if(!all.length){hot.innerHTML='';list.innerHTML='<div class="empty"><span class="em">✎</span>لا أخطاء مسجّلة. الأخطاء المكتشفة أثناء التسميع ستظهر هنا تلقائيًا.</div>';return;}
+  const active=all.filter(e=>!e.archived),archived=all.filter(e=>e.archived);
 
+  const keyOfErr=e=>e.verseKey||(e.surahId&&e.ayah?(e.surahId+':'+e.ayah):e.page?('p:'+e.page+'|'+(e.surahId||'')):('s:'+e.surah));
+  const groups={};
+  active.forEach(e=>{const k=keyOfErr(e);(groups[k]=groups[k]||[]).push(e);});
+  const hotList=Object.entries(groups).map(([k,a])=>{
+    const e=a[0],latest=a.slice().sort((x,y)=>(y.date||'').localeCompare(x.date||''))[0];
+    return{k,a,count:a.length,e,latest};
+  }).sort((a,b)=>b.count-a.count||(b.latest.date||'').localeCompare(a.latest.date||''));
+
+  const exact=hotList.filter(x=>x.count>=2).slice(0,6);
+  const autoCount=active.filter(e=>e.source==='recitation').length;
+  const pages=[...new Set(active.map(e=>+e.page).filter(Boolean))].length;
+  hot.innerHTML=
+    '<div class="v66-err-summary"><div><small>أخطاء نشطة</small><b>'+toAr(active.length)+'</b></div><div><small>أوجه متأثرة</small><b>'+toAr(pages)+'</b></div><div><small>اكتشفها التسميع</small><b>'+toAr(autoCount)+'</b></div></div>'+
+    (exact.length?'<div class="v66-hot"><div class="v66-hot-head"><b>المواضع الأكثر تكرارًا</b><small>مرتبة بحسب تكرار الخطأ نفسه</small></div>'+
+      exact.map(x=>{
+        const e=x.e,loc=(e.surah||'')+(e.ayah?' · آية '+toAr(e.ayah):e.page?' · وجه '+toAr(e.page):'');
+        return '<button class="v66-hot-row" data-hot-page="'+(e.page||'')+'" data-hot-vk="'+(e.verseKey||'')+'"><span><b>'+esc(loc||'موضع غير محدد')+'</b><small>'+esc(e.type||'خطأ')+' · آخر مرة '+(x.latest.date||'')+'</small></span><em>'+toAr(x.count)+'×</em></button>';
+      }).join('')+'</div>':'');
+
+  const rowHtml=e=>{
+    const i=all.indexOf(e),f=e.date?fmtD(e.date):{d:'',m:''},vk=e.verseKey||(e.surahId&&e.ayah?(e.surahId+':'+e.ayah):'');
+    const source=e.source==='recitation'?'تسميع تلقائي':'تسجيل يدوي';
+    const loc=(e.surah||'')+(e.ayah?' · آية '+toAr(e.ayah):'')+(e.page?' · وجه '+toAr(e.page):'');
+    return '<article class="v66-err-card'+(e.archived?' archived':'')+'">'+
+      '<button class="v66-err-open" data-open-page="'+(e.page||'')+'" data-open-vk="'+vk+'"><div class="v66-err-loc"><b>'+esc(loc||'موضع غير محدد')+'</b><small>'+source+' · '+f.d+' '+f.m+'</small></div><span>فتح</span></button>'+
+      '<div class="v66-err-desc"><b>'+esc(e.desc||e.type||'خطأ')+'</b><small>'+esc(e.type||'')+(e.archived?' · مُتقَن':'')+'</small></div>'+
+      '<div class="v66-err-actions">'+
+        (e.page&&!e.archived?'<button data-review-page="'+e.page+'">راجعي الوجه</button>':'')+
+        (e.archived?'<button data-undo="'+i+'">تراجع عن الأرشفة</button>':'<button data-archive="'+i+'">تم إتقانه</button>')+
+        '<button class="danger" data-del="'+i+'">حذف</button>'+
+      '</div></article>';
+  };
+
+  let html=active.length?'<div class="v66-err-section-title"><b>الأخطاء النشطة</b><span>'+toAr(active.length)+'</span></div>'+active.map(rowHtml).join(''):'<div class="v66-clean">لا أخطاء نشطة حاليًا.</div>';
+  if(archived.length)html+='<details class="v66-arch"><summary>الأخطاء المؤرشفة · '+toAr(archived.length)+'</summary>'+archived.map(rowHtml).join('')+'</details>';
+  list.innerHTML=html;
+
+  const openExact=(p,vk)=>{if(!p)return;openMushafAtV50(+p,'','',vk||'');};
+  hot.querySelectorAll('[data-hot-page]').forEach(b=>b.addEventListener('click',()=>openExact(b.dataset.hotPage,b.dataset.hotVk)));
+  list.querySelectorAll('[data-open-page]').forEach(b=>b.addEventListener('click',()=>openExact(b.dataset.openPage,b.dataset.openVk)));
+  list.querySelectorAll('[data-review-page]').forEach(b=>b.addEventListener('click',()=>openMushafAtV50(+b.dataset.reviewPage,'recite',faceTaskForV63(+b.dataset.reviewPage))));
+  list.querySelectorAll('[data-archive]').forEach(b=>b.addEventListener('click',()=>{const e=all[+b.dataset.archive];if(!e)return;e.archived=true;e.archivedDate=todayKey();save();renderErrors();if(typeof renderMap==='function')try{renderMap();}catch(_){}}));
+  list.querySelectorAll('[data-undo]').forEach(b=>b.addEventListener('click',()=>{const e=all[+b.dataset.undo];if(!e)return;e.archived=false;delete e.archivedDate;save();renderErrors();if(typeof renderMap==='function')try{renderMap();}catch(_){}}));
+  list.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{if(confirm('حذف الخطأ نهائيًا؟')){all.splice(+b.dataset.del,1);save();renderErrors();if(typeof renderMap==='function')try{renderMap();}catch(_){}}}));
+}
 /* ============ المرحليّات ============ */
 const AR_ORD=["","الأولى","الثانية","الثالثة","الرابعة","الخامسة","السادسة","السابعة","الثامنة","التاسعة","العاشرة","الحادية عشرة","الثانية عشرة","الثالثة عشرة","الرابعة عشرة","الخامسة عشرة"];
 // يبني قائمة المرحليات حسب اتجاه المسار: 'down' من الأسفل (٢٩,٣٠ ثم نزولًا)، 'up' من الأعلى (١,٢ ثم صعودًا)
@@ -4395,11 +4425,11 @@ renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=65');
+      const reg=await navigator.serviceWorker.register('sw.js?v=66');
       reg.update().catch(()=>{});
-      let reloaded=sessionStorage.getItem('durr-sw65-reloaded')==='1';
+      let reloaded=sessionStorage.getItem('durr-sw66-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw65-reloaded','1');location.reload();}
+        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw66-reloaded','1');location.reload();}
       });
     }catch(e){}
   });
