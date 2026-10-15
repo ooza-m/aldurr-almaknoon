@@ -1,0 +1,16 @@
+{
+  "name": "الدُّرّ المكنون — رحلة الحفظ",
+  "short_name": "الدُّرّ المكنون",
+  "description": "لوحة حفظ القرآن الكريم ومراجعته",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4E1D2",
+  "theme_color": "#5E3A4D",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
