@@ -1,2 +1,5 @@
 -r requirements.txt
+# Optional large NeMo backend. The default production path uses sherpa-onnx.
 nemo_toolkit[asr]
+torch>=2.3
+soundfile>=0.12,<1
