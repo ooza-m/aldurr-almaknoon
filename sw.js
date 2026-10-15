@@ -1,4 +1,4 @@
-const CACHE='durr-v57';
+const CACHE='durr-v58';
 const STATIC=[
   './manifest.json','./icon.png','./icon-180.png',
   './data/mushaf-data.json','./data/mushaf-search.json',
