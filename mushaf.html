@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>المصحف — الدرّ المكنون · v77</title>
-<script id="DURR_V77_ESCAPE_IFRAME">
+<title>المصحف — الدرّ المكنون · v78</title>
+<script id="DURR_V78_ESCAPE_IFRAME">
 /* v56: حماية من أي index قديم مخزّن في الكاش ما زال يفتح المصحف داخل iframe. */
 try{
   if(window.self!==window.top){
@@ -381,7 +381,7 @@ body.face-listening .screen{height:var(--app-vh)!important}
 body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 .qasr-setrow{align-items:flex-start}.qasr-status{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;color:var(--muted)}.qasr-status i{width:9px;height:9px;border-radius:50%;background:#b8b2b5}.qasr-status.ok{color:#49653C}.qasr-status.ok i{background:#6f8a63}.qasr-status.limited{color:#8A671A}.qasr-status.limited i{background:#C89B3C}.qasr-status.bad{color:#9C5362}.qasr-status.bad i{background:#C77486}.qasr-test{width:100%;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-family:inherit;border-radius:12px;padding:9px 12px;font-size:.72rem;font-weight:700;margin-top:8px}
 </style>
-<script src="config.js?v=77"></script>
+<script src="config.js?v=78"></script>
 </head>
 <body class="app-standalone">
 <div class="screen" id="screen">
@@ -559,7 +559,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
   <button data-app-route="map"><svg viewBox="0 0 24 24"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg><span>الخريطة</span></button>
   <button data-app-route="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>المزيد</span></button>
 </nav>
-<script id="DURR_V77_VIEWPORT">
+<script id="DURR_V78_VIEWPORT">
 (function(){
   function sync(){
     const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
@@ -1234,12 +1234,12 @@ let recSeq=[],recPos=0,recWords=[],recWordPos=0,eyeShown=false,recRec=null,recOn
 let recSession=null,recPageState=null,speechRec=null,speechAvailable=!!(window.SpeechRecognition||window.webkitSpeechRecognition),speechStarted=false;
 const QASR_CONFIG=(window.DURR_CONFIG&&window.DURR_CONFIG.quranAsr)||{};
 const QASR_URL=String(QASR_CONFIG.url||LS('durr-quran-asr-url','')||'').replace(/\/$/,'');
-let qasrActive=false,qasrCtx=null,qasrSource=null,qasrNode=null,qasrGain=null,qasrChunks=[],qasrSamples=0,qasrQueue=[],qasrBusy=false,qasrFailures=0,qasrSeq=0;
+let qasrActive=false,qasrCtx=null,qasrSource=null,qasrNode=null,qasrGain=null,qasrChunks=[],qasrSamples=0,qasrQueue=[],qasrBusy=false,qasrFailures=0,qasrSeq=0,qasrWarmed=false;
 const qasrAvailable=!!QASR_URL;
 let ERR=[];try{ERR=JSON.parse(LS('durr-errors','[]'))||[];}catch(e){ERR=[];}
 function saveErr(){LSet('durr-errors',JSON.stringify(ERR));}
 function sid(){return 'rs_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);}
-function newRecSession(){return{id:sid(),task:REC_RUNTIME_TASK||'free',planId:ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.id||'',plannedPages:ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.pages?ACTIVE_TASK_SESSION.pages.slice():[],startedAt:Date.now(),startPage:cur,engine:qasrAvailable?'quran-asr':(speechAvailable?'browser-speech':'session-only'),engineModel:qasrAvailable?(QASR_CONFIG.model||'quran-specialized'):'',pages:[],findings:[],stats:{wordHints:0,ayahHints:0,eyeShows:0,spokenMatches:0,suspectedSkips:0,quranChunks:0,browserChunks:0,uncertain:0,mutashabih:0},version:76};}
+function newRecSession(){return{id:sid(),task:REC_RUNTIME_TASK||'free',planId:ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.id||'',plannedPages:ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.pages?ACTIVE_TASK_SESSION.pages.slice():[],startedAt:Date.now(),startPage:cur,engine:qasrAvailable?'quran-asr':(speechAvailable?'browser-speech':'session-only'),engineModel:qasrAvailable?(QASR_CONFIG.model||'quran-specialized'):'',pages:[],findings:[],stats:{wordHints:0,ayahHints:0,eyeShows:0,spokenMatches:0,suspectedSkips:0,quranChunks:0,browserChunks:0,uncertain:0,mutashabih:0,quranLatencyMs:0,quranLatencyN:0,quranLatencyMax:0,warmupMs:0},version:78};}
 function setEngine(state,text){const e=$('recEngine');if(!e)return;e.classList.remove('live','ok');if(state)e.classList.add(state);$('recEngineText').textContent=text||'جلسة التسميع';}
 function verseText(vk){return SEARCH&&SEARCH[vk]?SEARCH[vk][1]:'';}
 function wordFor(vk,wi){const tx=verseText(vk);if(!tx||wi==null)return'';return (tx.trim().split(/\s+/)[wi]||'');}
@@ -1370,13 +1370,30 @@ function queueQasrChunkV73(float32,inRate,final=false){
   qasrQueue.push({audio_b64,sample_rate:16000,page:cur,position:recWordPos,session_id:recSession&&recSession.id||'',seq:qasrSeq++,final:!!final});
   pumpQasrV73();
 }
+async function warmQasrV78(){
+  if(!QASR_URL||qasrWarmed)return false;
+  try{
+    const t=performance.now(),r=await fetch(QASR_URL+'/warmup',{method:'POST',cache:'no-store'});
+    if(!r.ok)throw new Error('warmup '+r.status);
+    qasrWarmed=true;
+    const ms=Math.round(performance.now()-t);
+    if(recSession){recSession.stats.warmupMs=ms;recSession.engineModel=QASR_CONFIG.model||recSession.engineModel||'quran-specialized';}
+    return true;
+  }catch(e){return false;}
+}
 async function pumpQasrV73(){
-  if(qasrBusy||!qasrQueue.length)return;qasrBusy=true;const item=qasrQueue.shift();
+  if(qasrBusy||!qasrQueue.length)return;qasrBusy=true;const item=qasrQueue.shift(),t0=performance.now();
   try{
     const r=await fetch(QASR_URL+'/transcribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item),cache:'no-store'});
     if(!r.ok)throw new Error('qasr '+r.status);
-    const j=await r.json(),tx=String(j.transcript_delta||j.transcript||'').trim();
-    qasrFailures=0;if(tx)processTranscriptV73(tx,'quran-asr',j);
+    const j=await r.json(),tx=String(j.transcript_delta||j.transcript||'').trim(),ms=Math.round(performance.now()-t0);
+    qasrFailures=0;
+    if(recSession){
+      const st=recSession.stats||(recSession.stats={});
+      st.quranLatencyMs=(st.quranLatencyMs||0)+ms;st.quranLatencyN=(st.quranLatencyN||0)+1;st.quranLatencyMax=Math.max(st.quranLatencyMax||0,ms);
+      st.quranStreaming=!!j.streaming;st.quranBackend=j.backend||'';st.quranModel=j.model||recSession.engineModel||'';
+    }
+    if(tx)processTranscriptV73(tx,'quran-asr',j);
     if(item.final&&recSession)recSession.engineStreamFinalized=true;
   }catch(e){
     qasrFailures++;
@@ -1452,7 +1469,7 @@ function processSpeech(txt){processTranscriptV73(txt,'browser-speech',{});}
 function initSpeech(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return null;const r=new SR();r.lang='ar-SA';r.continuous=true;r.interimResults=false;r.maxAlternatives=1;r.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)processSpeech(e.results[i][0].transcript||'');};r.onerror=e=>{if(e.error!=='no-speech')setEngine('', 'التسجيل مستمر · التحليل الصوتي متوقف');};r.onend=()=>{speechStarted=false;if(recOn){try{r.start();speechStarted=true;}catch(e){}}};return r;}
 function startSpeech(){if(!speechAvailable)return false;if(!speechRec)speechRec=initSpeech();try{speechRec.start();speechStarted=true;setEngine('live','تحليل التلاوة مباشر');return true;}catch(e){return false;}}
 function stopSpeech(){try{speechRec&&speechStarted&&speechRec.stop();}catch(e){}speechStarted=false;}
-async function enterRecite(taskOverride){await ensureSearch();ensureMuta().catch(()=>{});closeAll();if(taskOverride)REC_RUNTIME_TASK=taskOverride;else if(!REC_RUNTIME_TASK)REC_RUNTIME_TASK=REC_TASK||'free';recMode=true;recSession=newRecSession();document.body.classList.add('reciting');document.body.classList.remove('chrome');reMaskFace();updateErrCount();syncTaskSessionChip();setEngine(qasrAvailable?'ok':(speechAvailable?'ok':''),qasrAvailable?'المحرك القرآني جاهز':(speechAvailable?'وضع محدود · تعرّف المتصفح':'الجلسة ستُسجّل دون تحليل آلي'));recTip(ACTIVE_TASK_SESSION?((ACTIVE_TASK_SESSION.label||taskSessionLabel(REC_RUNTIME_TASK))+' · '+ARA(1)+' من '+ARA((ACTIVE_TASK_SESSION.pages||[]).length)):(REC_RUNTIME_TASK==='new'?'سمِّعي الوجه بعد حفظه ليُثبت تلقائيًا':'سمِّعي من حفظك · يبدأ التحليل عند تشغيل الميكروفون'));}
+async function enterRecite(taskOverride){await ensureSearch();ensureMuta().catch(()=>{});if(qasrAvailable)warmQasrV78().catch(()=>{});closeAll();if(taskOverride)REC_RUNTIME_TASK=taskOverride;else if(!REC_RUNTIME_TASK)REC_RUNTIME_TASK=REC_TASK||'free';recMode=true;recSession=newRecSession();document.body.classList.add('reciting');document.body.classList.remove('chrome');reMaskFace();updateErrCount();syncTaskSessionChip();setEngine(qasrAvailable?'ok':(speechAvailable?'ok':''),qasrAvailable?'المحرك القرآني جاهز':(speechAvailable?'وضع محدود · تعرّف المتصفح':'الجلسة ستُسجّل دون تحليل آلي'));recTip(ACTIVE_TASK_SESSION?((ACTIVE_TASK_SESSION.label||taskSessionLabel(REC_RUNTIME_TASK))+' · '+ARA(1)+' من '+ARA((ACTIVE_TASK_SESSION.pages||[]).length)):(REC_RUNTIME_TASK==='new'?'سمِّعي الوجه بعد حفظه ليُثبت تلقائيًا':'سمِّعي من حفظك · يبدأ التحليل عند تشغيل الميكروفون'));}
 async function startRecallV76(vk,rid){
   await enterRecite('ai-review');
   const first=recWords.findIndex(w=>w.vk===vk);if(first<0){recTip('تعذّر تحديد موضع الاستدعاء');return;}
@@ -1466,12 +1483,12 @@ function rawExitRecite(){stopRec();stopSpeech();stopQuranAsrV73(false);recMode=f
 async function toggleRec(){const body=document.body;if(!recOn){let stream=null;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:true,autoGainControl:false}});recRec=new MediaRecorder(stream);recRec._chunks=[];recRec.ondataavailable=e=>recRec._chunks.push(e.data);recRec.start();}catch(e){recRec=null;}recOn=true;body.classList.add('rec-on');recT0=Date.now();tickTimer();recTimerH=setInterval(tickTimer,1000);let specialist=false;if(stream&&qasrAvailable)specialist=await startQuranAsrV73(stream);if(!specialist)startSpeech();}else{stopRec();recTip('أوقفتِ التسجيل مؤقتًا · يمكنك إنهاء الجلسة من ×');}}
 function stopRec(){if(!recOn)return;recOn=false;document.body.classList.remove('rec-on');clearInterval(recTimerH);stopSpeech();stopQuranAsrV73(true);try{recRec&&recRec.state!=='inactive'&&recRec.stop();recRec&&recRec.stream&&recRec.stream.getTracks().forEach(x=>x.stop());}catch(e){}}
 function tickTimer(){const s=Math.floor((Date.now()-recT0)/1000),m=Math.floor(s/60),ss=s%60;$('recTimer').textContent=ARA(m)+':'+ARA(String(ss).padStart(2,'0'));}
-function sessionPayload(){snapshotPage(false);const s=recSession||newRecSession();s.endedAt=Date.now();s.durationSec=Math.max(0,Math.round((s.endedAt-s.startedAt)/1000));const pages=s.pages||[],findings=s.findings||[];s.summary={pages:pages.length,completedPages:pages.filter(x=>x.complete).length,wordsTotal:pages.reduce((n,x)=>n+(x.wordsTotal||0),0),wordsCovered:pages.reduce((n,x)=>n+(x.wordsCovered||0),0),errors:pages.reduce((n,x)=>n+(x.errorCount||0),0),uncertain:findings.filter(x=>x.type!=='mutashabih_jump'&&!String(x.type||'').startsWith('confirmed_')).length,mutashabih:findings.filter(x=>x.type==='mutashabih_jump').length,recallSuccess:s.recall?pages.some(x=>x.recallSuccess):null,score:pages.length?Math.round(pages.reduce((n,x)=>n+(x.score||0),0)/pages.length):0};return JSON.parse(JSON.stringify(s));}
+function sessionPayload(){snapshotPage(false);const s=recSession||newRecSession();s.endedAt=Date.now();s.durationSec=Math.max(0,Math.round((s.endedAt-s.startedAt)/1000));const pages=s.pages||[],findings=s.findings||[];s.summary={pages:pages.length,completedPages:pages.filter(x=>x.complete).length,wordsTotal:pages.reduce((n,x)=>n+(x.wordsTotal||0),0),wordsCovered:pages.reduce((n,x)=>n+(x.wordsCovered||0),0),errors:pages.reduce((n,x)=>n+(x.errorCount||0),0),uncertain:findings.filter(x=>x.type!=='mutashabih_jump'&&!String(x.type||'').startsWith('confirmed_')).length,mutashabih:findings.filter(x=>x.type==='mutashabih_jump').length,recallSuccess:s.recall?pages.some(x=>x.recallSuccess):null,avgLatencyMs:(s.stats&&s.stats.quranLatencyN)?Math.round(s.stats.quranLatencyMs/s.stats.quranLatencyN):null,maxLatencyMs:s.stats&&s.stats.quranLatencyMax||null,streaming:!!(s.stats&&s.stats.quranStreaming),score:pages.length?Math.round(pages.reduce((n,x)=>n+(x.score||0),0)/pages.length):0};return JSON.parse(JSON.stringify(s));}
 function sendSession(payload){try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'durr:recitation-complete',payload},location.origin);}catch(e){}try{LSet('durr-last-recitation',JSON.stringify(payload));LSet('durr-pending-recitation',JSON.stringify(payload));}catch(e){}}
 function showRecSummary(payload){
-  const sm=payload.summary||{},pct=sm.wordsTotal?Math.round(sm.wordsCovered/sm.wordsTotal*100):0,engine=payload.engine==='quran-asr'?'محرك قرآني متخصص':payload.engine==='browser-speech'?'وضع محدود':'دون تحليل آلي',isRecall=payload.task==='ai-review'&&payload.recall;
+  const sm=payload.summary||{},pct=sm.wordsTotal?Math.round(sm.wordsCovered/sm.wordsTotal*100):0,engine=payload.engine==='quran-asr'?'محرك قرآني متخصص':payload.engine==='browser-speech'?'وضع محدود':'دون تحليل آلي',lat=(payload.engine==='quran-asr'&&sm.avgLatencyMs)?(' · متوسط الاستجابة '+ARA((sm.avgLatencyMs/1000).toFixed(1))+' ث'):'' ,isRecall=payload.task==='ai-review'&&payload.recall;
   $('recSummarySub').textContent=isRecall?'اختبار موضع واحد بالاستدعاء النشط':((sm.completedPages||0)+' وجه مكتمل · '+(sm.pages||0)+' وجه في الجلسة');
-  $('recSummaryBody').innerHTML='<div class="rec-score" style="--score:'+(sm.score||0)+'"><b>'+(isRecall?(sm.recallSuccess?'تم':'يحتاج إعادة'):ARA(sm.score||0)+'%')+'</b></div><div class="rec-sum-grid"><div class="rec-sum-stat"><b>'+ARA(pct)+'%</b><span>تغطية</span></div><div class="rec-sum-stat"><b>'+ARA(sm.errors||0)+'</b><span>أخطاء مؤكدة</span></div><div class="rec-sum-stat"><b>'+ARA(sm.uncertain||0)+'</b><span>مواضع محتملة</span></div></div><div class="rec-sum-note"><b>'+engine+'</b><br>'+(isRecall?(sm.recallSuccess?'اجتزتِ موضع الاستدعاء دون خطأ أو تلميح؛ سيُغلق من قائمة المراجعة الذكية.':'لم يُحسم الموضع بعد؛ سيبقى في قائمة المراجعة الذكية لتجربته مرة أخرى.'):'المواضع غير اليقينية لا تُحسب أخطاء مؤكدة. '+(sm.mutashabih?('ظهر '+ARA(sm.mutashabih)+' متشابه محتمل. '):'')+'ولا يُعدّ الوجه مراجعًا كاملًا إلا إذا بلغت تغطيته 95% فأكثر وكانت المساعدة محدودة.')+'</div>';
+  $('recSummaryBody').innerHTML='<div class="rec-score" style="--score:'+(sm.score||0)+'"><b>'+(isRecall?(sm.recallSuccess?'تم':'يحتاج إعادة'):ARA(sm.score||0)+'%')+'</b></div><div class="rec-sum-grid"><div class="rec-sum-stat"><b>'+ARA(pct)+'%</b><span>تغطية</span></div><div class="rec-sum-stat"><b>'+ARA(sm.errors||0)+'</b><span>أخطاء مؤكدة</span></div><div class="rec-sum-stat"><b>'+ARA(sm.uncertain||0)+'</b><span>مواضع محتملة</span></div></div><div class="rec-sum-note"><b>'+engine+lat+'</b><br>'+(isRecall?(sm.recallSuccess?'اجتزتِ موضع الاستدعاء دون خطأ أو تلميح؛ سيُغلق من قائمة المراجعة الذكية.':'لم يُحسم الموضع بعد؛ سيبقى في قائمة المراجعة الذكية لتجربته مرة أخرى.'):'المواضع غير اليقينية لا تُحسب أخطاء مؤكدة. '+(sm.mutashabih?('ظهر '+ARA(sm.mutashabih)+' متشابه محتمل. '):'')+'ولا يُعدّ الوجه مراجعًا كاملًا إلا إذا بلغت تغطيته 95% فأكثر وكانت المساعدة محدودة.')+'</div>';
   $('recSummaryWrap').classList.add('open');
 }
 let lastFinishedTaskPlan=false;
@@ -1569,7 +1586,7 @@ async function qasrHealthV75(force){
   if(!QASR_URL){card.classList.add('limited');card.querySelector('span').textContent='غير مربوط بعد';if(note)note.textContent='المصحف سيستخدم تعرّف المتصفح المحدود إلى أن يُنشر المحرك القرآني ويُضاف رابطه.';return;}
   try{
     const r=await fetch(QASR_URL+'/health',{cache:'no-store'});if(!r.ok)throw new Error('health');const j=await r.json();
-    card.classList.add('ok');card.querySelector('span').textContent='متصل · '+(j.streaming?'بث قرآني':'محرك قرآني');if(note)note.textContent='النموذج: '+(j.model||QASR_CONFIG.model||'قرآني متخصص')+' · التفريغ صوتي فقط، والحكم على الخطأ يتم بعد المحاذاة مع نص المصحف داخل التطبيق.';
+    card.classList.add('ok');card.querySelector('span').textContent='متصل · '+(j.streaming?'بث قرآني':'محرك قرآني')+(j.engine_loaded?' · جاهز':' · بارد');if(note)note.textContent='النموذج: '+(j.model||QASR_CONFIG.model||'قرآني متخصص')+' · التفريغ صوتي فقط، والحكم على الخطأ يتم بعد المحاذاة مع نص المصحف داخل التطبيق.';
   }catch(e){card.classList.add('bad');card.querySelector('span').textContent='تعذّر الاتصال';if(note)note.textContent='سيعود التطبيق تلقائيًا إلى وضع المتصفح المحدود، ولن يدّعي أن التحليل المتخصص يعمل.';}
 }
 function syncSettings(){$('tgDir').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===scrollDir));$('tgNum').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===numMode));qasrHealthV75(false);}
@@ -1609,7 +1626,7 @@ setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
 })();
 </script>
 <script>
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=77').then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=78').then(r=>r.update()).catch(()=>{}));}
 </script>
 </body>
 </html>
