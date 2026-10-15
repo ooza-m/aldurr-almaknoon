@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>المصحف — الدرّ المكنون · v56</title>
-<script id="DURR_V56_ESCAPE_IFRAME">
+<title>المصحف — الدرّ المكنون · v57</title>
+<script id="DURR_V57_ESCAPE_IFRAME">
 /* v56: حماية من أي index قديم مخزّن في الكاش ما زال يفتح المصحف داخل iframe. */
 try{
   if(window.self!==window.top){
@@ -63,7 +63,7 @@ body.chrome .chrome-top{transform:none;opacity:1;pointer-events:auto}
 .bism{justify-content:center}
 .bism span{color:var(--quran)}
 /* إطار اسم السورة — بمساحة واضحة أعلى وأسفل */
-.qline.hdr{padding:0}
+.qline.hdr{padding:0;overflow:visible}\n.qline.bism{overflow:visible}
 .surah-frame{position:relative;width:88%;aspect-ratio:16320/2000;display:flex;align-items:center;justify-content:center;margin:0 auto}
 .surah-frame::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,var(--frameA),var(--frameB));
   -webkit-mask:url(data/surah-frame.svg) center/100% 100% no-repeat;mask:url(data/surah-frame.svg) center/100% 100% no-repeat}
@@ -496,7 +496,7 @@ body.reciting .screen{height:var(--app-vh)!important}
   <button data-app-route="map"><svg viewBox="0 0 24 24"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg><span>الخريطة</span></button>
   <button data-app-route="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>المزيد</span></button>
 </nav>
-<script id="DURR_V56_VIEWPORT">
+<script id="DURR_V57_VIEWPORT">
 (function(){
   function sync(){
     const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
@@ -604,24 +604,67 @@ function fitPane(pane){
   if(!words.length)return;
   const cs=getComputedStyle(pane);
   const availH=pane.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
-  const n=lines.length,full=n>=12;
-  // شبكة المصحف: ١٥ سطرًا متساوية الارتفاع تمامًا (تباعدٌ موحّدٌ مريحٌ للحفظ، ولا يُقصّ الوجه).
-  // للأوجه الكاملة نترك هامشًا علويًّا وسفليًّا (≈٦٪) كما في «آية». والأوجه القصيرة تُرفع قليلًا نحو الأعلى.
+  const n=lines.length,full=n>=12,p=+(pane.dataset.p||cur||1);
+  const openingPage=p<=2; // وجها الفاتحة وبداية البقرة كانا مضبوطين أصلًا؛ لا نغيّر إيقاعهما.
+  const hdrLines=lines.filter(l=>l.classList.contains('hdr')||l.querySelector('.surah-frame'));
+  const bismLines=lines.filter(l=>l.classList.contains('bism'));
+  const specialCount=hdrLines.length+bismLines.length;
+
+  // الأسطر القرآنية العادية تحافظ على نفس إيقاع الصفحات التي كانت جيدة أصلًا.
+  // عند وجود عنوان سورة/بسملة نمنحهما مساحة مستقلة من الهامش الرأسي بدل ضغط بقية النص.
   let rowH,blockH;
-  if(full){rowH=availH*0.94/15;blockH=15*rowH;}
-  else{const rows=Math.min(15,n+3);rowH=availH/rows;blockH=n*rowH;}
-  lines.forEach(l=>{l.style.height=rowH+'px';l.style.marginTop='';});
-  if(full){pane.style.justifyContent='center';}
-  else{pane.style.justifyContent='flex-start';const leftover=Math.max(0,availH-blockH);if(lines[0])lines[0].style.marginTop=(leftover*0.34)+'px';}
+  const baseFull=availH*0.94/15;
+  if(full && specialCount && !openingPage){
+    const normalLines=lines.filter(l=>!l.classList.contains('hdr')&&!l.classList.contains('bism')&&!l.querySelector('.surah-frame'));
+    const normalH=baseFull;
+    const targetBlock=availH*0.985;
+    const normalBlock=normalLines.length*normalH;
+    const wantedHdr=baseFull*1.28;
+    const wantedBism=baseFull*1.10;
+    const wantedSpecial=hdrLines.length*wantedHdr+bismLines.length*wantedBism;
+    const room=Math.max(baseFull*specialCount,targetBlock-normalBlock);
+    const scale=wantedSpecial>room?room/wantedSpecial:1;
+    const hdrH=wantedHdr*scale,bismH=wantedBism*scale;
+
+    lines.forEach(l=>{
+      l.style.marginTop='';
+      if(l.classList.contains('hdr')||l.querySelector('.surah-frame'))l.style.height=hdrH+'px';
+      else if(l.classList.contains('bism'))l.style.height=bismH+'px';
+      else l.style.height=normalH+'px';
+    });
+    blockH=normalBlock+hdrLines.length*hdrH+bismLines.length*bismH;
+    rowH=normalH;
+    pane.style.justifyContent='center';
+  }else if(full){
+    rowH=baseFull;blockH=15*rowH;
+    lines.forEach(l=>{l.style.height=rowH+'px';l.style.marginTop='';});
+    pane.style.justifyContent='center';
+  }else{
+    const rows=Math.min(15,n+3);rowH=availH/rows;blockH=n*rowH;
+    lines.forEach(l=>{l.style.height=rowH+'px';l.style.marginTop='';});
+    pane.style.justifyContent='flex-start';
+    const leftover=Math.max(0,availH-blockH);if(lines[0])lines[0].style.marginTop=(leftover*0.34)+'px';
+  }
+
   // نسبة أعرض سطرٍ إلى العمود (تُستثنى العناوين والبسملة)
   const measure=()=>{let m=0;lines.forEach(l=>{if(l.querySelector('.surah-frame')||l.classList.contains('bism'))return;const a=l.clientWidth;if(a>0)m=Math.max(m,l.scrollWidth/a);});return m;};
-  // يُضبَط الخطّ ليملأ العرض، بسقفٍ لا يتجاوز ارتفاع السطر فلا يتداخل التشكيل رأسيًّا
+  // حجم القرآن يعتمد على ارتفاع السطر العادي فقط، فلا تكبّر مساحة العنوان النص القرآني.
   const cap=rowH*0.62;
   let size=cap;words.forEach(w=>w.style.fontSize=size+'px');
   for(let i=0;i<6;i++){const r=measure();if(!r)break;const ns=Math.min(cap,size/r*0.995);if(Math.abs(ns-size)<0.25){size=ns;break;}size=ns;words.forEach(w=>w.style.fontSize=size+'px');}
   words.forEach(w=>w.style.fontSize=size+'px');
-  pane.querySelectorAll('.bism span').forEach(s=>{s.style.fontSize=(size*0.95)+'px';const line=s.parentElement;if(s.scrollWidth>line.clientWidth)s.style.fontSize=(size*0.93*line.clientWidth/s.scrollWidth)+'px';});
-  pane.querySelectorAll('.sname').forEach(s=>{const fr=s.closest('.surah-frame');const mw=fr.clientWidth*0.50,mh=fr.clientHeight*0.56;let fs=mh;s.style.fontSize=fs+'px';if(s.scrollWidth>mw)fs=fs*mw/s.scrollWidth;s.style.fontSize=fs+'px';});
+
+  pane.querySelectorAll('.bism span').forEach(s=>{
+    const line=s.parentElement;
+    const lh=parseFloat(line.style.height)||rowH;
+    let fs=Math.min(size*0.95,lh*0.72);
+    s.style.fontSize=fs+'px';
+    if(s.scrollWidth>line.clientWidth){fs=fs*0.93*line.clientWidth/s.scrollWidth;s.style.fontSize=fs+'px';}
+  });
+  pane.querySelectorAll('.sname').forEach(s=>{
+    const fr=s.closest('.surah-frame');const mw=fr.clientWidth*0.50,mh=fr.clientHeight*0.56;
+    let fs=mh;s.style.fontSize=fs+'px';if(s.scrollWidth>mw)fs=fs*mw/s.scrollWidth;s.style.fontSize=fs+'px';
+  });
 }
 
 /* ===== المعايرة ===== */
@@ -1113,7 +1156,7 @@ setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
 })();
 </script>
 <script>
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=56').then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=57').then(r=>r.update()).catch(()=>{}));}
 </script>
 </body>
 </html>
