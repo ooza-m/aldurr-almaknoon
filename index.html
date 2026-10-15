@@ -459,6 +459,14 @@ main{padding-top:0!important}
 .pg.fixing{box-shadow:inset 0 0 0 2px rgba(200,155,60,.88)}
 .pg.partial{box-shadow:inset 0 0 0 1px rgba(126,107,139,.35)}
 .pg .fix-dot{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff;right:3px;top:3px;box-shadow:0 0 0 1px rgba(94,58,77,.15)}
+
+/* v63 · ملف الوجه التفصيلي */
+#pageModal .modal{max-height:88vh;overflow-y:auto}
+.pm-actions-v63{display:grid;grid-template-columns:1.15fr .85fr;gap:8px;margin-top:10px}
+.pm-verse-loading,.pm-verse-empty{background:var(--parch-2);border-radius:12px;padding:13px;color:var(--muted);font-size:.78rem;text-align:center}
+.pm-verse-head{display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px}.pm-verse-head b{display:block;font-size:.85rem;color:var(--ink)}.pm-verse-head small{display:block;font-size:.66rem;color:var(--muted);margin-top:2px}.pm-verse-head>span{font-size:.68rem;color:var(--accent);background:var(--wash-2);border-radius:999px;padding:4px 8px}
+.pm-verse-list{display:flex;flex-direction:column;gap:6px}.pm-verse-row{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 10px;display:grid;grid-template-columns:1fr 72px auto;align-items:center;gap:8px;text-align:right;font-family:inherit;color:var(--ink);cursor:pointer}.pm-verse-row.done{border-color:rgba(74,105,60,.24);background:rgba(232,240,226,.45)}.pm-verse-row.partial{border-color:rgba(126,107,139,.24);background:rgba(166,139,183,.07)}
+.pm-verse-loc b{display:block;font-size:.74rem}.pm-verse-loc small{display:block;color:var(--muted);font-size:.59rem;margin-top:2px}.pm-verse-meter{height:5px;border-radius:99px;background:var(--parch-2);overflow:hidden}.pm-verse-meter i{display:block;height:100%;background:var(--green);border-radius:inherit}.pm-verse-row.partial .pm-verse-meter i{background:#A68BB7}.pm-verse-score{font-size:.66rem;font-weight:800;color:var(--ink-2);white-space:nowrap}.pm-verse-score em{display:block;font-style:normal;font-weight:700;color:var(--clay);font-size:.56rem;margin-top:2px}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -798,7 +806,9 @@ window.FIREBASE_CONFIG = {
       <div class="map-controls" style="margin-bottom:10px">
         <span style="font-size:.78rem;color:var(--muted);align-self:center">تصفية:</span>
         <button class="btn btn-ghost btn-sm mapfilt on" data-filter="all">الكل</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="due" style="color:#C89B3C">يحتاج مراجعة</button>
+        <button class="btn btn-ghost btn-sm mapfilt" data-filter="fix" style="color:var(--gold)">تثبيت</button>
+        <button class="btn btn-ghost btn-sm mapfilt" data-filter="partial" style="color:#7E6B8B">جزئي</button>
+        <button class="btn btn-ghost btn-sm mapfilt" data-filter="due" style="color:#C89B3C">قريبة</button>
         <button class="btn btn-ghost btn-sm mapfilt" data-filter="weak" style="color:var(--clay)">متفلّت</button>
       </div>
       <div class="pill" id="mapCount" style="margin-bottom:12px">…</div>
@@ -947,8 +957,12 @@ window.FIREBASE_CONFIG = {
   <div id="pmReviewInfo" style="margin-bottom:12px"></div>
   <div id="pmStateInfo" style="margin-bottom:12px"></div>
   <div id="pmLearningInfo" style="margin-bottom:12px"></div>
+  <div id="pmVerseInfo" style="margin-bottom:12px"></div>
   <div id="pmErrors" style="margin-top:6px"></div>
-  <button class="btn btn-primary btn-sm" id="pmOpenMushaf" style="width:100%;margin-top:10px">فتح هذا الوجه في المصحف</button>
+  <div class="pm-actions-v63">
+    <button class="btn btn-primary btn-sm" id="pmStartReview">ابدئي المراجعة</button>
+    <button class="btn btn-ghost btn-sm" id="pmOpenMushaf">فتح في المصحف</button>
+  </div>
   <button class="btn btn-gold btn-sm" id="pmAddErr" style="width:100%;margin-top:8px">+ تسجيل خطأ في هذا الوجه</button>
 </div></div>
 
@@ -1028,7 +1042,7 @@ window.FIREBASE_CONFIG = {
     <div class="amiri" style="font-size:1rem;color:var(--ink)">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div>
     <div style="font-size:.8rem;color:var(--muted);margin-top:8px">الدُّرُّ المكنون · رحلة حفظ القرآن الكريم ومراجعته</div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:2px;opacity:.8">مصحف المدينة — طبعة الملك فهد · حفص عن عاصم · إصدار ٦</div>
-    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v62</div>
+    <div style="font-size:.72rem;color:var(--gold);margin-top:6px;font-weight:700">النسخة v63</div>
   </div>
 </div></div>
 
@@ -1557,7 +1571,7 @@ function tasksV50(){
   return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=62&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=63&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -1565,7 +1579,7 @@ function startTaskSessionV60(taskId){
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
   const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=62&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=63&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
@@ -2294,7 +2308,9 @@ function fillJuzPages(j){
     let cells='';
     for(let p=seg.start;p<=seg.end;p++){
       const m=mapPageMetaV62(p,seg.sur[0]),err=pageHasActiveErrors(p,seg.sur[0])?' has-err':'';
-      let dim='';if(mapFilter==='due'&&m.state!=='due')dim='opacity:.18;';if(mapFilter==='weak'&&m.state!=='weak')dim='opacity:.18;';
+      let dim='';
+      const matchFilter=mapFilter==='all'||(mapFilter==='fix'&&m.state==='fix')||(mapFilter==='partial'&&m.partial)||(mapFilter==='due'&&m.state==='due')||(mapFilter==='weak'&&m.state==='weak');
+      if(!matchFilter)dim='opacity:.16;';
       let bg='background:'+m.color+';';
       if(m.partial){const pc=Math.max(4,Math.round(m.coverage*100));bg='background:linear-gradient(90deg,'+m.color+' 0 '+pc+'%,var(--parch-2) '+pc+'% 100%);';}
       const txt=(m.state==='fresh'||m.state==='weak')&&!m.partial?'color:#fff;':'color:var(--ink);';
@@ -2328,7 +2344,11 @@ document.querySelectorAll('.mapfilt').forEach(b=>b.addEventListener('click',()=>
     // افتحي فقط الأجزاء التي تحوي أوجهًا مطابقة للبند
     openJuz.clear();
     for(let j=0;j<30;j++){const [from,to]=JUZ_RANGE[j];
-      for(let p=from;p<=to;p++){if(autoPageInfo(p).state===mapFilter){openJuz.add(j);break;}}}
+      for(let p=from;p<=to;p++){
+        const m=mapPageMetaV62(p,null);
+        const ok=(mapFilter==='fix'&&m.state==='fix')||(mapFilter==='partial'&&m.partial)||(mapFilter==='due'&&m.state==='due')||(mapFilter==='weak'&&m.state==='weak');
+        if(ok){openJuz.add(j);break;}
+      }}
   }
   renderMap();
 }));
@@ -2361,6 +2381,53 @@ function renderPageErrors(p){
     toast('أُرشِف الخطأ. يبقى في سجلّ الأخطاء كمُتقَن.');
   }));
 }
+
+let MAP_MUSHAF_DATA_V63=null,MAP_MUSHAF_PROMISE_V63=null;
+async function ensureMapMushafDataV63(){
+  if(MAP_MUSHAF_DATA_V63)return MAP_MUSHAF_DATA_V63;
+  if(!MAP_MUSHAF_PROMISE_V63)MAP_MUSHAF_PROMISE_V63=fetch('data/mushaf-data.json').then(r=>{if(!r.ok)throw new Error('mushaf data');return r.json();}).then(j=>MAP_MUSHAF_DATA_V63=j).catch(()=>null);
+  return MAP_MUSHAF_PROMISE_V63;
+}
+function faceTaskForV63(p){
+  const st=reviewEngineStateV62(p);
+  if(st.phase==='fix')return'fix';
+  if(st.phase==='near')return'near';
+  if(st.phase==='far')return'far';
+  return firstMemDateV62(p)?'near':'new';
+}
+function verseStatusV63(vk){
+  const v=(S.verseReview&&S.verseReview[vk])||null;
+  const errs=(S.errors||[]).filter(e=>!e.archived&&e.verseKey===vk).length;
+  if(!v)return{coverage:0,score:null,last:null,errors:errs,label:'لم تُسمّع'};
+  const cov=Math.max(0,Math.min(1,+v.coverage||0));
+  return{coverage:cov,score:v.score==null?null:+v.score,last:v.lastReview||null,errors:errs,label:cov>=.95?'مكتملة':cov>0?'جزئية':'لم تُسمّع'};
+}
+async function renderFaceVerseDetailsV63(p,sid){
+  const box=document.getElementById('pmVerseInfo');if(!box)return;
+  box.innerHTML='<div class="pm-verse-loading">يُحمّل تفصيل آيات الوجه…</div>';
+  const data=await ensureMapMushafDataV63();
+  if(curPage!==p)return;
+  const pg=data&&data.pages&&data.pages[String(p)];
+  if(!pg||!Array.isArray(pg.s)){box.innerHTML='<div class="pm-verse-empty">لا تتوفر بيانات الآيات لهذا الوجه حاليًا.</div>';return;}
+  const keys=[];
+  pg.s.forEach(seg=>{
+    if(sid!=null&&+seg.id!==+sid)return;
+    for(let a=+seg.vs;a<=+seg.ve;a++)keys.push({vk:seg.id+':'+a,sid:+seg.id,ayah:a});
+  });
+  if(!keys.length){box.innerHTML='<div class="pm-verse-empty">لا توجد آيات لهذه السورة في هذا الوجه.</div>';return;}
+  const completed=keys.filter(x=>verseStatusV63(x.vk).coverage>=.95).length;
+  const partial=keys.filter(x=>{const c=verseStatusV63(x.vk).coverage;return c>0&&c<.95;}).length;
+  let html='<div class="pm-verse-head"><div><b>آيات هذا الوجه</b><small>'+toAr(completed)+' مكتملة'+(partial?' · '+toAr(partial)+' جزئية':'')+'</small></div><span>'+toAr(keys.length)+' آية</span></div><div class="pm-verse-list">';
+  keys.forEach(x=>{
+    const st=verseStatusV63(x.vk),pct=Math.round(st.coverage*100),sur=(SURAHS.find(s=>s[0]===x.sid)||[])[1]||'';
+    const cls=st.coverage>=.95?' done':st.coverage>0?' partial':'';
+    html+='<button class="pm-verse-row'+cls+'" data-vk="'+x.vk+'" data-p="'+p+'"><div class="pm-verse-loc"><b>'+sur+' · '+toAr(x.ayah)+'</b><small>'+(st.last?st.last:'لا مراجعة مسجلة')+'</small></div><div class="pm-verse-meter"><i style="width:'+pct+'%"></i></div><div class="pm-verse-score">'+(st.coverage?toAr(pct)+'٪':'—')+(st.errors?'<em>'+toAr(st.errors)+' خطأ</em>':'')+'</div></button>';
+  });
+  html+='</div>';
+  box.innerHTML=html;
+  box.querySelectorAll('[data-vk]').forEach(b=>b.addEventListener('click',()=>openMushafAtV50(+b.dataset.p,'','',b.dataset.vk)));
+}
+
 function openPage(p,surahId){
   curPage=p;curPageSurah=(surahId!=null)?surahId:null;
   const s=(surahId!=null)?(SURAHS.find(x=>x[0]===surahId)||surahOfPage(p)):surahOfPage(p);
@@ -2386,8 +2453,13 @@ function openPage(p,surahId){
     '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(books.length>0)+' <b>التفسير</b><br><span style="color:var(--muted)">'+(books.length?toAr(books.length)+' كتاب':'لم يكتمل')+'</span></div>'+
     '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(!!h)+' <b>الحفظ</b><br><span style="color:var(--muted)">'+(h?(h.first||'تم'):'لم يثبت')+'</span></div>'+
     '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(!!rec)+' <b>التسميع</b><br><span style="color:var(--muted)">'+(rec?('آخر درجة '+toAr(rec.score||0)+'٪'):'لا جلسة مكتملة')+'</span></div></div>';
-  renderPageErrors(p);document.getElementById('pageModal').classList.add('open');
+  renderPageErrors(p);
+  const task=faceTaskForV63(p),reviewBtn=document.getElementById('pmStartReview');
+  reviewBtn.dataset.task=task;reviewBtn.textContent=task==='new'?'ابدئي تسميع الحفظ':task==='fix'?'راجعي وجه التثبيت':task==='near'?'ابدئي المراجعة القريبة':'ابدئي المراجعة البعيدة';
+  renderFaceVerseDetailsV63(p,surahId);
+  document.getElementById('pageModal').classList.add('open');
 }
+document.getElementById('pmStartReview').addEventListener('click',()=>{if(!curPage)return;const task=faceTaskForV63(curPage);document.getElementById('pageModal').classList.remove('open');openMushafAtV50(curPage,'recite',task);});
 document.getElementById('pmOpenMushaf').addEventListener('click',()=>{if(curPage)openMushafAtV50(curPage,'','');});
 document.getElementById('pmAddErr').addEventListener('click',()=>{document.getElementById('pageModal').classList.remove('open');openErr(curPage);});
 (function(){const b=document.getElementById('pmClose');if(b)b.addEventListener('click',()=>document.getElementById('pageModal').classList.remove('open'));})();
@@ -4179,11 +4251,11 @@ renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=62');
+      const reg=await navigator.serviceWorker.register('sw.js?v=63');
       reg.update().catch(()=>{});
-      let reloaded=sessionStorage.getItem('durr-sw62-reloaded')==='1';
+      let reloaded=sessionStorage.getItem('durr-sw63-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw62-reloaded','1');location.reload();}
+        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw63-reloaded','1');location.reload();}
       });
     }catch(e){}
   });
