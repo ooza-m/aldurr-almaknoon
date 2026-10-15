@@ -161,3 +161,14 @@ Do not market a model-card WER as the app's effective error-detection accuracy. 
 - phone microphones and background noise
 
 The application should stay conservative: low-confidence findings go to active recall instead of becoming confirmed errors.
+
+
+## Local accuracy evaluation
+
+Do not tune thresholds from the model card alone. Put private/local WAV files in `quran-asr-service/samples/` (do not commit recordings unless you intend to), create a JSONL manifest based on `eval-manifest.example.jsonl`, then run:
+
+```
+python evaluate.py eval-manifest.jsonl --out eval-results.json
+```
+
+The evaluator reports overall WER and WER by category. Keep categories separate for clean correct recitation, deliberate omission, substitution, repetition, mutashabihat jump, and phone/noise. Those numbers are the basis for calibrating the application's confirmed-error thresholds.
