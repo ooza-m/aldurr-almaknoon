@@ -3,11 +3,13 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    QASR_BACKEND=tarteel-whisper \
-    QASR_MODEL=tarteel-ai/whisper-base-ar-quran
+    QASR_BACKEND=sherpa-fastconformer \
+    QASR_MODEL=mohammed/fastconformer-quran-ar-onnx-int8 \
+    QASR_PRELOAD=1 \
+    QASR_THREADS=4
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg libsndfile1 \
+    && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
