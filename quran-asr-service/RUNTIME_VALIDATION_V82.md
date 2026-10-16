@@ -36,14 +36,32 @@ an actual Q8 export failure on the one-frame final tail: ConvInteger received
 a zero time axis. Readiness correctly stayed 503. The adapter now pads only
 the final native window to the proven 112-frame size with normalized silence
 and discards outputs beyond the real frame count (8x subsampling). A regression
-test ensures padding tokens cannot leak into the transcript. This repair still
-requires an observed successful native run.
+test ensures padding tokens cannot leak into the transcript. The repaired native
+run succeeded in deployment `e073b394-e24f-4cfa-af15-85b0c4d0a778`, source commit
+`66fb0b96c0077d8ef3a343e2192d781d7f3e3229`, on 2026-10-16. `/ready` returned
+200 and the actual HTTP transcription smoke suite completed.
 
 `selftest_runner.py` performs bounded
 loopback HTTP requests using only public EveryAyah recordings (six clips,
 three reciters), silence, exact retries and an empty final tail. Results must
 be observed in `DURR_SMOKE_CASE` / `DURR_SMOKE_DONE` logs before claiming runtime
-success. They are smoke checks, **not** an overall accuracy benchmark or proof
+success. Both were observed: six cases, silence and exact HTTP retries passed.
+Raw transcripts, deltas, snapshots and request timings are retained in
+`runtime-smoke-v82.json`. All six final transcripts match the references after
+`evaluate.py` Arabic normalization, and concatenated stable deltas match each
+final transcript exactly. The clips total 39.141 seconds and cover four distinct
+ayahs: Alafasy 1:2, 1:3, 1:4, 2:6; Husary 1:2; Minshawy 1:2.
+
+They are smoke checks, **not** an overall accuracy benchmark or proof
 of detecting incorrectly recited Quran. No user audio is downloaded or committed.
+The runner reports `runtime_verified: true` and `accuracy_verified: false`.
+Request timings are loopback measurements, not phone/network latency; with
+one-second audio packets, the first stable delta in these clips appears on the
+fourth packet (about four seconds of submitted audio), not within 100 ms.
+Phone microphone, noisy or mistaken recitation, browser/iPhone layout and full
+frontend-to-ASR verification remain pending. Local automated tests pass:
+37 Python tests (including numerical frontend parity) and 39 Node tests.
 
 No frontend URL, live website or `main` branch has been changed for this experiment.
+Railway has no public domain or pending staged changes. This results-only update
+does not alter the deployed source pin and requires no additional deployment.
