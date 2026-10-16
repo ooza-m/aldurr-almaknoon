@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>المصحف — الدرّ المكنون · v84</title>
+<title>المصحف — الدرّ المكنون · v85</title>
 <script id="DURR_V78_ESCAPE_IFRAME">
 /* v56: حماية من أي index قديم مخزّن في الكاش ما زال يفتح المصحف داخل iframe. */
 try{
@@ -382,11 +382,13 @@ body.face-listening .screen{height:var(--app-vh)!important}
 body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 .qasr-setrow{align-items:flex-start}.qasr-status{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;color:var(--muted)}.qasr-status i{width:9px;height:9px;border-radius:50%;background:#b8b2b5}.qasr-status.ok{color:#49653C}.qasr-status.ok i{background:#6f8a63}.qasr-status.limited{color:#8A671A}.qasr-status.limited i{background:#C89B3C}.qasr-status.bad{color:#9C5362}.qasr-status.bad i{background:#C77486}.qasr-test{width:100%;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-family:inherit;border-radius:12px;padding:9px 12px;font-size:.72rem;font-weight:700;margin-top:8px}
 </style>
-<link rel="stylesheet" href="app-navigation.css?v=84">
-<link rel="stylesheet" href="reader-shell.css?v=84">
-<script src="reader-core.js?v=84"></script>
-<script src="reader-audio.js?v=84"></script>
-<script src="config.js?v=84"></script>
+<link rel="stylesheet" href="app-navigation.css?v=85">
+<link rel="stylesheet" href="reader-shell.css?v=85">
+<script src="reader-core.js?v=85"></script>
+<script src="reader-audio.js?v=85"></script>
+<script src="config.js?v=85"></script>
+<link rel="stylesheet" href="app-preferences.css?v=85">
+<script src="app-preferences.js?v=85"></script>
 </head>
 <body class="app-standalone">
 <div class="screen" id="screen">
@@ -410,6 +412,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
     <div class="pane" id="paneC"></div>
   </div>
   <div class="pagefoot" id="pagefoot"></div>
+  <section class="reader-scrubber" aria-label="التنقّل أسفل الوجه"><div class="scrubber-label"><span>التنقّل بين أوجه المصحف والسور</span><span>١ — ٦٠٤</span></div><div class="pslider"><div class="sbubble" id="sBubble"><div class="bs" id="sbSurah">—</div><div class="bp" id="sbPage">وجه ١</div></div><input type="range" id="pageSlider" aria-label="الانتقال بين أوجه المصحف" min="1" max="604" value="1" dir="rtl"></div></section>
   <div class="tap-hint" id="tapHint">المسة واحدة للخيارات · اسحب للتنقّل · المس الآية مطوّلًا</div>
 
   <div class="chrome-bot">
@@ -424,7 +427,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
   <!-- الفهرس -->
   <div class="ov" id="indexOv">
     <div class="ov-top"><div class="ov-title">الفهرس</div><button class="ov-x" data-close aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <form class="page-jump" id="readerJumpForm"><label for="pageJump">الانتقال إلى وجه</label><input id="pageJump" type="number" min="1" max="604" value="1" inputmode="numeric" required><button type="submit">انتقال</button><div class="pslider"><div class="sbubble" id="sBubble"><div class="bs" id="sbSurah">—</div><div class="bp" id="sbPage">وجه ١</div></div><input type="range" id="pageSlider" aria-label="الانتقال بين أوجه المصحف" min="1" max="604" value="1" dir="rtl"></div></form>
+    <form class="page-jump" id="readerJumpForm"><label for="pageJump">الانتقال إلى وجه</label><input id="pageJump" type="number" min="1" max="604" value="1" inputmode="numeric" required><button type="submit">انتقال</button></form>
     <div class="seg"><button class="on" data-t="surah">السور</button><button data-t="rub">الأرباع</button></div>
     <div class="ov-wrap"><div class="ov-body" id="idxBody"></div><div class="juzrail" id="juzRail"></div></div>
   </div>
@@ -441,8 +444,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
     <div class="ov-top"><div class="ov-title">إعدادات المصحف</div><button class="ov-x" data-close aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="ov-body" style="padding:8px 18px 32px">
       <div class="setrow"><span class="lbl">اتجاه التنقّل</span><div class="toggle" id="tgDir"><button data-v="h">أفقيّ</button><button data-v="v">رأسيّ</button></div></div>
-      <div class="setrow"><span class="lbl">أرقام التطبيق</span><div class="toggle" id="tgNum"><button data-v="ar">عربيّة ٢٣</button><button data-v="en">إنجليزيّة 23</button></div></div>
-      <div class="note">أرقام آيات المصحف تبقى بالأرقام العربيّة دائمًا كما في المصحف المطبوع؛ يشمل هذا الخيار بقيّة أرقام التطبيق.</div>
+      <div data-app-preferences></div>
       <div class="setrow qasr-setrow"><span class="lbl">محرك التسميع القرآني</span><div class="qasr-status" id="qasrStatus"><i></i><span>جارٍ التحقق…</span></div></div>
       <div class="note" id="qasrStatusNote">المحرك المتخصص يفرّغ التلاوة فقط، ثم يطابق التطبيق الناتج مع نص القرآن المعتمد. عند عدم توفره يعمل وضع المتصفح المحدود.</div>
       <button class="qasr-test" id="qasrTest" type="button">فحص المحرك</button>
@@ -572,11 +574,11 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 /* ===== إعدادات محليّة ===== */
 const LS=(k,d)=>{try{return localStorage.getItem(k)||d;}catch(e){return d;}};
 const LSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
-let numMode=LS('durr-num','ar'), scrollDir=LS('durr-dir','h');
+let scrollDir=LS('durr-dir','h');
 let focusMode=LS('durr-focus','0')==='1';
 if(focusMode)document.body.classList.add('focus-mode');
-const AR=n=>numMode==='en'?String(n):String(n).replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
-const ARA=n=>String(n).replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]); // عربيّة دائمًا
+const AR=n=>DurrPreferences.digits(n);
+const ARA=n=>DurrPreferences.digits(n);
 const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
 const placeAr=p=>p==='makkah'?'مكّية':'مدنية';
 let DATA=null,SEARCH=null,cur=1,GLOBAL_SIZE=0,recMode=false;
@@ -1735,9 +1737,10 @@ async function qasrHealthV75(force){
     const ready=j.engine_loaded&&j.enabled!==false;card.classList.add(ready?'ok':'limited');card.querySelector('span').textContent=ready?('جاهز · '+(j.streaming?'بث قرآني':'تحليل مقاطع · تجريبي')):'المحرك غير جاهز';if(note)note.textContent='النموذج: '+(j.model||QASR_CONFIG.model||'قرآني متخصص')+' · التفريغ صوتي فقط، والحكم على الخطأ يتم بعد المحاذاة مع نص المصحف داخل التطبيق.';
   }catch(e){card.classList.add('bad');card.querySelector('span').textContent='تعذّر الاتصال';if(note)note.textContent='سيعود التطبيق تلقائيًا إلى وضع المتصفح المحدود، ولن يدّعي أن التحليل المتخصص يعمل.';}
 }
-function syncSettings(){$('tgDir').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===scrollDir));$('tgNum').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===numMode));qasrHealthV75(false);}
+DurrPreferences.subscribe(()=>{updateChrome();});
+function syncSettings(){$('tgDir').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===scrollDir));qasrHealthV75(false);}
 $('tgDir').querySelectorAll('button').forEach(b=>b.onclick=()=>{scrollDir=b.dataset.v;LSet('durr-dir',scrollDir);syncSettings();applyBases();});
-$('tgNum').querySelectorAll('button').forEach(b=>b.onclick=()=>{numMode=b.dataset.v;LSet('durr-num',numMode);syncSettings();updateChrome();});const qtest=$('qasrTest');if(qtest)qtest.onclick=()=>qasrHealthV75(true);
+const qtest=$('qasrTest');if(qtest)qtest.onclick=()=>qasrHealthV75(true);
 
 /* v55: قياس top-level visual viewport مباشرة؛ لم يعد هناك iframe وسيط. */
 function syncReaderViewport(){
@@ -1776,7 +1779,7 @@ setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
 });
 </script>
 <script>
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=84').then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=85').then(r=>r.update()).catch(()=>{}));}
 </script>
 </body>
 </html>

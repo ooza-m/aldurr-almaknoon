@@ -568,7 +568,7 @@ main{padding-top:0!important}
 /* v76 · المراجعة الذكية والاستدعاء النشط */
 .v76-smart{background:linear-gradient(145deg,#F6F0FA,#fff);border:1px solid rgba(140,114,160,.18);border-radius:16px;padding:12px;margin-bottom:12px}.v76-smart-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.v76-smart-head span{display:block;font-size:.55rem;color:#7D668E}.v76-smart-head b{display:block;font-size:.86rem;color:var(--ink);margin-top:1px}.v76-smart-head small{display:block;font-size:.55rem;color:var(--muted);margin-top:2px}.v76-smart-head strong{font-size:.75rem;color:#715980;background:#EEE5F3;border-radius:999px;padding:5px 8px}.v76-smart-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}.v76-smart-row{background:#fff;border:1px solid rgba(140,114,160,.12);border-radius:12px;padding:9px}.v76-smart-copy>div{display:flex;justify-content:space-between;gap:8px;align-items:center}.v76-smart-copy b{font-size:.69rem}.v76-smart-copy span{font-size:.52rem;color:#806C8E}.v76-smart-copy small,.v76-smart-copy em{display:block;font-size:.55rem;color:var(--muted);font-style:normal;margin-top:3px;line-height:1.45}.v76-smart-actions{display:flex;gap:6px;margin-top:8px}.v76-smart-actions button{border:0;border-radius:8px;background:#745B85;color:#fff;font-family:inherit;font-size:.56rem;font-weight:700;padding:6px 8px}.v76-smart-actions button.soft{background:var(--parch-2);color:var(--muted)}
 </style>
-<link rel="stylesheet" href="app-navigation.css?v=84">
+<link rel="stylesheet" href="app-navigation.css?v=85">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -583,6 +583,8 @@ window.FIREBASE_CONFIG = {
   appId: "1:1042941912548:web:cc8faead0409b666b693f1"
 };
 </script>
+<link rel="stylesheet" href="app-preferences.css?v=85">
+<script src="app-preferences.js?v=85"></script>
 </head>
 <body>
 <div id="v51AutoToast"><span class="v51-toast-ico">✓</span><span><b id="v51ToastTitle">سُجّلت الجلسة تلقائيًا</b><small id="v51ToastSub"></small></span></div>
@@ -1042,6 +1044,7 @@ window.FIREBASE_CONFIG = {
 
 <div class="modal-bg" id="settingsModal"><div class="modal v70-settings-modal"><button class="modal-x" onclick="document.getElementById('settingsModal').classList.remove('open')" aria-label="إغلاق">✕</button>
   <div class="v70-settings-head"><span>التفضيلات</span><h3>الإعدادات</h3><p>إعدادات التطبيق فقط؛ بيانات الحفظ والتقدّم تبقى في صفحاتها المختصة.</p></div>
+  <div data-app-preferences></div>
   <div class="v70-set-group">
     <h4>الحساب والعرض</h4>
     <div class="field"><label>الاسم المعروض</label><div style="display:flex;gap:8px"><input type="text" id="set-name" placeholder="اسمكِ" style="flex:1"><button class="btn btn-gold btn-sm" id="set-name-save">حفظ</button></div><p class="hint" id="set-name-msg" style="margin:6px 0 0;color:var(--green)"></p></div>
@@ -1060,7 +1063,7 @@ window.FIREBASE_CONFIG = {
     <p class="hint" id="ntStatus" style="margin-top:6px"></p>
   </div>
   <div class="v70-set-danger"><b>مسح بيانات التقدّم</b><p>يمسح السجل والخريطة والأخطاء والختمة والمرحليات. لا يمكن التراجع بعد التأكيد.</p><button class="btn btn-sm" id="set-reset">مسح جميع بيانات التقدّم</button></div>
-  <div class="v70-about"><div class="amiri">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div><span>الدُّرُّ المكنون · مصحف المدينة · حفص عن عاصم</span><b>النسخة v84</b></div>
+  <div class="v70-about"><div class="amiri">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div><span>الدُّرُّ المكنون · مصحف المدينة · حفص عن عاصم</span><b>النسخة v85</b></div>
 </div></div>
 
 <div class="modal-bg" id="stageModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('stageModal').classList.remove('open')" aria-label="إغلاق">✕</button>
@@ -1387,7 +1390,7 @@ function save(){try{S.updatedAt=Date.now();if(typeof invalidateReviewMap==='func
 const AR_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const AR_DOW=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 const AR_DOW_S=["أحد","إثن","ثلا","أرب","خمي","جمع","سبت"];
-function toAr(n){return String(n).replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);}
+function toAr(n){return DurrPreferences.digits(n);}
 /* صياغة عربية صحيحة لعدد الأوجه: وجه، وجهان، ٣ أوجه، ١١ وجهًا، ٢٠ وجهًا */
 function faces(n){
   n=+n||0;
@@ -1408,7 +1411,7 @@ function facesShort(n){
 function keyOf(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')+"-"+String(d.getDate()).padStart(2,'0');}
 function todayKey(){return keyOf(new Date());}
 function parseKey(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);}
-function fmtD(k){const[y,m,d]=k.split('-').map(Number);return{d:toAr(d),m:AR_MONTHS[m-1],y:toAr(y)};}
+function fmtD(k){const p=DurrPreferences.parts(k);return{d:toAr(p.day),m:DurrPreferences.MONTHS[DurrPreferences.get().calendar][p.month-1],y:toAr(p.year)};}
 function esc(s){return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 function daysBetween(a,b){return Math.round((parseKey(b)-parseKey(a))/86400000);}
 
@@ -1604,7 +1607,7 @@ function tasksV50(){
   return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=84&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=85&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -1612,7 +1615,7 @@ function startTaskSessionV60(taskId){
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
   const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=84&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=85&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
@@ -1633,7 +1636,7 @@ function renderHomeV50(){
   if(recent){const arr=[],streak=calcStreak(),month=pagesMemorizedInMonth();if(streak>0)arr.push([streak+' يومًا','سلسلة الاستمرار الحالية']);if(month>0)arr.push([month+' وجهًا','حفظ جديد هذا الشهر']);const listen=(S.activityEvents||[]).filter(e=>e&&e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir').length;if(listen)arr.push([listen+' جلسة سماع','سُجّلت تلقائيًا']);if(tf)arr.push([tf+' وجه تفسير','أُنجزت قراءته']);if(!arr.length)arr.push(['ابدئي أول جلسة','سيظهر تقدمك الحقيقي هنا']);recent.innerHTML=arr.slice(0,4).map(x=>'<div class="v50-glass v50-ach"><b>'+esc(x[0])+'</b><small>'+esc(x[1])+'</small></div>').join('');}
 }
 function renderTodayV50(){
-  const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=AR_DOW[d.getDay()]+'، '+d.getDate()+' '+AR_MONTHS[d.getMonth()]+' '+d.getFullYear();
+  const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
   const p=priorityV50(),pc=document.getElementById('todayPriorityV50'),pt=tasks.find(t=>t.id===(p.taskId||'')),canSession=pt&&pt.pages&&pt.pages.length;
@@ -1658,10 +1661,10 @@ function renderPlanningV67(){
   const goal=Math.max(1,(S.goal&&S.goal.pages)||1),mem=memCount(),remain=Math.max(0,604-mem),days=Math.ceil(remain/goal),finish=addDaysKeyV62(todayKey(),Math.max(0,days-1));
   const p30=newMemPagesSinceV69(30),p7=newMemPagesSinceV69(7),actual=(p30.size/30),actualFinish=actual>0?addDaysKeyV62(todayKey(),Math.max(0,Math.ceil(remain/actual)-1)):null;
   const fix=taskPagesV60('fix').length,near=taskPagesV60('near').length,far=taskPagesV60('far').length,reviewLoad=fix+near+far;
-  box.innerHTML='<div class="v69-plan-hero"><div><span>الهدف اليومي</span><h2>'+toAr(goal)+' '+facesShort(goal)+'</h2><p>إن استمر هذا الهدف يوميًا، التاريخ النظري لإتمام الحفظ: <b>'+finish+'</b></p></div><button class="btn btn-primary btn-sm" id="v67GoalEdit">تعديل الهدف</button></div>'+
+  box.innerHTML='<div class="v69-plan-hero"><div><span>الهدف اليومي</span><h2>'+toAr(goal)+' '+facesShort(goal)+'</h2><p>إن استمر هذا الهدف يوميًا، التاريخ النظري لإتمام الحفظ: <b>'+DurrPreferences.format(finish)+'</b></p></div><button class="btn btn-primary btn-sm" id="v67GoalEdit">تعديل الهدف</button></div>'+
     '<div class="v69-plan-progress"><i><em style="width:'+Math.round(mem/604*100)+'%"></em></i><div><span>'+toAr(mem)+' محفوظ</span><span>'+toAr(remain)+' متبقٍ</span></div></div>';
   const b=document.getElementById('v67GoalEdit');if(b)b.onclick=()=>{const n=prompt('كم وجهًا تريدين هدفًا يوميًا؟',goal);if(n===null)return;const v=Math.max(1,Math.min(20,+n||goal));S.goal=S.goal||{};S.goal.pages=v;S.goal.active=true;save();renderPlanningV67();refreshV50();};
-  real.innerHTML='<div class="v69-plan-grid"><div class="card"><span>آخر 7 أيام</span><b>'+toAr(p7.size)+' وجهًا جديدًا</b><small>من الإنجاز المسجّل فعليًا</small></div><div class="card"><span>متوسط 30 يومًا</span><b>'+toAr(Math.round(actual*10)/10)+' وجه/يوم</b><small>'+(actualFinish?'بهذا المعدّل: '+actualFinish:'لا توجد بيانات كافية بعد')+'</small></div><div class="card"><span>عبء المراجعة الآن</span><b>'+toAr(reviewLoad)+' وجهًا</b><small>'+toAr(fix)+' تثبيت · '+toAr(near)+' قريبة · '+toAr(far)+' بعيدة</small></div><div class="card"><span>هدف أسبوع كامل</span><b>'+toAr(goal*7)+' وجهًا</b><small>قبل إضافة عبء المراجعة</small></div></div>';
+  real.innerHTML='<div class="v69-plan-grid"><div class="card"><span>آخر 7 أيام</span><b>'+toAr(p7.size)+' وجهًا جديدًا</b><small>من الإنجاز المسجّل فعليًا</small></div><div class="card"><span>متوسط 30 يومًا</span><b>'+toAr(Math.round(actual*10)/10)+' وجه/يوم</b><small>'+(actualFinish?'بهذا المعدّل: '+DurrPreferences.format(actualFinish):'لا توجد بيانات كافية بعد')+'</small></div><div class="card"><span>عبء المراجعة الآن</span><b>'+toAr(reviewLoad)+' وجهًا</b><small>'+toAr(fix)+' تثبيت · '+toAr(near)+' قريبة · '+toAr(far)+' بعيدة</small></div><div class="card"><span>هدف أسبوع كامل</span><b>'+toAr(goal*7)+' وجهًا</b><small>قبل إضافة عبء المراجعة</small></div></div>';
 }
 function renderStatsV67(){
   const box=document.getElementById('statsV67');if(!box)return;
@@ -1671,11 +1674,11 @@ function renderStatsV67(){
   rs.forEach(x=>(x.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)donePages.push(Object.assign({},p,{task:x.task}));}));
   const avg=donePages.length?Math.round(donePages.reduce((a,p)=>a+(+p.score||0),0)/donePages.length):0,errors=(S.errors||[]).filter(e=>!e.archived);
   const autoErr=errors.filter(e=>e.source==='recitation').length,months=[],d=new Date();
-  for(let i=5;i>=0;i--){const x=new Date(d.getFullYear(),d.getMonth()-i,1),k=keyOf(x).slice(0,7);let n=0;(S.recitationSessions||[]).filter(r=>r.task==='new'&&keyOf(new Date(r.endedAt||r.startedAt||0)).slice(0,7)===k).forEach(r=>(r.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)n++;}));months.push({k,n});}
+  for(let i=5;i>=0;i--){const bucket=DurrPreferences.month(DurrPreferences.shiftMonth(d,-i)),k=keyOf(bucket.start),end=keyOf(bucket.next);let n=0;(S.recitationSessions||[]).filter(r=>{const date=keyOf(new Date(r.endedAt||r.startedAt||0));return r.task==='new'&&date>=k&&date<end;}).forEach(r=>(r.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)n++;}));months.push({k,n});}
   const maxM=Math.max(1,...months.map(x=>x.n)),listen=(S.activityEvents||[]).filter(e=>e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e.type==='tafsir').length,task=t=>donePages.filter(p=>p.task===t).length;
   box.innerHTML='<div class="v67-stat-grid"><div><span>المحفوظ</span><b>'+toAr(mem)+'</b><small>من 604 وجه</small></div><div><span>متوسط التسميع</span><b>'+toAr(avg)+'٪</b><small>آخر 30 يومًا</small></div><div><span>مستحق الآن</span><b>'+toAr(due)+'</b><small>وجهًا</small></div><div><span>أخطاء نشطة</span><b>'+toAr(errors.length)+'</b><small>'+toAr(autoErr)+' آلي</small></div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>توزيع المحفوظ</span><b>حالة المراجعة الحالية</b></div></div><div class="v67-bars">'+[['تثبيت',fix,'#C89B3C'],['قريبة',near,'#D7B45B'],['بعيدة',far,'#7482A8'],['متفلّت',weak,'#C77486'],['جزئي',partial,'#A68BB7']].map(x=>'<div><span>'+x[0]+'</span><i><em style="width:'+Math.min(100,mem?Math.round(x[1]/mem*100):0)+'%;background:'+x[2]+'"></em></i><b>'+toAr(x[1])+'</b></div>').join('')+'</div></div>'+
-  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>6 أشهر</span><b>الحفظ الجديد</b></div></div><div class="v67-month-chart">'+months.map(x=>{const dt=parseKey(x.k+'-01');return '<div><i><em style="height:'+Math.round(x.n/maxM*100)+'%"></em></i><b>'+toAr(x.n)+'</b><span>'+AR_MONTHS[dt.getMonth()].slice(0,3)+'</span></div>';}).join('')+'</div></div>'+
+  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>6 أشهر</span><b>الحفظ الجديد</b></div></div><div class="v67-month-chart">'+months.map(x=>{const dt=parseKey(x.k);return '<div><i><em style="height:'+Math.round(x.n/maxM*100)+'%"></em></i><b>'+toAr(x.n)+'</b><span>'+DurrPreferences.month(dt).name+'</span></div>';}).join('')+'</div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>آخر 30 يومًا</span><b>جلسات التسميع المكتملة</b></div><strong>'+toAr(donePages.length)+'</strong></div><div class="v67-inline-stats"><span>حفظ <b>'+toAr(task('new'))+'</b></span><span>تثبيت <b>'+toAr(task('fix'))+'</b></span><span>قريبة <b>'+toAr(task('near'))+'</b></span><span>بعيدة <b>'+toAr(task('far'))+'</b></span></div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>أنشطة مساندة</span><b>السماع والتفسير</b></div></div><div class="v67-inline-stats"><span>سماع مكتمل <b>'+toAr(listen)+'</b></span><span>تفسير مقروء <b>'+toAr(tf)+'</b></span></div></div>';
 }
@@ -1965,9 +1968,9 @@ function renderSmartReview(){
 }
 /* ===== إحصاءات ملهمة ===== */
 function pagesMemorizedInMonth(){
-  const now=new Date(),ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'),set=new Set();
-  (S.logs||[]).filter(l=>l.date&&l.date.startsWith(ym)).forEach(l=>(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1];p++)set.add(+p);}));
-  (S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&keyOf(new Date(r.endedAt||r.startedAt||0)).startsWith(ym)).forEach(r=>(r.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)set.add(+p.page);}));
+  const bucket=DurrPreferences.month(new Date()),start=keyOf(bucket.start),end=keyOf(bucket.next),set=new Set(),inMonth=k=>k&&k>=start&&k<end;
+  (S.logs||[]).filter(l=>inMonth(l.date)).forEach(l=>(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1];p++)set.add(+p);}));
+  (S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&inMonth(keyOf(new Date(r.endedAt||r.startedAt||0)))).forEach(r=>(r.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)set.add(+p.page);}));
   return set.size;
 }
 function longestStreak(){
@@ -2022,7 +2025,7 @@ function renderTodayCalIcon(){
   const d=new Date();
   box.innerHTML=`<div style="width:44px;height:46px;border-radius:9px;overflow:hidden;border:1.5px solid var(--line);background:#fff;display:flex;flex-direction:column;box-shadow:0 2px 6px rgba(94,58,77,.1)">
     <div style="background:var(--clay);height:12px;flex-shrink:0"></div>
-    <div style="flex:1;display:grid;place-items:center;font-weight:800;font-size:1.25rem;color:var(--ink);line-height:1">${d.getDate()}</div>
+    <div style="flex:1;display:grid;place-items:center;font-weight:800;font-size:1.25rem;color:var(--ink);line-height:1">${toAr(DurrPreferences.parts(d).day)}</div>
   </div>`;
 }
 function renderDailyGoal(){
@@ -2505,52 +2508,14 @@ let calMode='week',calRef=new Date();
 document.getElementById('vWeek').addEventListener('click',()=>{calMode='week';document.getElementById('vWeek').classList.add('on');document.getElementById('vMonth').classList.remove('on');renderCal();});
 document.getElementById('stagesToggle').addEventListener('click',()=>{renderStages();});
 document.getElementById('vMonth').addEventListener('click',()=>{calMode='month';document.getElementById('vMonth').classList.add('on');document.getElementById('vWeek').classList.remove('on');renderCal();});
-document.getElementById('calPrev').addEventListener('click',()=>{if(calMode==='week')calRef.setDate(calRef.getDate()-7);else calRef.setMonth(calRef.getMonth()-1);renderCal();});
-document.getElementById('calNext').addEventListener('click',()=>{if(calMode==='week')calRef.setDate(calRef.getDate()+7);else calRef.setMonth(calRef.getMonth()+1);renderCal();});
+document.getElementById('calPrev').addEventListener('click',()=>{if(calMode==='week')calRef.setDate(calRef.getDate()-7);else calRef=DurrPreferences.shiftMonth(calRef,-1);renderCal();});
+document.getElementById('calNext').addEventListener('click',()=>{if(calMode==='week')calRef.setDate(calRef.getDate()+7);else calRef=DurrPreferences.shiftMonth(calRef,1);renderCal();});
 (function initDatePicker(){
-  const btn=document.getElementById('calTitleBtn'),modal=document.getElementById('datePickModal');
-  if(!btn)return;
-  const host=document.getElementById('dpCalHost');
-  let vY,vM,mode='days';
-  const MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-  const DOW=["أحد","إثن","ثلا","أرب","خمي","جمع","سبت"];
-  function draw(){
-    if(mode==='years'){
-      let yrs='';const cy=new Date().getFullYear();
-      for(let y=cy+1;y>=cy-15;y--)yrs+=`<button type="button" data-y="${y}" class="dpm-cell${y===vY?' on':''}">${toAr(y)}</button>`;
-      host.innerHTML=`<div class="dpm-grid">${yrs}</div>`;
-      host.querySelectorAll('[data-y]').forEach(b=>b.addEventListener('click',()=>{vY=+b.dataset.y;mode='months';draw();}));
-      return;
-    }
-    if(mode==='months'){
-      let ms='';MONTHS.forEach((nm,i)=>{ms+=`<button type="button" data-m="${i}" class="dpm-cell${i===vM?' on':''}">${nm}</button>`;});
-      host.innerHTML=`<div style="text-align:center;font-weight:700;color:var(--ink);margin-bottom:8px;cursor:pointer" data-toyears>${toAr(vY)} ▾</div><div class="dpm-grid">${ms}</div>`;
-      host.querySelector('[data-toyears]').addEventListener('click',()=>{mode='years';draw();});
-      host.querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>{vM=+b.dataset.m;mode='days';draw();}));
-      return;
-    }
-    const first=new Date(vY,vM,1).getDay();const days=new Date(vY,vM+1,0).getDate();const tk=todayKey();
-    let cells='';for(let i=0;i<first;i++)cells+=`<div></div>`;
-    for(let d=1;d<=days;d++){const k=`${vY}-${String(vM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      cells+=`<button type="button" class="dpm-day${k===tk?' today':''}" data-k="${k}">${toAr(d)}</button>`;}
-    host.innerHTML=`
-      <div class="dpm-head">
-        <button type="button" class="dp-nav" data-prev>›</button>
-        <div class="dpm-title" data-tomonths>${MONTHS[vM]} ${toAr(vY)} ▾</div>
-        <button type="button" class="dp-nav" data-next>‹</button>
-      </div>
-      <div class="dpm-dow">${DOW.map(d=>`<span>${d}</span>`).join('')}</div>
-      <div class="dpm-days">${cells}</div>`;
-    host.querySelector('[data-prev]').addEventListener('click',()=>{vM--;if(vM<0){vM=11;vY--;}draw();});
-    host.querySelector('[data-next]').addEventListener('click',()=>{vM++;if(vM>11){vM=0;vY++;}draw();});
-    host.querySelector('[data-tomonths]').addEventListener('click',()=>{mode='months';draw();});
-    host.querySelectorAll('[data-k]').forEach(c=>c.addEventListener('click',()=>{calRef=parseKey(c.dataset.k);renderCal();modal.classList.remove('open');}));
-  }
-  function openPick(){vY=calRef.getFullYear();vM=calRef.getMonth();mode='days';draw();modal.classList.add('open');}
-  btn.addEventListener('click',openPick);
-  document.getElementById('dpToday').addEventListener('click',()=>{calRef=new Date();renderCal();modal.classList.remove('open');});
-  document.getElementById('dpClose').addEventListener('click',()=>modal.classList.remove('open'));
-  modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('open');});
+ const btn=document.getElementById('calTitleBtn'),modal=document.getElementById('datePickModal');
+ btn.addEventListener('click',()=>{DurrPreferences.picker(document.getElementById('dpCalHost'),{value:keyOf(calRef),onPick:k=>{calRef=parseKey(k);renderCal();modal.classList.remove('open');}});modal.classList.add('open');});
+ document.getElementById('dpToday').onclick=()=>{calRef=new Date();renderCal();modal.classList.remove('open');};
+ document.getElementById('dpClose').onclick=()=>modal.classList.remove('open');
+ modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('open');});
 })();
 function expandItemsToPagesV71(items){
   const set=new Set();(items||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(+it.from,+it.to),Math.max(+it.from,+it.to)]:pagesOfSurah(+it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)set.add(p);});return set;
@@ -2623,12 +2588,12 @@ function renderCalendarSummaryV70(){
   Object.keys(S.attendance||{}).forEach(k=>keys.add(k));(S.errors||[]).forEach(e=>{if(e.date)keys.add(e.date);});
   const today=parseKey(todayKey()),cut30=new Date(today),cut7=new Date(today);cut30.setDate(cut30.getDate()-29);cut7.setDate(cut7.getDate()-6);
   const active=[...keys].filter(k=>dayFactsV71(k).active),a30=active.filter(k=>parseKey(k)>=cut30&&parseKey(k)<=today).length,a7=active.filter(k=>parseKey(k)>=cut7&&parseKey(k)<=today).length;
-  const streak=calcStreak(),ym=todayKey().slice(0,7),present=Object.keys(S.attendance||{}).filter(k=>k.startsWith(ym)&&S.attendance[k]==='present').length;
+  const streak=calcStreak(),bucket=DurrPreferences.month(new Date()),start=keyOf(bucket.start),end=keyOf(bucket.next),present=Object.keys(S.attendance||{}).filter(k=>k>=start&&k<end&&S.attendance[k]==='present').length;
   box.innerHTML='<div class="v70-cal-summary"><div><span>آخر 7 أيام</span><b>'+toAr(a7)+'</b><small>أيام نشطة</small></div><div><span>آخر 30 يومًا</span><b>'+toAr(a30)+'</b><small>أيام نشطة</small></div><div><span>الاستمرار</span><b>'+toAr(streak)+'</b><small>يومًا متتابعًا</small></div><div><span>حضور الحلقة</span><b>'+toAr(present)+'</b><small>هذا الشهر</small></div></div>';
 }
 function renderHeatmap(){
   const box=document.getElementById('heatmap');if(!box)return;
-  const yEl=document.getElementById('hmYear');if(yEl)yEl.textContent=toAr(new Date().getFullYear());
+  const yEl=document.getElementById('hmYear');if(yEl)yEl.textContent=toAr(DurrPreferences.parts(new Date()).year);
   const today=new Date();today.setHours(0,0,0,0);
   // نعرض آخر ٢٦ أسبوعًا (نصف سنة) لتناسب شاشة الجوال
   const WEEKS=26;
@@ -2639,7 +2604,7 @@ function renderHeatmap(){
   // اضبط البداية على بداية الأسبوع المختارة (فيصبح أوّل صفٍّ هو اليوم المختار)
   start.setDate(start.getDate()-((start.getDay()-ws+7)%7));
   const levels=['#EFE7DE','#E3C9B8','#CE9C93','#B06E7A','#8A4A5E']; // من الباهت للغامق (ثيم اللافندر)
-  const AR_MON=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const AR_MON=DurrPreferences.MONTHS[DurrPreferences.get().calendar];
   let cols='';let lastMonth=-1;let monthLabels='';
   let cur=new Date(start);
   const nCols=Math.ceil((today-start)/(7*86400000))+1;
@@ -2654,8 +2619,8 @@ function renderHeatmap(){
       let bg=act<0?'transparent':levels[lvl];
       const isToday=k===todayKey();
       // النموذج (ب): خلفية باهتة خلف خانات الويكند (السبت/الأحد) — تمييز لطيف
-      cells+=`<div class="hm-cell" ${inRange?`data-date="${k}"`:''} title="${inRange?k:''}" style="width:11px;height:11px;border-radius:3px;background:${bg};${inRange?'cursor:pointer;':''}${isToday?'outline:2px solid var(--ink);outline-offset:1px':''}"></div>`;
-      if(cur.getDate()<=7&&colMonth<0)colMonth=cur.getMonth();
+      cells+=`<div class="hm-cell" ${inRange?`data-date="${k}"`:''} title="${inRange?DurrPreferences.format(k):''}" style="width:11px;height:11px;border-radius:3px;background:${bg};${inRange?'cursor:pointer;':''}${isToday?'outline:2px solid var(--ink);outline-offset:1px':''}"></div>`;
+      if(DurrPreferences.parts(cur).day<=7&&colMonth<0)colMonth=DurrPreferences.parts(cur).month-1;
       cur.setDate(cur.getDate()+1);
     }
     cols+=`<div style="display:grid;grid-template-rows:repeat(7,11px);gap:3px">${cells}</div>`;
@@ -2690,12 +2655,12 @@ function renderHeatmap(){
   if(m)m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
 })();
 function renderMonth(){
-  const y=calRef.getFullYear(),m=calRef.getMonth();document.getElementById('calTitle').textContent=AR_MONTHS[m]+" "+y;
+  const month=DurrPreferences.month(calRef);document.getElementById('calTitle').textContent=month.name+' '+toAr(month.year);
   const ws=(S.weekStart|0),rotDow=AR_DOW_S.slice(ws).concat(AR_DOW_S.slice(0,ws));document.getElementById('calDow').innerHTML=rotDow.map(d=>'<div class="cal-dow">'+d+'</div>').join('');
-  const grid=document.getElementById('calGrid');grid.innerHTML='';const first=((new Date(y,m,1).getDay())-ws+7)%7,days=new Date(y,m+1,0).getDate(),tk=todayKey();
+  const grid=document.getElementById('calGrid');grid.innerHTML='';const first=(month.start.getDay()-ws+7)%7,tk=todayKey();
   for(let i=0;i<first;i++){const e=document.createElement('div');e.className='cal-cell empty';grid.appendChild(e);}
-  for(let d=1;d<=days;d++){
-    const dt=new Date(y,m,d),k=keyOf(dt),dow=dt.getDay(),f=dayFactsV71(k),hal=isHalaqaDay(k,dow),mrev=isManualReviewDay(k),att=attStatus(k),cell=document.createElement('div');
+  for(const entry of month.days){
+    const d=toAr(entry.day),dt=entry.date,k=entry.key,dow=dt.getDay(),f=dayFactsV71(k),hal=isHalaqaDay(k,dow),mrev=isManualReviewDay(k),att=attStatus(k),cell=document.createElement('div');
     let cls='cal-cell'+(k===tk?' today':'')+(hal?' halaqa-day':'')+(mrev?' mreview-day':'');if(hal&&att==='present')cls+=' att-present';if(hal&&att==='absent')cls+=' att-absent';cell.className=cls;
     cell.innerHTML=(mrev?'<span class="mreview-badge">مراجعة</span>':'')+'<span class="cd">'+d+'</span><div class="dots">'+dayDots(k)+'</div>'+(f.errors.length?'<span class="v71-err-mini">'+toAr(f.errors.length)+'</span>':'');
     cell.addEventListener('click',()=>openDay(k));grid.appendChild(cell);
@@ -2703,7 +2668,7 @@ function renderMonth(){
 }
 function renderWeek(){
   const ws=(S.weekStart|0),ref=new Date(calRef),back=(ref.getDay()-ws+7)%7,sun=new Date(ref);sun.setDate(ref.getDate()-back);
-  const end=new Date(sun);end.setDate(sun.getDate()+6);document.getElementById('calTitle').textContent=sun.getDate()+' '+AR_MONTHS[sun.getMonth()].slice(0,3)+' — '+end.getDate()+' '+AR_MONTHS[end.getMonth()].slice(0,3);
+  const end=new Date(sun);end.setDate(sun.getDate()+6);document.getElementById('calTitle').textContent=DurrPreferences.format(sun,{year:undefined})+' — '+DurrPreferences.format(end,{year:undefined});
   const box=document.getElementById('calWeek');box.innerHTML='';const tk=todayKey();
   for(let i=0;i<7;i++){
     const d=new Date(sun);d.setDate(sun.getDate()+i);const k=keyOf(d),f=dayFactsV71(k),hal=isHalaqaDay(k,d.getDay()),mrev=isManualReviewDay(k),att=attStatus(k);let tags='';
@@ -2717,7 +2682,7 @@ function renderWeek(){
     if(mrev)tags+=tag('v71-mreview','مراجعة شهرية');
     if(hal&&att==='present')tags+=tag('v71-present','حضور الحلقة');else if(hal&&att==='absent')tags+=tag('v71-absent','غياب');
     const wd=document.createElement('div');wd.className='week-day'+(k===tk?' today':'')+(hal?' halaqa-day':'')+(mrev?' mreview-day':'');
-    wd.innerHTML='<div class="wd-date"><div class="d">'+d.getDate()+'</div><div class="dow">'+AR_DOW_S[d.getDay()]+'</div></div><div class="wd-body"><div class="wd-tags">'+(tags||'<span class="wd-empty">لا نشاط مسجل</span>')+'</div></div>';
+    wd.innerHTML='<div class="wd-date"><div class="d">'+toAr(DurrPreferences.parts(d).day)+'</div><div class="dow">'+AR_DOW_S[d.getDay()]+'</div></div><div class="wd-body"><div class="wd-tags">'+(tags||'<span class="wd-empty">لا نشاط مسجل</span>')+'</div></div>';
     wd.addEventListener('click',()=>openDay(k));box.appendChild(wd);
   }
 }
@@ -3043,7 +3008,7 @@ document.getElementById('erSave').addEventListener('click',()=>{
   const b=document.getElementById('btnAddErr');if(b){const o=b.textContent;b.textContent="✓ سُجّل الخطأ";setTimeout(()=>b.textContent=o,1400);}
 });
 function smartReviewLabelV76(t){return({possible_omission:'سقوط محتمل',possible_substitution:'استبدال محتمل',possible_repetition:'تكرار محتمل',possible_extra_word:'زيادة محتملة',mutashabih_jump:'انتقال إلى متشابه محتمل'})[t]||'موضع يحتاج تحقق';}
-function openSmartRecallV76(q){if(!q||!q.page||!q.verseKey)return;const url='mushaf.html?v=84&p='+encodeURIComponent(q.page)+'&mode=recall&task=ai-review&ayah='+encodeURIComponent(q.verseKey)+'&rid='+encodeURIComponent(q.id)+'&app=1';window.location.assign(url);}
+function openSmartRecallV76(q){if(!q||!q.page||!q.verseKey)return;const url='mushaf.html?v=85&p='+encodeURIComponent(q.page)+'&mode=recall&task=ai-review&ayah='+encodeURIComponent(q.verseKey)+'&rid='+encodeURIComponent(q.id)+'&app=1';window.location.assign(url);}
 function renderErrors(){
   const hot=document.getElementById('errHot'),list=document.getElementById('errList'),all=S.errors||[],queue=S.aiReviewQueue||[],pending=queue.filter(q=>q&&q.status==='pending');
   if(!all.length&&!pending.length){hot.innerHTML='';list.innerHTML='<div class="empty"><span class="em">✎</span>لا أخطاء أو مواضع معلّقة للمراجعة.</div>';return;}
@@ -3059,7 +3024,7 @@ function renderErrors(){
   }
   hot.innerHTML=aiHtml+
     '<div class="v66-err-summary"><div><small>أخطاء نشطة</small><b>'+toAr(active.length)+'</b></div><div><small>أوجه متأثرة</small><b>'+toAr(pages)+'</b></div><div><small>اكتشفها التسميع</small><b>'+toAr(autoCount)+'</b></div></div>'+
-    (exact.length?'<div class="v66-hot"><div class="v66-hot-head"><b>المواضع الأكثر تكرارًا</b><small>مرتبة بحسب تكرار الخطأ نفسه</small></div>'+exact.map(x=>{const e=x.e,loc=(e.surah||'')+(e.ayah?' · آية '+toAr(e.ayah):e.page?' · وجه '+toAr(e.page):'');return '<button class="v66-hot-row" data-hot-page="'+(e.page||'')+'" data-hot-vk="'+(e.verseKey||'')+'"><span><b>'+esc(loc||'موضع غير محدد')+'</b><small>'+esc(e.type||'خطأ')+' · آخر مرة '+(x.latest.date||'')+'</small></span><em>'+toAr(x.count)+'×</em></button>';}).join('')+'</div>':'');
+    (exact.length?'<div class="v66-hot"><div class="v66-hot-head"><b>المواضع الأكثر تكرارًا</b><small>مرتبة بحسب تكرار الخطأ نفسه</small></div>'+exact.map(x=>{const e=x.e,loc=(e.surah||'')+(e.ayah?' · آية '+toAr(e.ayah):e.page?' · وجه '+toAr(e.page):'');return '<button class="v66-hot-row" data-hot-page="'+(e.page||'')+'" data-hot-vk="'+(e.verseKey||'')+'"><span><b>'+esc(loc||'موضع غير محدد')+'</b><small>'+esc(e.type||'خطأ')+' · آخر مرة '+DurrPreferences.format(x.latest.date)+'</small></span><em>'+toAr(x.count)+'×</em></button>';}).join('')+'</div>':'');
 
   const rowHtml=e=>{const i=all.indexOf(e),f=e.date?fmtD(e.date):{d:'',m:''},vk=e.verseKey||(e.surahId&&e.ayah?(e.surahId+':'+e.ayah):''),source=e.source==='recitation'?(e.aiDetected?'تسميع ذكي':'تسميع تلقائي'):'تسجيل يدوي',loc=(e.surah||'')+(e.ayah?' · آية '+toAr(e.ayah):'')+(e.page?' · وجه '+toAr(e.page):''),conf=e.confidence!=null?' · ثقة '+toAr(Math.round(e.confidence*100))+'٪':'';return '<article class="v66-err-card'+(e.archived?' archived':'')+'"><button class="v66-err-open" data-open-page="'+(e.page||'')+'" data-open-vk="'+vk+'"><div class="v66-err-loc"><b>'+esc(loc||'موضع غير محدد')+'</b><small>'+source+conf+' · '+f.d+' '+f.m+'</small></div><span>فتح</span></button><div class="v66-err-desc"><b>'+esc(e.desc||e.type||'خطأ')+'</b><small>'+esc(e.type||'')+(e.archived?' · مُتقَن':'')+'</small></div><div class="v66-err-actions">'+(e.page&&!e.archived?'<button data-review-page="'+e.page+'">راجعي الوجه</button>':'')+(e.archived?'<button data-undo="'+i+'">تراجع عن الأرشفة</button>':'<button data-archive="'+i+'">تم إتقانه</button>')+'<button class="danger" data-del="'+i+'">حذف</button></div></article>';};
   let html=active.length?'<div class="v66-err-section-title"><b>الأخطاء المؤكدة</b><span>'+toAr(active.length)+'</span></div>'+active.map(rowHtml).join(''):'<div class="v66-clean">لا أخطاء مؤكدة نشطة حاليًا.</div>';
@@ -3120,20 +3085,17 @@ function renderStages(){
   if(sum)sum.innerHTML='<div class="v69-stage-hero"><div class="v69-stage-ring" style="--p:'+pct+'"><b>'+toAr(done)+'</b><small>من '+toAr(S.stages.length)+'</small></div><div><span>المرحلية الحالية</span><h2>'+(cur?esc(cur.name):'اكتمل المسار')+'</h2><p>'+(cur?esc(cur.range||''):'لا توجد مرحليات متبقية')+'</p><div class="v69-stage-meta"><span>المسار: '+((S.profile&&S.profile.pathDir)==='down'?'من الأجزاء الأخيرة إلى الأولى':'من الأجزاء الأولى إلى الأخيرة')+'</span>'+(next?'<span>التالي: '+esc(next.name)+'</span>':'')+'</div></div></div>';
   box.innerHTML=S.stages.map((s,i)=>{const doneS=s.status==='done',current=s.status==='current',date=s.date||'';
     return '<article class="v69-stage-row '+(doneS?'done':current?'current':'upcoming')+'"><div class="v69-stage-index">'+(doneS?'✓':toAr(i+1))+'</div><div class="v69-stage-copy"><div class="v69-stage-top"><div><b>'+esc(s.name)+'</b><small>'+esc(s.range||'')+'</small></div><span>'+(doneS?'مجتازة':current?'الحالية':'قادمة')+'</span></div>'+
-      (date?'<p class="v69-stage-date">تاريخ الاختبار: '+date+'</p>':'')+(s.note?'<p class="v69-stage-note">'+esc(s.note)+'</p>':'')+
+      (date?'<p class="v69-stage-date">تاريخ الاختبار: '+DurrPreferences.format(date)+'</p>':'')+(s.note?'<p class="v69-stage-note">'+esc(s.note)+'</p>':'')+
       '<div class="v69-stage-actions"><button data-edit="'+i+'">تعديل</button>'+(!doneS?'<button class="primary" data-done="'+i+'">تسجيل الاجتياز</button>':'')+'</div></div></article>';
   }).join('');
   box.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openStageEditor(+b.dataset.edit)));
   box.querySelectorAll('[data-done]').forEach(b=>b.addEventListener('click',()=>markStageDone(+b.dataset.done)));
 }
 function markStageDone(i){
-  const s=S.stages[i];const def=s.date||todayKey();
-  const inp=prompt(`تاريخ اختبار «${s.name}» (بصيغة سنة-شهر-يوم):`,def);
-  if(inp===null)return;
-  const val2=inp.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(val2)){alert("الصيغة غير صحيحة. مثال: 2026-08-15");return;}
-  s.date=val2;s.status='done';if(!s.note||s.note==='قيد الاستعداد')s.note='مُجتازة';
-  if(S.stages[i+1]&&S.stages[i+1].status==='upcoming')S.stages[i+1].status='current';
-  save();renderStages();
+ const s=S.stages[i];openStageEditor(i);
+ document.getElementById('stModalTitle').textContent='تسجيل اجتياز المرحلية';
+ setDateInput('stDate',s.date||todayKey());document.getElementById('stStatus').value='done';
+ if(!s.note||s.note==='قيد الاستعداد')document.getElementById('stNote').value='مُجتازة';
 }
 let editingStage=-1;
 function openStageEditor(i){
@@ -3154,9 +3116,11 @@ document.getElementById('stClose').addEventListener('click',()=>document.getElem
 document.getElementById('stSave').addEventListener('click',()=>{
   const data={name:val('stName')||'مرحلية',range:val('stRange'),date:document.getElementById('stDate').value,
     status:document.getElementById('stStatus').value,note:val('stNote')};
+  const wasDone=editingStage>=0&&S.stages[editingStage].status==='done';
   if(editingStage<0)S.stages.push(data);
   else{S.stages[editingStage].name=data.name;S.stages[editingStage].range=data.range;
     S.stages[editingStage].date=data.date;S.stages[editingStage].status=data.status;S.stages[editingStage].note=data.note;}
+  if(editingStage>=0&&!wasDone&&data.status==='done'&&S.stages[editingStage+1]?.status==='upcoming')S.stages[editingStage+1].status='current';
   save();renderStages();document.getElementById('stageModal').classList.remove('open');
 });
 document.getElementById('stUp').addEventListener('click',()=>moveStage(-1));
@@ -3840,77 +3804,20 @@ const DP_MONTHS=["يناير","فبراير","مارس","أبريل","مايو",
 const DP_DOW=["أحد","إثن","ثلا","أرب","خمي","جمع","سبت"];
 let dpCloseOpen=null;
 function buildDatepick(input){
-  if(input.dataset.dpDone)return;input.dataset.dpDone="1";
-  input.type="hidden";
-  const trigger=document.createElement('button');trigger.type="button";trigger.className='dp-trigger';
-  trigger.innerHTML=`<span class="dp-val">اختاري التاريخ</span><span class="dp-cal-ico">🗓</span>`;
-  input.parentNode.insertBefore(trigger,input.nextSibling);
-  let viewY,viewM,mode='days';
-  function refreshTrigger(){
-    const v=input.value;
-    if(/^\d{4}-\d{2}-\d{2}$/.test(v)){const dt=parseKey(v);
-      trigger.querySelector('.dp-val').textContent=`${AR_DOW[dt.getDay()]} · ${dt.getDate()} ${DP_MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;}
-    else trigger.querySelector('.dp-val').textContent='اختاري التاريخ';
-  }
-  function closePop(){if(input._pop){input._pop.remove();input._pop=null;}if(input._bd){input._bd.remove();input._bd=null;}trigger.classList.remove('active');dpCloseOpen=null;}
-  function openPop(){
-    if(dpCloseOpen)dpCloseOpen();
-    const v=input.value;const base=/^\d{4}-\d{2}-\d{2}$/.test(v)?parseKey(v):new Date();
-    viewY=base.getFullYear();viewM=base.getMonth();mode='days';
-    const bd=document.createElement('div');bd.className='dp-backdrop';bd.addEventListener('click',closePop);
-    document.body.appendChild(bd);input._bd=bd;
-    const pop=document.createElement('div');pop.className='dp-pop';
-    document.body.appendChild(pop);input._pop=pop;trigger.classList.add('active');dpCloseOpen=closePop;
-    positionPop(pop);drawPop(pop);
-  }
-  function positionPop(pop){const r=trigger.getBoundingClientRect();pop.style.top=(r.bottom+window.scrollY)+'px';
-    let left=r.left+window.scrollX;const w=290;if(left+w>window.innerWidth-8)left=window.innerWidth-w-8;if(left<8)left=8;pop.style.left=left+'px';}
-  function drawPop(pop){
-    if(mode==='years'){
-      let yrs='';const cy=new Date().getFullYear();
-      for(let y=cy+1;y>=cy-15;y--)yrs+=`<button type="button" data-y="${y}" class="${y===viewY?'on':''}">${y}</button>`;
-      pop.innerHTML=`<div class="dp-pop-head"><div class="dp-my" data-back="1">‹ رجوع</div></div><div class="dp-yearsel">${yrs}</div>`;
-      pop.querySelector('[data-back]').addEventListener('click',()=>{mode='days';drawPop(pop);});
-      pop.querySelectorAll('[data-y]').forEach(b=>b.addEventListener('click',()=>{viewY=+b.dataset.y;mode='months';drawPop(pop);}));
-      return;
-    }
-    if(mode==='months'){
-      let ms='';DP_MONTHS.forEach((nm,i)=>{ms+=`<button type="button" data-m="${i}" class="${i===viewM?'on':''}">${nm}</button>`;});
-      pop.innerHTML=`<div class="dp-pop-head"><div class="dp-my" data-back="1">‹ رجوع</div><div class="dp-my" data-yearmode2 style="font-weight:700">${viewY}</div></div><div class="dp-yearsel">${ms}</div>`;
-      pop.querySelector('[data-back]').addEventListener('click',()=>{mode='days';drawPop(pop);});
-      pop.querySelector('[data-yearmode2]').addEventListener('click',()=>{mode='years';drawPop(pop);});
-      pop.querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>{viewM=+b.dataset.m;mode='days';drawPop(pop);}));
-      return;
-    }
-    const first=new Date(viewY,viewM,1).getDay();const days=new Date(viewY,viewM+1,0).getDate();
-    const prevDays=new Date(viewY,viewM,0).getDate();const tk=todayKey();const selV=input.value;
-    let cells='';
-    for(let i=first-1;i>=0;i--)cells+=`<div class="dp-day other">${prevDays-i}</div>`;
-    for(let d=1;d<=days;d++){const k=`${viewY}-${String(viewM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const dow=new Date(viewY,viewM,d).getDay();const hal=(dow===3||dow===6);
-      let cls='dp-day';if(k===tk)cls+=' today';if(k===selV)cls+=' sel';if(hal)cls+=' halaqa';
-      cells+=`<div class="${cls}" data-k="${k}">${d}</div>`;}
-    const tot=first+days;for(let i=1;i<=(7-tot%7)%7;i++)cells+=`<div class="dp-day other">${i}</div>`;
-    pop.innerHTML=`
-      <div class="dp-pop-head">
-        <button type="button" class="dp-nav" data-prev>›</button>
-        <div class="dp-my" data-yearmode>${DP_MONTHS[viewM]} ${viewY}</div>
-        <button type="button" class="dp-nav" data-next>‹</button>
-      </div>
-      <div class="dp-dow">${DP_DOW.map(d=>`<span>${d}</span>`).join('')}</div>
-      <div class="dp-days">${cells}</div>
-      <div class="dp-quick"><button type="button" data-q="0">اليوم</button><button type="button" data-q="1">أمس</button><button type="button" data-q="2">قبل يومين</button></div>`;
-    pop.querySelector('[data-prev]').addEventListener('click',()=>{viewM--;if(viewM<0){viewM=11;viewY--;}drawPop(pop);});
-    pop.querySelector('[data-next]').addEventListener('click',()=>{viewM++;if(viewM>11){viewM=0;viewY++;}drawPop(pop);});
-    pop.querySelector('[data-yearmode]').addEventListener('click',()=>{mode='months';drawPop(pop);});
-    pop.querySelectorAll('[data-k]').forEach(c=>c.addEventListener('click',()=>pick(c.dataset.k)));
-    pop.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{const off=+b.dataset.q;const dt=new Date();dt.setDate(dt.getDate()-off);pick(keyOf(dt));}));
-  }
-  function pick(k){input.value=k;refreshTrigger();closePop();
-    input.dispatchEvent(new Event('change',{bubbles:true}));input.dispatchEvent(new Event('input',{bubbles:true}));}
-  trigger.addEventListener('click',e=>{e.preventDefault();if(input._pop)closePop();else openPop();});
-  input._dpSync=refreshTrigger;
-  refreshTrigger();
+ if(input.dataset.dpDone)return;input.dataset.dpDone='1';input.type='hidden';
+ const trigger=document.createElement('button');trigger.type='button';trigger.className='dp-trigger';
+ trigger.innerHTML='<span class="dp-val"></span><span class="dp-cal-ico" aria-hidden="true">▦</span>';
+ input.after(trigger);let pop,backdrop;
+ function refresh(){trigger.querySelector('.dp-val').textContent=input.value?DurrPreferences.format(input.value,{weekday:'long'}):'اختاري التاريخ';trigger.disabled=input.disabled;}
+ function close(){pop?.remove();backdrop?.remove();pop=null;input._pop=null;trigger.classList.remove('active');dpCloseOpen=null;}
+ trigger.onclick=()=>{
+   if(input.disabled)return;if(pop){close();return;}if(dpCloseOpen)dpCloseOpen();
+   backdrop=document.createElement('div');backdrop.className='dp-backdrop';backdrop.onclick=close;document.body.append(backdrop);
+   pop=document.createElement('div');pop.className='dp-pop';document.body.append(pop);input._pop=pop;dpCloseOpen=close;trigger.classList.add('active');
+   const r=trigger.getBoundingClientRect();pop.style.position='fixed';pop.style.top=Math.max(8,Math.min(r.bottom,window.innerHeight-Math.min(440,window.innerHeight*.75)-8))+'px';pop.style.left=Math.max(8,Math.min(r.left,window.innerWidth-298))+'px';
+   DurrPreferences.picker(pop,{value:input.value,min:input.min,max:input.max,isMarked:isHalaqaDay,onPick:k=>{input.value=k;refresh();close();input.dispatchEvent(new Event('change',{bubbles:true}));input.dispatchEvent(new Event('input',{bubbles:true}));}});
+ };
+ input._dpSync=refresh;input.addEventListener('change',refresh);refresh();
 }
 function initDatepicks(){document.querySelectorAll('input[type=date]').forEach(buildDatepick);}
 function setDateInput(id,val){const inp=document.getElementById(id);if(!inp)return;inp.value=val;if(inp._dpSync)inp._dpSync();}
@@ -4084,20 +3991,28 @@ document.getElementById('acctChip').addEventListener('click',()=>{
   if(fbUser){
     if(confirm('مسجّلة الدخول باسم: '+acctLabel()+'\n\nتسجيل الخروج؟')){
       fbAuth.signOut().then(()=>{localStorage.removeItem('durr-skip-auth');showGate(true);
+
+setGateMode('signin');});
+    }
+  }else{localStorage.removeItem('durr-skip-auth');showGate(true);setGateMode('signin');}
+});
 /* ===== ربط عناصر v50 ===== */
 (function(){
   const a=document.getElementById('homeAccountBtn');if(a)a.addEventListener('click',()=>document.getElementById('acctChip').click());
   const n=document.getElementById('homeNotifBtn');if(n)n.addEventListener('click',()=>openSettings());
   const t=document.getElementById('todayTuneBtn');if(t)t.addEventListener('click',()=>openSettings());
   const r=document.getElementById('todayRefreshV50');if(r)r.addEventListener('click',()=>refreshV50());
-  const m=document.getElementById('btnManualEntryV50');
   ['moreSettingsBtn','moreSettingsTop'].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener('click',openSettings);});
   const st=document.getElementById('moreStagesBtn');if(st)st.addEventListener('click',()=>switchTab('stages'));
 })();
 
-setGateMode('signin');});
-    }
-  }else{localStorage.removeItem('durr-skip-auth');showGate(true);setGateMode('signin');}
+DurrPreferences.subscribe(()=>{
+ if(typeof dpCloseOpen==='function')dpCloseOpen();
+ document.getElementById('datePickModal').classList.remove('open');
+ refreshV50();renderTodayCalIcon();renderCal();
+ if(document.getElementById('tab-stages').classList.contains('active'))renderStages();
+ if(document.getElementById('tab-errors').classList.contains('active'))renderErrors();
+ document.querySelectorAll('input[data-dp-done]').forEach(input=>input._dpSync?.());
 });
 /* ===== نافذة الإعدادات ===== */
 function openSettings(){
@@ -4170,7 +4085,7 @@ renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=84');
+      const reg=await navigator.serviceWorker.register('sw.js?v=85');
       reg.update().catch(()=>{});
       let reloaded=sessionStorage.getItem('durr-sw81-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{

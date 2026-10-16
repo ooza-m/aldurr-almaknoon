@@ -28,7 +28,7 @@ async function boot(){
     if(match)return {ok:true,json:async()=>({tafsir:{resource_id:+match[1],text:'<p>تفسير المصدر '+match[1]+' للآية '+match[2]+'</p><p>فقرة ثانية.</p>'}})};
     throw Error('Unexpected network request: '+url);
   };
-  w.eval(read('reader-core.js'));w.eval(read('reader-audio.js'));
+  w.localStorage.setItem('durr-num','en');w.eval(read('app-preferences.js'));w.eval(read('reader-core.js'));w.eval(read('reader-audio.js'));
   for(const script of w.document.querySelectorAll('script:not([src])')){
     let code=script.textContent;
     if(code.includes('const REC_QUERY='))code+='\nwindow.readerTest={get player(){return audioController},get page(){return cur},get verse(){return playingVerse},settle,faceVerses,loadTafsir,maybeCompleteFaceTafsir};';
@@ -50,6 +50,14 @@ test('reader boots without missing/duplicate IDs or JavaScript errors',async t=>
   const ids=[...w.document.querySelectorAll('[id]')].map(el=>el.id);assert.equal(new Set(ids).size,ids.length);
   const missing=[...read('mushaf.html').matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]).filter(id=>!w.document.getElementById(id)&&!['errClr'].includes(id));assert.deepEqual([...new Set(missing)],[]);
   assert.deepEqual(errors,[]);assert.equal(w.document.getElementById('faceListenBar').parentElement.id,'screen');
+});
+test('page scrubber is under the face before actions and jumps without opening the index',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());const scrubber=$('pageSlider').closest('.reader-scrubber');
+ assert.equal(scrubber.previousElementSibling.id,'pagefoot');assert.ok(scrubber.compareDocumentPosition(w.document.querySelector('.chrome-bot'))&w.Node.DOCUMENT_POSITION_FOLLOWING);
+ assert.equal($('indexOv').querySelector('#pageSlider'),null);$('pageSlider').value='50';$('pageSlider').dispatchEvent(new w.Event('input'));assert.ok($('sBubble').classList.contains('on'));
+ $('pageSlider').dispatchEvent(new w.Event('change'));assert.equal(w.readerTest.page,50);assert.ok(!$('indexOv').classList.contains('open'));
+ $('btnSettings').click();w.DurrPreferences.mount(w.document.querySelector('[data-app-preferences]'));w.document.querySelector('[data-palette=navy]').click();w.document.querySelector('[data-digits=ar]').click();
+ assert.equal(w.document.documentElement.dataset.palette,'navy');assert.equal(w.localStorage.getItem('durr-num'),'ar');assert.match($('pagefoot').textContent,/٥٠/);
 });
 test('face tafsir source buttons really change content and agree with the ayah sheet',async t=>{
   const {dom,w,$,requests}=await boot();t.after(()=>dom.window.close());

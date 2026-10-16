@@ -1,0 +1,38 @@
+/* Shared classic palette controls and brand surfaces. Quran glyphs are untouched. */
+body{background:radial-gradient(ellipse at 0 0,var(--wash),transparent 55%),linear-gradient(150deg,var(--page),var(--parch))!important}
+.bottom-nav,.app-bottom-nav{background:var(--surface)!important;border-color:var(--line)!important}
+.bottom-nav button,.app-bottom-nav button{color:var(--muted)}
+.bottom-nav button.active,.app-bottom-nav button.active{background:var(--wash);color:var(--accent)}
+.bottom-nav .nav-mushaf,.app-bottom-nav .nav-mushaf{background:var(--accent);color:#fff;border-color:var(--surface)}
+.bottom-nav .nav-mushaf.active,.app-bottom-nav .nav-mushaf.active{background:var(--accent-2)}
+.v50-hero{background:linear-gradient(135deg,var(--wash),var(--surface))!important}
+.preferences-panel{color:var(--ink);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;text-align:right}
+.preferences-panel h3{font-size:1rem;margin:0 0 5px}.preferences-intro{font-size:.74rem;color:var(--muted);line-height:1.9;margin-bottom:18px}
+.preferences-panel fieldset{border:0;border-top:1px solid var(--line);padding:17px 0 12px;margin:0;min-width:0}
+.preferences-panel legend{font-size:.82rem;font-weight:700;padding:0 0 0 10px}
+.preferences-panel small{font-size:.7rem;color:var(--muted);line-height:1.9;display:block;margin-top:7px}
+.design-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.design-current,.design-future{padding:12px;border:1px solid var(--line);border-radius:15px;background:var(--surface);text-align:right;color:var(--ink);font:inherit}
+.design-current{border-color:var(--accent);background:var(--wash2)}.design-future:disabled{opacity:.7;cursor:default}
+.design-options b{font-size:.8rem}.design-options small{font-size:.65rem}
+.palette-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.palette-grid button{border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:12px;min-height:90px;text-align:right;color:var(--ink);font:inherit;cursor:pointer}
+.palette-grid button.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.palette-grid b{display:block;font-size:.75rem;margin-top:7px}.palette-swatches{display:flex;gap:0;direction:rtl}.palette-swatches i{display:block;width:27px;height:23px}.palette-swatches i:first-child{border-radius:0 8px 8px 0;border:1px solid rgba(0,0,0,.06)}.palette-swatches i:last-child{border-radius:8px 0 0 8px}
+.pref-segment{display:flex;background:var(--wash2);border:1px solid var(--line);border-radius:13px;padding:4px;gap:4px}
+.pref-segment button{font:inherit;font-size:.78rem;min-height:43px;flex:1;color:var(--ink-2);background:transparent;border:0;border-radius:10px;cursor:pointer}
+.pref-segment button.on{background:var(--surface);color:var(--accent-2);box-shadow:0 2px 6px rgba(0,0,0,.04);font-weight:700}
+.pref-saved{font-size:.72rem;min-height:1.8em;color:var(--accent);margin:5px 0 0}
+.preferences-panel button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#settingsModal .v70-settings-modal{padding-top:max(24px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom));scrollbar-gutter:stable}
+.reader-scrubber{order:3;flex:0 0 auto;width:min(100%,620px);margin:0 auto;padding:2px 20px 4px;color:var(--ink-2)}
+.reader-scrubber .pslider{min-height:28px}.reader-scrubber input[type=range]{width:100%;accent-color:var(--accent)}
+.scrubber-label{display:flex;justify-content:space-between;font-size:.63rem;min-height:18px;color:var(--muted)}
+.reader-scrubber .sbubble{bottom:34px}.reader-scrubber button{font:inherit;color:var(--accent);font-weight:600}
+body.reciting .reader-scrubber,body.focus-mode .reader-scrubber{display:none}
+@media(max-height:620px){.reader-scrubber{padding-block:0}.scrubber-label{display:none}}
+.v50-priority,.v65-hero,.v65-page-token{background:linear-gradient(135deg,var(--surface),var(--wash))!important}
+.v50-btn.soft,.v50-task-action,.v50-more-ico,.v50-arrow{background:var(--wash)!important;color:var(--accent-2)}
+.dp-day{font:inherit;border:0;background:transparent;color:var(--ink);cursor:pointer}.dp-day:disabled{opacity:.35;cursor:default}
+.dp-my{font:inherit;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.dp-pop{max-height:min(440px,75vh);overflow:auto}
