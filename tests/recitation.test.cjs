@@ -143,3 +143,32 @@ test('a discarded browser recognizer cannot change the next session',async()=>{
   recognizer.onresult({resultIndex:0,results:[result]});
   assert.equal(run(c,'recWordPos'),0);
 });
+
+test('chunked recording waits for a pause and discards silence-only buffers',()=>{
+  const c=context();
+  run(c,`qasrStreaming=false;globalThis.segments=[];queueQasrChunkV73=(x,rate)=>segments.push({length:x.length,rate});`);
+  run(c,'collectQasrAudioV80(new Float32Array(32000),16000)');
+  assert.equal(c.segments.length,0);
+  assert.equal(run(c,'qasrSamples'),0);
+  run(c,'collectQasrAudioV80(new Float32Array(32000).fill(.1),16000)');
+  assert.equal(c.segments.length,0);
+  run(c,'collectQasrAudioV80(new Float32Array(11200),16000)');
+  assert.equal(c.segments.length,1);
+  assert.equal(c.segments[0].length,43200);
+});
+
+test('chunked recording bounds a continuous utterance below the server size limit',()=>{
+  const c=context();
+  run(c,`qasrStreaming=false;globalThis.segments=[];queueQasrChunkV73=x=>segments.push(x.length);`);
+  for(let i=0;i<48;i++)run(c,'collectQasrAudioV80(new Float32Array(4096).fill(.1),16000)');
+  assert.equal(c.segments.length,1);
+  assert.ok(c.segments[0]<=16000*12+4096);
+});
+
+test('an unready model never opens the Quran audio processor',async()=>{
+  for(const info of [{engine_loaded:false,quran_specialized:true},{engine_loaded:true,quran_specialized:true,enabled:false}]){
+    const c=context(async()=>({ok:true,json:async()=>info}));
+    assert.equal(await run(c,'startQuranAsrV73({})'),false);
+    assert.equal(run(c,'qasrActive'),false);
+  }
+});

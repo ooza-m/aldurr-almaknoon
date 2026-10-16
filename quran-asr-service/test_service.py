@@ -48,7 +48,7 @@ def api(monkeypatch):
 
 def payload(seq=0, final=False, samples=1600):
     return {'session_id': 'regression', 'seq': seq, 'final': final,
-            'audio_b64': base64.b64encode(np.ones(samples, dtype='<i2').tobytes()).decode()}
+            'audio_b64': base64.b64encode((np.ones(samples, dtype='<i2') * 1000).tobytes()).decode()}
 
 
 def test_retries_do_not_feed_audio_twice(api):
@@ -160,3 +160,50 @@ def test_failed_model_readiness_keeps_health_available(api, monkeypatch):
     assert result['ok'] is True
     assert result['engine_loaded'] is False
     assert result['model_error'] == 'incompatible_model_export'
+
+
+def test_chunked_ctc_is_idempotent_and_never_replays_previous_segment(api, monkeypatch):
+    client, recognizer = api
+    monkeypatch.setattr(service, 'BACKEND', 'sherpa-offline-ctc')
+    monkeypatch.setattr(service, 'ALLOW_EXPERIMENTAL', True)
+    recognizer.calls = 0
+    def decode(stream):
+        recognizer.calls += 1
+        stream.result = SimpleNamespace(text='الحمد لله' if recognizer.calls == 1 else 'رب العالمين')
+    recognizer.decode_stream = decode
+    first = client.post('/transcribe', json=payload()).json()
+    assert first['streaming'] is False
+    assert first['transcript_delta'] == 'الحمد لله'
+    assert client.post('/transcribe', json=payload()).json() == first
+    second = client.post('/transcribe', json=payload(seq=1)).json()
+    assert second['transcript_delta'] == 'رب العالمين'
+    assert second['transcript'] == 'الحمد لله رب العالمين'
+    final = client.post('/transcribe', json=payload(seq=2, final=True, samples=0)).json()
+    assert final['transcript_delta'] == ''
+    assert final['transcript'] == second['transcript']
+    assert recognizer.calls == 2
+
+
+def test_silence_does_not_reach_offline_model(api, monkeypatch):
+    client, recognizer = api
+    monkeypatch.setattr(service, 'BACKEND', 'sherpa-offline-ctc')
+    monkeypatch.setattr(service, 'ALLOW_EXPERIMENTAL', True)
+    body = payload(); body['audio_b64'] = base64.b64encode(np.zeros(32000, dtype='<i2').tobytes()).decode()
+    result = client.post('/transcribe', json=body).json()
+    assert result['transcript_delta'] == ''
+    assert result['confidence_calibrated'] is False
+    assert not recognizer.streams
+
+
+def test_failed_quality_candidate_cannot_be_activated_by_url_alone(api, monkeypatch):
+    client, recognizer = api
+    monkeypatch.setattr(service, 'BACKEND', 'sherpa-offline-ctc')
+    monkeypatch.setattr(service, 'ALLOW_EXPERIMENTAL', False)
+    info = client.get('/health').json()
+    assert info['engine_loaded'] is True
+    assert info['enabled'] is False
+    assert info['experimental'] is True
+    assert client.get('/ready').status_code == 503
+    assert client.post('/warmup').status_code == 503
+    assert client.post('/transcribe', json=payload()).status_code == 503
+    assert not recognizer.streams
