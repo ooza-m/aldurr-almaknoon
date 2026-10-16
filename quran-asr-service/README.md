@@ -1,227 +1,100 @@
-# Quran ASR service
+# Quran ASR service — v80
 
-Backend for the recitation engine in **الدُّرّ المكنون**.
+Quran-specific acoustic transcription for **الدُّرّ المكنون**. The service returns what the model heard; it does not retrieve the nearest canonical ayah. The browser aligns that hypothesis to its Quran text. Automatic findings stay provisional until confidence has been calibrated.
 
-The architecture is deliberately Quran-specific:
+## Experimental candidate: chunked Quran CTC (not approved)
 
-```
-microphone
-  -> Quran ASR
-  -> canonical Quran alignment in the app
-  -> confirmed / uncertain / mutashabihat findings
-  -> active recall and review scheduling
-```
+- Backend: `sherpa-offline-ctc` (CPU, sherpa-onnx).
+- Model: `TheGreatQuran/QuranKarim-SpeechToText-onnxModel`.
+- File: `qurankarim-fastconformer-mixed.onnx`.
+- Pinned upstream revision: `76eab42481554dfe2fd837596802af243482a894`.
+- Base model: `mohammed/fastconformer-quran-ar`, fine-tuned on Quran recitation.
+- Mode: **independent audio segments, not cache-aware live streaming**.
 
-The ASR model only estimates what was recited. It is **not** allowed to decide Quran correctness by itself.
+All three tested precisions made errors on clean short recitation. **This candidate is not approved for the app and is disabled by default.** `QASR_ALLOW_EXPERIMENTAL=1` is required for explicit developer experiments; otherwise `/ready` and `/transcribe` return HTTP 503 even when the model is loaded. Do not set the public app URL to this candidate.
 
-## Configured streaming backend — blocked by a verified export incompatibility
+The browser checks the service's actual capabilities before opening the audio processor. For this backend it collects a segment until a pause (at least 2 seconds of audio and 650 ms of low energy), or 12 seconds maximum. Results arrive after the segment is submitted. This is an experimental recitation mode, not a claim of Tarteel-equivalent latency or accuracy. A bounded low-energy gate discards silence-only buffers. Background noise and quiet voices still require device testing.
 
-**v79 runtime finding:** the configured ONNX bundle loads but crashes sherpa-onnx on real decoding. Inspection shows an offline encoder without streaming cache inputs and combined decoder/joiner graphs. It is not a usable sherpa streaming bundle. See [RUNTIME_VALIDATION.md](RUNTIME_VALIDATION.md). The service now rejects that export before entering native inference; `/ready` returns 503. **Do not publish this model as a working recitation engine.** A compatible replacement must pass an actual multi-chunk probe and then real-recitation evaluation.
+The previous `sherpa-fastconformer` streaming bundle remains an optional path but its selected export failed native inference. See `RUNTIME_VALIDATION.md`. Do not reactivate that bundle without replacing and revalidating its graph interface.
 
-The existing experimental configuration is:
+## Run
 
-- `sherpa-fastconformer`
-- `mohammed/fastconformer-quran-ar-onnx-int8`
-- streaming FastConformer / transducer
-- 16 kHz mono PCM
-- CC-BY-4.0 upstream license; keep model attribution
-
-This checkpoint is Quran-specific and advertised as a streaming INT8 ONNX bundle for sherpa-onnx, but our runtime check found that its graphs do not implement that interface. Its own model card notes that on-device WER verification is still pending, so accuracy must be validated on our recitation test set before claiming parity with Tarteel.
-
-Environment:
-
-```
-QASR_BACKEND=sherpa-fastconformer
-QASR_MODEL=mohammed/fastconformer-quran-ar-onnx-int8
-QASR_PRELOAD=1
-QASR_THREADS=4
-```
-
-## Why the streaming path was introduced
-
-`tarteel-ai/whisper-base-ar-quran` remains supported as a fallback, but the web product needs a low-latency Quran-specific streaming path. The sherpa FastConformer service keeps a recognizer stream per recitation session and returns only the new transcript delta for each chunk.
-
-The app then performs constrained Quran alignment. Uncertain positions remain review candidates; they are not silently promoted to confirmed errors.
-
-## Optional backends
-
-### Quran Whisper fallback
-
-Install the optional dependencies:
-
-```
-pip install torch transformers accelerate soundfile
-```
-
-Then:
-
-```
-QASR_BACKEND=tarteel-whisper
-QASR_MODEL=tarteel-ai/whisper-base-ar-quran
-```
-
-### Full NeMo FastConformer
-
-```
-pip install -r requirements-fastconformer.txt
-QASR_BACKEND=nemo-fastconformer
-QASR_MODEL=mohammed/fastconformer-quran-ar
-```
-
-This is heavier than the ONNX path and normally needs a larger container / GPU.
-
-## Local run
-
-```
+```bash
 cd quran-asr-service
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app:app --host 0.0.0.0 --port 8000
+python -m pip install -r requirements.txt
+# Developer experiments only:
+QASR_ALLOW_EXPERIMENTAL=1 uvicorn app:app --host 0.0.0.0 --port 8000 --workers 1
 ```
 
-Health:
+The model preloads by default. Set `QASR_PRELOAD=0` only for tests or explicit manual warmup. `QASR_THREADS` defaults to 4; the container uses 2. One service replica and one worker are required because session ordering/retry state is in memory.
 
-```
-curl http://localhost:8000/health
-```
-
-Warm model before a live session:
-
-```
-curl -X POST http://localhost:8000/warmup
-```
-
-## Docker
-
-```
+```bash
 docker build -t durr-quran-asr .
-docker run --rm -p 8000:8000 durr-quran-asr
+docker run --rm -e QASR_ALLOW_EXPERIMENTAL=1 -p 8000:8000 durr-quran-asr
 ```
 
-The first boot downloads the model files from Hugging Face unless they are already in the cache.
+The container respects `PORT` (default `8000`). Public model files download at first boot; no Hugging Face token is required for the pinned default. Never commit credentials or put them in `config.js`.
 
-## Browser configuration
+## Endpoints
 
-The public app reads `/config.js`. Put only the public service URL there:
+- `GET /health`: process liveness, model load state, mode, revision and load errors.
+- `GET /ready`: HTTP 200 only after model initialization; otherwise HTTP 503.
+- `POST /warmup`: load the selected model.
+- `GET /model-info`: model metadata and attribution.
+- `POST /transcribe`: mono PCM16 16 kHz, at most 15 seconds per request.
+- `DELETE /session/{session_id}`: release ordering/retry state.
 
-```js
-window.DURR_CONFIG = {
-  quranAsr: {
-    url: "https://YOUR-QURAN-ASR.example.com",
-    mode: "quran-specialized-streaming",
-    model: "mohammed/fastconformer-quran-ar-onnx-int8"
-  }
-};
-```
-
-Never put provider keys, Hugging Face tokens, or other secrets in `config.js`.
-
-## Streaming protocol
-
-`POST /transcribe`
+Request:
 
 ```json
-{
-  "audio_b64": "<base64 signed 16-bit PCM>",
-  "sample_rate": 16000,
-  "page": 2,
-  "position": 14,
-  "session_id": "rs_...",
-  "seq": 3,
-  "final": false
-}
+{"session_id":"rs_example","seq":0,"sample_rate":16000,"audio_b64":"<base64 PCM16>","final":false}
 ```
 
-The service preserves the streaming recognizer state by `session_id` and returns both cumulative and delta text:
+Response includes `transcript`, `transcript_delta`, `streaming`, `seq`, `final`, `confidence: null`, and `confidence_calibrated: false`. In chunked mode only the current segment is returned in the delta; cumulative text is for diagnostics. Send the final tail with `final: true`, including an empty final request when there is no remaining audio. Sequences start at zero per microphone run. Exact retries reuse a cached response; conflicting or out-of-order requests return HTTP 409. Final retry state is retained for 60 seconds. Session capacity is controlled by `QASR_MAX_SESSIONS`.
 
-```json
-{
-  "transcript": "...",
-  "transcript_delta": "...",
-  "backend": "sherpa-fastconformer",
-  "model": "mohammed/fastconformer-quran-ar-onnx-int8",
-  "quran_specialized": true,
-  "streaming": true,
-  "seq": 3,
-  "final": false
-}
-```
+The browser waits for the final response before saving, and labels missing analysis incomplete. Recall attempts never earn complete-face credit or change full-face scheduling. The browser fallback also drains its last final recognition event before saving.
 
-Send the last chunk with `"final": true` so the recognizer can flush and release its stream. A small retry receipt remains for 60 seconds.
+## Verification
 
-## Accuracy rule
-
-Do not market a model-card WER as the app's effective error-detection accuracy. We need our own held-out recordings with:
-
-- correct Hafs recitation
-- deliberate omissions
-- substitutions
-- repetitions
-- pauses and restarts
-- common mutashabihat jumps
-- phone microphones and background noise
-
-The application should stay conservative: low-confidence findings go to active recall instead of becoming confirmed errors.
-
-
-## Local accuracy evaluation
-
-Do not tune thresholds from the model card alone. Put private/local WAV files in `quran-asr-service/samples/` (do not commit recordings unless you intend to), create a JSONL manifest based on `eval-manifest.example.jsonl`, then run:
-
-```
-python evaluate.py eval-manifest.jsonl --out eval-results.json
-```
-
-The evaluator reports overall WER and WER by category. Keep categories separate for clean correct recitation, deliberate omission, substitution, repetition, mutashabihat jump, and phone/noise. Those numbers are the basis for calibrating the application's confirmed-error thresholds.
-
-## v79: reliable stream completion and conservative assessment
-
-- The browser waits for the final chunk and pending similarity analysis before saving a session.
-- Each microphone run has its own stream ID; pause/resume never reuses a finalized stream.
-- `seq` starts at zero and increases by one per stream. Retrying the same sequence and audio returns the cached response without feeding audio twice. Changed audio or skipped sequences return HTTP 409. Retry information survives finalization for 60 seconds; idle live streams expire after `QASR_SESSION_TTL`.
-- A cumulative hypothesis is provisional. `transcript_delta` contains only newly committed whole words; an empty delta must remain empty. A revision of already committed words returns `transcript_revised: true` and does not replay them.
-- Final PCM shorter than 400 samples is preserved. Invalid odd-length PCM is rejected.
-- Alignment similarity is not calibrated acoustic confidence. The service currently returns `confidence: null` and `confidence_calibrated: false`. Automatic findings therefore remain candidates for verification; manual confirmation remains available. Candidate positions do not subtract grade points.
-- Network failure, an out-of-order response, or an unreconciled transcript revision marks the analysis incomplete and prevents complete-face credit for the current face.
-- Recall is restricted to its requested ayah. It never completes a face or updates face-review scheduling, including when importing an old client's recall result.
-- The microphone buffer is released on stop; the client no longer retains an unused recording of the entire session.
-
-### Regression checks
-
-From the repository root, without downloading any model:
-
-```
+```bash
 python -m pip install -r quran-asr-service/requirements-test.txt
 python -m pytest -q quran-asr-service/test_service.py
 node --test tests/recitation.test.cjs
 ```
 
-These verify the HTTP and browser protocol with simulated model responses. They **do not measure Quran recognition accuracy** and do not replace real-microphone testing on iPhone/Safari.
+These tests simulate recognizers; they do not measure Quran recognition accuracy. To isolate a real native model from the service process:
 
-### Evaluation reference rule
+```bash
+python quran-asr-service/probe_runtime.py \
+  --repo TheGreatQuran/QuranKarim-SpeechToText-onnxModel \
+  --revision 76eab42481554dfe2fd837596802af243482a894 \
+  --model-file qurankarim-fastconformer-mixed.onnx \
+  --wav /absolute/path/recitation-16k-mono.wav
+```
 
-`reference` must be a human-verified transcript of **what was actually spoken**, including deliberate mistakes. For an omission or substitution recording, using the correct canonical ayah as the reference would reward an ASR model for silently correcting the speaker. Use a separate canonical Quran reference when assessing mistake detection. The present evaluator measures transcription WER only, not error-detector precision or recall.
+The probe tests repeated streams in a child process and reports native crashes/timeouts. Runtime compatibility is separate from recognition accuracy. The unfiltered model emits a spurious character on pure silence; the service therefore gates silence before inference. See `RUNTIME_VALIDATION_V80.md` for measured smoke results.
 
-Paths in a manifest resolve relative to that manifest. Private recordings, local manifests, and evaluation results are excluded from Git by default.
+## Accuracy evaluation
 
-### Deployment boundary
+Use local PCM16/16 kHz/mono WAV files and the example JSONL manifest:
 
-The recognizer keeps live streams in process memory. Run **one Uvicorn worker and one service replica**; do not deploy this service as stateless per-request functions. Horizontal scaling needs stream affinity or a redesigned state layer.
+```bash
+python quran-asr-service/evaluate.py /absolute/path/manifest.jsonl --out /absolute/path/results.json
+```
 
-`/health` is liveness, not model readiness. `/ready` returns HTTP 503 until the model is loaded, then HTTP 200; use it as the deployment readiness check. Check its `engine_loaded` field and successfully call `/warmup` before connecting a deployed endpoint in `config.js`. A production claim requires an actual model runtime test and held-out recordings; the ONNX model card still reports pending sherpa/on-device verification.
+References must record **what was actually spoken**, including deliberate omissions and substitutions. Using the correct ayah as the reference for an incorrect recitation would reward a recognizer for hiding the mistake. Manifest audio paths resolve relative to the manifest. WER measures transcription; it does not measure the precision or recall of the browser's mistake detector. Test correct and deliberately mistaken recitation, repetitions, pauses, mutashabihat, phone microphones and background noise separately. Do not promote model-card benchmarks to app accuracy claims.
 
-The repository's web app can be updated independently. Until a service is deployed and its URL configured, recitation remains in the explicitly labelled browser-limited mode.
+## Railway
 
+Use repository `ooza-m/aldurr-almaknoon`, service root `/quran-asr-service`, Dockerfile `Dockerfile`, one replica, and `/ready` as the health check. The configuration file lives at `/quran-asr-service/railway.json`. Set `CORS_ORIGINS` to the actual web app origin. Do not replace `/ready` with `/health` to hide load failures. A staged service is not a live deployment.
 
-### Container hosting setup
+Only after a replacement has passed quality evaluation, deployment, real HTTP/audio verification and public-domain checks should its URL be set in `config.js`. The current URL remains empty until then.
 
-Use `quran-asr-service` as the service root and its Dockerfile to build. The container accepts the platform's `PORT` environment variable (default `8000`) and explicitly runs one Uvicorn worker. Keep one replica for streaming state. Set `CORS_ORIGINS` to the app origin, and retain `QASR_PRELOAD=1`. Do not configure the public app URL until `/ready` succeeds and a real audio request has been checked.
+## Attribution and optional backends
 
-The browser fallback also waits for its final recognition event before saving; a stop timeout marks the result incomplete. Retired recognizers cannot update a later session.
+The selected export is distributed under CC-BY-4.0. Credit TheGreatQuran, Mohammed's Quran FastConformer fine-tune, NVIDIA's original FastConformer, and Tarteel's EveryAyah training data. Preserve the upstream model attribution:
 
-### Prepared Railway deployment
+- https://huggingface.co/TheGreatQuran/QuranKarim-SpeechToText-onnxModel
+- https://huggingface.co/mohammed/fastconformer-quran-ar
 
-This repository includes a deployment configuration, not a live deployment. Use source `ooza-m/aldurr-almaknoon`, root directory `/quran-asr-service`, and config-file path `/quran-asr-service/railway.json`. The Docker command respects `PORT` and runs one worker; the config keeps one replica. Its `/ready` health check intentionally fails until a compatible model successfully loads. Do not change it to `/health` to conceal an incompatible model.
-
-A Railway account connection and a validated model are still required. No hosting plan, paid resource, or public speech endpoint has been created by this update.
+Optional `tarteel-whisper` and `nemo-fastconformer` backends remain supported when their own dependencies and model IDs are configured. They are not the tested deployment default. New gated models require the account holder's own access grant and must pass runtime and recitation evaluation before activation.

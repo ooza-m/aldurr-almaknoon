@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+node_modules/
 quran-asr-service/samples/
 quran-asr-service/eval-manifest.jsonl
 quran-asr-service/eval-results*.json

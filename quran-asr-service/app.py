@@ -11,18 +11,29 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 APP_NAME = "Durr Quran ASR"
-BACKEND = os.getenv("QASR_BACKEND", "sherpa-fastconformer").strip().lower()
+BACKEND = os.getenv("QASR_BACKEND", "sherpa-offline-ctc").strip().lower()
 MODEL_ID = os.getenv(
-    "QASR_MODEL", "mohammed/fastconformer-quran-ar-onnx-int8"
+    "QASR_MODEL", {
+        "sherpa-offline-ctc": "TheGreatQuran/QuranKarim-SpeechToText-onnxModel",
+        "sherpa-fastconformer": "mohammed/fastconformer-quran-ar-onnx-int8",
+        "tarteel-whisper": "tarteel-ai/whisper-base-ar-quran",
+        "nemo-fastconformer": "mohammed/fastconformer-quran-ar",
+    }.get(BACKEND, "")
 ).strip()
+MODEL_REVISION = os.getenv("QASR_MODEL_REVISION") or (
+    "76eab42481554dfe2fd837596802af243482a894"
+    if MODEL_ID == "TheGreatQuran/QuranKarim-SpeechToText-onnxModel" else None
+)
+MODEL_FILE = os.getenv("QASR_MODEL_FILE", "qurankarim-fastconformer-mixed.onnx")
 HF_TOKEN = os.getenv("HF_TOKEN") or None
 SESSION_TTL = int(os.getenv("QASR_SESSION_TTL", "1200"))
 MAX_SESSIONS = max(1, int(os.getenv("QASR_MAX_SESSIONS", "32")))
 MAX_PCM_BYTES = 16000 * 2 * 15
 NUM_THREADS = max(1, int(os.getenv("QASR_THREADS", "4")))
 PRELOAD = os.getenv("QASR_PRELOAD", "1") not in {"0", "false", "False"}
+ALLOW_EXPERIMENTAL = os.getenv("QASR_ALLOW_EXPERIMENTAL", "0") in {"1", "true", "True"}
 
-app = FastAPI(title=APP_NAME, version="2.0.0")
+app = FastAPI(title=APP_NAME, version="2.1.0")
 
 origins = [
     x.strip()
@@ -58,7 +69,7 @@ class TranscribeRequest(BaseModel):
 
 
 def _device_name() -> str:
-    if BACKEND == "sherpa-fastconformer":
+    if BACKEND in {"sherpa-fastconformer", "sherpa-offline-ctc"}:
         return "cpu"
     try:
         import torch
@@ -118,6 +129,17 @@ def _load_sherpa():
         feature_dim=80,
         num_threads=NUM_THREADS,
         decoding_method="greedy_search",
+    )
+
+
+def _load_offline_ctc():
+    from huggingface_hub import hf_hub_download
+    import sherpa_onnx
+
+    model = hf_hub_download(MODEL_ID, MODEL_FILE, revision=MODEL_REVISION, token=HF_TOKEN)
+    tokens = hf_hub_download(MODEL_ID, "tokens.txt", revision=MODEL_REVISION, token=HF_TOKEN)
+    return sherpa_onnx.OfflineRecognizer.from_nemo_ctc(
+        model=model, tokens=tokens, num_threads=NUM_THREADS,
     )
 
 
@@ -190,7 +212,9 @@ def _load_engine():
             raise IncompatibleModelError("Configured model export is incompatible")
 
         try:
-            if BACKEND == "sherpa-fastconformer":
+            if BACKEND == "sherpa-offline-ctc":
+                _engine = _load_offline_ctc()
+            elif BACKEND == "sherpa-fastconformer":
                 _engine = _load_sherpa()
             elif BACKEND == "tarteel-whisper":
                 _engine = _load_whisper()
@@ -270,7 +294,7 @@ def _transcribe_sherpa(
             if len(_sessions) >= MAX_SESSIONS:
                 raise HTTPException(status_code=503, detail="session capacity reached")
             state = {
-                "stream": recognizer.create_stream(),
+                "stream": recognizer.create_stream() if BACKEND == "sherpa-fastconformer" else None,
                 "lock": threading.Lock(),
                 "next_seq": 0,
                 "responses": {},
@@ -287,19 +311,27 @@ def _transcribe_sherpa(
                 return cached[1]
             if seq != state["next_seq"] or state.get("finished"):
                 raise HTTPException(status_code=409, detail="chunk out of order")
-        stream = state.get("stream")
-        if stream is None:
-            raise HTTPException(status_code=409, detail="session already finalized")
-        if audio.size:
-            stream.accept_waveform(16000, audio)
-        if final:
-            # Allow the encoder's last partial window to produce its tokens.
-            stream.accept_waveform(16000, np.zeros(4800, dtype=np.float32))
-            stream.input_finished()
-        while recognizer.is_ready(stream):
-            recognizer.decode_stream(stream)
-        text = _result_text(recognizer.get_result(stream))
-        delta, revised = _stable_delta(state, text, final)
+        if BACKEND == "sherpa-offline-ctc":
+            # Each browser segment is decoded independently; no canonical ayah
+            # retrieval or language-model correction is used here.
+            delta = _decode_offline_ctc(recognizer, audio)
+            text = (state.get("text", "") + " " + delta).strip()
+            state["text"] = text
+            revised = False
+        else:
+            stream = state.get("stream")
+            if stream is None:
+                raise HTTPException(status_code=409, detail="session already finalized")
+            if audio.size:
+                stream.accept_waveform(16000, audio)
+            if final:
+                # Allow the encoder's last partial window to produce its tokens.
+                stream.accept_waveform(16000, np.zeros(4800, dtype=np.float32))
+                stream.input_finished()
+            while recognizer.is_ready(stream):
+                recognizer.decode_stream(stream)
+            text = _result_text(recognizer.get_result(stream))
+            delta, revised = _stable_delta(state, text, final)
         result = (text, delta, revised)
         state["updated_at"] = time.time()
         if seq is not None:
@@ -316,6 +348,17 @@ def _transcribe_sherpa(
         with _sessions_lock:
             _sessions.pop(sid, None)
     return result
+
+
+def _decode_offline_ctc(recognizer, audio: np.ndarray) -> str:
+    # An energy gate prevents silence-only hallucinations. It is NOT a speech
+    # classifier or calibrated acoustic confidence; noisy input can still pass.
+    if not audio.size or float(np.sqrt(np.mean(audio * audio))) < 0.0001:
+        return ""
+    stream = recognizer.create_stream()
+    stream.accept_waveform(16000, audio)
+    recognizer.decode_stream(stream)
+    return _result_text(stream.result)
 
 
 def _transcribe_whisper(audio: np.ndarray) -> str:
@@ -342,7 +385,7 @@ def _transcribe_nemo(audio: np.ndarray) -> str:
 
 @app.on_event("startup")
 def _startup():
-    if PRELOAD:
+    if PRELOAD and (BACKEND != "sherpa-offline-ctc" or ALLOW_EXPERIMENTAL):
         threading.Thread(target=lambda: _safe_preload(), daemon=True).start()
 
 
@@ -361,14 +404,18 @@ def health():
         "service": APP_NAME,
         "backend": BACKEND,
         "model": MODEL_ID,
+        "revision": MODEL_REVISION,
+        "recitation_mode": "streaming" if BACKEND == "sherpa-fastconformer" else "chunked",
         "device": _device_name(),
         "quran_specialized": True,
         "streaming": BACKEND == "sherpa-fastconformer",
         "engine_loaded": _engine is not None,
+        "experimental": BACKEND == "sherpa-offline-ctc",
+        "enabled": BACKEND != "sherpa-offline-ctc" or ALLOW_EXPERIMENTAL,
         "model_error": _engine_error,
         "license_note": (
             "CC-BY-4.0 model; attribution required"
-            if MODEL_ID.startswith("mohammed/")
+            if MODEL_ID.startswith(("mohammed/", "TheGreatQuran/"))
             else "review upstream model license"
         ),
     }
@@ -379,6 +426,7 @@ def model_info():
     return {
         "backend": BACKEND,
         "model": MODEL_ID,
+        "revision": MODEL_REVISION,
         "quran_specialized": True,
         "streaming": BACKEND == "sherpa-fastconformer",
         "sample_rate": 16000,
@@ -387,8 +435,9 @@ def model_info():
         "engine_loaded": _engine is not None,
         "model_error": _engine_error,
         "attribution": (
-            "mohammed/fastconformer-quran-ar-onnx-int8 (CC-BY-4.0)"
-            if MODEL_ID.startswith("mohammed/")
+            "TheGreatQuran export / Mohammed Quran fine-tune / NVIDIA FastConformer (CC-BY-4.0)"
+            if MODEL_ID.startswith("TheGreatQuran/")
+            else MODEL_ID + " (CC-BY-4.0)" if MODEL_ID.startswith("mohammed/")
             else MODEL_ID
         ),
     }
@@ -396,6 +445,8 @@ def model_info():
 
 @app.get("/ready")
 def ready():
+    if BACKEND == "sherpa-offline-ctc" and not ALLOW_EXPERIMENTAL:
+        raise HTTPException(status_code=503, detail="Experimental backend is not enabled")
     if _engine is None:
         raise HTTPException(status_code=503, detail="Quran ASR model is not ready")
     return {"ok": True, "engine_loaded": True, "backend": BACKEND, "model": MODEL_ID}
@@ -403,6 +454,8 @@ def ready():
 
 @app.post("/warmup")
 def warmup():
+    if BACKEND == "sherpa-offline-ctc" and not ALLOW_EXPERIMENTAL:
+        raise HTTPException(status_code=503, detail="Experimental backend is not enabled")
     try:
         _load_engine()
     except Exception as exc:
@@ -417,10 +470,12 @@ def warmup():
 
 @app.post("/transcribe")
 def transcribe(req: TranscribeRequest):
+    if BACKEND == "sherpa-offline-ctc" and not ALLOW_EXPERIMENTAL:
+        raise HTTPException(status_code=503, detail="Experimental backend is not enabled")
     audio = _decode_pcm(req)
 
     try:
-        if BACKEND == "sherpa-fastconformer":
+        if BACKEND in {"sherpa-fastconformer", "sherpa-offline-ctc"}:
             text, delta, revised = _transcribe_sherpa(
                 audio, req.session_id or "", req.final, req.seq
             )

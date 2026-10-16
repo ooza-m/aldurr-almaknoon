@@ -1,0 +1,177 @@
+{
+  "date": "2026-10-16",
+  "purpose": "Runtime and transcription smoke test; not a held-out accuracy benchmark",
+  "model_revision": "76eab42481554dfe2fd837596802af243482a894",
+  "source_audio": "https://everyayah.com/data/Alafasy_128kbps/00100[2-4].mp3",
+  "mixed_http": {
+    "model": "TheGreatQuran/QuranKarim-SpeechToText-onnxModel",
+    "revision": "76eab42481554dfe2fd837596802af243482a894",
+    "mode": "chunked-offline",
+    "audio_source": "https://everyayah.com/data/Alafasy_128kbps/00100[2-4].mp3",
+    "clips": [
+      {
+        "ayah": "1:2",
+        "reference": "الحمد لله رب العالمين",
+        "hypothesis": "الْحَمْدُ لِلَّهِ رَبِّ العالمين",
+        "normalized_match": true,
+        "audio_seconds": 5.5336875,
+        "request_seconds": 0.438
+      },
+      {
+        "ayah": "1:3",
+        "reference": "الرحمن الرحيم",
+        "hypothesis": "ح الرحيم",
+        "normalized_match": false,
+        "audio_seconds": 4.5725,
+        "request_seconds": 0.286
+      },
+      {
+        "ayah": "1:4",
+        "reference": "مالك يوم الدين",
+        "hypothesis": "مَالِكِ يَوْمِ الددِّّين",
+        "normalized_match": false,
+        "audio_seconds": 4.6013125,
+        "request_seconds": 0.229
+      }
+    ],
+    "exact_retry": true,
+    "empty_final_delta": true,
+    "silence_filtered": true,
+    "accuracy_benchmark": false
+  },
+  "q8_runtime": {
+    "repo": "TheGreatQuran/QuranKarim-SpeechToText-onnxModel",
+    "revision": "76eab42481554dfe2fd837596802af243482a894",
+    "model_file": "qurankarim-fastconformer-q8.onnx",
+    "mode": "offline-ctc",
+    "load_seconds": 1.817,
+    "runs": [
+      {
+        "clip": "silence",
+        "repeat": 0,
+        "audio_seconds": 2.0,
+        "decode_seconds": 0.081,
+        "transcript": "ي"
+      },
+      {
+        "clip": "silence",
+        "repeat": 1,
+        "audio_seconds": 2.0,
+        "decode_seconds": 0.084,
+        "transcript": "ي"
+      },
+      {
+        "clip": "fatiha-2.wav",
+        "repeat": 0,
+        "audio_seconds": 5.534,
+        "decode_seconds": 0.218,
+        "transcript": "الْحَمْدُ لِلَّهِ رَبِّ الْعَمِينَ"
+      },
+      {
+        "clip": "fatiha-2.wav",
+        "repeat": 1,
+        "audio_seconds": 5.534,
+        "decode_seconds": 0.213,
+        "transcript": "الْحَمْدُ لِلَّهِ رَبِّ الْعَمِينَ"
+      },
+      {
+        "clip": "fatiha-3.wav",
+        "repeat": 0,
+        "audio_seconds": 4.572,
+        "decode_seconds": 0.104,
+        "transcript": "الرَّحْمَن الرَّحِيم"
+      },
+      {
+        "clip": "fatiha-3.wav",
+        "repeat": 1,
+        "audio_seconds": 4.572,
+        "decode_seconds": 0.102,
+        "transcript": "الرَّحْمَن الرَّحِيم"
+      },
+      {
+        "clip": "fatiha-4.wav",
+        "repeat": 0,
+        "audio_seconds": 4.601,
+        "decode_seconds": 0.094,
+        "transcript": "مَالِكِ يَوْمِ الدِّينِ"
+      },
+      {
+        "clip": "fatiha-4.wav",
+        "repeat": 1,
+        "audio_seconds": 4.601,
+        "decode_seconds": 0.099,
+        "transcript": "مَالِكِ يَوْمِ الدِّينِ"
+      }
+    ],
+    "runtime_verified": true,
+    "accuracy_verified": false
+  },
+  "fp32_runtime": {
+    "repo": "TheGreatQuran/QuranKarim-SpeechToText-onnxModel",
+    "revision": "76eab42481554dfe2fd837596802af243482a894",
+    "model_file": "qurankarim-fastconformer.onnx",
+    "mode": "offline-ctc",
+    "load_seconds": 3.709,
+    "runs": [
+      {
+        "clip": "silence",
+        "repeat": 0,
+        "audio_seconds": 2.0,
+        "decode_seconds": 0.093,
+        "transcript": "ت"
+      },
+      {
+        "clip": "silence",
+        "repeat": 1,
+        "audio_seconds": 2.0,
+        "decode_seconds": 0.107,
+        "transcript": "ت"
+      },
+      {
+        "clip": "fatiha-2.wav",
+        "repeat": 0,
+        "audio_seconds": 5.534,
+        "decode_seconds": 0.19,
+        "transcript": "الْحَمْدُ لِلَّهِ رَبِّ الْعَمِينَ"
+      },
+      {
+        "clip": "fatiha-2.wav",
+        "repeat": 1,
+        "audio_seconds": 5.534,
+        "decode_seconds": 0.196,
+        "transcript": "الْحَمْدُ لِلَّهِ رَبِّ الْعَمِينَ"
+      },
+      {
+        "clip": "fatiha-3.wav",
+        "repeat": 0,
+        "audio_seconds": 4.572,
+        "decode_seconds": 0.159,
+        "transcript": "الرَّحْمَن الرَّحِيم"
+      },
+      {
+        "clip": "fatiha-3.wav",
+        "repeat": 1,
+        "audio_seconds": 4.572,
+        "decode_seconds": 0.156,
+        "transcript": "الرَّحْمَن الرَّحِيم"
+      },
+      {
+        "clip": "fatiha-4.wav",
+        "repeat": 0,
+        "audio_seconds": 4.601,
+        "decode_seconds": 0.154,
+        "transcript": "مَالِكِ يَوْمِ الدِّينِ"
+      },
+      {
+        "clip": "fatiha-4.wav",
+        "repeat": 1,
+        "audio_seconds": 4.601,
+        "decode_seconds": 0.162,
+        "transcript": "مَالِكِ يَوْمِ الدِّينِ"
+      }
+    ],
+    "runtime_verified": true,
+    "accuracy_verified": false
+  },
+  "decision": "Not approved for public recitation assessment. Experimental backend is disabled by default. No deployment activated."
+}
