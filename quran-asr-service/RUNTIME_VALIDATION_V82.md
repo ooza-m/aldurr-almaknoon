@@ -31,7 +31,15 @@ contract. This preflight does not establish successful audio inference.
 
 ## Real-audio validation status
 
-Pending deployment of the adapter. `selftest_runner.py` performs bounded
+The first adapter deployment (`670cfd0c-1d9d-44dc-b661-caf2773dd561`) exposed
+an actual Q8 export failure on the one-frame final tail: ConvInteger received
+a zero time axis. Readiness correctly stayed 503. The adapter now pads only
+the final native window to the proven 112-frame size with normalized silence
+and discards outputs beyond the real frame count (8x subsampling). A regression
+test ensures padding tokens cannot leak into the transcript. This repair still
+requires an observed successful native run.
+
+`selftest_runner.py` performs bounded
 loopback HTTP requests using only public EveryAyah recordings (six clips,
 three reciters), silence, exact retries and an empty final tail. Results must
 be observed in `DURR_SMOKE_CASE` / `DURR_SMOKE_DONE` logs before claiming runtime

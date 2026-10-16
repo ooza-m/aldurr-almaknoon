@@ -66,6 +66,25 @@ def test_silence_and_empty_final_do_not_enter_native_decoder():
     assert stream.accept(np.zeros(0, np.float32), final=True) == ""
 
 
+def test_short_final_window_is_padded_but_padding_tokens_are_discarded():
+    seen = []
+    def run(_, inputs):
+        seen.append(inputs)
+        logits = np.full((1, 14, 1025), -100, np.float32)
+        logits[0, 0, 4] = 0
+        logits[0, 1:, 7] = 0
+        return [logits, np.array([14]), inputs['cache_last_channel'], inputs['cache_last_time'], inputs['cache_last_channel_len']]
+    engine = fake_engine([])
+    engine.session = SimpleNamespace(run=run)
+    stream = MunoStream(engine)
+    result = stream.accept(np.ones(18000, np.float32) * .1, final=True)
+    assert len(seen) == 2
+    assert all(item['audio_signal'].shape == (1, 80, 112) for item in seen)
+    assert all(item['length'][0] == 112 for item in seen)
+    # First full window emits 4,7; the single real tail frame emits only 4.
+    assert result == '4 7 4'
+
+
 def test_stream_state_is_not_shared_between_sessions():
     engine = fake_engine([4, 7])
     a, b = MunoStream(engine), MunoStream(engine)

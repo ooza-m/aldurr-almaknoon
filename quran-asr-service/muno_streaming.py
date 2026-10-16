@@ -112,13 +112,20 @@ class MunoStream:
         while self.pending.shape[1] >= 112 or (final and self.pending.shape[1]):
             size = min(112, self.pending.shape[1])
             chunk, self.pending = self.pending[:, :size], self.pending[:, size:]
+            # The granted Q8 graph crashes on a 1-frame final input after
+            # subsampling (ConvInteger receives a zero time axis). Always use
+            # its proven 112-frame physical window; only finalization pads.
+            # The right context is normalized silence, not artificial speech.
+            if size < 112:
+                silence = (np.float32(np.log(2 ** -24)) - self.engine.mean) / (self.engine.std + 1e-5)
+                chunk = np.concatenate((chunk, np.repeat(silence[:, None], 112 - size, axis=1)), axis=1).astype(np.float32)
             values = self.engine.session.run(None, {
-                "audio_signal": chunk[None], "length": np.array([size], np.int64),
+                "audio_signal": chunk[None], "length": np.array([112], np.int64),
                 "cache_last_channel": self.channel, "cache_last_time": self.time,
                 "cache_last_channel_len": self.cache_length,
             })
             logp, lengths, self.channel, self.time, self.cache_length = values
-            usable = int(lengths[0])
+            usable = min(int(lengths[0]), (size + 7) // 8)
             if usable < 0 or usable > logp.shape[1] or not np.isfinite(logp).all():
                 raise ValueError("Invalid model output")
             for token in logp[0, :usable].argmax(-1):
