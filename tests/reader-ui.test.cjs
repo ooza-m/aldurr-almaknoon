@@ -21,12 +21,14 @@ async function boot(){
   w.HTMLAnchorElement.prototype.click=function(){downloads.push(this.download);};
   w.fetch=async url=>{
     url=String(url);requests.push(url);
+    if(url.includes('/chapter_recitations/')){const chapter=+url.match(/chapter_recitations\/\d+\/(\d+)/)[1];return {ok:true,json:async()=>({audio_file:{chapter_id:chapter,audio_url:'https://download.quranicaudio.com/qdc/khalil_al_husary/murattal/'+chapter+'.mp3',timestamps:Array.from({length:286},(_,i)=>({verse_key:chapter+':'+(i+1),timestamp_from:i*10000,timestamp_to:(i+1)*10000}))}})};}
+    if(url.includes('download.quranicaudio.com')||url.includes('everyayah.com'))return {ok:true,arrayBuffer:async()=>new ArrayBuffer(16)};
     if(url.startsWith('data/'))return {ok:true,json:async()=>JSON.parse(read(url))};
     const match=url.match(/tafsirs\/(\d+)\/by_ayah\/([\d:]+)/);
     if(match)return {ok:true,json:async()=>({tafsir:{resource_id:+match[1],text:'<p>تفسير المصدر '+match[1]+' للآية '+match[2]+'</p><p>فقرة ثانية.</p>'}})};
     throw Error('Unexpected network request: '+url);
   };
-  w.eval(read('reader-core.js'));
+  w.eval(read('reader-core.js'));w.eval(read('reader-audio.js'));
   for(const script of w.document.querySelectorAll('script:not([src])')){
     let code=script.textContent;
     if(code.includes('const REC_QUERY='))code+='\nwindow.readerTest={get player(){return audioController},get page(){return cur},get verse(){return playingVerse},settle,faceVerses,loadTafsir,maybeCompleteFaceTafsir};';
@@ -64,7 +66,7 @@ test('listen settings, speed, persistent highlighting and next-page following ar
   $('audioReciter').value='husary';$('audioReciter').dispatchEvent(new w.Event('change'));
   $('audioRate').value='1.5';$('audioRate').dispatchEvent(new w.Event('change'));
   $('audioForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();await tick();
-  assert.equal(w.readerTest.player.status,'playing');assert.match(audio[0].src,/Husary/);assert.equal(audio[0].playbackRate,1.5);
+  assert.equal(w.readerTest.player.status,'playing');assert.match(audio[0].src,/^blob:/);assert.ok(w.readerTest.player.plan);assert.equal(audio[0].playbackRate,1.5);
   assert.ok(w.document.querySelector('#paneB .qw.playing[data-vk="1:1"]'));
   $('faceListenPlay').click();await tick();assert.equal(w.readerTest.player.status,'paused');assert.ok(w.document.querySelector('#paneB .qw.playing[data-vk="1:1"]'));
   $('faceListenNext').click();await tick();assert.equal(w.readerTest.verse,'1:2');

@@ -27,6 +27,50 @@ function context(fetchImpl = async()=>({ok:true,json:async()=>({seq:0,transcript
 }
 const run = (c, code) => vm.runInContext(code,c);
 
+test('interim speech reveals a reversible preview without committing coverage or errors',()=>{
+  const c=context();run(c,`recSeq.forEach(w=>{const classes=new Set();w.el.classList={add:k=>classes.add(k),remove:k=>classes.delete(k),contains:k=>classes.has(k)};});previewSpeechV84('الحمد لله');`);
+  assert.equal(run(c,`recSeq[0].el.classList.contains('rec-preview')`),true);
+  assert.equal(run(c,'recPageState.covered.size'),0);assert.equal(run(c,'recWordPos'),0);assert.equal(run(c,'ERR.length'),0);assert.equal(run(c,'recSession.findings.length'),0);
+  run(c,`previewSpeechV84('الحمد');`);assert.equal(run(c,`recSeq[1].el.classList.contains('rec-preview')`),false);
+  run(c,'clearSpeechPreview()');assert.equal(run(c,`recSeq[0].el.classList.contains('rec-preview')`),false);
+});
+
+test('browser final results commit once, and a recognizer restart resets result indices',()=>{
+  const c=context();let r;c.window.SpeechRecognition=class{constructor(){r=this;}start(){this.onstart?.();}};
+  run(c,'startSpeech()');assert.equal(r.interimResults,true);
+  const result=[{transcript:'الحمد لله'}];result.isFinal=false;r.onresult({resultIndex:0,results:[result]});assert.equal(run(c,'recPageState.covered.size'),0);
+  result.isFinal=true;r.onresult({resultIndex:0,results:[result]});assert.equal(run(c,'recPageState.covered.size'),2);
+  const count=run(c,'recSession.stats.browserChunks');r.onresult({resultIndex:0,results:[result]});assert.equal(run(c,'recSession.stats.browserChunks'),count);
+  r.onend();const next=[{transcript:'رب العالمين'}];next.isFinal=true;run(c,'recOn=false');r.onresult({resultIndex:0,results:[next]});assert.equal(run(c,'recPageState.covered.size'),4);
+});
+
+test('even a claimed high ASR confidence cannot automatically create an error',()=>{
+  const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{confidence:1,confidence_calibrated:true});`);
+  assert.equal(run(c,'ERR.length'),0);assert.equal(run(c,'recPageState.errors.size'),0);assert.equal(run(c,`recSession.findings.some(f=>f.type.startsWith('confirmed_'))`),false);
+});
+
+test('a short touch cannot record an error; long touch requires confirmation',()=>{
+  const c=context();let confirms=0;c.confirm=()=>{confirms++;return false;};c.document.elementFromPoint=()=>({closest:()=>c.word});
+  run(c,`Date.now=()=>1000;globalThis.word=recSeq[0].el;word.dataset.vk='1:2';word._wi=0;word.classList.contains=k=>k==='rvl';globalThis.touch={clientX:1,clientY:1};recTapStart(touch);recTapEnd(touch);`);
+  assert.equal(confirms,0);assert.equal(run(c,'ERR.length'),0);
+  run(c,'Date.now=()=>1500;recTapEnd(touch)');assert.equal(confirms,1);assert.equal(run(c,'ERR.length'),0);
+  c.confirm=()=>true;run(c,'recTapEnd(touch)');assert.equal(run(c,'ERR.length'),1);assert.equal(run(c,'ERR[0].userConfirmed'),true);
+  assert.equal(run(c,`sessionPayload().manualErrorKeys[0]`),'1:2#0');
+});
+
+test('unconfirmed findings never become persistent review-queue entries',()=>{
+  const html=readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
+  const start=html.indexOf('function ingestRecitationSessionV51('),end=html.indexOf("\nwindow.addEventListener('message'",start+10),fn=html.slice(start,end);
+  const c=vm.createContext({S:{recitationSessions:[],errors:[]},Date,JSON,Set,keyOf:()=> '2026-10-16',ensureLogForDateV51:()=>({}),save(){},mirrorFaceLearningV61(){},showV51Toast(){},renderErrors(){},refreshV50(){},todayKey:()=> '2026-10-16'});
+  vm.runInContext(fn,c);vm.runInContext(`ingestRecitationSessionV51({id:'trial',version:84,endedAt:1,pages:[],findings:[{type:'possible_omission',vk:'1:2',page:1,userConfirmed:false}]})`,c);
+  assert.equal(c.S.aiReviewQueue.length,0);assert.equal(c.S.errors.length,0);
+  vm.runInContext(`ingestRecitationSessionV51({id:'unconfirmed-word',version:84,endedAt:1,pages:[{page:1,verses:[{vk:'1:2',errorWordIndexes:[0]}]}],findings:[]})`,c);
+  assert.equal(c.S.errors.length,0);
+  c.SURAHS=[[1,'الفاتحة']];
+  vm.runInContext(`ingestRecitationSessionV51({id:'manual-word',version:84,manualErrorKeys:['1:2#0'],endedAt:1,pages:[{page:1,verses:[{vk:'1:2',errorWordIndexes:[0]}]}],findings:[]})`,c);
+  assert.equal(c.S.errors.length,1);
+});
+
 test('an empty streaming delta never replays the cumulative transcript',async()=>{
   const c=context(async()=>({ok:true,json:async()=>({seq:0,streaming:true,transcript:'الحمد لله رب العالمين',transcript_delta:''})}));
   await run(c,`qasrRunId='stream_1';queueQasrChunkV73(new Float32Array(16000),16000);`);

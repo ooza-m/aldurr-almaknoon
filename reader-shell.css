@@ -103,6 +103,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 .state{border-radius:16px;box-shadow:none;min-height:67px}.state .h{font-size:.87rem}.state .p{font-size:.73rem}
 button,select,input{touch-action:manipulation}
 button:disabled{opacity:.4;cursor:default}.audio-field[hidden]{display:none}
+.pane.reciting .qw.rec-preview:not(.rvl){color:var(--quran)!important;opacity:.58;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:5px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media(min-width:700px){.pane{padding-inline:26px}.sheet{max-width:580px;margin-inline:auto}.chrome-top{padding-inline:18px}.ov-top,.ov>.seg,.ov>.page-jump{width:min(calc(100% - 36px),680px);margin-inline:auto}}
 @media(max-height:620px){.mini-top{display:none}.chrome-top{min-height:46px;flex-basis:46px}.chrome-bot{min-height:48px;flex-basis:48px}.reader-action{min-height:40px}.face-listen-bar{padding-block:5px}.listen-transport{min-height:34px}}
