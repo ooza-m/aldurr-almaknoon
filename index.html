@@ -568,6 +568,7 @@ main{padding-top:0!important}
 /* v76 · المراجعة الذكية والاستدعاء النشط */
 .v76-smart{background:linear-gradient(145deg,#F6F0FA,#fff);border:1px solid rgba(140,114,160,.18);border-radius:16px;padding:12px;margin-bottom:12px}.v76-smart-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.v76-smart-head span{display:block;font-size:.55rem;color:#7D668E}.v76-smart-head b{display:block;font-size:.86rem;color:var(--ink);margin-top:1px}.v76-smart-head small{display:block;font-size:.55rem;color:var(--muted);margin-top:2px}.v76-smart-head strong{font-size:.75rem;color:#715980;background:#EEE5F3;border-radius:999px;padding:5px 8px}.v76-smart-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}.v76-smart-row{background:#fff;border:1px solid rgba(140,114,160,.12);border-radius:12px;padding:9px}.v76-smart-copy>div{display:flex;justify-content:space-between;gap:8px;align-items:center}.v76-smart-copy b{font-size:.69rem}.v76-smart-copy span{font-size:.52rem;color:#806C8E}.v76-smart-copy small,.v76-smart-copy em{display:block;font-size:.55rem;color:var(--muted);font-style:normal;margin-top:3px;line-height:1.45}.v76-smart-actions{display:flex;gap:6px;margin-top:8px}.v76-smart-actions button{border:0;border-radius:8px;background:#745B85;color:#fff;font-family:inherit;font-size:.56rem;font-weight:700;padding:6px 8px}.v76-smart-actions button.soft{background:var(--parch-2);color:var(--muted)}
 </style>
+<link rel="stylesheet" href="app-navigation.css?v=81">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -932,7 +933,7 @@ window.FIREBASE_CONFIG = {
     <div class="v50-page">
       <div class="v50-top"><span style="width:44px"></span><div class="v50-title"><h1>المزيد</h1><p>الصفحات المساندة خارج التنفيذ اليومي</p></div><span style="width:44px"></span></div>
       <div class="v70-more-section"><h3>المتابعة والتحليل</h3><div class="v70-more-row">
-        <button data-v50-route="calendar"><b>التقويم</b><small>السجل والمثابرة والحضور</small></button>
+        <button data-v50-route="map"><b>خريطة الأوجه</b><small>الحفظ والمراجعة على امتداد المصحف</small></button>
         <button data-v50-route="stats"><b>الإحصاءات</b><small>الأداء والاتجاهات</small></button>
       </div></div>
       <div class="v70-more-section"><h3>المسارات</h3><div class="v70-more-list">
@@ -990,14 +991,14 @@ window.FIREBASE_CONFIG = {
   <button data-tab="home" class="active">
     <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>الرئيسية</span>
   </button>
-  <button data-tab="mushaf">
-    <svg viewBox="0 0 24 24"><path d="M12 6.5C10.5 5 7.5 4.4 4 5v13c3.5-.6 6.5 0 8 1.5 1.5-1.5 4.5-2.1 8-1.5V5c-3.5-.6-6.5 0-8 1.5z"/><path d="M12 6.5v13"/></svg><span>المصحف</span>
-  </button>
   <button data-tab="today">
     <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span>اليوم</span>
   </button>
-  <button data-tab="map">
-    <svg viewBox="0 0 24 24"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg><span>الخريطة</span>
+  <button data-tab="mushaf" class="nav-mushaf">
+    <svg viewBox="0 0 24 24"><path d="M12 6.5C10.5 5 7.5 4.4 4 5v13c3.5-.6 6.5 0 8 1.5 1.5-1.5 4.5-2.1 8-1.5V5c-3.5-.6-6.5 0-8 1.5z"/><path d="M12 6.5v13"/></svg><span>المصحف</span>
+  </button>
+  <button data-tab="calendar">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4M8 13h2M14 13h2M8 17h2"/></svg><span>التقويم</span>
   </button>
   <button data-tab="more">
     <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>المزيد</span>
@@ -1059,7 +1060,7 @@ window.FIREBASE_CONFIG = {
     <p class="hint" id="ntStatus" style="margin-top:6px"></p>
   </div>
   <div class="v70-set-danger"><b>مسح بيانات التقدّم</b><p>يمسح السجل والخريطة والأخطاء والختمة والمرحليات. لا يمكن التراجع بعد التأكيد.</p><button class="btn btn-sm" id="set-reset">مسح جميع بيانات التقدّم</button></div>
-  <div class="v70-about"><div class="amiri">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div><span>الدُّرُّ المكنون · مصحف المدينة · حفص عن عاصم</span><b>النسخة v80</b></div>
+  <div class="v70-about"><div class="amiri">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div><span>الدُّرُّ المكنون · مصحف المدينة · حفص عن عاصم</span><b>النسخة v81</b></div>
 </div></div>
 
 <div class="modal-bg" id="stageModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('stageModal').classList.remove('open')" aria-label="إغلاق">✕</button>
@@ -1421,7 +1422,7 @@ function switchTab(t){
   }
   document.body.classList.toggle('home-active',t==='home');
   document.body.dataset.page=t;
-  const morePages=['calendar','khatma','tafsir','planning','stages','stats','tajweed','errors'];
+  const morePages=['map','khatma','tafsir','planning','stages','stats','tajweed','errors'];
   const navTab=t==='manual'?'today':(morePages.includes(t)?'more':t);
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
   document.querySelectorAll('#bottomNav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===navTab));
@@ -1603,7 +1604,7 @@ function tasksV50(){
   return arr;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=80&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=81&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -1611,7 +1612,7 @@ function startTaskSessionV60(taskId){
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
   const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=80&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=81&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
@@ -3042,7 +3043,7 @@ document.getElementById('erSave').addEventListener('click',()=>{
   const b=document.getElementById('btnAddErr');if(b){const o=b.textContent;b.textContent="✓ سُجّل الخطأ";setTimeout(()=>b.textContent=o,1400);}
 });
 function smartReviewLabelV76(t){return({possible_omission:'سقوط محتمل',possible_substitution:'استبدال محتمل',possible_repetition:'تكرار محتمل',possible_extra_word:'زيادة محتملة',mutashabih_jump:'انتقال إلى متشابه محتمل'})[t]||'موضع يحتاج تحقق';}
-function openSmartRecallV76(q){if(!q||!q.page||!q.verseKey)return;const url='mushaf.html?v=80&p='+encodeURIComponent(q.page)+'&mode=recall&task=ai-review&ayah='+encodeURIComponent(q.verseKey)+'&rid='+encodeURIComponent(q.id)+'&app=1';window.location.assign(url);}
+function openSmartRecallV76(q){if(!q||!q.page||!q.verseKey)return;const url='mushaf.html?v=81&p='+encodeURIComponent(q.page)+'&mode=recall&task=ai-review&ayah='+encodeURIComponent(q.verseKey)+'&rid='+encodeURIComponent(q.id)+'&app=1';window.location.assign(url);}
 function renderErrors(){
   const hot=document.getElementById('errHot'),list=document.getElementById('errList'),all=S.errors||[],queue=S.aiReviewQueue||[],pending=queue.filter(q=>q&&q.status==='pending');
   if(!all.length&&!pending.length){hot.innerHTML='';list.innerHTML='<div class="empty"><span class="em">✎</span>لا أخطاء أو مواضع معلّقة للمراجعة.</div>';return;}
@@ -4169,11 +4170,11 @@ renderAll();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=80');
+      const reg=await navigator.serviceWorker.register('sw.js?v=81');
       reg.update().catch(()=>{});
-      let reloaded=sessionStorage.getItem('durr-sw80-reloaded')==='1';
+      let reloaded=sessionStorage.getItem('durr-sw81-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw80-reloaded','1');location.reload();}
+        if(!reloaded){reloaded=true;sessionStorage.setItem('durr-sw81-reloaded','1');location.reload();}
       });
     }catch(e){}
   });

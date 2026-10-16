@@ -1,0 +1,12 @@
+/* Shared navigation: home, today, the central mushaf, calendar, more. */
+:root{--app-nav-h:calc(76px + env(safe-area-inset-bottom,0px))}
+.bottom-nav,.app-bottom-nav{position:fixed;inset:auto auto 0 50%;transform:translateX(-50%);z-index:65;display:flex;direction:rtl;align-items:center;gap:3px;width:min(100%,560px);min-height:var(--app-nav-h);padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));border:1px solid rgba(168,84,107,.10);border-bottom:0;border-radius:25px 25px 0 0;background:rgba(255,252,249,.97);box-shadow:0 -6px 28px rgba(94,58,77,.07);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.bottom-nav button,.app-bottom-nav button{min-width:0;min-height:52px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:5px 1px;border:0;border-radius:15px;background:transparent;color:#957e87;font:inherit;cursor:pointer;touch-action:manipulation}
+.bottom-nav button svg,.app-bottom-nav button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.bottom-nav button span,.app-bottom-nav button span{font-size:.64rem;font-weight:600;white-space:nowrap}
+.bottom-nav button.active,.app-bottom-nav button.active{background:#f7e9ed;color:#a24d65}
+.bottom-nav .nav-mushaf,.app-bottom-nav .nav-mushaf{flex:1.12;min-height:62px;margin-top:-10px;background:#a4546b;color:#fff;box-shadow:0 5px 14px rgba(164,84,107,.2);border:4px solid #fffcf9;border-radius:21px}
+.bottom-nav .nav-mushaf svg,.app-bottom-nav .nav-mushaf svg{width:25px;height:25px;stroke:#fff}
+.bottom-nav .nav-mushaf.active,.app-bottom-nav .nav-mushaf.active{background:#874257;color:#fff;box-shadow:0 5px 18px rgba(135,66,87,.25)}
+.bottom-nav button:focus-visible,.app-bottom-nav button:focus-visible{outline:2px solid #874257;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.bottom-nav *,.app-bottom-nav *{transition:none!important}}
