@@ -10,7 +10,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     QASR_THREADS=2
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates \
+    && apt-get install -y --no-install-recommends ca-certificates ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -19,6 +19,7 @@ RUN pip install -r requirements.txt
 
 COPY app.py .
 COPY probe_app.py .
+COPY muno_streaming.py selftest_runner.py MODEL_LICENSE_NPL-1.1.txt ./
 
 EXPOSE 8000
 CMD ["sh", "-c", "exec uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]

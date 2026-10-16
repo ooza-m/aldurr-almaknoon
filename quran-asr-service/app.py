@@ -14,6 +14,7 @@ APP_NAME = "Durr Quran ASR"
 BACKEND = os.getenv("QASR_BACKEND", "sherpa-offline-ctc").strip().lower()
 MODEL_ID = os.getenv(
     "QASR_MODEL", {
+        "muno-streaming-ctc": "Muno459/fastconformer-quran-streaming",
         "sherpa-offline-ctc": "TheGreatQuran/QuranKarim-SpeechToText-onnxModel",
         "sherpa-fastconformer": "mohammed/fastconformer-quran-ar-onnx-int8",
         "tarteel-whisper": "tarteel-ai/whisper-base-ar-quran",
@@ -22,7 +23,8 @@ MODEL_ID = os.getenv(
 ).strip()
 MODEL_REVISION = os.getenv("QASR_MODEL_REVISION") or (
     "76eab42481554dfe2fd837596802af243482a894"
-    if MODEL_ID == "TheGreatQuran/QuranKarim-SpeechToText-onnxModel" else None
+    if MODEL_ID == "TheGreatQuran/QuranKarim-SpeechToText-onnxModel" else
+    "75799adac5d2a9bc0230d4c4b410dd68319560e4" if BACKEND == "muno-streaming-ctc" else None
 )
 MODEL_FILE = os.getenv("QASR_MODEL_FILE", "qurankarim-fastconformer-mixed.onnx")
 HF_TOKEN = os.getenv("HF_TOKEN") or None
@@ -69,7 +71,7 @@ class TranscribeRequest(BaseModel):
 
 
 def _device_name() -> str:
-    if BACKEND in {"sherpa-fastconformer", "sherpa-offline-ctc"}:
+    if BACKEND in {"sherpa-fastconformer", "sherpa-offline-ctc", "muno-streaming-ctc"}:
         return "cpu"
     try:
         import torch
@@ -212,7 +214,12 @@ def _load_engine():
             raise IncompatibleModelError("Configured model export is incompatible")
 
         try:
-            if BACKEND == "sherpa-offline-ctc":
+            if BACKEND == "muno-streaming-ctc":
+                from muno_streaming import MunoEngine, REPO, REVISION
+                if MODEL_ID != REPO or MODEL_REVISION != REVISION:
+                    raise IncompatibleModelError("Muno adapter requires its validated revision")
+                _engine = MunoEngine(HF_TOKEN, NUM_THREADS)
+            elif BACKEND == "sherpa-offline-ctc":
                 _engine = _load_offline_ctc()
             elif BACKEND == "sherpa-fastconformer":
                 _engine = _load_sherpa()
@@ -294,7 +301,7 @@ def _transcribe_sherpa(
             if len(_sessions) >= MAX_SESSIONS:
                 raise HTTPException(status_code=503, detail="session capacity reached")
             state = {
-                "stream": recognizer.create_stream() if BACKEND == "sherpa-fastconformer" else None,
+                "stream": recognizer.create_stream() if BACKEND in {"sherpa-fastconformer", "muno-streaming-ctc"} else None,
                 "lock": threading.Lock(),
                 "next_seq": 0,
                 "responses": {},
@@ -318,6 +325,9 @@ def _transcribe_sherpa(
             text = (state.get("text", "") + " " + delta).strip()
             state["text"] = text
             revised = False
+        elif BACKEND == "muno-streaming-ctc":
+            text = state["stream"].accept(audio, final=final)
+            delta, revised = _stable_delta(state, text, final)
         else:
             stream = state.get("stream")
             if stream is None:
@@ -385,7 +395,7 @@ def _transcribe_nemo(audio: np.ndarray) -> str:
 
 @app.on_event("startup")
 def _startup():
-    if PRELOAD and (BACKEND != "sherpa-offline-ctc" or ALLOW_EXPERIMENTAL):
+    if PRELOAD and (BACKEND not in {"sherpa-offline-ctc", "muno-streaming-ctc"} or ALLOW_EXPERIMENTAL):
         threading.Thread(target=lambda: _safe_preload(), daemon=True).start()
 
 
@@ -405,17 +415,18 @@ def health():
         "backend": BACKEND,
         "model": MODEL_ID,
         "revision": MODEL_REVISION,
-        "recitation_mode": "streaming" if BACKEND == "sherpa-fastconformer" else "chunked",
+        "recitation_mode": "streaming" if BACKEND in {"sherpa-fastconformer", "muno-streaming-ctc"} else "chunked",
         "device": _device_name(),
         "quran_specialized": True,
-        "streaming": BACKEND == "sherpa-fastconformer",
+        "streaming": BACKEND in {"sherpa-fastconformer", "muno-streaming-ctc"},
         "engine_loaded": _engine is not None,
-        "experimental": BACKEND == "sherpa-offline-ctc",
-        "enabled": BACKEND != "sherpa-offline-ctc" or ALLOW_EXPERIMENTAL,
+        "experimental": BACKEND in {"sherpa-offline-ctc", "muno-streaming-ctc"},
+        "enabled": BACKEND not in {"sherpa-offline-ctc", "muno-streaming-ctc"} or ALLOW_EXPERIMENTAL,
         "model_error": _engine_error,
         "license_note": (
             "CC-BY-4.0 model; attribution required"
             if MODEL_ID.startswith(("mohammed/", "TheGreatQuran/"))
+            else "NPL-1.1; no-profit use only; experimental" if BACKEND == "muno-streaming-ctc"
             else "review upstream model license"
         ),
     }
@@ -428,7 +439,7 @@ def model_info():
         "model": MODEL_ID,
         "revision": MODEL_REVISION,
         "quran_specialized": True,
-        "streaming": BACKEND == "sherpa-fastconformer",
+        "streaming": BACKEND in {"sherpa-fastconformer", "muno-streaming-ctc"},
         "sample_rate": 16000,
         "threads": NUM_THREADS,
         "session_ttl": SESSION_TTL,
@@ -445,7 +456,7 @@ def model_info():
 
 @app.get("/ready")
 def ready():
-    if BACKEND == "sherpa-offline-ctc" and not ALLOW_EXPERIMENTAL:
+    if BACKEND in {"sherpa-offline-ctc", "muno-streaming-ctc"} and not ALLOW_EXPERIMENTAL:
         raise HTTPException(status_code=503, detail="Experimental backend is not enabled")
     if _engine is None:
         raise HTTPException(status_code=503, detail="Quran ASR model is not ready")
@@ -454,7 +465,7 @@ def ready():
 
 @app.post("/warmup")
 def warmup():
-    if BACKEND == "sherpa-offline-ctc" and not ALLOW_EXPERIMENTAL:
+    if BACKEND in {"sherpa-offline-ctc", "muno-streaming-ctc"} and not ALLOW_EXPERIMENTAL:
         raise HTTPException(status_code=503, detail="Experimental backend is not enabled")
     try:
         _load_engine()
@@ -470,12 +481,12 @@ def warmup():
 
 @app.post("/transcribe")
 def transcribe(req: TranscribeRequest):
-    if BACKEND == "sherpa-offline-ctc" and not ALLOW_EXPERIMENTAL:
+    if BACKEND in {"sherpa-offline-ctc", "muno-streaming-ctc"} and not ALLOW_EXPERIMENTAL:
         raise HTTPException(status_code=503, detail="Experimental backend is not enabled")
     audio = _decode_pcm(req)
 
     try:
-        if BACKEND in {"sherpa-fastconformer", "sherpa-offline-ctc"}:
+        if BACKEND in {"sherpa-fastconformer", "sherpa-offline-ctc", "muno-streaming-ctc"}:
             text, delta, revised = _transcribe_sherpa(
                 audio, req.session_id or "", req.final, req.seq
             )
@@ -499,7 +510,7 @@ def transcribe(req: TranscribeRequest):
         "backend": BACKEND,
         "model": MODEL_ID,
         "quran_specialized": True,
-        "streaming": BACKEND == "sherpa-fastconformer",
+        "streaming": BACKEND in {"sherpa-fastconformer", "muno-streaming-ctc"},
         "seq": req.seq,
         "final": req.final,
         "confidence": None,

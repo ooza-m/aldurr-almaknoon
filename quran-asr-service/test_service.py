@@ -62,6 +62,37 @@ def test_retries_do_not_feed_audio_twice(api):
     assert client.post('/transcribe', json=payload(samples=800)).status_code == 409
 
 
+def test_muno_streaming_uses_stable_deltas_and_idempotent_final(monkeypatch):
+    calls = []
+    class MunoFakeStream:
+        def accept(self, audio, final=False):
+            calls.append((audio.size, final))
+            return 'الحمد لله رب العالمين' if final else 'الحمد لله'
+    monkeypatch.setattr(service, 'BACKEND', 'muno-streaming-ctc')
+    monkeypatch.setattr(service, 'ALLOW_EXPERIMENTAL', True)
+    monkeypatch.setattr(service, '_engine', SimpleNamespace(create_stream=MunoFakeStream))
+    service._sessions.clear()
+    with TestClient(service.app) as client:
+        first = client.post('/transcribe', json=payload()).json()
+        assert first['streaming'] and first['transcript_delta'] == ''
+        body = payload(seq=1, final=True, samples=120)
+        final = client.post('/transcribe', json=body).json()
+        assert final['transcript_delta'] == 'الحمد لله رب العالمين'
+        assert client.post('/transcribe', json=body).json() == final
+        assert calls == [(1600, False), (120, True)]
+    service._sessions.clear()
+
+
+def test_muno_remains_disabled_without_explicit_experimental_enable(monkeypatch):
+    monkeypatch.setattr(service, 'BACKEND', 'muno-streaming-ctc')
+    monkeypatch.setattr(service, 'ALLOW_EXPERIMENTAL', False)
+    monkeypatch.setattr(service, '_engine', object())
+    with TestClient(service.app) as client:
+        assert client.get('/ready').status_code == 503
+        assert client.post('/transcribe', json=payload()).status_code == 503
+        assert not client.get('/health').json()['enabled']
+
+
 def test_rejects_sequence_gap_without_losing_stream(api):
     client, rec = api
     assert client.post('/transcribe', json=payload(seq=1)).status_code == 409
