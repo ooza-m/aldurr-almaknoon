@@ -54,7 +54,7 @@ def read_wav(path: Path) -> np.ndarray:
 
 
 def transcribe(audio: np.ndarray, sid: str) -> str:
-    if BACKEND == "sherpa-fastconformer":
+    if BACKEND in {"sherpa-fastconformer", "sherpa-offline-ctc"}:
         text, _, _ = _transcribe_sherpa(audio, sid, True)
         return text
     if BACKEND == "nemo-fastconformer":

@@ -1,6 +1,7 @@
-const CACHE='durr-v79';
+const CACHE='durr-v81';
 const STATIC=[
   './manifest.json','./icon.png','./icon-180.png',
+  './app-navigation.css?v=81','./reader-shell.css?v=81','./reader-core.js?v=81',
   './data/mushaf-data.json','./data/mushaf-search.json',
   './data/mushaf-mutashabihat.json','./data/surah-frame.svg'
 ];
