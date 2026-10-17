@@ -390,7 +390,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 <script src="reader-ui.js?v=89"></script>
 <script src="reader-study.js?v=89"></script>
 <script src="reader-session.js?v=89"></script>
-<script src="config.js?v=94"></script>
+<script src="config.js?v=95"></script>
 <link rel="stylesheet" href="app-preferences.css?v=89">
 <script src="app-preferences.js?v=89"></script>
 <link rel="stylesheet" href="reader-tools.css?v=89">
@@ -1489,12 +1489,12 @@ function pumpQasrV73(run=qasrRunsV86.get(qasrRunId)){
      const ctx=run.ctx;if(!ctx||ctx.finalized)continue;if(data.seq!==item.seq)throw Error('ASR sequence mismatch');
      const tx=String(Object.prototype.hasOwnProperty.call(data,'transcript_delta')?data.transcript_delta:(data.transcript||'')).trim(),ms=Math.round(performance.now()-start),stats=ctx.session.stats;
      stats.quranLatencyMs+=ms;stats.quranLatencyN++;stats.quranLatencyMax=Math.max(stats.quranLatencyMax,ms);stats.quranStreaming=!!data.streaming;stats.quranBackend=data.backend||'';
-     if(data.transcript_revised)ctx.session.analysisIncomplete=true;
+     if(data.transcript_revised)ctx.session.phonemePreviewRevised=true;
      // A phoneme-level model cannot be fed into word-level Quran grading.
      // Until a verified phoneme-to-canonical-word aligner exists, do not award
      // completion or record automatic recitation mistakes from these tokens.
      if(data.transcript_format==='phonemes'){
-       ctx.session.analysisIncomplete=true;
+       ctx.session.phonemePreviewOnly=true;
        void previewQuranPhonemesV90(ctx,item.page,String(data.transcript||'')).catch(()=>{});
        // The acoustic preview is advisory; the active word tracker remains authoritative.
      }else if(tx)await dispatchRecitationV89(ctx,item.page,tx,'quran-asr',data);
