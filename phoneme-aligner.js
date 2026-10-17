@@ -24,5 +24,17 @@ function align(heard,words){
  words.forEach((w,k)=>{const next=offset+w.phonemes.length;if(next<=end&&!suspect.has(k)&&matched[k].size===w.phonemes.length)confirmed.push(k);else if(offset<end&&(suspect.has(k)||matched[k].size))candidate.push(k);offset=next;});
  return {matchedWords:confirmed,candidateWords:candidate,errors:[],completed:false,status:'provisional',referencePrefixTokens:end,editDistance:best};
 }
-return {align};
+function exactPrefix(heard,segments){
+ const normalize=s=>String(s||'').replace(/\\s+/g,'').trim();
+ if(!Array.isArray(segments)||!segments.length||!segments.every(s=>typeof s==='string'&&s.trim()))return {matchedWords:[],status:'invalid_reference',errors:[],completed:false};
+ const spoken=normalize(heard);if(!spoken)return {matchedWords:[],status:'no_speech',errors:[],completed:false};
+ let offset=0;const matched=[];
+ for(let i=0;i<segments.length;i++){
+   const token=normalize(segments[i]);if(!token)return {matchedWords:[],status:'invalid_reference',errors:[],completed:false};
+   if(spoken.slice(offset,offset+token.length)!==token)break;
+   offset+=token.length;matched.push(i);
+ }
+ return {matchedWords:matched,status:offset===spoken.length?'prefix':'unverified_speech',errors:[],completed:false,consumedCharacters:offset};
+}
+return {align,exactPrefix};
 });
