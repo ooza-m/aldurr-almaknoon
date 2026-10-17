@@ -16,6 +16,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+RUN python -c "from quranic_phonemizer import Phonemizer; p=Phonemizer(); a=p.analyse('1:1'); w=p.analyse('1:1:1'); assert a.phonemes() and w.phonemes(); print('Hafs G2P smoke test passed')"
+
 COPY app.py .
 
 EXPOSE 8000
