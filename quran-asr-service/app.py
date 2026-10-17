@@ -511,8 +511,10 @@ def phoneme_reference_schema():
                     "sample_value": describe(value[0]) if value else None}
         return {"kind": type(value).__name__,
                 "preview": str(value)[:80] if isinstance(value, (str, int, float)) else None}
+    structure = describe(data)
+    print("QASR_REFERENCE_SCHEMA " + json.dumps(structure, ensure_ascii=False), flush=True)
     return {"model": MODEL_ID, "reference": "ordered_quran_phonemes.json",
-            "schema": describe(data)}
+            "schema": structure}
 
 
 def _verified_word_units(value):
