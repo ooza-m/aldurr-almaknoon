@@ -16,7 +16,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-RUN python -c "from quranic_phonemizer import Phonemizer; p=Phonemizer(); a=p.analyse('1:1'); w=p.analyse('1:1:1'); assert a.phonemes() and w.phonemes(); print('Hafs G2P smoke test passed')"
+RUN python -c "from quranic_phonemizer import Phonemizer; p=Phonemizer(); a=p.analyse('1:1'); w=p.analyse('1:1:1'); assert a.phonemes() and w.phonemes(); group=a.phonemes(by='word'); assert len(group)==4; print('Hafs G2P contextual word grouping passed')"
 
 COPY app.py .
 
