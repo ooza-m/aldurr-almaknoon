@@ -47,7 +47,8 @@
      const initial=!this.located,oldCursor=this.cursor;this.located=true;if(initial)this.startedAt=result.start;
      const updates=[];
      // A jump is revealed for orientation, never counted as recited or turned into a long run of errors.
-     const omittedPrefix=!initial&&!recovered&&result.start>oldCursor&&result.start-oldCursor<=6?Array.from({length:result.start-oldCursor},(_,i)=>({type:'omit',index:oldCursor+i,word:this.words[oldCursor+i],heard:'',similarity:0})):[];
+     const anchoredJump=result.strong>=3&&this.words[oldCursor-1]&&this.covered.has(this.words[oldCursor-1].vk+'#'+this.words[oldCursor-1].wi);
+     const omittedPrefix=!initial&&!recovered&&result.start>oldCursor&&result.start-oldCursor<180&&(result.start-oldCursor<=6||anchoredJump)?Array.from({length:result.start-oldCursor},(_,i)=>({type:'omit',index:oldCursor+i,word:this.words[oldCursor+i],heard:'',similarity:0})):[];
      const body=result.ops.slice();if(omittedPrefix.length===1&&body[0]?.type==='extra'){omittedPrefix[0]={...omittedPrefix[0],type:'sub',heard:body.shift().heard};}
      const ops=[...omittedPrefix,...body];
      ops.forEach((op,i)=>{
@@ -59,7 +60,7 @@
          // Repeating a recently recited word is a repair/repetition, not automatically an error.
          if(this.words.slice(Math.max(0,op.index-5),op.index+1).some(w=>w.norm===op.heard))return;
        }
-       const before=ops.slice(0,i).some(o=>o.type==='match'&&o.similarity>=.99)||(!initial&&result.start<=oldCursor+6),after=ops.slice(i+1).filter(o=>o.type==='match'&&o.similarity>=.99).length;
+       const before=ops.slice(0,i).some(o=>o.type==='match'&&o.similarity>=.99)||(!initial&&(result.start<=oldCursor+6||anchoredJump)),after=ops.slice(i+1).filter(o=>o.type==='match'&&o.similarity>=.99).length;
        // At least a right anchor is required. Silence and unanchored transcript tails are not errors.
        const previousWord=this.words[Math.max(0,op.index-1)],previousAnchor=!initial&&previousWord&&this.covered.has(previousWord.vk+'#'+previousWord.wi);
        if(!before||after<1||(result.strong<2&&!previousAnchor))return;
@@ -72,5 +73,29 @@
    dismiss(key){this.dismissed.add(key);const event=this.errors.get(key);if(event)event.active=false;}
    export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],events:this.events.slice()};}
  }
- return {normalize,baseNormalize,configureAliases,tokens,similarity,align,Tracker};
+ class RevealGate{
+  constructor(words,delay=3000){this.words=words;this.delay=delay;this.pending=new Map();this.deadlines=new Map();this.handled=new Set();}
+  update(ops,errors,now=Date.now()){
+   ops.forEach(op=>{if(op.word)this.pending.set(op.index,op.word);});const active=new Map([...errors].filter(([,e])=>e.active&&e.type==='omission'));
+   for(const[key,e]of active)if(!this.handled.has(key)&&!this.deadlines.has(key))this.deadlines.set(key,now+this.delay);
+   for(const[key,deadline]of this.deadlines)if(!active.has(key)||deadline<=now){this.deadlines.delete(key);this.handled.add(key);}
+   const barrier=Math.min(Infinity,...[...this.deadlines.keys()].map(key=>active.get(key)?.index??Infinity));
+   return {barrier,waiting:Number.isFinite(barrier),remaining:this.deadlines.size?Math.max(0,Math.min(...this.deadlines.values())-now):0,visible:[...this.pending].filter(([index])=>index<barrier).map(([,word])=>({word,omitted:active.has(word.vk+'#'+word.wi)}))};
+  }
+ }
+ class Locator{
+  constructor(search){this.entries=Object.entries(search).map(([vk,[page,text]])=>({vk,page,text,tokens:tokens(text)})).sort((a,b)=>{const rank=v=>{const[s,n]=v.vk.split(':').map(Number);return s*1000+n;};return rank(a)-rank(b);});this.index=new Map();this.entries.forEach((v,i)=>new Set(v.tokens).forEach(t=>{if(!this.index.has(t))this.index.set(t,[]);this.index.get(t).push(i);}));}
+  locate(text){const heard=tokens(text).slice(-24);if(heard.length<3)return null;const counts=new Map();for(const t of new Set(heard))for(const i of this.index.get(t)||[])counts.set(i,(counts.get(i)||0)+1);
+   const ranked=[...counts].sort((a,b)=>b[1]-a[1]).slice(0,24),candidates=[];
+   for(const[i]of ranked){const entry=this.entries[i],next=this.entries[i+1],parts=[entry,...(next&&next.vk.split(':')[0]===entry.vk.split(':')[0]?[next]:[])],words=parts.flatMap(v=>v.tokens.map((expected,wi)=>({expected,wi,vk:v.vk,page:v.page}))),match=align(words,heard.join(' '));if(!match||match.strong<3||match.score<.72)continue;const first=match.ops.find(op=>op.type==='match')?.word;if(!first)continue;candidates.push({vk:first.vk,page:first.page,score:match.score,strong:match.strong});}
+   candidates.sort((a,b)=>b.strong-a.strong||b.score-a.score);const best=candidates[0];if(!best)return null;const other=candidates.find(c=>c.vk!==best.vk);if(other&&other.strong===best.strong&&other.score>=best.score-.035)return null;return best;
+  }
+ }
+ function errorInfo(error,all=[],words=[]){const type=String(error.type||'').replace(/^automatic_/,''),key=error.vk;
+  if(type==='omission'){const verse=words.filter(w=>w.vk===key),omitted=all.filter(e=>e.vk===key&&String(e.type).replace(/^automatic_/,'')==='omission'&&e.active!==false);return {group:'omission',label:verse.length&&omitted.length>=verse.length?'سقوط آية كاملة':'سقوط كلمة',reason:'سقط أثناء التسميع'};}
+  if(type==='substitution')return {group:'word',label:'استبدال كلمة'};if(type==='extra')return {group:'extra',label:'كلمة زائدة'};if(type==='mutashabih_jump')return {group:'word',label:'انتقال إلى متشابه'};
+  if(type==='assistance')return {group:'help',label:error.hint==='ayah'?'تلميح آية':error.hint==='eye'?'كشف الوجه':'تلميح كلمة'};
+  if(type==='tashkeel')return {group:'word',label:'خطأ تشكيل · مصنّف من المعلّمة'};return {group:'word',label:'خطأ في الكلمة'};
+ }
+ return {normalize,baseNormalize,configureAliases,tokens,similarity,align,Tracker,RevealGate,Locator,errorInfo};
 });

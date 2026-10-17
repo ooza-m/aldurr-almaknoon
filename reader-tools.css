@@ -1,7 +1,7 @@
 /* Functional reader chrome; QCF glyph metrics and line layout stay unchanged. */
 [hidden]{display:none!important}
 .rec-job-status{order:5;flex:0 0 auto;align-self:center;max-width:94%;font:inherit;font-size:.66rem;line-height:1.6;padding:7px 12px;margin:3px auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--accent-2);cursor:pointer;z-index:22}
-.pane.reciting .qw.rec-corrected.rvl{color:var(--accent)!important;text-decoration:none}.pane.reciting .qw.rec-context.rvl{opacity:.65}
+.pane.reciting .qw.rec-corrected.rvl{color:var(--accent)!important;text-decoration:none}.pane.reciting .qw.rec-context.rvl{opacity:1}
 .pane.reciting .qw.qend{color:var(--accent)!important;opacity:.6}
 .err-word-actions{display:flex;gap:6px;flex-wrap:wrap;padding:7px 0}.err-word-actions button{font:inherit;font-size:.65rem;min-height:35px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--wash-2);color:var(--ink);cursor:pointer}
 .qw.qend.has-bookmark{position:relative;outline:1.5px solid var(--accent);outline-offset:1px;border-radius:8px!important}
@@ -29,3 +29,19 @@
 #practicePrompt{padding:18px;margin-top:16px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}#practicePrompt h3{font-size:.95rem;margin-bottom:12px}#practiceStatus,#noteStatus{font-size:.78rem;color:var(--ink-2);margin-top:10px}
 .qw.qend.has-note{text-decoration:underline dotted var(--accent);text-underline-offset:4px}.practice-preparing .track{visibility:hidden}
 .study-ov :is(button,input,textarea,select):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* Independent repeat and comparison panels; never alter the printed page. */
+.session-body{width:min(100%,680px);margin-inline:auto;padding:18px 20px calc(32px + env(safe-area-inset-bottom));line-height:1.85}
+.session-body h3{font-size:1rem;margin:22px 0 12px}.repeat-card{border:1px solid var(--line);border-radius:22px;background:var(--surface);margin-bottom:18px;overflow:hidden}
+.repeat-range-row,.repeat-switch,.repeat-count{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:78px;padding:14px 18px}
+.repeat-range-row+ .repeat-range-row{border-top:1px solid var(--line)}.repeat-range-row>span{display:flex;align-items:center;gap:8px;min-width:0}
+.repeat-range-row select,.repeat-range-row input,.repeat-count select{font:inherit;color:var(--accent-2);background:var(--wash);border:1px solid var(--line);border-radius:10px;min-height:44px;padding:6px 9px;max-width:48vw}
+.repeat-range-row input{width:66px;text-align:center}.repeat-switch input{appearance:none;width:52px;height:32px;border-radius:40px;background:var(--line);position:relative;cursor:pointer;flex-shrink:0}
+.repeat-switch input:before{content:'';position:absolute;width:26px;height:26px;background:#fff;border-radius:50%;top:3px;left:3px;box-shadow:0 1px 5px #0002;transition:transform .16s}
+.repeat-switch input:checked{background:var(--accent)}.repeat-switch input:checked:before{transform:translateX(20px)}
+.repeat-count{border-top:1px solid var(--line);font-size:.8rem}.repeat-panel :is(button,input,select):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.muta-catalog-item{display:block;width:100%;text-align:right;font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:12px;cursor:pointer}
+.muta-catalog-item b{display:block;font-size:.77rem;color:var(--accent-2);margin-bottom:8px}.muta-catalog-item span{font-family:Amiri,serif;font-size:1.2rem;line-height:2}
+.rec-error-legend{display:flex;gap:10px;flex-wrap:wrap;padding:12px 16px;font-size:.75rem}.rec-error-legend span{border-inline-start:4px solid currentColor;padding-inline-start:8px}
+.rec-error-legend .word,.err-word-actions .error-word{color:#b8435c}.rec-error-legend .omission,.err-word-actions .error-omission{color:#a26814}.rec-error-legend .extra,.err-word-actions .error-extra{color:#8558ba}
+[data-theme=dark] .rec-error-legend .word{color:#f19aaf}[data-theme=dark] .rec-error-legend .omission{color:#efc06f}[data-theme=dark] .rec-error-legend .extra{color:#ccb0f2}

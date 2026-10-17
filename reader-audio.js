@@ -9,7 +9,7 @@
     });
   }
   class AudioDownloads{
-    constructor({fetcher,createUrl,revokeUrl,library,requestTimeout=8000,stallTimeout=15000}={}){this.fetcher=fetcher||fetch;this.createUrl=createUrl||URL.createObjectURL.bind(URL);this.revokeUrl=revokeUrl||URL.revokeObjectURL.bind(URL);this.library=library||new libraryApi.Library();this.requestTimeout=requestTimeout;this.stallTimeout=stallTimeout;this.urls=[];this.controller=null;this.key='';this.plan=null;this.records=new Map();}
+    constructor({fetcher,createUrl,revokeUrl,library,requestTimeout=15000,stallTimeout=20000}={}){this.fetcher=fetcher||globalThis.fetch.bind(globalThis);this.createUrl=createUrl||URL.createObjectURL.bind(URL);this.revokeUrl=revokeUrl||URL.revokeObjectURL.bind(URL);this.library=library||new libraryApi.Library();this.requestTimeout=requestTimeout;this.stallTimeout=stallTimeout;this.urls=[];this.controller=null;this.key='';this.plan=null;this.records=new Map();}
     clear(){this.controller?.abort();this.controller=null;this.urls.forEach(url=>this.revokeUrl(url));this.urls=[];this.plan=null;this.key='';this.records.clear();}
     async request(url,signal,json=false,onProgress=()=>{}){
       const controller=new AbortController(),abort=()=>controller.abort();signal.addEventListener('abort',abort,{once:true});
@@ -78,8 +78,8 @@
     }
   }
   class BufferedPlayer extends core.AudioPlayer{
-    constructor(options={}){super(options);this.repeat=1;this.cycle=1;this.gap=0;this.gapTimer=null;this.gapDeadline=0;this.gapRemaining=0;this.downloads=options.downloads||new AudioDownloads();this.plan=null;this.boundary=null;this.download=null;this.coverage=new Map();this.coverageRanges=new Map();this.lastClock=null;}
-    snapshot(){const state=super.snapshot(),s=this.plan?.get(state.key);if(s&&s.to!=null){state.current=Math.max(0,state.current-s.from);state.duration=s.to-s.from;state.progress=(state.index+Math.min(1,state.current/state.duration))/state.queue.length;}return {...state,download:this.download,preloaded:!!this.plan,repeat:this.repeat,cycle:this.cycle,gap:this.gap,gapRemaining:this.status==='waiting'?Math.max(0,(this.gapDeadline-Date.now())/1000):this.gapRemaining/1000};}
+    constructor(options={}){super(options);this.repeat=1;this.cycle=1;this.ayahRepeat=1;this.ayahCycle=1;this.gap=0;this.gapTimer=null;this.gapDeadline=0;this.gapRemaining=0;this.downloads=options.downloads||new AudioDownloads();this.plan=null;this.boundary=null;this.download=null;this.coverage=new Map();this.coverageRanges=new Map();this.lastClock=null;}
+    snapshot(){const state=super.snapshot(),s=this.plan?.get(state.key);if(s&&s.to!=null){state.current=Math.max(0,state.current-s.from);state.duration=s.to-s.from;state.progress=(state.index+Math.min(1,state.current/state.duration))/state.queue.length;}return {...state,download:this.download,preloaded:!!this.plan,repeat:this.repeat,cycle:this.cycle,ayahRepeat:this.ayahRepeat,ayahCycle:this.ayahCycle,gap:this.gap,gapRemaining:this.status==='waiting'?Math.max(0,(this.gapDeadline-Date.now())/1000):this.gapRemaining/1000};}
     async start({verses,scope='verse',page=0,autoplay=true,startIndex=0}={}){
       if(!Array.isArray(verses)||!verses.length||!verses.every(core.validVerse))throw Error('Invalid audio range');
       this.halt();const token=++this.generation;this.queue=[...new Set(verses)];this.scope=scope;this.page=page;this.completed.clear();this.coverage.clear();this.coverageRanges.clear();this.cycle=1;this.index=0;this.plan=null;
@@ -87,14 +87,14 @@
       try{
         const plan=await this.downloads.prepare(this.queue,this.reciter,d=>{if(token===this.generation){this.download=d;this.emit();}});
         if(token!==this.generation)return;this.plan=plan;this.download=null;return this.playIndex(Math.min(startIndex,this.queue.length-1),{autoplay});
-      }catch(error){if(token!==this.generation)return;this.status='error';this.download=null;this.emit();this.onError('لم يكتمل تنزيل التلاوة. تحققي من الاتصال واضغطي تشغيل للمحاولة مجددًا.');}
+      }catch(error){if(token!==this.generation)return;this.status='error';this.download=null;console.warn('Audio preparation failed',error);this.emit();this.onError('لم يكتمل تنزيل التلاوة. تحققي من الاتصال واضغطي تشغيل للمحاولة مجددًا.');}
     }
     halt(){clearTimeout(this.gapTimer);this.gapTimer=null;this.gapRemaining=0;this.gapDeadline=0;clearTimeout(this.boundary);this.boundary=null;this.lastClock=null;if(this.audio){this.audio.onloadedmetadata=this.audio.onended=this.audio.onpause=this.audio.ontimeupdate=this.audio.onplaying=this.audio.onerror=null;this.audio.pause();}}
-    async playIndex(index,{autoplay=true}={}){
+    async playIndex(index,{autoplay=true,keepAyahCycle=false}={}){
       if(!this.plan)return super.playIndex(index,{autoplay});
       if(index<0)return;if(index>=this.queue.length)return this.finish();
       this.halt();const token=++this.generation,a=this.audio||(this.audio=this.audioFactory()),segment=this.plan.get(this.queue[index]);
-      this.index=index;this.status='loading';this.emit();
+      this.index=index;if(!keepAyahCycle)this.ayahCycle=1;this.status='loading';this.emit();
       try{
         Promise.resolve(this.onVerse(this.queue[index],this.snapshot())).catch(()=>{});if(token!==this.generation)return;
         if(a.src!==segment.src){a.src=segment.src;a.preload='auto';}
@@ -120,21 +120,23 @@
       while((segment.to!=null&&t>=segment.to-.015)||ended){
         const key=this.queue[this.index],duration=(segment.to??this.audio.duration)-segment.from;
         if(duration>0&&(this.coverage.get(key)||0)>=duration*.95)this.completed.add(key);
+        if(this.ayahRepeat===0||this.ayahCycle<this.ayahRepeat){this.ayahCycle++;if(this.gap)this.waitForRepeat(this.gap*1000,this.index,true);else this.playIndex(this.index,{keepAyahCycle:true});return;}
         const next=this.index+1;if(next>=this.queue.length){this.finish();return;}
         const upcoming=this.plan.get(this.queue[next]);
         if(!ended&&upcoming.src===segment.src&&+this.queue[next].split(':')[1]===+key.split(':')[1]+1){
-          this.index=next;const snapshot=this.snapshot();Promise.resolve(this.onVerse(this.queue[next],snapshot)).catch(()=>{});segment=upcoming;
+          this.index=next;this.ayahCycle=1;const snapshot=this.snapshot();Promise.resolve(this.onVerse(this.queue[next],snapshot)).catch(()=>{});segment=upcoming;
         }else{this.playIndex(next);return;}
       }
       this.emit();this.schedule(token);
     }
-    async toggle(){if(this.status==='waiting'){this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());clearTimeout(this.gapTimer);this.gapTimer=null;this.status='wait-paused';this.emit();return;}if(this.status==='wait-paused'){this.waitForRepeat(this.gapRemaining);return;}if(this.status==='error')return this.start({verses:this.queue,scope:this.scope,page:this.page});await super.toggle();if(this.plan&&this.status==='playing')this.schedule(this.generation);}
+    async toggle(){if(this.status==='waiting'){this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());clearTimeout(this.gapTimer);this.gapTimer=null;this.status='wait-paused';this.emit();return;}if(this.status==='wait-paused'){this.waitForRepeat(this.gapRemaining,this.gapTarget,this.gapKeepAyah);return;}if(this.status==='error')return this.start({verses:this.queue,scope:this.scope,page:this.page});await super.toggle();if(this.plan&&this.status==='playing')this.schedule(this.generation);}
     setRate(value){super.setRate(value);if(this.plan)this.schedule(this.generation);}
     async setReciter(id){if(!core.RECITERS.some(r=>r.id===id)||id===this.reciter)return;const playing=this.status==='playing',queue=this.queue.slice(),scope=this.scope,page=this.page,startIndex=this.index;this.reciter=id;if(!queue.length){this.emit();return;}await this.start({verses:queue,scope,page,autoplay:playing,startIndex});}
+    setAyahRepeat(count){if([1,2,3,5,10,0].includes(+count)){this.ayahRepeat=+count;this.ayahCycle=1;this.emit();}}
     setGap(seconds){if([0,3,5,10,15,30].includes(+seconds)){this.gap=+seconds;this.emit();}}
-    waitForRepeat(ms){
-      this.halt();const token=++this.generation;this.status='waiting';this.gapRemaining=ms;this.gapDeadline=Date.now()+ms;
-      const tick=()=>{if(token!==this.generation||this.status!=='waiting')return;this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());if(!this.gapRemaining){this.gapTimer=null;this.playIndex(0);return;}this.emit();this.gapTimer=setTimeout(tick,Math.min(250,this.gapRemaining));};tick();
+    waitForRepeat(ms,index=0,keepAyahCycle=false){
+      this.halt();const token=++this.generation;this.status='waiting';this.gapRemaining=ms;this.gapDeadline=Date.now()+ms;this.gapTarget=index;this.gapKeepAyah=keepAyahCycle;
+      const tick=()=>{if(token!==this.generation||this.status!=='waiting')return;this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());if(!this.gapRemaining){this.gapTimer=null;this.playIndex(index,{keepAyahCycle});return;}this.emit();this.gapTimer=setTimeout(tick,Math.min(250,this.gapRemaining));};tick();
     }
     setRepeat(count){if([1,2,3,5,10,0].includes(+count)){this.repeat=+count;this.cycle=1;this.emit();}}
     seek(fraction){if(['waiting','wait-paused'].includes(this.status)||!this.audio||!this.plan)return;const s=this.plan.get(this.queue[this.index]),duration=(s.to??this.audio.duration)-s.from;if(!(duration>0))return;this.lastClock=null;this.audio.currentTime=s.from+Math.min(1,Math.max(0,+fraction))*duration;this.emit();this.schedule(this.generation);}

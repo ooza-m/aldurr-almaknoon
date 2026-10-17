@@ -30,7 +30,7 @@ async function boot(options={}){
     if(match)return {ok:true,json:async()=>({tafsir:{resource_id:+match[1],text:'<p>تفسير المصدر '+match[1]+' للآية '+match[2]+'</p><p>فقرة ثانية.</p>'}})};
     throw Error('Unexpected network request: '+url);
   };
-  w.localStorage.setItem('durr-num','en');if(options.savedFocus!=null)w.localStorage.setItem('durr-focus',options.savedFocus);for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js','reader-study.js'])w.eval(read(file));
+  w.localStorage.setItem('durr-num','en');if(options.savedFocus!=null)w.localStorage.setItem('durr-focus',options.savedFocus);for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js','reader-study.js','reader-session.js'])w.eval(read(file));
   for(const script of w.document.querySelectorAll('script:not([src])')){
     let code=script.textContent;
     if(code.includes('const REC_QUERY='))code+='\nwindow.readerTest={get player(){return audioController},get page(){return cur},get verse(){return playingVerse},get session(){return recSession},get recMode(){return recMode},get pageState(){return recPageState},get jobs(){return recJobsV86},settle,faceVerses,loadTafsir,maybeCompleteFaceTafsir,enterRecite,toggleRec,finishReciteSession,processTranscriptV73,openErrLog};';
@@ -44,6 +44,16 @@ test('night preference changes Quran ink without changing any glyphs or line ord
  const {dom,w,$}=await boot();t.after(()=>dom.window.close());const before=[...w.document.querySelectorAll('.pane .qline')].map(el=>el.textContent);
  $('btnSettings').click();w.DurrPreferences.mount(w.document.querySelector('[data-app-preferences]'));w.document.querySelector('[data-appearance=dark]').click();assert.equal(w.document.documentElement.dataset.theme,'dark');assert.equal(w.document.documentElement.style.getPropertyValue('--quran'),'#f1ece5');
  assert.deepEqual([...w.document.querySelectorAll('.pane .qline')].map(el=>el.textContent),before);assert.equal(JSON.parse(w.localStorage.getItem(w.DurrPreferences.KEY)).appearance,'dark');w.document.querySelector('[data-appearance=light]').click();assert.equal(w.document.documentElement.dataset.theme,'light');
+});
+test('free recitation relocates across the Quran and reveals matches without fading',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());$('freeRecite').click();for(let i=0;i<20;i++)await tick();
+ assert.equal(w.readerTest.session.freeSearch,true);const search=JSON.parse(read('data/mushaf-search.json'));await w.readerTest.processTranscriptV73(search['103:2'][1],'browser-speech');
+ assert.equal(w.readerTest.page,601);assert.equal(w.readerTest.session.freeLocated,true);assert.ok(w.readerTest.pageState.covered.size>=4);
+ assert.ok(w.document.querySelector('.pane.reciting .qw.rvl[data-vk="103:2"]'));assert.equal(w.document.querySelectorAll('.pane.reciting .qw.rec-skipped').length,0);
+});
+test('similar-verse catalog is reachable and links to comparison details',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());$('readerSimi').click();$('mutaSurah').value='2';$('mutaSurah').dispatchEvent(new w.Event('change'));
+ for(let i=0;i<20;i++)await tick();assert.ok($('mutaCatalogOv').classList.contains('open'));const b=$('mutaCatalogBody').querySelector('[data-muta-vk]');assert.ok(b);b.click();for(let i=0;i<10;i++)await tick();assert.ok($('simiOv').classList.contains('open'));
 });
 test('verse notes retain both types, render hostile text safely and jump to their exact ayah',async t=>{
  const {dom,w,$}=await boot();t.after(()=>dom.window.close());await w.openAyah('1:3');$('ayNote').click();$('noteText').value='<img src=x onerror=alert(1)>';$('noteForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
@@ -59,9 +69,10 @@ test('random recall uses selected faces and a hint prevents independent success 
 test('an unassisted one-ayah practice result is distinct from a completed face',async t=>{
  const {dom,w,$}=await boot();t.after(()=>dom.window.close());w.Math.random=()=>0;$('openPractice').click();$('practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));for(let i=0;i<10;i++)await tick();$('practiceStart').click();for(let i=0;i<15;i++)await tick();const vk=w.readerTest.session.recall.vk,search=JSON.parse(read('data/mushaf-search.json'));w.readerTest.processTranscriptV73(search[vk][1],'browser-speech');await w.readerTest.finishReciteSession();const payload=JSON.parse(w.localStorage.getItem('durr-last-recitation'));assert.equal(payload.summary.recallSuccess,true);assert.equal(payload.summary.completedPages,0);
 });
-test('audio options preserve a chosen silent gap while changing repetition and start playback',async t=>{
- const {dom,w,$}=await boot();t.after(()=>{w.readerTest.player.stop();dom.window.close();});$('readerListen').click();$('audioRepeat').value='2';$('audioGap').value='5';$('audioForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));for(let i=0;i<15;i++)await tick();assert.equal(w.readerTest.player.repeat,2);assert.equal(w.readerTest.player.gap,5);assert.equal(w.readerTest.player.status,'playing');
- $('faceListenOptions').click();assert.equal($('audioGap').value,'5');assert.equal($('audioRepeat').value,'2');
+test('repeat settings separate range and ayah repeats without losing playback',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>{w.readerTest.player.stop();dom.window.close();});$('readerListen').click();$('audioForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));for(let i=0;i<15;i++)await tick();assert.equal(w.readerTest.player.status,'playing');
+ $('faceListenRepeat').click();assert.ok($('repeatOv').classList.contains('open'));$('repeatRangeOn').checked=true;$('repeatRangeCount').value='2';$('repeatAyahOn').checked=true;$('repeatAyahCount').value='3';$('repeatGap').value='5';$('repeatForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();
+ assert.equal(w.readerTest.player.repeat,2);assert.equal(w.readerTest.player.ayahRepeat,3);assert.equal(w.readerTest.player.gap,5);assert.equal(w.readerTest.player.status,'playing');assert.ok(!$('repeatOv').classList.contains('open'));$('faceListenRepeat').click();assert.equal($('repeatGap').value,'5');assert.equal($('repeatAyahCount').value,'3');
 });
 test('a short touch toggles tools, suppresses the following ghost click and leaves glyph styles alone',async t=>{
  const {dom,w,$}=await boot();t.after(()=>dom.window.close());const pane=$('paneB'),word=pane.querySelector('.qw[data-vk]');let measurements=0;
@@ -121,7 +132,7 @@ test('download ring indicates progress and its stop button cancels without reviv
  const work=player.start({verses:['103:1','103:2','103:3']});await tick();await tick();assert.equal(player.status,'loading');assert.equal($('faceListenDownloadRing').hasAttribute('hidden'),false);assert.equal($('faceListenPlay').disabled,false);assert.equal($('faceListenPlay').getAttribute('aria-label'),'إلغاء التحميل');$('faceListenPlay').click();await work;assert.equal(player.status,'idle');assert.equal(w.document.body.classList.contains('face-listening'),false);
 });
 test('seek and bounded repetition control the real player without creating listening credit',async t=>{
- const {dom,w,$}=await boot();t.after(()=>dom.window.close());const player=w.readerTest.player;await player.start({verses:['1:1','1:2']});$('faceListenRepeat').click();assert.equal(player.repeat,2);$('faceListenSeek').value='500';$('faceListenSeek').dispatchEvent(new w.Event('change'));assert.equal(player.audio.currentTime,5);assert.equal(player.completed.size,0);assert.equal($('faceListenRepeatCount').textContent,'2');
+ const {dom,w,$}=await boot();t.after(()=>{w.readerTest.player.stop();dom.window.close();});const player=w.readerTest.player;await player.start({verses:['1:1','1:2']});$('faceListenRepeat').click();assert.ok($('repeatOv').classList.contains('open'));$('repeatRangeOn').checked=true;$('repeatRangeCount').value='2';$('repeatForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(player.repeat,2);$('faceListenSeek').value='500';$('faceListenSeek').dispatchEvent(new w.Event('change'));assert.equal(player.audio.currentTime,5);assert.equal(player.completed.size,0);assert.equal($('faceListenRepeatCount').textContent,'2');
 });
 test('finishing speech immediately restores navigation while the final result belongs to its old session',async t=>{
  const recognizers=[];class SR{constructor(){recognizers.push(this);}start(){this.onstart?.();}stop(){}abort(){this.onend?.();}}

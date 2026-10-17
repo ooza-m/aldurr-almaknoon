@@ -25,6 +25,15 @@ class Audio{
 }
 function player(t,options={}){const audio=new Audio(),d=downloads(),p=new BufferedPlayer({audioFactory:()=>audio,downloads:d.store,...options});t.after(()=>p.stop());return {p,audio,...d};}
 function advance(audio,to){while(audio.currentTime<to){audio.currentTime=Math.min(to,audio.currentTime+.25);audio.ontimeupdate?.();}}
+test('each ayah repeats separately before advancing and does not redownload',async t=>{
+ const {p,audio,requests}=player(t);p.setAyahRepeat(2);await p.start({verses:['1:1','1:2']});advance(audio,1.75);audio.currentTime=2;audio.ontimeupdate();await tick();
+ assert.equal(p.snapshot().key,'1:1');assert.equal(p.ayahCycle,2);assert.equal(audio.currentTime,0);
+ advance(audio,2);await tick();assert.equal(p.snapshot().key,'1:2');assert.equal(p.ayahCycle,1);assert.equal(requests.length,2);
+});
+test('default browser fetch is bound to its native global receiver',async()=>{
+ const native=globalThis.fetch;let calls=0;globalThis.fetch=async function(){assert.equal(this,globalThis);calls++;return {ok:true,arrayBuffer:async()=>new ArrayBuffer(8)};};
+ try{const store=new AudioDownloads({createUrl:()=> 'blob:bound',revokeUrl(){}});await store.prepare(['103:1'],'maher');assert.equal(calls,1);store.clear();}finally{globalThis.fetch=native;}
+});
 test('chapter MP3 is downloaded once before any selected ayah plays',async t=>{
   const {p,audio,requests}=player(t);await p.start({verses:['1:1','1:2','1:3'],scope:'surah'});
   assert.equal(requests.length,2);assert.equal(requests.filter(u=>u.endsWith('.mp3')).length,1);assert.match(audio.src,/^blob:/);

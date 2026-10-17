@@ -20,7 +20,7 @@
     const [s,a]=key.split(':');return 'https://everyayah.com/data/'+reciter.directory+'/'+s.padStart(3,'0')+a.padStart(3,'0')+'.mp3';
   }
   class TafsirStore{
-    constructor({fetcher,storage,toText}={}){this.fetcher=fetcher||fetch;this.storage=storage;this.toText=toText||String;this.inflight=new Map();this.cache={};this.key='durr-tafsir-cache-v81';
+    constructor({fetcher,storage,toText}={}){this.fetcher=fetcher||globalThis.fetch.bind(globalThis);this.storage=storage;this.toText=toText||String;this.inflight=new Map();this.cache={};this.key='durr-tafsir-cache-v81';
       try{const data=JSON.parse(storage&&storage.getItem(this.key)||'{}');if(data.version===1&&data.entries)this.cache=data.entries;}catch(_){}
     }
     async get(key,book){

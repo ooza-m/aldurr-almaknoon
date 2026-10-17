@@ -1,5 +1,26 @@
 const test=require('node:test'),assert=require('node:assert/strict'),{Tracker,align}=require('../recitation-core.js');
 const words=()=>['بسم الله الرحمن الرحيم','الحمد لله رب العالمين','الرحمن الرحيم','مالك يوم الدين','اياك نعبد واياك نستعين'].flatMap((s,i)=>s.split(' ').map((expected,wi)=>({expected,wi,vk:'1:'+(i+1)})));
+test('omissions hold later reveals for three seconds, then fade only omitted words',()=>{
+ const {RevealGate}=require('../recitation-core.js'),t=new Tracker(words()),g=new RevealGate(t.words),r=t.feed('بسم الله الرحيم الحمد لله رب العالمين');
+ let s=g.update(r.ops,t.errors,100);assert.equal(s.waiting,true);assert.ok(s.visible.every(v=>v.word.index<2));
+ s=g.update([],t.errors,3099);assert.equal(s.waiting,true);s=g.update([],t.errors,3100);assert.equal(s.waiting,false);
+ assert.equal(s.visible.find(v=>v.word.index===2).omitted,true);assert.equal(s.visible.find(v=>v.word.index===3).omitted,false);
+});
+test('repair before the omission deadline releases the gate immediately',()=>{
+ const {RevealGate}=require('../recitation-core.js'),t=new Tracker(words()),g=new RevealGate(t.words);
+ let r=t.feed('بسم الله الرحيم الحمد لله رب العالمين');g.update(r.ops,t.errors,100);r=t.feed('الرحمن الرحيم الحمد لله رب العالمين');
+ const s=g.update(r.ops,t.errors,200);assert.equal(s.waiting,false);assert.ok(s.visible.every(v=>!v.omitted));
+});
+test('whole-Quran locator finds distinct passages but waits on repeated verses',()=>{
+ const {Locator}=require('../recitation-core.js'),search=require('../data/mushaf-search.json'),l=new Locator(search);
+ for(const vk of ['103:2','44:3','114:1','45:3'])assert.equal(l.locate(search[vk][1]).vk,vk);
+ assert.equal(l.locate('فبأي آلاء ربكما تكذبان'),null);assert.equal(l.locate('الله'),null);
+});
+test('error taxonomy distinguishes omission, extra and substitution without claiming acoustic tashkeel',()=>{
+ const {errorInfo}=require('../recitation-core.js');assert.equal(errorInfo({type:'extra'}).group,'extra');assert.equal(errorInfo({type:'substitution'}).label,'استبدال كلمة');
+ const errors=[0,1].map(wi=>({vk:'1:1',wi,type:'omission',active:true}));assert.equal(errorInfo(errors[0],errors,errors).label,'سقوط آية كاملة');
+ assert.match(errorInfo({type:'tashkeel'}).label,/المعلّمة/);
+});
 test('initial recitation locates a middle ayah without counting its preceding words',()=>{const t=new Tracker(words()),r=t.feed('الحمد لله رب العالمين');assert.equal(r.start,4);assert.equal(r.end,8);assert.equal(t.covered.size,4);assert.equal(t.errors.size,0);});
 test('an omitted word does not stop subsequent words or the next ayah',()=>{const t=new Tracker(words()),r=t.feed('بسم الله الرحيم الحمد لله رب العالمين');assert.equal(r.end,8);assert.equal(t.errors.get('1:1#2').type,'omission');assert.ok(t.covered.has('1:2#3'));});
 test('a substituted word is recorded automatically with its heard text',()=>{const t=new Tracker(words());t.feed('الحمد لله غريب العالمين الرحمن الرحيم');const e=t.errors.get('1:2#2');assert.equal(e.type,'substitution');assert.equal(e.heard,'غريب');assert.equal(e.automatic,true);assert.equal(e.confidenceKind,'alignment-not-acoustic');assert.equal(t.cursor,10);});
