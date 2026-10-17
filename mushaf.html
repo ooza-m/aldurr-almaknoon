@@ -1210,7 +1210,7 @@ function openFaceListening(){openAudioOptions(faceVerses(cur)[0],'face');}
 function closeFaceListening(){audioController.stop();playingVerse='';paintPlayingVerse();refitVisiblePanes();}
 $('faceListenPlay').onclick=()=>audioController.status==='loading'?closeFaceListening():audioController.toggle();$('faceListenClose').onclick=closeFaceListening;
 $('faceListenSeek').onchange=e=>audioController.seek(+e.target.value/1000);
-$('recSoundToggle').onclick=()=>{recSoundEnabledV91=!recSoundEnabledV91;LSet('durr-rec-error-sounds',recSoundEnabledV91?'1':'0');updateRecSoundButtonV91();recTip(recSoundEnabledV91?'أصوات التنبيه مفعّلة':'أصوات التنبيه مكتومة');};
+$('recSoundToggle').onclick=()=>{try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){recSoundContextV91=recSoundContextV91||new AC();recSoundContextV91.resume().catch(()=>{});}}catch(e){}recSoundEnabledV91=!recSoundEnabledV91;LSet('durr-rec-error-sounds',recSoundEnabledV91?'1':'0');updateRecSoundButtonV91();recTip(recSoundEnabledV91?'أصوات التنبيه مفعّلة':'أصوات التنبيه مكتومة');};
 $('faceListenRepeat').onclick=()=>sessionToolsV89?.openRepeat();
 $('faceListenAirPlay').onclick=()=>audioController.audio?.webkitShowPlaybackTargetPicker?.();
 $('faceListenPrev').onclick=()=>audioController.previous();$('faceListenNext').onclick=()=>audioController.next();
@@ -1330,8 +1330,8 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
  renderRecitationV89(ctx,sec,result.ops);
  for(const [key,event] of sec.tracker.errors){const w=sec.words.find(w=>w.vk+'#'+w.wi===key);if(w){w.el.classList.toggle('rec-err',event.active);w.el.classList.toggle('rec-corrected',!event.active);w.el.classList.toggle('rec-omission',event.active&&event.type==='omission');w.el.classList.toggle('rec-extra',event.active&&event.type==='extra');w.el.dataset.err=event.active?'1':'';}}
  recWordPos=sec.tracker.cursor;recPos=recWordPos<recWords.length?recWords[recWordPos].seqIndex:recSeq.length;setCurrent(sec.words[Math.max(0,result.end-1)]?.el);updateErrCount();
- const confirmedAudioError=result.updates.find(e=>e.active&&e.automatic!==false&&source==='quran-asr'&&meta?.confidence_calibrated===true&&Number(meta.confidence)>=.9);
- if(confirmedAudioError)playRecErrorToneV91(confirmedAudioError.type);
+ const audibleHint=result.updates.find(e=>e.active&&source==='browser-speech'&&['omission','extra','substitution','replacement'].includes(e.type));
+ if(audibleHint)playRecErrorToneV91(audibleHint.type);
  if(result.updates.some(e=>e.active))navigator.vibrate?.(25);
  const recallEnd=ctx.session.recall&&sec.words.findLastIndex(w=>w.vk===ctx.session.recall.vk)+1;
  if((recWordPos>=recWords.length||recallEnd&&recWordPos>=recallEnd)&&!sec.gateWaiting&&recOn&&!recFinishing){snapshotPage(true);clearTimeout(recAdvanceTimer);recAdvanceTimer=setTimeout(()=>recSession?.recall?finishReciteSession(false):autoAdvance(),420);}
@@ -1496,10 +1496,10 @@ function pumpQasrV73(run=qasrRunsV86.get(qasrRunId)){
      if(data.transcript_format==='phonemes'){
        ctx.session.analysisIncomplete=true;
        void previewQuranPhonemesV90(ctx,item.page,String(data.transcript||'')).catch(()=>{});
-       if(recSession?.id===ctx.session.id&&!data.transcript)setEngine('limited','بانتظار تمييز الأصوات القرآنية');
+       // The acoustic preview is advisory; the active word tracker remains authoritative.
      }else if(tx)await dispatchRecitationV89(ctx,item.page,tx,'quran-asr',data);
-     if(item.final){ctx.session.engineStreamFinalized=true;if(recSession?.id===ctx.session.id){if(ctx.session.analysisIncomplete)setEngine('limited','وصل الصوت، لكن محاذاة الكلمات لم تُستكمل؛ لا تُحتسب نتيجة تسميع');else setEngine('ok','اكتمل تحليل المقطع · يمكنك المتابعة');}}
-   }catch(error){if(run.ctx)run.ctx.session.analysisIncomplete=true;run.queue.length=0;if(recSession?.id===run.owner&&recOn){setEngine('','تعذّر التحليل المتخصص · الانتقال إلى المتصفح');startSpeech();}break;}
+     if(item.final){ctx.session.engineStreamFinalized=true;if(recSession?.id===ctx.session.id){if(speechStarted)setEngine('live','تتبّع الكلمات مستمر · التحليل الصوتي المساند انتهى');else if(ctx.session.analysisIncomplete)setEngine('limited','تعذّرت المحاذاة الصوتية المساندة');else setEngine('ok','اكتمل تحليل المقطع');}}
+   }catch(error){if(run.ctx)run.ctx.session.analysisIncomplete=true;run.queue.length=0;if(recSession?.id===run.owner&&recOn&&!speechStarted){setEngine('','التحليل المساند غير متاح');startSpeech();}break;}
    }
  })().finally(()=>{run.promise=null;if(qasrRunId===run.id){qasrBusy=false;qasrPumpPromise=null;}});qasrPumpPromise=run.promise;return run.promise;
 }
@@ -1665,10 +1665,11 @@ async function toggleRec(){
     const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:true,autoGainControl:false}});
     if(!recMode||recFinishing||!recSession||recSession.id!==owner){stream.getTracks().forEach(t=>t.stop());return;}
     recStream=stream;recOn=true;syncRecMicV89();document.body.classList.add('rec-on');recT0=Date.now();tickTimer();recTimerH=setInterval(tickTimer,1000);
-    let specialist=false;
-    if(qasrAvailable)specialist=await startQuranAsrV73(stream);
-    if(!recOn||!recMode||recFinishing)return;
-    if(!specialist&&!startSpeech())setEngine('','الميكروفون يعمل · دون تحليل آلي');
+    const wordsStarted=startSpeech();
+    if(!wordsStarted)setEngine('','الميكروفون يعمل · التتبع بالكلمات غير متاح');
+    if(qasrAvailable){
+      void startQuranAsrV73(stream).then(started=>{if(started&&recOn&&wordsStarted)setEngine('live','متابعة الكلمات نشطة · التحليل القرآني المساند');}).catch(()=>{});
+    }
   }catch(e){
     if(recSession?.id!==owner||generation!==recStartGenerationV86)return;
     recStream&&recStream.getTracks().forEach(t=>t.stop());recStream=null;recOn=false;syncRecMicV89();document.body.classList.remove('rec-on');clearInterval(recTimerH);
