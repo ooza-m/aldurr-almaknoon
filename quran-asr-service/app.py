@@ -11,9 +11,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 APP_NAME = "Durr Quran ASR"
-BACKEND = os.getenv("QASR_BACKEND", "sherpa-fastconformer").strip().lower()
+BACKEND = os.getenv("QASR_BACKEND", "quran-zipformer-ctc").strip().lower()
 MODEL_ID = os.getenv(
-    "QASR_MODEL", "mohammed/fastconformer-quran-ar-onnx-int8"
+    "QASR_MODEL", "Quran-Lab/zipformer_p-arabic-v3"
 ).strip()
 HF_TOKEN = os.getenv("HF_TOKEN") or None
 SESSION_TTL = int(os.getenv("QASR_SESSION_TTL", "1200"))
@@ -58,7 +58,7 @@ class TranscribeRequest(BaseModel):
 
 
 def _device_name() -> str:
-    if BACKEND == "sherpa-fastconformer":
+    if BACKEND in {"sherpa-fastconformer", "quran-zipformer-ctc"}:
         return "cpu"
     try:
         import torch
@@ -151,6 +151,20 @@ def _validate_sherpa_bundle(encoder: str, decoder: str, joiner: str):
         del session
         if not valid:
             raise IncompatibleModelError(f"{kind} is not a compatible sherpa streaming NeMo export")
+
+
+def _load_zipformer_ctc():
+    from huggingface_hub import hf_hub_download
+    import sherpa_onnx
+
+    model = hf_hub_download(MODEL_ID, "zipformer_p_arabic_v3.int8.onnx", token=HF_TOKEN)
+    tokens = hf_hub_download(MODEL_ID, "tokens.txt", token=HF_TOKEN)
+    return sherpa_onnx.OnlineRecognizer.from_zipformer2_ctc(
+        model=model, tokens=tokens, sample_rate=16000,
+        feature_dim=80, num_threads=NUM_THREADS,
+        decoding_method="greedy_search",
+        enable_endpoint_detection=False,
+    )
 
 
 def _load_whisper():
@@ -363,7 +377,7 @@ def health():
         "model": MODEL_ID,
         "device": _device_name(),
         "quran_specialized": True,
-        "streaming": BACKEND == "sherpa-fastconformer",
+        "streaming": BACKEND in {"sherpa-fastconformer", "quran-zipformer-ctc"},
         "engine_loaded": _engine is not None,
         "model_error": _engine_error,
         "license_note": (
@@ -438,7 +452,7 @@ def transcribe(req: TranscribeRequest):
         raise HTTPException(status_code=503, detail="Quran ASR unavailable") from exc
 
     return {
-        "transcript": text,
+        "transcript": text,\n        "transcript_format": "phonemes" if BACKEND == "quran-zipformer-ctc" else "words",
         "transcript_delta": delta,
         "transcript_revised": revised,
         "backend": BACKEND,
