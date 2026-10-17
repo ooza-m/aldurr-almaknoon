@@ -3,8 +3,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    QASR_BACKEND=sherpa-fastconformer \
-    QASR_MODEL=mohammed/fastconformer-quran-ar-onnx-int8 \
+    QASR_BACKEND=quran-zipformer-ctc \
+    QASR_MODEL=Quran-Lab/zipformer_p-arabic-v3 \
     QASR_PRELOAD=1 \
     QASR_THREADS=4
 
