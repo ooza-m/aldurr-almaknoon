@@ -506,6 +506,7 @@ def _startup_schema_probe():
                 return {"kind": "list", "count": len(value), "child": shape(value[0], depth+1) if value else None}
             return {"kind": type(value).__name__}
         print("QASR_REFERENCE_SCHEMA " + json.dumps(shape(data), ensure_ascii=False), flush=True)
+        print("QASR_VERIFIED_FATIHAH_WORDS " + str(len(_verified_word_units(data["1:1"]) or [])), flush=True)
     except Exception as exc:
         print("QASR_REFERENCE_ERROR " + type(exc).__name__, flush=True)
 
