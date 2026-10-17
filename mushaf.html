@@ -1455,7 +1455,14 @@ function pumpQasrV73(run=qasrRunsV86.get(qasrRunId)){
      const ctx=run.ctx;if(!ctx||ctx.finalized)continue;if(data.seq!==item.seq)throw Error('ASR sequence mismatch');
      const tx=String(Object.prototype.hasOwnProperty.call(data,'transcript_delta')?data.transcript_delta:(data.transcript||'')).trim(),ms=Math.round(performance.now()-start),stats=ctx.session.stats;
      stats.quranLatencyMs+=ms;stats.quranLatencyN++;stats.quranLatencyMax=Math.max(stats.quranLatencyMax,ms);stats.quranStreaming=!!data.streaming;stats.quranBackend=data.backend||'';
-     if(data.transcript_revised)ctx.session.analysisIncomplete=true;if(tx)await dispatchRecitationV89(ctx,item.page,tx,'quran-asr',data);
+     if(data.transcript_revised)ctx.session.analysisIncomplete=true;
+     // A phoneme-level model cannot be fed into word-level Quran grading.
+     // Until a verified phoneme-to-canonical-word aligner exists, do not award
+     // completion or record automatic recitation mistakes from these tokens.
+     if(data.transcript_format==='phonemes'){
+       ctx.session.analysisIncomplete=true;
+       if(recSession?.id===ctx.session.id)setEngine('limited','المحرّك يتعرف على الأصوات؛ محاذاة الكلمات القرآنية غير مفعّلة بعد');
+     }else if(tx)await dispatchRecitationV89(ctx,item.page,tx,'quran-asr',data);
      if(item.final){ctx.session.engineStreamFinalized=true;if(recSession?.id===ctx.session.id)setEngine('ok','اكتمل تحليل المقطع · يمكنك المتابعة');}
    }catch(error){if(run.ctx)run.ctx.session.analysisIncomplete=true;run.queue.length=0;if(recSession?.id===run.owner&&recOn){setEngine('','تعذّر التحليل المتخصص · الانتقال إلى المتصفح');startSpeech();}break;}
    }
