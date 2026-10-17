@@ -586,6 +586,40 @@ def phoneme_reference_verse(surah: int, ayah: int):
             "verified_word_boundaries": True}
 
 
+@app.get("/phoneme-reference/inspect/{surah}/{ayah}")
+def inspect_phoneme_reference(surah: int, ayah: int):
+    """Inspect real upstream phoneme layout without exposing model tokens."""
+    if not (1 <= surah <= 114 and 1 <= ayah <= 286):
+        raise HTTPException(status_code=400, detail="Invalid verse location")
+    try:
+        data = _reference_data()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Reference unavailable") from exc
+    record = data.get(f"{surah}:{ayah}") if isinstance(data, dict) else None
+    if not isinstance(record, dict):
+        raise HTTPException(status_code=404, detail="Verse not found")
+    sequence = record.get("aya_phonemes_list")
+    text = record.get("aya_text")
+    if isinstance(sequence, list):
+        element_types = sorted(set(type(x).__name__ for x in sequence))
+        nested = any(isinstance(x, (dict, list)) for x in sequence)
+        lengths = [len(x) for x in sequence[:8] if isinstance(x, (str, list, dict))]
+    else:
+        element_types = []
+        nested = False
+        lengths = []
+    return {
+        "verse": f"{surah}:{ayah}",
+        "text_word_count": len(text.split()) if isinstance(text, str) else None,
+        "sequence_type": type(sequence).__name__,
+        "sequence_length": len(sequence) if isinstance(sequence, (list, str)) else None,
+        "element_types": element_types,
+        "nested_elements": nested,
+        "first_element_lengths": lengths,
+        "verified_word_boundaries": _verified_word_units(record) is not None,
+    }
+
+
 @app.delete("/session/{session_id}")
 def delete_session(session_id: str):
     with _sessions_lock:
