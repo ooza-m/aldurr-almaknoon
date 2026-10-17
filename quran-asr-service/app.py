@@ -204,7 +204,9 @@ def _load_engine():
             raise IncompatibleModelError("Configured model export is incompatible")
 
         try:
-            if BACKEND == "sherpa-fastconformer":
+            if BACKEND == "quran-zipformer-ctc":
+                _engine = _load_zipformer_ctc()
+            elif BACKEND == "sherpa-fastconformer":
                 _engine = _load_sherpa()
             elif BACKEND == "tarteel-whisper":
                 _engine = _load_whisper()
