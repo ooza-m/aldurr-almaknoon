@@ -1210,7 +1210,7 @@ function openFaceListening(){openAudioOptions(faceVerses(cur)[0],'face');}
 function closeFaceListening(){audioController.stop();playingVerse='';paintPlayingVerse();refitVisiblePanes();}
 $('faceListenPlay').onclick=()=>audioController.status==='loading'?closeFaceListening():audioController.toggle();$('faceListenClose').onclick=closeFaceListening;
 $('faceListenSeek').onchange=e=>audioController.seek(+e.target.value/1000);
-$('recSoundToggle').onclick=()=>{try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){recSoundContextV91=recSoundContextV91||new AC();recSoundContextV91.resume().catch(()=>{});}}catch(e){}recSoundEnabledV91=!recSoundEnabledV91;LSet('durr-rec-error-sounds',recSoundEnabledV91?'1':'0');updateRecSoundButtonV91();if(recSoundEnabledV91)playRecErrorToneV91('omission',true);recTip(recSoundEnabledV91?'أصوات التنبيه مفعّلة':'أصوات التنبيه مكتومة');};
+$('recSoundToggle').onclick=()=>{unlockRecErrorAudioV97();recSoundEnabledV91=!recSoundEnabledV91;LSet('durr-rec-error-sounds',recSoundEnabledV91?'1':'0');updateRecSoundButtonV91();if(recSoundEnabledV91)playRecErrorToneV91('omission',true);recTip(recSoundEnabledV91?'أصوات التنبيه مفعّلة':'أصوات التنبيه مكتومة');};
 $('faceListenRepeat').onclick=()=>sessionToolsV89?.openRepeat();
 $('faceListenAirPlay').onclick=()=>audioController.audio?.webkitShowPlaybackTargetPicker?.();
 $('faceListenPrev').onclick=()=>audioController.previous();$('faceListenNext').onclick=()=>audioController.next();
@@ -1388,25 +1388,40 @@ function updateRecSoundButtonV91(){
  button.title=recSoundEnabledV91?'أصوات الأخطاء مفعّلة':'أصوات الأخطاء مكتومة';
  button.style.opacity=recSoundEnabledV91?'1':'.45';
 }
+function unlockRecErrorAudioV97(){
+ try{
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  const ctx=recSoundContextV91||(recSoundContextV91=new AC());
+  if(ctx.state!=='running')void ctx.resume().catch(()=>{});
+  // A silent oscillator in a direct user gesture unlocks iOS WebAudio.
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  g.gain.value=0;o.connect(g);g.connect(ctx.destination);
+  o.start();o.stop(ctx.currentTime+.015);
+ }catch(e){}
+}
 function playRecErrorToneV91(kind,preview=false){
- if(!recSoundEnabledV91||(!recOn&&!preview)||document.hidden||Date.now()-recSoundAtV91<1100)return;
+ if(!recSoundEnabledV91||(!recOn&&!preview)||document.hidden||Date.now()-recSoundAtV91<900)return;
  try{
    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
    const ctx=recSoundContextV91||(recSoundContextV91=new AC());
-   if(ctx.state==='suspended'){ctx.resume().catch(()=>{});return;}
-   const tones=kind==='omission'?[[390,0,.105],[310,.14,.17]]:kind==='extra'?[[490,0,.075],[620,.11,.095]]:[[525,0,.12]];
-   const now=ctx.currentTime+.01;
-   for(const [hz,delay,duration] of tones){
-     const oscillator=ctx.createOscillator(),volume=ctx.createGain();
-     oscillator.type='sine';oscillator.frequency.setValueAtTime(hz,now+delay);
-     volume.gain.setValueAtTime(.0001,now+delay);
-     volume.gain.exponentialRampToValueAtTime(.045,now+delay+.018);
-     volume.gain.exponentialRampToValueAtTime(.0001,now+delay+duration);
-     oscillator.connect(volume);volume.connect(ctx.destination);
-     oscillator.start(now+delay);oscillator.stop(now+delay+duration+.02);
-   }
-   recSoundAtV91=Date.now();
- }catch(e){/* audio feedback is optional and never affects recitation */ }
+   const play=()=>{
+     if(ctx.state!=='running')return;
+     const tones=kind==='omission'?[[390,0,.11],[310,.15,.19]]:kind==='extra'?[[490,0,.09],[620,.13,.12]]:[[525,0,.17]];
+     const now=ctx.currentTime+.02;
+     for(const [hz,delay,duration] of tones){
+       const oscillator=ctx.createOscillator(),volume=ctx.createGain();
+       oscillator.type='sine';oscillator.frequency.setValueAtTime(hz,now+delay);
+       volume.gain.setValueAtTime(.0001,now+delay);
+       volume.gain.exponentialRampToValueAtTime(.085,now+delay+.02);
+       volume.gain.exponentialRampToValueAtTime(.0001,now+delay+duration);
+       oscillator.connect(volume);volume.connect(ctx.destination);
+       oscillator.start(now+delay);oscillator.stop(now+delay+duration+.03);
+     }
+     recSoundAtV91=Date.now();
+   };
+   if(ctx.state==='running')play();
+   else void ctx.resume().then(play).catch(()=>{});
+ }catch(e){}
 }
 updateRecSoundButtonV91();
 function setEngine(state,text){const e=$('recEngine');if(!e)return;e.classList.remove('live','ok');if(state)e.classList.add(state);$('recEngineText').textContent=text||'جلسة التسميع';}
@@ -1721,6 +1736,7 @@ $('recExit').onclick=()=>finishReciteSession(false);
 $('recWord').onclick=revealNextWord;
 $('recAyah').onclick=revealNextAyah;
 $('recEye').onclick=toggleEye;
+$('recMic').addEventListener('pointerdown',unlockRecErrorAudioV97,{passive:true});
 $('recMic').onclick=toggleRec;
 $('freeRecite').onclick=async()=>{await enterRecite('free');voiceLocatorV89=voiceLocatorV89||new DurrRecitation.Locator(SEARCH);recSession.freeSearch=true;recSession.freeLocated=false;setEngine('','التسميع الحر · ابدئي من أي آية ثم شغّلي الميكروفون');};
 $('recErrs').onclick=openErrLog;
