@@ -65,3 +65,9 @@ test('stop releases downloaded URLs and cancels callbacks',async t=>{
 test('wrong-reciter chapter metadata is rejected and uses the requested voice',async()=>{
   const {store,requests}=downloads();const plan=await store.prepare(['1:1','1:2'],'husary');assert.equal(requests.length,3);assert.ok(requests.slice(1).every(u=>u.includes('/Husary_128kbps/')));assert.notEqual(plan.get('1:1').src,plan.get('1:2').src);store.clear();
 });
+test('replaying the same half of an ayah cannot add up to full listening credit',async t=>{
+ const complete=[],{p,audio}=player(t,{onComplete:s=>complete.push(s)});await p.start({verses:['1:1','1:2']});advance(audio,1);await p.previous();advance(audio,1);p.seek(1);audio.ontimeupdate();await tick();advance(audio,4);assert.equal(complete[0].fullyPlayed,false);assert.ok((p.coverage.get('1:1')||0)<=1.01);
+});
+test('a selected repeat count reuses prepared audio and completes only after the last cycle',async t=>{
+ const complete=[],{p,audio,requests}=player(t,{onComplete:s=>complete.push(s)});p.setRepeat(2);await p.start({verses:['1:1','1:2']});advance(audio,3.75);audio.currentTime=4;audio.ontimeupdate();await tick();assert.equal(complete.length,0);assert.equal(p.cycle,2);advance(audio,4);assert.equal(complete.length,1);assert.equal(complete[0].fullyPlayed,true);assert.equal(requests.length,2);
+});

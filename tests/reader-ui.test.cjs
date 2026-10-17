@@ -4,10 +4,11 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {JSDOM,VirtualConsole}=require('jsdom');
 const root=path.join(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
-async function boot(){
+async function boot(options={}){
   const errors=[],requests=[],console=new VirtualConsole();console.on('jsdomError',error=>errors.push(error));
   const dom=new JSDOM(read('mushaf.html'),{url:'https://reader.test/mushaf.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:console}),w=dom.window;
   w.matchMedia=()=>({matches:true});w.FontFace=class{async load(){return this;}};
+  if(options.SpeechRecognition){w.SpeechRecognition=options.SpeechRecognition;Object.defineProperty(w.navigator,'mediaDevices',{value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});}
   Object.defineProperty(w.document,'fonts',{value:{add(){},load:async()=>[]}});
   w.requestAnimationFrame=fn=>{fn();return 0;};w.scrollTo=()=>{};
   const audio=[];w.Audio=class{
@@ -28,10 +29,10 @@ async function boot(){
     if(match)return {ok:true,json:async()=>({tafsir:{resource_id:+match[1],text:'<p>تفسير المصدر '+match[1]+' للآية '+match[2]+'</p><p>فقرة ثانية.</p>'}})};
     throw Error('Unexpected network request: '+url);
   };
-  w.localStorage.setItem('durr-num','en');w.eval(read('app-preferences.js'));w.eval(read('reader-core.js'));w.eval(read('reader-audio.js'));
+  w.localStorage.setItem('durr-num','en');for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js'])w.eval(read(file));
   for(const script of w.document.querySelectorAll('script:not([src])')){
     let code=script.textContent;
-    if(code.includes('const REC_QUERY='))code+='\nwindow.readerTest={get player(){return audioController},get page(){return cur},get verse(){return playingVerse},settle,faceVerses,loadTafsir,maybeCompleteFaceTafsir};';
+    if(code.includes('const REC_QUERY='))code+='\nwindow.readerTest={get player(){return audioController},get page(){return cur},get verse(){return playingVerse},get session(){return recSession},get recMode(){return recMode},get pageState(){return recPageState},get jobs(){return recJobsV86},settle,faceVerses,loadTafsir,maybeCompleteFaceTafsir,enterRecite,toggleRec,finishReciteSession,processTranscriptV73,openErrLog};';
     w.eval(code);
   }
   for(let i=0;i<50&&w.document.getElementById('loading').style.display!=='none';i++)await tick();
@@ -58,6 +59,36 @@ test('page scrubber is under the face before actions and jumps without opening t
  $('pageSlider').dispatchEvent(new w.Event('change'));assert.equal(w.readerTest.page,50);assert.ok(!$('indexOv').classList.contains('open'));
  $('btnSettings').click();w.DurrPreferences.mount(w.document.querySelector('[data-app-preferences]'));w.document.querySelector('[data-palette=navy]').click();w.document.querySelector('[data-digits=ar]').click();
  assert.equal(w.document.documentElement.dataset.palette,'navy');assert.equal(w.localStorage.getItem('durr-num'),'ar');assert.match($('pagefoot').textContent,/٥٠/);
+});
+test('ayah bookmarks persist independently of browsing and jump back to their exact ayah',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());await w.openAyah('1:3');$('ayBookmark').click();assert.equal($('ayBookmark').getAttribute('aria-pressed'),'true');
+ const saved=JSON.parse(w.localStorage.getItem('durr-verse-bookmarks-v86'));assert.equal(saved[0].vk,'1:3');await w.readerTest.settle(50);assert.equal(JSON.parse(w.localStorage.getItem('durr-verse-bookmarks-v86'))[0].vk,'1:3');
+ $('btnIndex').click();$('openBookmarks').click();assert.ok($('bookmarksOv').classList.contains('open'));w.document.querySelector('[data-bookmark-go="1:3"]').click();await tick();await tick();assert.equal(w.readerTest.page,1);assert.ok(w.document.querySelector('.qend.has-bookmark[data-vk="1:3"]'));
+});
+test('reader library exposes each reciter, surah download and real stored status',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());$('readerListen').click();$('openAudioLibrary').click();await tick();assert.equal(w.document.querySelectorAll('[data-reader-open]').length,8);
+ w.document.querySelector('[data-reader-open=alafasy]').click();await tick();assert.equal(w.document.querySelectorAll('[data-download]').length,114);
+ $('audioLibrarySearch').value='العصر';$('audioLibrarySearch').dispatchEvent(new w.Event('input'));await tick();w.document.querySelector('[data-download="103"]').click();for(let i=0;i<12;i++)await tick();assert.match($('audioLibraryFeedback').textContent,/اكتمل|تم التحميل/);assert.ok(w.document.querySelector('[data-chapter-remove="103"]'));
+ w.document.querySelector('[data-chapter-play="103"]').click();for(let i=0;i<8;i++)await tick();assert.equal(w.readerTest.player.status,'playing');assert.equal(w.readerTest.player.queue.length,3);assert.match($('faceListenReader').textContent,/العفاسي/);
+});
+test('download ring indicates progress and its stop button cancels without reviving playback',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());const player=w.readerTest.player,original=player.downloads.fetcher;let reads=0;
+ player.downloads.fetcher=async url=>String(url).includes('chapter_recitations')?original(url):{ok:true,headers:{get:key=>key==='content-length'?'32':'audio/mpeg'},body:{getReader:()=>({read:async()=>++reads===1?{done:false,value:new Uint8Array(8)}:new Promise(()=>{}),cancel:async()=>{}})}};
+ const work=player.start({verses:['103:1','103:2','103:3']});await tick();await tick();assert.equal(player.status,'loading');assert.equal($('faceListenDownloadRing').hasAttribute('hidden'),false);assert.equal($('faceListenPlay').disabled,false);assert.equal($('faceListenPlay').getAttribute('aria-label'),'إلغاء التحميل');$('faceListenPlay').click();await work;assert.equal(player.status,'idle');assert.equal(w.document.body.classList.contains('face-listening'),false);
+});
+test('seek and bounded repetition control the real player without creating listening credit',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());const player=w.readerTest.player;await player.start({verses:['1:1','1:2']});$('faceListenRepeat').click();assert.equal(player.repeat,2);$('faceListenSeek').value='500';$('faceListenSeek').dispatchEvent(new w.Event('change'));assert.equal(player.audio.currentTime,5);assert.equal(player.completed.size,0);assert.equal($('faceListenRepeatCount').textContent,'2');
+});
+test('finishing speech immediately restores navigation while the final result belongs to its old session',async t=>{
+ const recognizers=[];class SR{constructor(){recognizers.push(this);}start(){this.onstart?.();}stop(){}abort(){this.onend?.();}}
+ const {dom,w,$}=await boot({SpeechRecognition:SR});t.after(()=>dom.window.close());await w.readerTest.enterRecite('free');await w.readerTest.toggleRec();const owner=w.readerTest.session.id,old=recognizers[0],finished=w.readerTest.finishReciteSession();
+ assert.equal(w.readerTest.recMode,false);assert.equal(w.document.body.classList.contains('reciting'),false);assert.equal($('recSummaryWrap').classList.contains('open'),false);$('btnIndex').click();assert.ok($('indexOv').classList.contains('open'));
+ await w.readerTest.enterRecite('free');const fresh=w.readerTest.session.id;assert.notEqual(fresh,owner);const result=[{transcript:'الحمد لله رب العالمين'}];result.isFinal=true;old.onresult({resultIndex:0,results:[result]});old.onend();await finished;
+ assert.equal(w.readerTest.session.id,fresh);assert.equal(w.readerTest.pageState.covered.size,0);assert.equal(w.readerTest.jobs.get(owner).payload.summary.wordsCovered,4);assert.equal($('recSummaryWrap').classList.contains('open'),false);assert.match($('recJobStatus').textContent,/اكتمل/);
+ await w.readerTest.finishReciteSession();
+});
+test('automatic error rows are removable without waiting for the similar-verses data',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());await w.readerTest.enterRecite('free');w.readerTest.processTranscriptV73('الحمد لله غريب العالمين الرحمن الرحيم','browser-speech',{});await w.readerTest.openErrLog();assert.ok($('errBody').querySelector('[data-error-remove]'));$('errBody').querySelector('[data-error-remove]').click();await tick();assert.equal(JSON.parse(w.localStorage.getItem('durr-errors')).length,0);assert.equal(JSON.parse(w.localStorage.getItem('durr-error-dismissals-v86')).length,1);await w.readerTest.finishReciteSession();
 });
 test('face tafsir source buttons really change content and agree with the ayah sheet',async t=>{
   const {dom,w,$,requests}=await boot();t.after(()=>dom.window.close());

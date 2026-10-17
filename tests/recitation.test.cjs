@@ -7,12 +7,12 @@ const recitation = source.slice(source.indexOf('const REC_QUERY='), source.index
 const normalize = source.match(/^const norm=.*$/m)[0];
 function context(fetchImpl = async()=>({ok:true,json:async()=>({seq:0,transcript_delta:''})})) {
   const elements = new Map();
-  const element = () => ({classList:{add(){},remove(){},toggle(){}},dataset:{},style:{},setAttribute(){},removeAttribute(){}});
+  const element = () => ({classList:{add(){},remove(){},toggle(){}},dataset:{},style:{},addEventListener(){},setAttribute(){},removeAttribute(){}});
   const c = vm.createContext({URLSearchParams,location:{search:'',origin:'https://app.test'},
-    window:{DURR_CONFIG:{quranAsr:{url:'https://asr.test'}},SpeechRecognition:function(){}},
+    window:{addEventListener(){},DURR_CONFIG:{quranAsr:{url:'https://asr.test'}},SpeechRecognition:function(){}},
     LS:(_,fallback)=>fallback,LSet(){},localStorage:{removeItem(){}},
     performance,AbortController,setTimeout,clearTimeout,setInterval,clearInterval,
-    fetch:fetchImpl,navigator:{},document:{body:element()},
+    fetch:fetchImpl,navigator:{},ARA:String,DurrRecitation:require('../recitation-core.js'),DurrRecitationJobs:require('../recitation-jobs.js'),document:{body:element()},
     $:id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);},
     paneCur:element(),DATA:{pages:{'1':{s:[{id:1}]}}},SEARCH:{},
     recMode:true,cur:1,norm:null,btoa:s=>Buffer.from(s,'binary').toString('base64'),
@@ -20,7 +20,7 @@ function context(fetchImpl = async()=>({ok:true,json:async()=>({seq:0,transcript
   });
   vm.runInContext(normalize+'\n'+recitation,c);
   vm.runInContext(`recSession=newRecSession();
-    recSeq=['الحمد','لله','رب','العالمين'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){}},dataset:{}}}));
+    recSeq=['الحمد','لله','رب','العالمين'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){}},dataset:{}}}));
     recWords=recSeq;recPageState=makePageState();recOn=true;
     checkMutashabihV73=async()=>{};updateErrCount=()=>{};recTip=()=>{};`,c);
   return c;
@@ -44,9 +44,9 @@ test('browser final results commit once, and a recognizer restart resets result 
   r.onend();const next=[{transcript:'رب العالمين'}];next.isFinal=true;run(c,'recOn=false');r.onresult({resultIndex:0,results:[next]});assert.equal(run(c,'recPageState.covered.size'),4);
 });
 
-test('even a claimed high ASR confidence cannot automatically create an error',()=>{
-  const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{confidence:1,confidence_calibrated:true});`);
-  assert.equal(run(c,'ERR.length'),0);assert.equal(run(c,'recPageState.errors.size'),0);assert.equal(run(c,`recSession.findings.some(f=>f.type.startsWith('confirmed_'))`),false);
+test('anchored omissions are saved automatically without claiming user/acoustic confirmation',()=>{
+  const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{confidence:1,confidence_calibrated:true});`);
+  assert.equal(run(c,'ERR.length'),1);assert.equal(run(c,'recPageState.errors.size'),1);assert.equal(run(c,'ERR[0].automatic'),true);assert.equal(run(c,'ERR[0].userConfirmed'),false);assert.equal(run(c,'ERR[0].confidenceKind'),'alignment-not-acoustic');assert.equal(run(c,`recSession.findings.some(f=>f.type.startsWith('confirmed_'))`),false);
 });
 
 test('a short touch cannot record an error; long touch requires confirmation',()=>{
@@ -120,10 +120,10 @@ test('late responses from an old stream cannot update a new recitation session',
   assert.equal(run(c,'recSession.stats.quranChunks'),0);
 });
 
-test('unscored ASR confidence cannot automatically confirm a Quran omission',()=>{
-  const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{});`);
-  assert.equal(run(c,'ERR.length'),0);
-  assert.equal(run(c,`recSession.findings.some(f=>f.type==='possible_omission')`),true);
+test('automatic omission tracking continues after the missed word',()=>{
+  const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{});`);
+  assert.equal(run(c,'ERR.length'),1);
+  assert.equal(run(c,`recSession.findings.some(f=>f.type==='automatic_omission')`),true);assert.equal(run(c,'recWordPos'),6);assert.equal(run(c,'recPageState.covered.size'),5);
 });
 
 test('a recall attempt with an extra-word finding remains unresolved and never completes a face',()=>{

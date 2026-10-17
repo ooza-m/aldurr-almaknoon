@@ -25,7 +25,7 @@ async function boot(){
  const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));vc.on('warn',e=>errors.push(e));
  const dom=new JSDOM(read('index.html'),{url:'https://app.test/index.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc}),w=dom.window;
  w.scrollTo=()=>{};w.requestAnimationFrame=fn=>{fn();return 0;};w.alert=()=>{};w.confirm=()=>false;w.matchMedia=()=>({matches:false,addEventListener(){}});w.fetch=async()=>({ok:false});
- w.localStorage.setItem('durr-skip-auth','1');w.eval(read('app-preferences.js'));
+ w.localStorage.setItem('durr-skip-auth','1');for(const file of ['app-preferences.js','reader-ui.js','app-data.js'])w.eval(read(file));
  w.eval([...w.document.querySelectorAll('script:not([src])')].map(s=>s.textContent).join('\n'));
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));await new Promise(r=>setImmediate(r));
  return {dom,w,errors,$:id=>w.document.getElementById(id)};
@@ -79,4 +79,18 @@ test('stage completion uses the selected-calendar picker and saves only after co
  $('stDate').nextElementSibling.click();const target=$('stDate')._pop.querySelector('.dp-days [data-k]').dataset.k;$('stDate')._pop.querySelector('.dp-days [data-k]').click();$('stSave').click();
  const state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));assert.equal(state.stages[index].date,target);assert.equal(state.stages[index].status,'done');assert.equal(state.stages[index+1].status,'current');
  assert.match($('stageTrack').textContent,new RegExp(w.DurrPreferences.format(target)));
+});
+test('automatic findings reach the error log and an improved final result does not duplicate a session',async t=>{
+ const {dom,w}=await boot();t.after(()=>dom.window.close());
+ const initial={id:'background-one',version:86,task:'free',analysisStatus:'interrupted',analysisIncomplete:true,endedAt:Date.now(),pages:[{page:1,coverage:.4,complete:false,score:40,verses:[{vk:'1:2',coverage:.4,errorWordIndexes:[2],errorWords:1}]}],automaticErrorKeys:['1:2#2'],findings:[{type:'automatic_omission',automatic:true,active:true,source:'browser-speech',confidenceKind:'alignment-not-acoustic',page:1,vk:'1:2',wi:2,expected:'رب',confidence:.8}]};
+ w.ingestRecitationSessionV51(initial);let state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));assert.equal(state.errors.length,1);assert.equal(state.errors[0].automatic,true);assert.equal(state.errors[0].userConfirmed,undefined);
+ const final=JSON.parse(JSON.stringify(initial));final.analysisStatus='complete';final.analysisIncomplete=false;final.pages[0].coverage=.9;w.ingestRecitationSessionV51(final);w.ingestRecitationSessionV51(final);state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));assert.equal(state.recitationSessions.length,1);assert.equal(state.activityEvents.filter(e=>e.type==='recitation').length,1);assert.equal(state.verseReview['1:2'].count,1);assert.equal(state.errors.length,1);assert.equal(state.recitationSessions[0].analysisStatus,'complete');
+});
+test('home reading pin stays separate from memorization scheduling',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());new w.DurrReaderUI.Bookmarks(w.localStorage).put('3:1',50,'وردي');w.refreshV50();assert.match($('homeContinueCard').textContent,/فاصلك/);assert.equal($('homeContinueCard').querySelector('[data-reading-vk]').dataset.readingVk,'3:1');assert.equal(w.lastActivityPageV50(),1);
+});
+test('import validation leaves state untouched and undo restores the checkpoint',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());w.confirm=()=>true;const before=w.currentBackupV86();w.DurrData.checkpoint(w.localStorage,before);
+ const imported=w.DurrData.validate(w.DurrData.backup({logs:[],profile:{name:'اسم مستورد',pathChosen:true,pathDir:'up'}},{palette:'navy',digits:'en',calendar:'hijri'},[{vk:'1:4',page:1,name:'فاصل'}]));w.applyImportV86(imported);assert.equal(JSON.parse(w.localStorage.getItem('durr-alfareed-v2')).profile.name,'اسم مستورد');assert.equal(w.DurrPreferences.get().palette,'navy');
+ $('settingsUndoRestore').click();assert.equal(JSON.parse(w.localStorage.getItem('durr-alfareed-v2')).profile.name,before.state.profile.name);assert.equal(w.DurrPreferences.get().palette,before.displayPreferences.palette);assert.equal(JSON.parse(w.localStorage.getItem('durr-verse-bookmarks-v86')).length,before.bookmarks.length);
 });
