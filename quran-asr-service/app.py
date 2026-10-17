@@ -454,7 +454,8 @@ def transcribe(req: TranscribeRequest):
         raise HTTPException(status_code=503, detail="Quran ASR unavailable") from exc
 
     return {
-        "transcript": text,\n        "transcript_format": "phonemes" if BACKEND == "quran-zipformer-ctc" else "words",
+        "transcript": text,
+        "transcript_format": "phonemes" if BACKEND == "quran-zipformer-ctc" else "words",
         "transcript_delta": delta,
         "transcript_revised": revised,
         "backend": BACKEND,
