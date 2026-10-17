@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import json
 import os
 import threading
 import time
@@ -467,6 +468,51 @@ def transcribe(req: TranscribeRequest):
         "confidence": None,
         "confidence_calibrated": False,
     }
+
+
+_reference_cache = None
+_reference_lock = threading.Lock()
+
+
+def _reference_data():
+    """Load the upstream licensed reference inside the private ASR service."""
+    global _reference_cache
+    if _reference_cache is not None:
+        return _reference_cache
+    with _reference_lock:
+        if _reference_cache is None:
+            from huggingface_hub import hf_hub_download
+            path = hf_hub_download(
+                MODEL_ID, "ordered_quran_phonemes.json", token=HF_TOKEN
+            )
+            with open(path, encoding="utf-8") as stream:
+                data = json.load(stream)
+            if not isinstance(data, (dict, list)):
+                raise ValueError("Unexpected Quran phoneme reference")
+            _reference_cache = data
+    return _reference_cache
+
+
+@app.get("/phoneme-reference/schema")
+def phoneme_reference_schema():
+    """Return a minimal, non-sensitive structural probe, never token or model files."""
+    try:
+        data = _reference_data()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Reference unavailable") from exc
+    def describe(value):
+        if isinstance(value, dict):
+            keys = list(value.keys())
+            return {"kind": "object", "count": len(keys),
+                    "sample_keys": keys[:4],
+                    "sample_value": describe(value[keys[0]]) if keys else None}
+        if isinstance(value, list):
+            return {"kind": "array", "count": len(value),
+                    "sample_value": describe(value[0]) if value else None}
+        return {"kind": type(value).__name__,
+                "preview": str(value)[:80] if isinstance(value, (str, int, float)) else None}
+    return {"model": MODEL_ID, "reference": "ordered_quran_phonemes.json",
+            "schema": describe(data)}
 
 
 @app.delete("/session/{session_id}")
