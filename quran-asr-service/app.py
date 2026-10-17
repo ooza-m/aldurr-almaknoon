@@ -620,6 +620,65 @@ def inspect_phoneme_reference(surah: int, ayah: int):
     }
 
 
+_phonemizer_engine = None
+_phonemizer_lock = threading.Lock()
+
+
+def _hafs_phonemizer():
+    global _phonemizer_engine
+    if _phonemizer_engine is None:
+        with _phonemizer_lock:
+            if _phonemizer_engine is None:
+                from quranic_phonemizer import Phonemizer
+                _phonemizer_engine = Phonemizer()
+    return _phonemizer_engine
+
+
+def _g2p_word_candidate(surah: int, ayah: int, word: int):
+    result = _hafs_phonemizer().analyse(f"{surah}:{ayah}:{word}")
+    return [str(x) for x in result.phonemes()]
+
+
+@app.get("/phoneme-reference/g2p/{surah}/{ayah}")
+def g2p_reference_candidate(surah: int, ayah: int):
+    """Generate candidate word boundaries, never claim model-vocabulary equivalence."""
+    if not (1 <= surah <= 114 and 1 <= ayah <= 286):
+        raise HTTPException(status_code=400, detail="Invalid verse location")
+    data = _reference_data()
+    record = data.get(f"{surah}:{ayah}") if isinstance(data, dict) else None
+    if not isinstance(record, dict):
+        raise HTTPException(status_code=404, detail="Verse not in reference")
+    text = record.get("aya_text")
+    if not isinstance(text, str) or not text.strip():
+        raise HTTPException(status_code=422, detail="Reference text missing")
+    words = text.split()
+    if not (1 <= len(words) <= 100):
+        raise HTTPException(status_code=422, detail="Unexpected verse word count")
+    try:
+        whole = [str(x) for x in _hafs_phonemizer().analyse(f"{surah}:{ayah}").phonemes()]
+        candidates = [_g2p_word_candidate(surah, ayah, idx + 1) for idx in range(len(words))]
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="G2P reference generation unavailable") from exc
+    joined = [unit for word in candidates for unit in word]
+    upstream = record.get("aya_phonemes_list")
+    upstream_tokens = [str(x) for x in upstream] if isinstance(upstream, list) and all(
+        isinstance(x, str) for x in upstream
+    ) else None
+    matching_context = joined == whole
+    matching_model = matching_context and upstream_tokens == joined
+    return {
+        "verse": f"{surah}:{ayah}",
+        "word_count": len(words),
+        "g2p_word_units": candidates,
+        "g2p_verse_tokens": len(whole),
+        "upstream_tokens": len(upstream_tokens) if upstream_tokens is not None else None,
+        "context_exact": matching_context,
+        "model_vocabulary_exact": matching_model,
+        "can_grade": False,
+        "reason": "requires validated contextual word boundaries and calibration",
+    }
+
+
 @app.delete("/session/{session_id}")
 def delete_session(session_id: str):
     with _sessions_lock:
