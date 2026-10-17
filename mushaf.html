@@ -1210,7 +1210,7 @@ function openFaceListening(){openAudioOptions(faceVerses(cur)[0],'face');}
 function closeFaceListening(){audioController.stop();playingVerse='';paintPlayingVerse();refitVisiblePanes();}
 $('faceListenPlay').onclick=()=>audioController.status==='loading'?closeFaceListening():audioController.toggle();$('faceListenClose').onclick=closeFaceListening;
 $('faceListenSeek').onchange=e=>audioController.seek(+e.target.value/1000);
-$('recSoundToggle').onclick=()=>{recSoundEnabledV91=!recSoundEnabledV91;LSet('durr-rec-error-sounds',recSoundEnabledV91?'1':'0');updateRecSoundButtonV91();recTip(recSoundEnabledV91?'أصوات التنبيه مفعّلة':'أصوات التنبيه مكتومة');};updateRecSoundButtonV91();
+$('recSoundToggle').onclick=()=>{recSoundEnabledV91=!recSoundEnabledV91;LSet('durr-rec-error-sounds',recSoundEnabledV91?'1':'0');updateRecSoundButtonV91();recTip(recSoundEnabledV91?'أصوات التنبيه مفعّلة':'أصوات التنبيه مكتومة');};
 $('faceListenRepeat').onclick=()=>sessionToolsV89?.openRepeat();
 $('faceListenAirPlay').onclick=()=>audioController.audio?.webkitShowPlaybackTargetPicker?.();
 $('faceListenPrev').onclick=()=>audioController.previous();$('faceListenNext').onclick=()=>audioController.next();
@@ -1408,6 +1408,7 @@ function playRecErrorToneV91(kind){
    recSoundAtV91=Date.now();
  }catch(e){/* audio feedback is optional and never affects recitation */ }
 }
+updateRecSoundButtonV91();
 function setEngine(state,text){const e=$('recEngine');if(!e)return;e.classList.remove('live','ok');if(state)e.classList.add(state);$('recEngineText').textContent=text||'جلسة التسميع';}
 function verseText(vk){return SEARCH&&SEARCH[vk]?SEARCH[vk][1]:'';}
 function wordFor(vk,wi){const tx=verseText(vk);if(!tx||wi==null)return'';return (tx.trim().split(/\s+/)[wi]||'');}
