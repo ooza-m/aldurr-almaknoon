@@ -3,6 +3,12 @@ const P=require('../app-preferences.js');
 const {JSDOM,VirtualConsole}=require('jsdom'),fs=require('node:fs'),path=require('node:path');
 const read=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8');
 function reset(){const map=new Map();P.load({getItem:k=>map.get(k),setItem:(k,v)=>map.set(k,v)});return map;}
+test('night palette text and primary-action text meet WCAG AA contrast numerically',()=>{
+ const luminance=hex=>{const rgb=hex.match(/\w\w/g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];};
+ const ratio=(a,b)=>{const l=[luminance(a),luminance(b)].sort((a,b)=>b-a);return (l[0]+.05)/(l[1]+.05);};
+ for(const bg of ['page','surface','wash','wash2'])for(const ink of ['ink','ink2','muted'])assert.ok(ratio(P.NIGHT[ink],P.NIGHT[bg])>=4.5,ink+' on '+bg);
+ for(const accent of Object.values(P.NIGHT_ACCENTS)){assert.ok(ratio(accent,P.NIGHT.surface)>=4.5);assert.ok(ratio(P.NIGHT.page,accent)>=4.5);}
+});
 test('preferences validate, persist, migrate digits and keep future design unavailable',()=>{
  const map=reset();P.set({palette:'navy',digits:'en',calendar:'hijri',design:'floral'});
  assert.equal(P.get().design,'classic');assert.equal(P.get().palette,'navy');assert.equal(JSON.parse(map.get(P.KEY)).calendar,'hijri');
@@ -25,11 +31,23 @@ async function boot(){
  const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));vc.on('warn',e=>errors.push(e));
  const dom=new JSDOM(read('index.html'),{url:'https://app.test/index.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc}),w=dom.window;
  w.scrollTo=()=>{};w.requestAnimationFrame=fn=>{fn();return 0;};w.alert=()=>{};w.confirm=()=>false;w.matchMedia=()=>({matches:false,addEventListener(){}});w.fetch=async()=>({ok:false});
- w.localStorage.setItem('durr-skip-auth','1');for(const file of ['app-preferences.js','reader-ui.js','app-data.js'])w.eval(read(file));
+ w.localStorage.setItem('durr-skip-auth','1');for(const file of ['app-preferences.js','reader-ui.js','reader-study.js','app-data.js'])w.eval(read(file));
  w.eval([...w.document.querySelectorAll('script:not([src])')].map(s=>s.textContent).join('\n'));
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));await new Promise(r=>setImmediate(r));
  return {dom,w,errors,$:id=>w.document.getElementById(id)};
 }
+test('a practice payload can never claim a complete face or resolve an unrelated review item',async t=>{
+ const {dom,w}=await boot();t.after(()=>dom.window.close());w.ingestRecitationSessionV51({id:'practice-defensive',version:86,task:'practice',analysisStatus:'complete',endedAt:Date.now(),recall:{vk:'1:2',page:1,id:'unrelated'},summary:{recallSuccess:true},pages:[{page:1,complete:true,coverage:1,score:100,verses:[{vk:'1:2',coverage:1,errorWordIndexes:[]}]}]});
+ const state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2')),session=state.recitationSessions.find(s=>s.id==='practice-defensive');assert.equal(session.pages[0].complete,false);assert.equal(state.activityEvents.find(e=>e.id==='practice-defensive:1').complete,false);assert.ok(!state.faceLearning?.[1]?.recite?.complete);
+});
+test('main backup and recovery preserve verse notes and night preferences, old backups keep notes intact',async t=>{
+ const {dom,w}=await boot();t.after(()=>dom.window.close());const n=new w.DurrStudy.Notes(w.localStorage);n.put('1:2',1,'teacher','مراجعة');w.DurrPreferences.set({appearance:'dark'});const b=w.currentBackupV86();assert.equal(b.notes[0].text,'مراجعة');assert.equal(b.displayPreferences.appearance,'dark');
+ w.applyImportV86(w.DurrData.validate({...b,notes:[],displayPreferences:{...b.displayPreferences,appearance:'light'}}));assert.equal(new w.DurrStudy.Notes(w.localStorage).items.length,0);w.applyImportV86(w.DurrData.validate(b));assert.equal(new w.DurrStudy.Notes(w.localStorage).get('1:2','teacher'),'مراجعة');assert.equal(w.document.documentElement.dataset.theme,'dark');
+ w.applyImportV86(w.DurrData.validate({logs:[]}));assert.equal(new w.DurrStudy.Notes(w.localStorage).get('1:2','teacher'),'مراجعة');
+});
+test('system appearance follows OS changes only when system mode is selected',()=>{
+ const dom=new JSDOM('<!doctype html><html><body><div data-app-preferences></div></body></html>',{url:'https://prefs.test',runScripts:'outside-only'}),w=dom.window;let dark=false,change;w.matchMedia=()=>({get matches(){return dark;},addEventListener(event,fn){change=fn;}});w.eval(read('app-preferences.js'));const p=w.DurrPreferences;p.set({appearance:'system'});assert.equal(w.document.documentElement.dataset.theme,'light');dark=true;change();assert.equal(w.document.documentElement.dataset.theme,'dark');p.set({appearance:'light'});change();assert.equal(w.document.documentElement.dataset.theme,'light');dom.window.close();
+});
 test('visible settings shortcuts open before any login/logout and all local tabs render',async t=>{
  const {dom,w,$,errors}=await boot();t.after(()=>dom.window.close());
  for(const id of ['moreSettingsBtn','homeNotifBtn','todayTuneBtn']){$('settingsModal').classList.remove('open');$(id).click();assert.ok($('settingsModal').classList.contains('open'),id);}

@@ -78,8 +78,8 @@
     }
   }
   class BufferedPlayer extends core.AudioPlayer{
-    constructor(options={}){super(options);this.repeat=1;this.cycle=1;this.downloads=options.downloads||new AudioDownloads();this.plan=null;this.boundary=null;this.download=null;this.coverage=new Map();this.coverageRanges=new Map();this.lastClock=null;}
-    snapshot(){const state=super.snapshot(),s=this.plan?.get(state.key);if(s&&s.to!=null){state.current=Math.max(0,state.current-s.from);state.duration=s.to-s.from;state.progress=(state.index+Math.min(1,state.current/state.duration))/state.queue.length;}return {...state,download:this.download,preloaded:!!this.plan,repeat:this.repeat,cycle:this.cycle};}
+    constructor(options={}){super(options);this.repeat=1;this.cycle=1;this.gap=0;this.gapTimer=null;this.gapDeadline=0;this.gapRemaining=0;this.downloads=options.downloads||new AudioDownloads();this.plan=null;this.boundary=null;this.download=null;this.coverage=new Map();this.coverageRanges=new Map();this.lastClock=null;}
+    snapshot(){const state=super.snapshot(),s=this.plan?.get(state.key);if(s&&s.to!=null){state.current=Math.max(0,state.current-s.from);state.duration=s.to-s.from;state.progress=(state.index+Math.min(1,state.current/state.duration))/state.queue.length;}return {...state,download:this.download,preloaded:!!this.plan,repeat:this.repeat,cycle:this.cycle,gap:this.gap,gapRemaining:this.status==='waiting'?Math.max(0,(this.gapDeadline-Date.now())/1000):this.gapRemaining/1000};}
     async start({verses,scope='verse',page=0,autoplay=true,startIndex=0}={}){
       if(!Array.isArray(verses)||!verses.length||!verses.every(core.validVerse))throw Error('Invalid audio range');
       this.halt();const token=++this.generation;this.queue=[...new Set(verses)];this.scope=scope;this.page=page;this.completed.clear();this.coverage.clear();this.coverageRanges.clear();this.cycle=1;this.index=0;this.plan=null;
@@ -89,7 +89,7 @@
         if(token!==this.generation)return;this.plan=plan;this.download=null;return this.playIndex(Math.min(startIndex,this.queue.length-1),{autoplay});
       }catch(error){if(token!==this.generation)return;this.status='error';this.download=null;this.emit();this.onError('لم يكتمل تنزيل التلاوة. تحققي من الاتصال واضغطي تشغيل للمحاولة مجددًا.');}
     }
-    halt(){clearTimeout(this.boundary);this.boundary=null;this.lastClock=null;if(this.audio){this.audio.onloadedmetadata=this.audio.onended=this.audio.onpause=this.audio.ontimeupdate=this.audio.onplaying=this.audio.onerror=null;this.audio.pause();}}
+    halt(){clearTimeout(this.gapTimer);this.gapTimer=null;this.gapRemaining=0;this.gapDeadline=0;clearTimeout(this.boundary);this.boundary=null;this.lastClock=null;if(this.audio){this.audio.onloadedmetadata=this.audio.onended=this.audio.onpause=this.audio.ontimeupdate=this.audio.onplaying=this.audio.onerror=null;this.audio.pause();}}
     async playIndex(index,{autoplay=true}={}){
       if(!this.plan)return super.playIndex(index,{autoplay});
       if(index<0)return;if(index>=this.queue.length)return this.finish();
@@ -128,12 +128,17 @@
       }
       this.emit();this.schedule(token);
     }
-    async toggle(){if(this.status==='error')return this.start({verses:this.queue,scope:this.scope,page:this.page});await super.toggle();if(this.plan&&this.status==='playing')this.schedule(this.generation);}
+    async toggle(){if(this.status==='waiting'){this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());clearTimeout(this.gapTimer);this.gapTimer=null;this.status='wait-paused';this.emit();return;}if(this.status==='wait-paused'){this.waitForRepeat(this.gapRemaining);return;}if(this.status==='error')return this.start({verses:this.queue,scope:this.scope,page:this.page});await super.toggle();if(this.plan&&this.status==='playing')this.schedule(this.generation);}
     setRate(value){super.setRate(value);if(this.plan)this.schedule(this.generation);}
     async setReciter(id){if(!core.RECITERS.some(r=>r.id===id)||id===this.reciter)return;const playing=this.status==='playing',queue=this.queue.slice(),scope=this.scope,page=this.page,startIndex=this.index;this.reciter=id;if(!queue.length){this.emit();return;}await this.start({verses:queue,scope,page,autoplay:playing,startIndex});}
+    setGap(seconds){if([0,3,5,10,15,30].includes(+seconds)){this.gap=+seconds;this.emit();}}
+    waitForRepeat(ms){
+      this.halt();const token=++this.generation;this.status='waiting';this.gapRemaining=ms;this.gapDeadline=Date.now()+ms;
+      const tick=()=>{if(token!==this.generation||this.status!=='waiting')return;this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());if(!this.gapRemaining){this.gapTimer=null;this.playIndex(0);return;}this.emit();this.gapTimer=setTimeout(tick,Math.min(250,this.gapRemaining));};tick();
+    }
     setRepeat(count){if([1,2,3,5,10,0].includes(+count)){this.repeat=+count;this.cycle=1;this.emit();}}
-    seek(fraction){if(!this.audio||!this.plan)return;const s=this.plan.get(this.queue[this.index]),duration=(s.to??this.audio.duration)-s.from;if(!(duration>0))return;this.lastClock=null;this.audio.currentTime=s.from+Math.min(1,Math.max(0,+fraction))*duration;this.emit();this.schedule(this.generation);}
-    finish(){clearTimeout(this.boundary);if(this.repeat===0||this.cycle<this.repeat){this.cycle++;this.playIndex(0);return;}super.finish();}
+    seek(fraction){if(['waiting','wait-paused'].includes(this.status)||!this.audio||!this.plan)return;const s=this.plan.get(this.queue[this.index]),duration=(s.to??this.audio.duration)-s.from;if(!(duration>0))return;this.lastClock=null;this.audio.currentTime=s.from+Math.min(1,Math.max(0,+fraction))*duration;this.emit();this.schedule(this.generation);}
+    finish(){clearTimeout(this.boundary);if(this.repeat===0||this.cycle<this.repeat){this.cycle++;if(this.gap)this.waitForRepeat(this.gap*1000);else this.playIndex(0);return;}this.halt();super.finish();}
     stop(){this.halt();super.stop();this.downloads.clear();this.plan=null;this.download=null;this.coverage.clear();this.coverageRanges.clear();}
   }
   return {AudioDownloads,BufferedPlayer,CHAPTER_READERS};

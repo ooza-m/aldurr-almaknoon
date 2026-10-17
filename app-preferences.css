@@ -36,3 +36,17 @@ body.reciting .reader-scrubber,body.focus-mode .reader-scrubber{display:none}
 .dp-day{font:inherit;border:0;background:transparent;color:var(--ink);cursor:pointer}.dp-day:disabled{opacity:.35;cursor:default}
 .dp-my{font:inherit;border:0;background:transparent;color:var(--ink);cursor:pointer}
 .dp-pop{max-height:min(440px,75vh);overflow:auto}
+
+/* Night surfaces use explicit tokens, never invert the printed Quran or images. */
+:root[data-theme=dark] :is(.card,.v50-card,.v50-mini,.v50-task,.v50-task-chip,.v50-ach,.v50-more-item,.v50-path-card,.modal,.v70-settings-modal,.dp-pop,.dpm-pop,.gate-box,.sheet,.ov,.face-listen-bar,.tap-hint,.rec-engine,.rec-job-status){background:var(--surface)!important;color:var(--ink);border-color:var(--line)}
+:root[data-theme=dark] :is(.v50-top,.v50-hero,.v50-priority,.v65-hero,.v65-page-token,.juz-head,.tj-marhala-head,.cal-cell,.week-day,.stat,.design-current,.pref-segment,.library-search,.rec-score){background:var(--wash2)!important;color:var(--ink)}
+:root[data-theme=dark] :is(.v50-btn.ghost,.v50-mini .ico,.v50-task-icon,.v50-thumb,.chip-check,.check-row label,.tf-tab,.ay-card,.reader-action,.listen-options,.listen-step,.listen-rate){background:var(--wash2)!important;color:var(--ink)}
+:root[data-theme=dark] :is(.btn-primary,.v50-btn.primary,.audio-start,.listen-play,.bottom-nav .nav-mushaf,.app-bottom-nav .nav-mushaf,.rec-sum-actions .primary){background:var(--accent)!important;color:var(--on-accent)!important}
+:root[data-theme=dark] :is(input,select,textarea){background:var(--surface);color:var(--ink);border-color:var(--line)}
+:root[data-theme=dark] :is(h1,h2,h3,h4,.v50-hero h2,.v50-greeting,.ay-ttl,.ov-title){color:var(--ink)}
+:root[data-theme=dark] :is(.qw.lp,.qw.hl,.qw.flash){background-color:#514350!important}
+:root[data-theme=dark] .qw.playing{background-color:#424d3c!important}
+:root[data-theme=dark] .qw.rec-err{color:#ffb7af!important}
+:root[data-theme=dark] .qw.rec-corrected{color:#bfdba6!important}
+:root[data-theme=dark] .chrome-top,:root[data-theme=dark] .chrome-bot{background:var(--page)!important}
+:root[data-theme=dark] :is(.cal-cell.other,.month-other){opacity:.6}

@@ -8,12 +8,14 @@
     navy:{name:'الكحلي اللؤلؤي',page:'#f2f6f9',surface:'#fcfdff',accent:'#345d79',accent2:'#24455e',ink:'#263b4b',ink2:'#485f70',muted:'#647483',wash:'#dfeaf2',wash2:'#eef3f8',soft:'#b5cbdc'},
     plum:{name:'البنفسجي العاجي',page:'#f7f3fa',surface:'#fffdfd',accent:'#72548b',accent2:'#543b6c',ink:'#3f304d',ink2:'#61516d',muted:'#796b84',wash:'#eae0f1',wash2:'#f4edf8',soft:'#cdb8dd'}
   };
+  const NIGHT={page:'#16191f',surface:'#20252d',ink:'#f1ece5',ink2:'#d5d2d0',muted:'#b8b6b8',wash:'#303641',wash2:'#282e37',soft:'#667080'};
+  const NIGHT_ACCENTS={rose:'#efb3c6',olive:'#bfd6a4',navy:'#a9cfe9',plum:'#d8bdea'};
   const DESIGNS=[{id:'classic',name:'التصميم الكلاسيكي',available:true},{id:'floral',name:'تصميم الورد',available:false,futureDefault:true}];
   const MONTHS={gregorian:['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],hijri:['محرّم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوّال','ذو القعدة','ذو الحجة']};
-  const defaults={design:'classic',palette:'rose',digits:'ar',calendar:'gregorian',updatedAt:0};
+  const defaults={design:'classic',palette:'rose',appearance:'light',digits:'ar',calendar:'gregorian',updatedAt:0};
   let current={...defaults},storage=null,win=null;
   const listeners=new Set(),formatters=new Map();
-  const clean=value=>({design:'classic',palette:PALETTES[value?.palette]?value.palette:'rose',digits:value?.digits==='en'?'en':'ar',calendar:value?.calendar==='hijri'?'hijri':'gregorian',updatedAt:Number.isFinite(value?.updatedAt)?value.updatedAt:0});
+  const clean=value=>({design:'classic',palette:PALETTES[value?.palette]?value.palette:'rose',appearance:['light','dark','system'].includes(value?.appearance)?value.appearance:'light',digits:value?.digits==='en'?'en':'ar',calendar:value?.calendar==='hijri'?'hijri':'gregorian',updatedAt:Number.isFinite(value?.updatedAt)?value.updatedAt:0});
   function get(){return {...current};}
   function digits(value,mode=current.digits){const latin=String(value).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));return mode==='en'?latin:latin.replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
   function load(store){storage=store;try{const saved=JSON.parse(storage?.getItem(KEY)||'null');current=clean(saved||{digits:storage?.getItem('durr-num')});}catch(_){current={...defaults};}return get();}
@@ -78,24 +80,27 @@
     const convert=node=>{if(node.nodeType===3&&node.parentElement&&!node.parentElement.closest(skip)){const value=digits(node.nodeValue);if(value!==node.nodeValue)node.nodeValue=value;}};
     if(root.nodeType===3){convert(root);return;}const walker=win.document.createTreeWalker(root,win.NodeFilter.SHOW_TEXT);let node;while((node=walker.nextNode()))convert(node);
   }
-  function apply(){const p=PALETTES[current.palette],root=win.document.documentElement;root.dataset.palette=current.palette;root.dataset.design='classic';root.dataset.digits=current.digits;root.dataset.calendar=current.calendar;
-    win.document.querySelector('meta[name="theme-color"]')?.setAttribute('content',p.accent2);
-    const vars={...p,clay:p.accent,'clay-soft':p.wash,parch:p.page,'parch-2':p.wash2,'wash-2':p.wash2,text:p.ink,'ink-2':p.ink2,'accent-2':p.accent2,gold:p.accent,'gold-soft':p.soft,pink:p.accent,'pink-soft':p.wash,'line':'color-mix(in srgb, '+p.ink+' 15%, transparent)','line-2':'color-mix(in srgb, '+p.ink+' 8%, transparent)','v50-glass':p.surface,'v50-glass-strong':p.surface,'v50-cloud':p.surface,'v50-sky':p.wash};
+  function apply(){const dark=current.appearance==='dark'||current.appearance==='system'&&!!win.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    const base=PALETTES[current.palette],p=dark?{...base,...NIGHT,accent:NIGHT_ACCENTS[current.palette],accent2:NIGHT_ACCENTS[current.palette]}:base,root=win.document.documentElement;
+    root.dataset.appearance=current.appearance;root.dataset.theme=dark?'dark':'light';root.style.colorScheme=dark?'dark':'light';root.dataset.palette=current.palette;root.dataset.design='classic';root.dataset.digits=current.digits;root.dataset.calendar=current.calendar;
+    win.document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?p.page:p.accent2);
+    const vars={...p,quran:dark?'#f1ece5':'#241A20',frameA:p.accent,frameB:p.accent2,'on-accent':dark?NIGHT.page:'#ffffff',green:dark?'#b4d49c':'#506b3f','green-bg':dark?'#283827':'#eaf0e4',clay:p.accent,'clay-soft':p.wash,parch:p.page,'parch-2':p.wash2,'wash-2':p.wash2,text:p.ink,'ink-2':p.ink2,'accent-2':p.accent2,gold:p.accent,'gold-soft':p.soft,pink:p.accent,'pink-soft':p.wash,'line':'color-mix(in srgb, '+p.ink+' 15%, transparent)','line-2':'color-mix(in srgb, '+p.ink+' 8%, transparent)','v50-glass':p.surface,'v50-glass-strong':p.surface,'v50-cloud':p.surface,'v50-sky':p.wash};
     Object.entries(vars).forEach(([k,v])=>{if(k!=='name')root.style.setProperty('--'+k,v);});formatNumbers(win.document.body);
   }
   function mount(host){if(!host||host.dataset.prefsMounted)return;host.dataset.prefsMounted='1';
     host.innerHTML='<section class="preferences-panel"><h3>المظهر والعرض</h3><p class="preferences-intro">تُحفظ الخيارات فورًا وتُطبّق على التطبيق والمصحف.</p>'
       +'<fieldset><legend>التصميم</legend><div class="design-options"><div class="design-current"><b>الكلاسيكي</b><small>متاح الآن · أربع مجموعات ألوان</small></div><button class="design-future" type="button" disabled><b>تصميم الورد</b><small>قريبًا · سيكون التصميم الافتراضي عند اكتماله</small></button></div></fieldset>'
       +'<fieldset><legend>ألوان التصميم الكلاسيكي</legend><div class="palette-grid">'+Object.entries(PALETTES).map(([id,p])=>'<button type="button" data-palette="'+id+'" aria-pressed="false"><span class="palette-swatches" aria-hidden="true">'+[p.page,p.soft,p.accent,p.ink].map(c=>'<i style="background:'+c+'"></i>').join('')+'</span><b>'+p.name+'</b></button>').join('')+'</div></fieldset>'
+      +'<fieldset><legend>إضاءة الواجهة والمصحف</legend><div class="pref-segment"><button type="button" data-appearance="light">نهاري</button><button type="button" data-appearance="dark">ليلي</button><button type="button" data-appearance="system">حسب الجهاز</button></div><small>يتغيّر لون الصفحة دون تغيير الخط أو ترتيب السطور.</small></fieldset>'
       +'<fieldset><legend>أرقام الواجهة</legend><div class="pref-segment" data-preserve-numerals><button type="button" data-digits="ar">عربية ١٢٣</button><button type="button" data-digits="en">إنجليزية 123</button></div><small>أرقام الآيات المطبوعة داخل صفحة المصحف تبقى كما هي.</small></fieldset>'
       +'<fieldset><legend>التواريخ والتقويم</legend><div class="pref-segment"><button type="button" data-calendar="gregorian">ميلادي</button><button type="button" data-calendar="hijri">هجري · أم القرى</button></div><small>يتغيّر العرض واختيار الأيام؛ تبقى المواعيد وسجلات الحفظ محفوظة في أيامها نفسها.</small></fieldset><p class="pref-saved" role="status" aria-live="polite"></p></section>';
-    const sync=()=>{for(const attr of ['palette','digits','calendar'])host.querySelectorAll('[data-'+attr+']').forEach(b=>{const active=b.dataset[attr]===current[attr];b.classList.toggle('on',active);b.setAttribute('aria-pressed',String(active));});};
-    host.addEventListener('click',e=>{const b=e.target.closest('[data-palette],[data-digits],[data-calendar]');if(!b)return;for(const attr of ['palette','digits','calendar'])if(b.dataset[attr])set({[attr]:b.dataset[attr]});host.querySelector('.pref-saved').textContent='حُفظت التفضيلات';});subscribe(sync);sync();
+    const sync=()=>{for(const attr of ['palette','appearance','digits','calendar'])host.querySelectorAll('[data-'+attr+']').forEach(b=>{const active=b.dataset[attr]===current[attr];b.classList.toggle('on',active);b.setAttribute('aria-pressed',String(active));});};
+    host.addEventListener('click',e=>{const b=e.target.closest('[data-palette],[data-appearance],[data-digits],[data-calendar]');if(!b)return;for(const attr of ['palette','appearance','digits','calendar'])if(b.dataset[attr])set({[attr]:b.dataset[attr]});host.querySelector('.pref-saved').textContent='حُفظت التفضيلات';});subscribe(sync);sync();
   }
-  function attach(window){win=window;let store;try{store=win.localStorage;}catch(_){}load(store);apply();
+  function attach(window){win=window;let store;try{store=win.localStorage;}catch(_){}load(store);apply();win.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if(current.appearance==='system')apply();});
     win.addEventListener('storage',e=>{if(e.key===KEY&&e.newValue){try{set(JSON.parse(e.newValue),{external:true});}catch(_){}}});
     const ready=()=>{win.document.querySelectorAll('[data-app-preferences]').forEach(mount);formatNumbers(win.document.body);const observer=new win.MutationObserver(records=>{observer.disconnect();records.forEach(r=>{if(r.type==='characterData')formatNumbers(r.target);else r.addedNodes.forEach(formatNumbers);});observer.observe(win.document.body,{subtree:true,childList:true,characterData:true});});observer.observe(win.document.body,{subtree:true,childList:true,characterData:true});};
     if(win.document.readyState==='loading')win.document.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
   }
-  return {KEY,PALETTES,DESIGNS,MONTHS,get,set,load,subscribe,digits,parts,format,month,shiftMonth,fromParts,parse,key,picker,mount,attach,formatNumbers};
+  return {KEY,PALETTES,NIGHT,NIGHT_ACCENTS,DESIGNS,MONTHS,get,set,load,subscribe,digits,parts,format,month,shiftMonth,fromParts,parse,key,picker,mount,attach,formatNumbers};
 });

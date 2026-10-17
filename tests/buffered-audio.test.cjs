@@ -1,6 +1,14 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {AudioDownloads,BufferedPlayer}=require('../reader-audio.js');
 const tick=()=>new Promise(r=>setImmediate(r));
+test('optional silent gap pauses and resumes its countdown without redownloading or audio during silence',async t=>{
+ t.mock.timers.enable({apis:['setTimeout','Date']});const {p,audio,requests}=player(t);p.setRepeat(2);p.setGap(5);await p.start({verses:['1:1','1:2']});advance(audio,4);assert.equal(p.status,'waiting');assert.ok(audio.paused);const plays=audio.plays;
+ t.mock.timers.tick(2000);await p.toggle();assert.equal(p.status,'wait-paused');const remaining=p.snapshot().gapRemaining;t.mock.timers.tick(10000);assert.equal(p.snapshot().gapRemaining,remaining);assert.equal(audio.plays,plays);
+ await p.toggle();t.mock.timers.tick(3000);await tick();assert.equal(p.status,'playing');assert.equal(audio.currentTime,0);assert.equal(p.cycle,2);assert.equal(requests.length,2);advance(audio,4);assert.equal(p.status,'ended');
+});
+test('stopping during a silent gap invalidates its delayed playback callback',async t=>{
+ t.mock.timers.enable({apis:['setTimeout','Date']});const {p,audio}=player(t);p.setGap(3);p.setRepeat(0);await p.start({verses:['1:1','1:2']});advance(audio,4);assert.equal(p.status,'waiting');const plays=audio.plays;p.stop();t.mock.timers.tick(20000);await tick();assert.equal(p.status,'idle');assert.equal(audio.plays,plays);
+});
 const times=['1:1','1:2','1:3'].map((verse_key,i)=>({verse_key,timestamp_from:i*2000,timestamp_to:(i+1)*2000}));
 function downloads(options={}){
   const requests=[],revoked=[];let id=0;

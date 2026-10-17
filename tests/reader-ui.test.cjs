@@ -29,7 +29,7 @@ async function boot(options={}){
     if(match)return {ok:true,json:async()=>({tafsir:{resource_id:+match[1],text:'<p>تفسير المصدر '+match[1]+' للآية '+match[2]+'</p><p>فقرة ثانية.</p>'}})};
     throw Error('Unexpected network request: '+url);
   };
-  w.localStorage.setItem('durr-num','en');for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js'])w.eval(read(file));
+  w.localStorage.setItem('durr-num','en');for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js','reader-study.js'])w.eval(read(file));
   for(const script of w.document.querySelectorAll('script:not([src])')){
     let code=script.textContent;
     if(code.includes('const REC_QUERY='))code+='\nwindow.readerTest={get player(){return audioController},get page(){return cur},get verse(){return playingVerse},get session(){return recSession},get recMode(){return recMode},get pageState(){return recPageState},get jobs(){return recJobsV86},settle,faceVerses,loadTafsir,maybeCompleteFaceTafsir,enterRecite,toggleRec,finishReciteSession,processTranscriptV73,openErrLog};';
@@ -39,6 +39,29 @@ async function boot(options={}){
   assert.equal(w.document.getElementById('loading').style.display,'none','reader booted');
   return {dom,w,errors,requests,audio,clipboard,shares,downloads,$:id=>w.document.getElementById(id)};
 }
+test('night preference changes Quran ink without changing any glyphs or line order',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());const before=[...w.document.querySelectorAll('.pane .qline')].map(el=>el.textContent);
+ $('btnSettings').click();w.DurrPreferences.mount(w.document.querySelector('[data-app-preferences]'));w.document.querySelector('[data-appearance=dark]').click();assert.equal(w.document.documentElement.dataset.theme,'dark');assert.equal(w.document.documentElement.style.getPropertyValue('--quran'),'#f1ece5');
+ assert.deepEqual([...w.document.querySelectorAll('.pane .qline')].map(el=>el.textContent),before);assert.equal(JSON.parse(w.localStorage.getItem(w.DurrPreferences.KEY)).appearance,'dark');w.document.querySelector('[data-appearance=light]').click();assert.equal(w.document.documentElement.dataset.theme,'light');
+});
+test('verse notes retain both types, render hostile text safely and jump to their exact ayah',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());await w.openAyah('1:3');$('ayNote').click();$('noteText').value='<img src=x onerror=alert(1)>';$('noteForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+ $('noteKind').value='teacher';$('noteKind').dispatchEvent(new w.Event('change'));$('noteText').value='توجيه المعلمة';$('noteForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));const data=JSON.parse(w.localStorage.getItem('durr-verse-notes-v87'));assert.equal(data.length,2);
+ $('openNotes').click();assert.equal($('notesBody').querySelector('img'),null);assert.match($('notesBody').textContent,/<img src=x/);assert.match($('notesBody').textContent,/توجيه المعلمة/);
+ await w.readerTest.settle(50);$('notesBody').querySelector('[data-note-go]').click();for(let i=0;i<8;i++)await tick();assert.equal(w.readerTest.page,1);assert.ok(w.document.querySelector('.qw.qend[data-vk="1:3"]').classList.contains('has-note'));
+});
+test('random recall uses selected faces and a hint prevents independent success and face credit',async t=>{
+ const {dom,w,$,errors}=await boot();t.after(()=>dom.window.close());w.Math.random=()=>0;$('openPractice').click();$('practiceFrom').value='1';$('practiceTo').value='1';$('practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));for(let i=0;i<10;i++)await tick();assert.equal($('practicePrompt').hidden,false);assert.match($('practiceLocation').textContent,/الفاتحة/);
+ $('practiceHint').click();for(let i=0;i<4;i++)await tick();assert.ok($('practiceHintText').textContent);$('practiceStart').click();for(let i=0;i<15;i++)await tick();assert.equal(w.readerTest.recMode,true);assert.equal(w.readerTest.session.task,'practice');assert.equal(w.readerTest.session.recall.hinted,true);assert.equal(w.document.body.classList.contains('practice-preparing'),false);
+ const vk=w.readerTest.session.recall.vk,search=JSON.parse(read('data/mushaf-search.json'));w.readerTest.processTranscriptV73(search[vk][1],'browser-speech');await w.readerTest.finishReciteSession();const payload=JSON.parse(w.localStorage.getItem('durr-last-recitation'));assert.equal(payload.summary.completedPages,0);assert.equal(payload.summary.recallSuccess,false);assert.ok(payload.pages.every(p=>!p.complete));await w.readerTest.enterRecite();assert.notEqual(w.readerTest.session.task,'practice');assert.deepEqual(errors,[]);
+});
+test('an unassisted one-ayah practice result is distinct from a completed face',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());w.Math.random=()=>0;$('openPractice').click();$('practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));for(let i=0;i<10;i++)await tick();$('practiceStart').click();for(let i=0;i<15;i++)await tick();const vk=w.readerTest.session.recall.vk,search=JSON.parse(read('data/mushaf-search.json'));w.readerTest.processTranscriptV73(search[vk][1],'browser-speech');await w.readerTest.finishReciteSession();const payload=JSON.parse(w.localStorage.getItem('durr-last-recitation'));assert.equal(payload.summary.recallSuccess,true);assert.equal(payload.summary.completedPages,0);
+});
+test('audio options preserve a chosen silent gap while changing repetition and start playback',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>{w.readerTest.player.stop();dom.window.close();});$('readerListen').click();$('audioRepeat').value='2';$('audioGap').value='5';$('audioForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));for(let i=0;i<15;i++)await tick();assert.equal(w.readerTest.player.repeat,2);assert.equal(w.readerTest.player.gap,5);assert.equal(w.readerTest.player.status,'playing');
+ $('faceListenOptions').click();assert.equal($('audioGap').value,'5');assert.equal($('audioRepeat').value,'2');
+});
 test('both navigation bars place Mushaf centrally and route calendar directly',()=>{
   for(const [file,selector,attr] of [['index.html','#bottomNav','tab'],['mushaf.html','#appBottomNav','appRoute']]){
     const dom=new JSDOM(read(file)),buttons=[...dom.window.document.querySelector(selector).children];
