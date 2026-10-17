@@ -396,7 +396,7 @@ def model_info():
         "backend": BACKEND,
         "model": MODEL_ID,
         "quran_specialized": True,
-        "streaming": BACKEND == "sherpa-fastconformer",
+        "streaming": BACKEND in {"sherpa-fastconformer", "quran-zipformer-ctc"},
         "sample_rate": 16000,
         "threads": NUM_THREADS,
         "session_ttl": SESSION_TTL,
@@ -436,7 +436,7 @@ def transcribe(req: TranscribeRequest):
     audio = _decode_pcm(req)
 
     try:
-        if BACKEND == "sherpa-fastconformer":
+        if BACKEND in {"sherpa-fastconformer", "quran-zipformer-ctc"}:
             text, delta, revised = _transcribe_sherpa(
                 audio, req.session_id or "", req.final, req.seq
             )
