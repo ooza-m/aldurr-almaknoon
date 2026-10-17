@@ -6,6 +6,7 @@ function align(heard,words){
  const spoken=Array.isArray(heard)?heard.map(String):(typeof heard==='string'?heard.trim().split(/\s+/).filter(Boolean):[]);
  const refs=[];(words||[]).forEach((w,k)=>{if(!Array.isArray(w.phonemes)||!w.phonemes.length)throw new TypeError('Verified word phonemes required');w.phonemes.forEach(t=>refs.push({token:String(t),word:k}));});
  const n=spoken.length,m=refs.length;if(n>4096||m>4096)throw new RangeError('Alignment too large');
+ // Keep only stable full-word matches: partial output can change on the next chunk.
  if(!m)return {matchedWords:[],candidateWords:[],errors:[],completed:false,status:'no_reference'};
  const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
  for(let i=0;i<=n;i++)dp[i][0]=i;
