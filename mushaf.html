@@ -384,6 +384,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 <script src="reader-core.js?v=89"></script>
 <script src="audio-library.js?v=89"></script>
 <script src="reader-audio.js?v=89"></script>
+<script src="phoneme-aligner.js?v=90"></script>
 <script src="recitation-core.js?v=89"></script>
 <script src="recitation-jobs.js?v=89"></script>
 <script src="reader-ui.js?v=89"></script>
@@ -1463,7 +1464,7 @@ function pumpQasrV73(run=qasrRunsV86.get(qasrRunId)){
        ctx.session.analysisIncomplete=true;
        if(recSession?.id===ctx.session.id)setEngine('limited','المحرّك يتعرف على الأصوات؛ محاذاة الكلمات القرآنية غير مفعّلة بعد');
      }else if(tx)await dispatchRecitationV89(ctx,item.page,tx,'quran-asr',data);
-     if(item.final){ctx.session.engineStreamFinalized=true;if(recSession?.id===ctx.session.id)setEngine('ok','اكتمل تحليل المقطع · يمكنك المتابعة');}
+     if(item.final){ctx.session.engineStreamFinalized=true;if(recSession?.id===ctx.session.id){if(ctx.session.analysisIncomplete)setEngine('limited','وصل الصوت، لكن محاذاة الكلمات لم تُستكمل؛ لا تُحتسب نتيجة تسميع');else setEngine('ok','اكتمل تحليل المقطع · يمكنك المتابعة');}}
    }catch(error){if(run.ctx)run.ctx.session.analysisIncomplete=true;run.queue.length=0;if(recSession?.id===run.owner&&recOn){setEngine('','تعذّر التحليل المتخصص · الانتقال إلى المتصفح');startSpeech();}break;}
    }
  })().finally(()=>{run.promise=null;if(qasrRunId===run.id){qasrBusy=false;qasrPumpPromise=null;}});qasrPumpPromise=run.promise;return run.promise;
