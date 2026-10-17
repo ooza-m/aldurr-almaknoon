@@ -11,9 +11,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 APP_NAME = "Durr Quran ASR"
-BACKEND = os.getenv("QASR_BACKEND", "tarteel-whisper").strip().lower()
+BACKEND = os.getenv("QASR_BACKEND", "sherpa-fastconformer").strip().lower()
 MODEL_ID = os.getenv(
-    "QASR_MODEL", "tarteel-ai/whisper-base-ar-quran"
+    "QASR_MODEL", "mohammed/fastconformer-quran-ar-onnx-int8"
 ).strip()
 HF_TOKEN = os.getenv("HF_TOKEN") or None
 SESSION_TTL = int(os.getenv("QASR_SESSION_TTL", "1200"))
@@ -162,7 +162,6 @@ def _load_whisper():
         model=MODEL_ID,
         token=HF_TOKEN,
         device=0 if torch.cuda.is_available() else -1,
-        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
     )
 
 
