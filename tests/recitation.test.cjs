@@ -216,3 +216,9 @@ test('an unready model never opens the Quran audio processor',async()=>{
     assert.equal(run(c,'qasrActive'),false);
   }
 });
+
+
+test('phoneme transcript cannot be scored as Quran word transcription', () => {
+  assert.match(source, /data\.transcript_format==='phonemes'/);
+  assert.match(source, /ctx\.session\.analysisIncomplete=true;[\s\S]*?else if\(tx\)await dispatchRecitationV89/);
+});
