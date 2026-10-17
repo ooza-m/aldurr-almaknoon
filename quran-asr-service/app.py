@@ -515,6 +515,53 @@ def phoneme_reference_schema():
             "schema": describe(data)}
 
 
+def _verified_word_units(value):
+    """Only accept source records with explicit boundaries for each word."""
+    if isinstance(value, dict):
+        value = value.get("words", value.get("word_phonemes"))
+    if not isinstance(value, list) or not value:
+        return None
+    units = []
+    for item in value:
+        if not isinstance(item, dict):
+            return None
+        phonemes = item.get("phonemes")
+        if not isinstance(phonemes, list) or not phonemes or not all(
+            isinstance(p, str) and p.strip() for p in phonemes
+        ):
+            return None
+        units.append(phonemes)
+    return units
+
+
+@app.get("/phoneme-reference/verse/{surah}/{ayah}")
+def phoneme_reference_verse(surah: int, ayah: int):
+    """Never invent word boundaries from a whole-ayah phoneme string."""
+    if not (1 <= surah <= 114 and 1 <= ayah <= 286):
+        raise HTTPException(status_code=400, detail="Invalid verse location")
+    try:
+        data = _reference_data()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Reference unavailable") from exc
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=422, detail="Verse-keyed reference not supported")
+    value = data.get(f"{surah}:{ayah}")
+    if value is None:
+        value = data.get(str(surah), {})
+        if isinstance(value, dict):
+            value = value.get(str(ayah))
+    if value is None:
+        raise HTTPException(status_code=404, detail="Verse not present in reference")
+    words = _verified_word_units(value)
+    if words is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Reference has no verified word-level phoneme boundaries"
+        )
+    return {"verse": f"{surah}:{ayah}", "word_phonemes": words,
+            "verified_word_boundaries": True}
+
+
 @app.delete("/session/{session_id}")
 def delete_session(session_id: str):
     with _sessions_lock:
