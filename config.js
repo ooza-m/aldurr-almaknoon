@@ -4,8 +4,8 @@
 */
 window.DURR_CONFIG = Object.assign({}, window.DURR_CONFIG || {}, {
   quranAsr: {
-    url: "",
-    enabled: false, // Pause uncalibrated phoneme ASR; keep the browser word recognizer active.
+    url: "https://quran-asr-production-3419.up.railway.app",
+    enabled: true, // Secondary phoneme preview; browser words stay active.
     mode: "quran-specialized-streaming",
     model: "Quran-Lab/zipformer_p-arabic-v3"
   }
