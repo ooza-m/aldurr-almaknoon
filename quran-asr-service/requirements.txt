@@ -4,3 +4,4 @@ numpy>=1.26,<3
 huggingface-hub>=0.27,<2
 sherpa-onnx>=1.12,<2
 onnxruntime>=1.20,<2
+quranic-phonemizer>=3.0,<4
