@@ -655,8 +655,11 @@ def g2p_reference_candidate(surah: int, ayah: int):
     if not (1 <= len(words) <= 100):
         raise HTTPException(status_code=422, detail="Unexpected verse word count")
     try:
-        whole = [str(x) for x in _hafs_phonemizer().analyse(f"{surah}:{ayah}").phonemes()]
-        candidates = [_g2p_word_candidate(surah, ayah, idx + 1) for idx in range(len(words))]
+        verse_analysis = _hafs_phonemizer().analyse(f"{surah}:{ayah}")
+        whole = [str(x) for x in verse_analysis.phonemes()]
+        candidates = [[str(x) for x in group] for group in verse_analysis.phonemes(by="word")]
+        if len(candidates) != len(words):
+            raise ValueError("Quran word count mismatch")
     except Exception as exc:
         raise HTTPException(status_code=503, detail="G2P reference generation unavailable") from exc
     joined = [unit for word in candidates for unit in word]
