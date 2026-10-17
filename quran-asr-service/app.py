@@ -552,7 +552,7 @@ def _verified_word_units(value):
                 and len(chunks) == len(written.split())
                 and all(isinstance(chunk, str) and chunk.strip() for chunk in chunks)
                 and "".join(chunks).replace(" ", "") == verse.replace(" ", "")):
-            return [[chunk] for chunk in chunks]
+            return [chunk.split() if len(chunk.split()) > 1 else [chunk] for chunk in chunks]
         return None
     if isinstance(value, dict):
         value = value.get("words", value.get("word_phonemes"))
