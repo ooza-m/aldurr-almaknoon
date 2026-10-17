@@ -1330,7 +1330,7 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
  renderRecitationV89(ctx,sec,result.ops);
  for(const [key,event] of sec.tracker.errors){const w=sec.words.find(w=>w.vk+'#'+w.wi===key);if(w){w.el.classList.toggle('rec-err',event.active);w.el.classList.toggle('rec-corrected',!event.active);w.el.classList.toggle('rec-omission',event.active&&event.type==='omission');w.el.classList.toggle('rec-extra',event.active&&event.type==='extra');w.el.dataset.err=event.active?'1':'';}}
  recWordPos=sec.tracker.cursor;recPos=recWordPos<recWords.length?recWords[recWordPos].seqIndex:recSeq.length;setCurrent(sec.words[Math.max(0,result.end-1)]?.el);updateErrCount();
- const audibleHint=result.updates.find(e=>e.active&&source==='browser-speech'&&['omission','extra','substitution','replacement'].includes(e.type));
+ const audibleHint=result.updates.find(e=>e.active&&source==='browser-speech'&&['omission','extra','substitution'].includes(e.type));
  if(audibleHint)playRecErrorToneV91(audibleHint.type);
  if(result.updates.some(e=>e.active))navigator.vibrate?.(25);
  const recallEnd=ctx.session.recall&&sec.words.findLastIndex(w=>w.vk===ctx.session.recall.vk)+1;
@@ -1629,7 +1629,7 @@ function initSpeech(){
  r.onresult=e=>{if(!ctx||ctx.finalized||r._stopped)return;let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const result=e.results[i],text=result[0].transcript||'';if(result.isFinal){if(!finalized.has(i)){finalized.add(i);if(recSession?.id===ctx.session.id&&recMode)ensureRecContextV86();dispatchRecitationV89(ctx,ctx.page,text,'browser-speech');}}else interim+=' '+text;}if(r===speechRec&&interim.trim())previewSpeechV84(interim);};
  r.onerror=e=>{if(['not-allowed','service-not-allowed','audio-capture'].includes(e.error))r._noRestart=true;if(r===speechRec&&e.error!=='no-speech')setEngine('','تعذّر التعرّف الصوتي · أوقفي الميكروفون وأعيدي تشغيله للمحاولة');};
  r.onend=()=>{if(r._stopDone){r._stopDone();return;}if(r!==speechRec)return;speechStarted=false;finalized.clear();let attempts=0;
- const restart=()=>{if(r!==speechRec||!recOn||!recMode||qasrActive||r._stopping||r._noRestart||ctx.finalized)return;try{r.start();speechStarted=true;}catch(_){if(++attempts<3)r._restartTimer=setTimeout(restart,250);else setEngine('','توقف التعرّف؛ أعيدي تشغيل الميكروفون للمحاولة.');}};
+ const restart=()=>{if(r!==speechRec||!recOn||!recMode||r._stopping||r._noRestart||ctx.finalized)return;try{r.start();speechStarted=true;}catch(_){if(++attempts<3)r._restartTimer=setTimeout(restart,250);else setEngine('','توقف التعرّف؛ أعيدي تشغيل الميكروفون للمحاولة.');}};
  r._restartTimer=setTimeout(restart,120);
  };
  return r;
