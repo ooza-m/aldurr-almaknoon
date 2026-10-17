@@ -1210,7 +1210,7 @@ function openFaceListening(){openAudioOptions(faceVerses(cur)[0],'face');}
 function closeFaceListening(){audioController.stop();playingVerse='';paintPlayingVerse();refitVisiblePanes();}
 $('faceListenPlay').onclick=()=>audioController.status==='loading'?closeFaceListening():audioController.toggle();$('faceListenClose').onclick=closeFaceListening;
 $('faceListenSeek').onchange=e=>audioController.seek(+e.target.value/1000);
-$('recSoundToggle').onclick=()=>{try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){recSoundContextV91=recSoundContextV91||new AC();recSoundContextV91.resume().catch(()=>{});}}catch(e){}recSoundEnabledV91=!recSoundEnabledV91;LSet('durr-rec-error-sounds',recSoundEnabledV91?'1':'0');updateRecSoundButtonV91();recTip(recSoundEnabledV91?'أصوات التنبيه مفعّلة':'أصوات التنبيه مكتومة');};
+$('recSoundToggle').onclick=()=>{try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){recSoundContextV91=recSoundContextV91||new AC();recSoundContextV91.resume().catch(()=>{});}}catch(e){}recSoundEnabledV91=!recSoundEnabledV91;LSet('durr-rec-error-sounds',recSoundEnabledV91?'1':'0');updateRecSoundButtonV91();if(recSoundEnabledV91)playRecErrorToneV91('omission',true);recTip(recSoundEnabledV91?'أصوات التنبيه مفعّلة':'أصوات التنبيه مكتومة');};
 $('faceListenRepeat').onclick=()=>sessionToolsV89?.openRepeat();
 $('faceListenAirPlay').onclick=()=>audioController.audio?.webkitShowPlaybackTargetPicker?.();
 $('faceListenPrev').onclick=()=>audioController.previous();$('faceListenNext').onclick=()=>audioController.next();
@@ -1388,8 +1388,8 @@ function updateRecSoundButtonV91(){
  button.title=recSoundEnabledV91?'أصوات الأخطاء مفعّلة':'أصوات الأخطاء مكتومة';
  button.style.opacity=recSoundEnabledV91?'1':'.45';
 }
-function playRecErrorToneV91(kind){
- if(!recSoundEnabledV91||!recOn||document.hidden||Date.now()-recSoundAtV91<1100)return;
+function playRecErrorToneV91(kind,preview=false){
+ if(!recSoundEnabledV91||(!recOn&&!preview)||document.hidden||Date.now()-recSoundAtV91<1100)return;
  try{
    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
    const ctx=recSoundContextV91||(recSoundContextV91=new AC());
@@ -1517,7 +1517,7 @@ function collectQasrAudioV80(x,rate){
 async function startQuranAsrV73(stream){
   if(!QASR_URL||!stream)return false;const owner=recSession?.id;
   try{
-    setEngine('','جارٍ التحقق من جاهزية المحرك القرآني…');
+    if(!speechStarted)setEngine('','جارٍ التحقق من جاهزية المحرك القرآني…');
     const response=await requestQasrV79('/health',{},5000);if(!response.ok)throw new Error('health');
     const info=await response.json();
     if(info.quran_specialized!==true||info.engine_loaded!==true||info.enabled===false)throw new Error('engine not ready');
@@ -1530,8 +1530,8 @@ async function startQuranAsrV73(stream){
     const rate=qasrCtx.sampleRate;
     qasrNode.onaudioprocess=e=>{if(qasrActive)collectQasrAudioV80(new Float32Array(e.inputBuffer.getChannelData(0)),rate);};
     qasrSource.connect(qasrNode);qasrNode.connect(qasrGain);qasrGain.connect(qasrCtx.destination);qasrActive=true;qasrFailures=0;
-    if(recSession){recSession.engine='quran-asr';recSession.engineModel=info.model||QASR_CONFIG.model||'quran-specialized';recSession.recitationMode=qasrStreaming?'streaming':'chunked';recSession.engineStreamFinalized=false;}
-    setEngine('live',qasrStreaming?'جارٍ الاستماع بالمحرك القرآني':'تسميع قرآني تجريبي · التحليل بعد الوقف');return true;
+    if(recSession){recSession.secondaryEngine='quran-asr';recSession.engineModel=info.model||QASR_CONFIG.model||'quran-specialized';recSession.recitationMode=qasrStreaming?'streaming':'chunked';recSession.engineStreamFinalized=false;}
+    if(!speechStarted)setEngine('live','جارٍ التحليل القرآني');return true;
   }catch(e){if(recSession?.id===owner)stopQuranAsrV73(false);return false;}
 }
 function stopQuranAsrV73(flush=true){
