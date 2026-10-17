@@ -542,6 +542,17 @@ def phoneme_reference_schema():
 
 def _verified_word_units(value):
     """Only accept source records with explicit boundaries for each word."""
+    if isinstance(value, dict) and "aya_phonemes_list" in value:
+        chunks = value.get("aya_phonemes_list")
+        verse = value.get("aya_phoneme")
+        written = value.get("aya_text")
+        if (isinstance(chunks, list) and isinstance(verse, str)
+                and isinstance(written, str) and chunks
+                and len(chunks) == len(written.split())
+                and all(isinstance(chunk, str) and chunk.strip() for chunk in chunks)
+                and "".join(chunks).replace(" ", "") == verse.replace(" ", "")):
+            return [[chunk] for chunk in chunks]
+        return None
     if isinstance(value, dict):
         value = value.get("words", value.get("word_phonemes"))
     if not isinstance(value, list) or not value:
