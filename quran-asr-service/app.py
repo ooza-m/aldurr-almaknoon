@@ -462,7 +462,7 @@ def transcribe(req: TranscribeRequest):
         "backend": BACKEND,
         "model": MODEL_ID,
         "quran_specialized": True,
-        "streaming": BACKEND == "sherpa-fastconformer",
+        "streaming": BACKEND in {"sherpa-fastconformer", "quran-zipformer-ctc"},
         "seq": req.seq,
         "final": req.final,
         "confidence": None,
