@@ -390,7 +390,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 <script src="reader-ui.js?v=89"></script>
 <script src="reader-study.js?v=89"></script>
 <script src="reader-session.js?v=89"></script>
-<script src="config.js?v=89"></script>
+<script src="config.js?v=94"></script>
 <link rel="stylesheet" href="app-preferences.css?v=89">
 <script src="app-preferences.js?v=89"></script>
 <link rel="stylesheet" href="reader-tools.css?v=89">
@@ -1280,7 +1280,7 @@ function syncTaskSessionChip(){
 let recSeq=[],recPos=0,recWords=[],recWordPos=0,eyeShown=false,recStream=null,recOn=false,recTimerH=null,recT0=0;
 let recSession=null,recPageState=null,speechRec=null,speechAvailable=!!(window.SpeechRecognition||window.webkitSpeechRecognition),speechStarted=false;
 const QASR_CONFIG=(window.DURR_CONFIG&&window.DURR_CONFIG.quranAsr)||{};
-const QASR_URL=String(QASR_CONFIG.url||LS('durr-quran-asr-url','')||'').replace(/\/$/,'');
+const QASR_URL=QASR_CONFIG.enabled===false?'':String(QASR_CONFIG.url||LS('durr-quran-asr-url','')||'').replace(/\/$/,'');
 let qasrActive=false,qasrCtx=null,qasrSource=null,qasrNode=null,qasrGain=null,qasrChunks=[],qasrSamples=0,qasrQueue=[],qasrBusy=false,qasrFailures=0,qasrSeq=0,qasrWarmed=false,qasrRunId="",qasrPumpPromise=null,qasrAbort=null;
 let recStarting=false,recFinishing=false,recAdvancing=false,recAdvanceTimer=null,recStartGenerationV86=0;
 let speechStopPromise=null,speechStopResolve=null;
