@@ -1552,7 +1552,7 @@ async function getPhonemeVerseV90(vk){
  if(!/^\d{1,3}:\d{1,3}$/.test(vk)||!QASR_URL)return null;
  if(!phonemeVerseCacheV90.has(vk)){
    const [surah,ayah]=vk.split(':');
-   phonemeVerseCacheV90.set(vk,fetch(QASR_URL+'/phoneme-reference/verse/'+surah+'/'+ayah,{cache:'no-store'})
+   phonemeVerseCacheV90.set(vk,(async()=>{const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),2500);try{return await fetch(QASR_URL+'/phoneme-reference/verse/'+surah+'/'+ayah,{cache:'force-cache',signal:abort.signal});}finally{clearTimeout(timer);}})()
      .then(r=>r.ok?r.json():null)
      .then(data=>data?.verified_word_boundaries&&Array.isArray(data.word_phonemes)?data.word_phonemes.map(p=>p.join(' ')):null)
      .catch(()=>null));
