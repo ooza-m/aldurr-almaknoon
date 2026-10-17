@@ -493,6 +493,28 @@ def _reference_data():
     return _reference_cache
 
 
+def _startup_schema_probe():
+    try:
+        data = _reference_data()
+        def shape(value, depth=0):
+            if depth >= 4:
+                return {"kind": type(value).__name__}
+            if isinstance(value, dict):
+                keys = list(value)
+                return {"kind": "dict", "count": len(keys), "sample_keys": [str(k)[:24] for k in keys[:3]], "child": shape(value[keys[0]], depth+1) if keys else None}
+            if isinstance(value, list):
+                return {"kind": "list", "count": len(value), "child": shape(value[0], depth+1) if value else None}
+            return {"kind": type(value).__name__}
+        print("QASR_REFERENCE_SCHEMA " + json.dumps(shape(data), ensure_ascii=False), flush=True)
+    except Exception as exc:
+        print("QASR_REFERENCE_ERROR " + type(exc).__name__, flush=True)
+
+
+@app.on_event("startup")
+def _schedule_reference_schema_probe():
+    threading.Thread(target=_startup_schema_probe, daemon=True).start()
+
+
 @app.get("/phoneme-reference/schema")
 def phoneme_reference_schema():
     """Return a minimal, non-sensitive structural probe, never token or model files."""
