@@ -4,8 +4,8 @@
 */
 window.DURR_CONFIG = Object.assign({}, window.DURR_CONFIG || {}, {
   quranAsr: {
-    url: "",
+    url: "https://quran-asr-production-3419.up.railway.app",
     mode: "quran-specialized-streaming",
-    model: "mohammed/fastconformer-quran-ar-onnx-int8"
+    model: "Quran-Lab/zipformer_p-arabic-v3"
   }
 });
