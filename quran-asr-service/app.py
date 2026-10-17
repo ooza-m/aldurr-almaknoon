@@ -669,6 +669,7 @@ def g2p_reference_candidate(surah: int, ayah: int):
     ) else None
     matching_context = joined == whole
     matching_model = matching_context and upstream_tokens == joined
+    print("QASR_G2P_COMPAT " + json.dumps({"verse": f"{surah}:{ayah}", "context": matching_context, "model": matching_model, "word_count": len(words), "g2p_count": len(whole), "upstream_count": len(upstream_tokens) if upstream_tokens else None}), flush=True)
     return {
         "verse": f"{surah}:{ayah}",
         "word_count": len(words),
