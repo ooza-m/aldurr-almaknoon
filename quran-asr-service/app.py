@@ -670,10 +670,11 @@ def g2p_reference_candidate(surah: int, ayah: int):
     ) else None
     matching_context = joined == whole
     matching_model = matching_context and upstream_tokens == joined
-    print("QASR_G2P_COMPAT " + json.dumps({"verse": f"{surah}:{ayah}", "context": matching_context, "model": matching_model, "word_count": len(words), "g2p_count": len(whole), "upstream_count": len(upstream_tokens) if upstream_tokens else None}), flush=True)
+    print("QASR_G2P_COMPAT " + json.dumps({"verse": f"{surah}:{ayah}", "context": matching_context, "model": matching_model, "word_count": len(words), "g2p_count": len(whole), "upstream_count": len(upstream_tokens) if upstream_tokens else None, "word_grouped": bool(upstream_tokens and len(upstream_tokens) == len(words)), "reconstructs": ("".join(upstream_tokens).replace(" ", "") == str(record.get("aya_phoneme", "")).replace(" ", "")) if upstream_tokens else False}), flush=True)
     return {
         "verse": f"{surah}:{ayah}",
         "word_count": len(words),
+        "upstream_word_grouped": isinstance(upstream, list) and len(upstream) == len(words) and all(isinstance(x, str) and x.strip() for x in upstream),
         "g2p_word_units": candidates,
         "g2p_verse_tokens": len(whole),
         "upstream_tokens": len(upstream_tokens) if upstream_tokens is not None else None,
