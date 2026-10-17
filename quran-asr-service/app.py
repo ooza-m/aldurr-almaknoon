@@ -513,6 +513,7 @@ def _startup_schema_probe():
 @app.on_event("startup")
 def _schedule_reference_schema_probe():
     threading.Thread(target=_startup_schema_probe, daemon=True).start()
+    threading.Thread(target=lambda: g2p_reference_candidate(1, 1), daemon=True).start()
 
 
 @app.get("/phoneme-reference/schema")
