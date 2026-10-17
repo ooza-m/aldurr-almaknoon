@@ -1455,7 +1455,7 @@ function queueQasrChunkV73(float32,inRate,final=false){
  let run=qasrRunsV86.get(qasrRunId);if(!run){const ctx=ensureRecContextV86();run={id:qasrRunId,ctx,owner:recSession.id,queue:[],promise:null,controller:null};qasrRunsV86.set(run.id,run);ctx?.runs.add(run.id);}
  let audio_b64='';if(float32?.length)audio_b64=b64PcmV73(f32To16kPcmV73(float32,inRate));else if(!final)return;
  run.queue.push({audio_b64,sample_rate:16000,page:cur,position:recWordPos,session_id:run.id,seq:qasrSeq++,final:!!final,owner:run.owner});qasrQueue=run.queue;
- if(run.queue.length>8){if(run.ctx)run.ctx.session.analysisIncomplete=true;run.queue.length=0;return Promise.resolve();}
+ if(run.queue.length>5){if(run.ctx)run.ctx.session.analysisIncomplete=true;run.queue.length=0;return Promise.resolve();}
  return pumpQasrV73(run);
 }
 async function requestQasrV79(path,options={},timeout=12000){
@@ -1484,7 +1484,7 @@ function pumpQasrV73(run=qasrRunsV86.get(qasrRunId)){
  run.promise=(async()=>{
    while(run.queue.length&&!run.ctx?.finalized){const item=run.queue.shift(),start=performance.now();
      try{let data;for(let attempt=0;attempt<2;attempt++){const controller=new AbortController();run.controller=controller;let timer;
-       try{data=await Promise.race([(async()=>{const {owner,...body}=item,response=await fetch(QASR_URL+'/transcribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});if(!response.ok)throw Error('ASR HTTP '+response.status);return response.json();})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('ASR timeout'));},12000);})]);break;}catch(error){if(attempt===1||run.ctx?.finalized)throw error;}finally{clearTimeout(timer);}
+       try{data=await Promise.race([(async()=>{const {owner,...body}=item,response=await fetch(QASR_URL+'/transcribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});if(!response.ok)throw Error('ASR HTTP '+response.status);return response.json();})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('ASR timeout'));},7000);})]);break;}catch(error){if(attempt===1||run.ctx?.finalized)throw error;}finally{clearTimeout(timer);}
      }
      const ctx=run.ctx;if(!ctx||ctx.finalized)continue;if(data.seq!==item.seq)throw Error('ASR sequence mismatch');
      const tx=String(Object.prototype.hasOwnProperty.call(data,'transcript_delta')?data.transcript_delta:(data.transcript||'')).trim(),ms=Math.round(performance.now()-start),stats=ctx.session.stats;
@@ -1495,7 +1495,7 @@ function pumpQasrV73(run=qasrRunsV86.get(qasrRunId)){
      // completion or record automatic recitation mistakes from these tokens.
      if(data.transcript_format==='phonemes'){
        ctx.session.analysisIncomplete=true;
-       await previewQuranPhonemesV90(ctx,item.page,String(data.transcript||''));
+       void previewQuranPhonemesV90(ctx,item.page,String(data.transcript||'')).catch(()=>{});
        if(recSession?.id===ctx.session.id&&!data.transcript)setEngine('limited','بانتظار تمييز الأصوات القرآنية');
      }else if(tx)await dispatchRecitationV89(ctx,item.page,tx,'quran-asr',data);
      if(item.final){ctx.session.engineStreamFinalized=true;if(recSession?.id===ctx.session.id){if(ctx.session.analysisIncomplete)setEngine('limited','وصل الصوت، لكن محاذاة الكلمات لم تُستكمل؛ لا تُحتسب نتيجة تسميع');else setEngine('ok','اكتمل تحليل المقطع · يمكنك المتابعة');}}
@@ -1509,7 +1509,7 @@ function collectQasrAudioV80(x,rate){
   const quiet=Math.sqrt(energy/Math.max(1,x.length))<.008;
   qasrQuietSamples=quiet?qasrQuietSamples+x.length:0;if(!quiet)qasrHasVoice=true;
   if(!qasrStreaming&&!qasrHasVoice&&qasrSamples>=rate*2){qasrChunks=[];qasrSamples=0;qasrQuietSamples=0;return;}
-  const due=qasrStreaming?qasrSamples>=rate*.4:(qasrSamples>=rate*12||(qasrHasVoice&&qasrSamples>=rate*2&&qasrQuietSamples>=rate*.65));
+  const due=qasrStreaming?qasrSamples>=rate*1.2:(qasrSamples>=rate*12||(qasrHasVoice&&qasrSamples>=rate*2&&qasrQuietSamples>=rate*.65));
   if(!due)return;
   const all=new Float32Array(qasrSamples);let offset=0;qasrChunks.forEach(c=>{all.set(c,offset);offset+=c.length;});
   qasrChunks=[];qasrSamples=0;qasrQuietSamples=0;qasrHasVoice=false;queueQasrChunkV73(all,rate);
@@ -1549,7 +1549,7 @@ function markSessionError(vk,wi,kind){if(!recPageState||wi==null)return;const k=
 function snapshotPage(forceComplete){return snapshotStateV86(recSession,recPageState,forceComplete);}
 const phonemeVerseCacheV90=new Map();
 async function getPhonemeVerseV90(vk){
- if(!/^\\d{1,3}:\\d{1,3}$/.test(vk)||!QASR_URL)return null;
+ if(!/^\d{1,3}:\d{1,3}$/.test(vk)||!QASR_URL)return null;
  if(!phonemeVerseCacheV90.has(vk)){
    const [surah,ayah]=vk.split(':');
    phonemeVerseCacheV90.set(vk,fetch(QASR_URL+'/phoneme-reference/verse/'+surah+'/'+ayah,{cache:'no-store'})
