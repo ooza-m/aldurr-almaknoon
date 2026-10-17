@@ -1,9 +1,9 @@
-const CACHE='durr-v87';
+const CACHE='durr-v88';
 const STATIC=[
-  './app-preferences.js?v=87','./app-preferences.css?v=87',
-  './reader-study.js?v=87','./audio-library.js?v=87','./recitation-core.js?v=87','./recitation-jobs.js?v=87','./reader-ui.js?v=87','./reader-tools.css?v=87','./app-data.js?v=87','./data/recitation-aliases.json',
+  './app-preferences.js?v=88','./app-preferences.css?v=88',
+  './reader-study.js?v=88','./audio-library.js?v=88','./recitation-core.js?v=88','./recitation-jobs.js?v=88','./reader-ui.js?v=88','./reader-tools.css?v=88','./app-data.js?v=88','./data/recitation-aliases.json',
   './manifest.json','./icon.png','./icon-180.png',
-  './app-navigation.css?v=87','./reader-shell.css?v=87','./reader-core.js?v=87','./reader-audio.js?v=87',
+  './app-navigation.css?v=88','./reader-shell.css?v=88','./reader-core.js?v=88','./reader-audio.js?v=88',
   './data/mushaf-data.json','./data/mushaf-search.json',
   './data/mushaf-mutashabihat.json','./data/surah-frame.svg'
 ];

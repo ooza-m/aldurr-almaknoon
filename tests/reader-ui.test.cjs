@@ -4,6 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {JSDOM,VirtualConsole}=require('jsdom');
 const root=path.join(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
+function tap(w,el,x=100,y=100){const touch={clientX:x,clientY:y},start=new w.Event('touchstart',{bubbles:true,cancelable:true}),end=new w.Event('touchend',{bubbles:true});Object.defineProperty(start,'touches',{value:[touch]});Object.defineProperty(end,'changedTouches',{value:[touch]});el.dispatchEvent(start);el.dispatchEvent(end);}
 async function boot(options={}){
   const errors=[],requests=[],console=new VirtualConsole();console.on('jsdomError',error=>errors.push(error));
   const dom=new JSDOM(read('mushaf.html'),{url:'https://reader.test/mushaf.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:console}),w=dom.window;
@@ -29,7 +30,7 @@ async function boot(options={}){
     if(match)return {ok:true,json:async()=>({tafsir:{resource_id:+match[1],text:'<p>تفسير المصدر '+match[1]+' للآية '+match[2]+'</p><p>فقرة ثانية.</p>'}})};
     throw Error('Unexpected network request: '+url);
   };
-  w.localStorage.setItem('durr-num','en');for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js','reader-study.js'])w.eval(read(file));
+  w.localStorage.setItem('durr-num','en');if(options.savedFocus!=null)w.localStorage.setItem('durr-focus',options.savedFocus);for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js','reader-study.js'])w.eval(read(file));
   for(const script of w.document.querySelectorAll('script:not([src])')){
     let code=script.textContent;
     if(code.includes('const REC_QUERY='))code+='\nwindow.readerTest={get player(){return audioController},get page(){return cur},get verse(){return playingVerse},get session(){return recSession},get recMode(){return recMode},get pageState(){return recPageState},get jobs(){return recJobsV86},settle,faceVerses,loadTafsir,maybeCompleteFaceTafsir,enterRecite,toggleRec,finishReciteSession,processTranscriptV73,openErrLog};';
@@ -62,22 +63,42 @@ test('audio options preserve a chosen silent gap while changing repetition and s
  const {dom,w,$}=await boot();t.after(()=>{w.readerTest.player.stop();dom.window.close();});$('readerListen').click();$('audioRepeat').value='2';$('audioGap').value='5';$('audioForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));for(let i=0;i<15;i++)await tick();assert.equal(w.readerTest.player.repeat,2);assert.equal(w.readerTest.player.gap,5);assert.equal(w.readerTest.player.status,'playing');
  $('faceListenOptions').click();assert.equal($('audioGap').value,'5');assert.equal($('audioRepeat').value,'2');
 });
-test('both navigation bars place Mushaf centrally and route calendar directly',()=>{
-  for(const [file,selector,attr] of [['index.html','#bottomNav','tab'],['mushaf.html','#appBottomNav','appRoute']]){
+test('a short touch toggles tools, suppresses the following ghost click and leaves glyph styles alone',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());const pane=$('paneB'),word=pane.querySelector('.qw[data-vk]');let measurements=0;
+ Object.defineProperties(pane,{clientWidth:{get:()=>380},clientHeight:{get:()=>{measurements++;return 700;}}});w.syncReaderViewport();const before=[...pane.querySelectorAll('.qline,.qw')].map(el=>el.style.cssText),count=measurements;
+ assert.ok(!$('readerDock').closest('.track'));assert.equal($('readerTopTools').getAttribute('aria-hidden'),'true');tap(w,word);assert.ok(w.document.body.classList.contains('chrome'));assert.equal($('readerTopTools').getAttribute('aria-hidden'),'false');assert.equal($('readerDock').hasAttribute('inert'),false);word.click();assert.ok(w.document.body.classList.contains('chrome'));assert.ok(!$('ayahWrap').classList.contains('open'));
+ tap(w,word);assert.ok(!w.document.body.classList.contains('chrome'));assert.equal($('readerDock').hasAttribute('inert'),true);assert.equal(measurements,count);assert.deepEqual([...pane.querySelectorAll('.qline,.qw')].map(el=>el.style.cssText),before);
+});
+test('multi-touch and canceled gestures do not toggle reader tools',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());const start=new w.Event('touchstart',{bubbles:true,cancelable:true});Object.defineProperty(start,'touches',{value:[{clientX:100,clientY:100},{clientX:140,clientY:120}]});$('track').dispatchEvent(start);const end=new w.Event('touchend',{bubbles:true});Object.defineProperty(end,'changedTouches',{value:[{clientX:100,clientY:100}]});$('track').dispatchEvent(end);assert.ok(!w.document.body.classList.contains('chrome'));$('track').dispatchEvent(new w.Event('touchcancel'));$('track').click();assert.ok(!w.document.body.classList.contains('chrome'));
+});
+test('reader always opens large regardless of the obsolete focus preference, and Home is its exit',async t=>{
+ for(const savedFocus of ['0','1']){const {dom,w,$}=await boot({savedFocus});t.after(()=>dom.window.close());assert.equal($('btnFocus'),null);assert.equal($('appBottomNav'),null);assert.ok(!w.document.body.classList.contains('focus-mode'));assert.equal($('readerDock').hasAttribute('inert'),true);assert.equal($('btnBack').closest('[inert]'),null);let route='';w.leaveReader=async value=>{route=value;};$('btnBack').click();assert.equal(route,'home');}
+});
+test('keyboard toggles controls and Escape hides them without changing pages',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());const page=w.readerTest.page;$('track').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.ok(w.document.body.classList.contains('chrome'));$('track').dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));assert.ok(!w.document.body.classList.contains('chrome'));
+ $('track').click();w.document.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal($('readerDock').getAttribute('aria-hidden'),'true');assert.equal(w.readerTest.page,page);
+});
+test('showing an audio session reveals the dock once; later progress does not re-open hidden tools',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>{w.readerTest.player.stop();dom.window.close();});await w.readerTest.player.start({verses:['1:1','1:2']});assert.ok(w.document.body.classList.contains('chrome'));$('track').click();assert.ok(!w.document.body.classList.contains('chrome'));w.readerTest.player.emit();assert.ok(!w.document.body.classList.contains('chrome'));assert.equal($('faceListenBar').closest('#readerDock').id,'readerDock');
+});
+test('main navigation keeps Mushaf central while the reader has only its persistent home exit',()=>{
+  for(const [file,selector,attr] of [['index.html','#bottomNav','tab']]){
     const dom=new JSDOM(read(file)),buttons=[...dom.window.document.querySelector(selector).children];
     assert.deepEqual(buttons.map(b=>b.dataset[attr]),['home','today','mushaf','calendar','more']);assert.ok(buttons[2].classList.contains('nav-mushaf'));dom.window.close();
   }
   const dom=new JSDOM(read('index.html'));assert.ok(dom.window.document.querySelector('#tab-more [data-v50-route=map]'));dom.window.close();
+  const reader=new JSDOM(read('mushaf.html'));assert.equal(reader.window.document.querySelector('#appBottomNav'),null);assert.equal(reader.window.document.querySelector('#btnFocus'),null);assert.equal(reader.window.document.querySelector('#btnBack').getAttribute('aria-label'),'العودة للرئيسية');reader.window.close();
 });
 test('reader boots without missing/duplicate IDs or JavaScript errors',async t=>{
   const {dom,w,errors}=await boot();t.after(()=>dom.window.close());
   const ids=[...w.document.querySelectorAll('[id]')].map(el=>el.id);assert.equal(new Set(ids).size,ids.length);
   const missing=[...read('mushaf.html').matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]).filter(id=>!w.document.getElementById(id)&&!['errClr'].includes(id));assert.deepEqual([...new Set(missing)],[]);
-  assert.deepEqual(errors,[]);assert.equal(w.document.getElementById('faceListenBar').parentElement.id,'screen');
+  assert.deepEqual(errors,[]);assert.equal(w.document.getElementById('faceListenBar').parentElement.id,'readerDock');
 });
 test('page scrubber is under the face before actions and jumps without opening the index',async t=>{
  const {dom,w,$}=await boot();t.after(()=>dom.window.close());const scrubber=$('pageSlider').closest('.reader-scrubber');
- assert.equal(scrubber.previousElementSibling.id,'pagefoot');assert.ok(scrubber.compareDocumentPosition(w.document.querySelector('.chrome-bot'))&w.Node.DOCUMENT_POSITION_FOLLOWING);
+ assert.equal(scrubber.parentElement.id,'readerDock');assert.equal(scrubber.parentElement.previousElementSibling.id,'pagefoot');assert.ok(scrubber.compareDocumentPosition(w.document.querySelector('.chrome-bot'))&w.Node.DOCUMENT_POSITION_FOLLOWING);
  assert.equal($('indexOv').querySelector('#pageSlider'),null);$('pageSlider').value='50';$('pageSlider').dispatchEvent(new w.Event('input'));assert.ok($('sBubble').classList.contains('on'));
  $('pageSlider').dispatchEvent(new w.Event('change'));assert.equal(w.readerTest.page,50);assert.ok(!$('indexOv').classList.contains('open'));
  $('btnSettings').click();w.DurrPreferences.mount(w.document.querySelector('[data-app-preferences]'));w.document.querySelector('[data-palette=navy]').click();w.document.querySelector('[data-digits=ar]').click();
@@ -156,7 +177,7 @@ test('long touch opens ayah details while preventing native selection and a phan
   const {dom,w,$}=await boot();t.after(()=>dom.window.close());const word=$('paneB').querySelector('.qw[data-vk]'),touch={clientX:100,clientY:100};
   const start=new w.Event('touchstart',{bubbles:true,cancelable:true});Object.defineProperty(start,'touches',{value:[touch]});word.dispatchEvent(start);assert.ok(start.defaultPrevented);
   await new Promise(resolve=>setTimeout(resolve,480));assert.ok($('ayahWrap').classList.contains('open'));assert.equal(w.getSelection().toString(),'');
-  const end=new w.Event('touchend',{bubbles:true});Object.defineProperty(end,'changedTouches',{value:[touch]});word.dispatchEvent(end);assert.ok(!w.document.body.classList.contains('reader-quiet'));
+  const end=new w.Event('touchend',{bubbles:true});Object.defineProperty(end,'changedTouches',{value:[touch]});word.dispatchEvent(end);assert.ok(!w.document.body.classList.contains('chrome'));assert.ok($('readerDock').hasAttribute('inert'));
 });
 test('late Saadi responses cannot overwrite a newer Muyassar selection',async t=>{
   const {dom,w,$}=await boot();t.after(()=>dom.window.close());const original=w.fetch,releases=[];
@@ -164,17 +185,19 @@ test('late Saadi responses cannot overwrite a newer Muyassar selection',async t=
   const old=w.openFaceTafsir('saadi');await tick();w.document.querySelector('[data-face-tf=muyassar]').click();await tick();await tick();releases.forEach(release=>release());await old;await tick();
   assert.match($('faceTafsirBody').textContent,/المصدر 16/);assert.doesNotMatch($('faceTafsirBody').textContent,/المصدر 91/);
 });
-test('viewport updates do not measure and grow the navigation height recursively',async t=>{
-  const {dom,w,$}=await boot();t.after(()=>dom.window.close());$('appBottomNav').getBoundingClientRect=()=>{throw Error('nav measurement feedback');};
+test('viewport sizing does not reserve or measure the removed application navigation',async t=>{
+  const {dom,w,$}=await boot();t.after(()=>dom.window.close());assert.equal($('appBottomNav'),null);
   for(let i=0;i<20;i++)w.syncReaderViewport();assert.equal(w.document.documentElement.style.getPropertyValue('--app-nav-h'),'');
 });
-test('new styles win over legacy positioning and keep the audio dock in normal flow',async t=>{
+test('reader controls and recitation UI overlay the large fixed reading area',async t=>{
   const {dom,w,$}=await boot();t.after(()=>dom.window.close());
   for(const file of ['app-navigation.css','reader-shell.css']){const style=w.document.createElement('style');style.textContent=read(file);w.document.head.append(style);assert.ok(style.sheet.cssRules.length>0);}
   assert.equal(w.getComputedStyle($('screen')).position,'relative');
-  assert.equal(w.getComputedStyle(w.document.querySelector('.chrome-top')).position,'relative');
-  assert.equal(w.getComputedStyle(w.document.querySelector('.chrome-top')).pointerEvents,'auto');
+  assert.equal(w.getComputedStyle($('readerTopTools')).position,'absolute');assert.equal(w.getComputedStyle($('readerDock')).position,'absolute');assert.equal(w.getComputedStyle($('btnBack')).position,'absolute');
+  assert.equal(w.getComputedStyle($('readerTopTools')).visibility,'hidden');assert.equal(w.getComputedStyle($('readerDock')).pointerEvents,'none');
+  assert.equal(w.getComputedStyle($('btnBack')).visibility,'visible');assert.equal($('btnBack').closest('[inert]'),null);assert.equal(w.getComputedStyle(w.document.querySelector('.mini-top')).display,'none');
+  $('track').click();assert.equal(w.getComputedStyle($('readerTopTools')).visibility,'visible');assert.equal(w.getComputedStyle($('readerDock')).pointerEvents,'auto');
   w.document.body.classList.add('face-listening');assert.equal(w.getComputedStyle($('faceListenBar')).position,'relative');assert.equal(w.getComputedStyle($('faceListenBar')).display,'flex');
-  assert.equal(w.getComputedStyle($('appBottomNav')).pointerEvents,'auto');assert.equal(w.getComputedStyle($('appBottomNav')).opacity,'1');
-  w.document.body.classList.add('focus-mode');assert.equal(w.getComputedStyle($('appBottomNav')).display,'none');
+  assert.equal($('faceListenBar').closest('#readerDock').id,'readerDock');
+  await w.readerTest.enterRecite();assert.equal(w.getComputedStyle($('recBar')).position,'absolute');assert.equal(w.getComputedStyle($('recEngine')).position,'absolute');assert.equal(w.getComputedStyle($('recSessionChip')).position,'absolute');
 });

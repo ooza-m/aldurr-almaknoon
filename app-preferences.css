@@ -29,7 +29,7 @@ body{background:radial-gradient(ellipse at 0 0,var(--wash),transparent 55%),line
 .reader-scrubber .pslider{min-height:28px}.reader-scrubber input[type=range]{width:100%;accent-color:var(--accent)}
 .scrubber-label{display:flex;justify-content:space-between;font-size:.63rem;min-height:18px;color:var(--muted)}
 .reader-scrubber .sbubble{bottom:34px}.reader-scrubber button{font:inherit;color:var(--accent);font-weight:600}
-body.reciting .reader-scrubber,body.focus-mode .reader-scrubber{display:none}
+body.reciting .reader-scrubber{display:none}
 @media(max-height:620px){.reader-scrubber{padding-block:0}.scrubber-label{display:none}}
 .v50-priority,.v65-hero,.v65-page-token{background:linear-gradient(135deg,var(--surface),var(--wash))!important}
 .v50-btn.soft,.v50-task-action,.v50-more-ico,.v50-arrow{background:var(--wash)!important;color:var(--accent-2)}
