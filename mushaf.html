@@ -1462,7 +1462,8 @@ function pumpQasrV73(run=qasrRunsV86.get(qasrRunId)){
      // completion or record automatic recitation mistakes from these tokens.
      if(data.transcript_format==='phonemes'){
        ctx.session.analysisIncomplete=true;
-       if(recSession?.id===ctx.session.id)setEngine('limited','المحرّك يتعرف على الأصوات؛ محاذاة الكلمات القرآنية غير مفعّلة بعد');
+       await previewQuranPhonemesV90(ctx,item.page,String(data.transcript||''));
+       if(recSession?.id===ctx.session.id&&!data.transcript)setEngine('limited','بانتظار تمييز الأصوات القرآنية');
      }else if(tx)await dispatchRecitationV89(ctx,item.page,tx,'quran-asr',data);
      if(item.final){ctx.session.engineStreamFinalized=true;if(recSession?.id===ctx.session.id){if(ctx.session.analysisIncomplete)setEngine('limited','وصل الصوت، لكن محاذاة الكلمات لم تُستكمل؛ لا تُحتسب نتيجة تسميع');else setEngine('ok','اكتمل تحليل المقطع · يمكنك المتابعة');}}
    }catch(error){if(run.ctx)run.ctx.session.analysisIncomplete=true;run.queue.length=0;if(recSession?.id===run.owner&&recOn){setEngine('','تعذّر التحليل المتخصص · الانتقال إلى المتصفح');startSpeech();}break;}
@@ -1513,6 +1514,35 @@ function makePageState(){const vm={};recWords.forEach(w=>{const v=vm[w.vk]||(vm[
 function markCoverage(s,source){if(!recPageState||!s||s.wi==null)return;const k=s.vk+'#'+s.wi;recPageState.covered.add(k);const v=recPageState.verses[s.vk];if(v)v.covered.add(s.wi);if(source!=='asr'&&source!=='quran-asr'&&source!=='browser-speech'){recPageState.assisted.add(k);if(v)v.assisted.add(s.wi);}}
 function markSessionError(vk,wi,kind){if(!recPageState||wi==null)return;const k=vk+'#'+wi,v=recPageState.verses[vk];if(kind==='suspected'){recPageState.suspected.add(k);if(v)v.suspected.add(wi);return;}recPageState.errors.add(k);recPageState.suspected.delete(k);if(v){v.errors.add(wi);v.suspected.delete(wi);}}
 function snapshotPage(forceComplete){return snapshotStateV86(recSession,recPageState,forceComplete);}
+const phonemeVerseCacheV90=new Map();
+async function getPhonemeVerseV90(vk){
+ if(!/^\\d{1,3}:\\d{1,3}$/.test(vk)||!QASR_URL)return null;
+ if(!phonemeVerseCacheV90.has(vk)){
+   const [surah,ayah]=vk.split(':');
+   phonemeVerseCacheV90.set(vk,fetch(QASR_URL+'/phoneme-reference/verse/'+surah+'/'+ayah,{cache:'no-store'})
+     .then(r=>r.ok?r.json():null)
+     .then(data=>data?.verified_word_boundaries&&Array.isArray(data.word_phonemes)?data.word_phonemes.map(p=>p.join(' ')):null)
+     .catch(()=>null));
+ }
+ return phonemeVerseCacheV90.get(vk);
+}
+async function previewQuranPhonemesV90(ctx,page,transcript){
+ const sec=ctx?.sections?.get(page);
+ if(!sec||!window.DurrPhonemeAligner?.exactPrefix||!transcript)return;
+ const vk=sec.words.find(w=>w.vk)?.vk;
+ if(!vk)return;
+ const segments=await getPhonemeVerseV90(vk);
+ if(!segments||ctx.finalized||recSession?.id!==ctx.session.id||cur!==page)return;
+ const verseWords=sec.words.filter(w=>w.vk===vk);
+ if(verseWords.length!==segments.length)return;
+ const result=DurrPhonemeAligner.exactPrefix(transcript,segments);
+ if(result.status!=='prefix')return;
+ for(const index of result.matchedWords){
+   const item=verseWords[index];
+   if(item?.el){item.el.classList.add('rvl');item.el.classList.remove('rec-skipped');}
+ }
+ if(result.matchedWords.length)setEngine('live','متابعة صوتية أولية · لا تُحتسب أخطاء أو إتمام قبل التحقق');
+}
 function buildRecSeq(){recSeq=[];recWords=[];const seen={};paneCur.querySelectorAll('.qw[data-vk]').forEach(el=>{const vk=el.dataset.vk,isEnd=el.classList.contains('qend');if(!(vk in seen))seen[vk]=0;let wi=null;if(!isEnd){wi=seen[vk];seen[vk]++;}el._wi=wi;el.classList.remove('rvl','rec-cur','rec-err','rec-context','rec-corrected','rec-omission','rec-extra','rec-skipped');if(wi!==null&&ERR.some(x=>x.vk===vk&&x.wi===wi&&x.session===(recSession&&recSession.id)))el.dataset.err='1';else el.removeAttribute('data-err');const item={el,vk,wi};recSeq.push(item);if(wi!==null)recWords.push({...item,seqIndex:recSeq.length-1,expected:wordFor(vk,wi)});});recWordPos=0;if(recMode){if(recPageState&&recPageState.page!==cur)snapshotPage(false);recPageState=makePageState();}}
 function reMaskFace(){paneCur.classList.add('reciting');buildRecSeq();recPos=0;eyeShown=false;setEye();}
 function setEye(){const b=$('recEye');if(!b)return;b.classList.toggle('off',!eyeShown);$('recEyeIcon').innerHTML=eyeShown?'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>':'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>';}
