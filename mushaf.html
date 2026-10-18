@@ -1784,7 +1784,7 @@ showReaderTools(false);
 $('btnSettings').onclick=e=>{e.stopPropagation();openSettings();};
 $('readerListen').onclick=()=>openFaceListening();
 $('readerTafsir').onclick=()=>openFaceTafsir(tfTab);
-$('btnStates').onclick=e=>{e.stopPropagation();$('stTitle').textContent='وجه '+AR(cur);syncFaceStateSheet();$('stWrap').classList.add('open');};
+$('btnStates').onclick=async e=>{e.stopPropagation();if(recMode)return;await enterRecite('free');if(!recSession)return;voiceLocatorV89=voiceLocatorV89||new DurrRecitation.Locator(SEARCH);recSession.freeSearch=true;recSession.freeLocated=false;setEngine('','التسميع الحر · ابدئي من أي آية وشغّلي الميكروفون');};
 $('btnBack').onclick=e=>{e.stopPropagation();leaveReader('home');};
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeAll);
 document.querySelectorAll('[data-closesheet]').forEach(b=>b.addEventListener('click',closeSheets));
