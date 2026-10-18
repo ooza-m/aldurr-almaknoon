@@ -1749,7 +1749,26 @@ function applyErrorDismissalsV86(){
  try{const dismissed=new Set(JSON.parse(localStorage.getItem('durr-error-dismissals-v86')||'[]'));S.errors=S.errors.filter(e=>!dismissed.has(e.sessionId+'|'+e.verseKey+'#'+e.wordIndex));}catch(_){}
 }
 
+function findFreeRecitationPlanLinksV105(rs,log){
+ if(rs.task!=='free')return [];
+ const pages=(rs.pages||[]).filter(p=>(p.wordsCovered||0)>0).map(p=>+p.page);
+ const links=[];
+ const check=(items,type)=>{
+   (items||[]).forEach(row=>{
+     const from=+row.from||0,to=+row.to||0;
+     if(!from||!to)return;
+     const hits=pages.filter(p=>p>=from&&p<=to);
+     if(hits.length)links.push({type,surahId:+row.surahId||null,from,to,pages:hits,status:'suggested',automaticCompletion:false});
+   });
+ };
+ check(log.memList,'new');
+ check((log.revList||[]).filter(x=>x.type!=='far'),'near');
+ check((log.revList||[]).filter(x=>x.type==='far'),'far');
+ return links;
+}
 function ingestRecitationSessionV51(raw){if(!raw||!raw.id)return;if(!S.recitationSessions)S.recitationSessions=[];const previous=S.recitationSessions.find(x=>x&&x.id===raw.id);if(previous&&!(raw.version>=86&&['interrupted','incomplete'].includes(previous.analysisStatus)&&raw.analysisStatus==='complete'))return;const updating=!!previous;if(updating){S.recitationSessions=S.recitationSessions.filter(x=>x.id!==raw.id);S.activityEvents=(S.activityEvents||[]).filter(e=>!String(e.id||'').startsWith(raw.id+':'));}const rs=JSON.parse(JSON.stringify(raw));S.recitationSessions.push(rs);if(S.recitationSessions.length>500)S.recitationSessions=S.recitationSessions.slice(-500);S.verseReview=S.verseReview||{};S.activityEvents=S.activityEvents||[];S.aiReviewQueue=S.aiReviewQueue||[];const date=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now())),log=ensureLogForDateV51(date);let full=0,partial=0,errAdded=0;const task=rs.task||'free';
+  rs.suggestedPlanLinks=findFreeRecitationPlanLinksV105(rs,log);
+  rs.planLinkStatus=rs.suggestedPlanLinks.length?'suggested-review':'unmatched';
   if(rs.version>=86)errAdded+=ingestAutomaticErrorsV86(rs,date);
   if(['ai-review','practice'].includes(task))(rs.pages||[]).forEach(pg=>{pg.complete=false;});
   const reviewTypes=new Set(['possible_omission','possible_substitution','possible_repetition','possible_extra_word','mutashabih_jump']);
