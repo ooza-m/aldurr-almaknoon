@@ -85,45 +85,60 @@
  }
  class Locator{
   constructor(search){
-    this.entries=Object.entries(search).map(([vk,[page,text]])=>({vk,page,text,tokens:tokens(text)}))
-      .sort((a,b)=>{const [sa,aa]=a.vk.split(':').map(Number),[sb,ab]=b.vk.split(':').map(Number);return sa-sb||aa-ab;});
-    this.index=new Map();
-    this.entries.forEach((v,i)=>new Set(v.tokens).forEach(t=>{if(!this.index.has(t))this.index.set(t,[]);this.index.get(t).push(i);}));
+    this.entries=Object.entries(search).map(([vk,[page,text]])=>({vk,page,tokens:tokens(text)}))
+      .sort((a,b)=>{const [as,aa]=a.vk.split(':').map(Number),[bs,ba]=b.vk.split(':').map(Number);return as-bs||aa-ba;});
+    this.words=[];this.startIndex=new Map();
+    for(const verse of this.entries)for(let wi=0;wi<verse.tokens.length;wi++)
+      this.words.push({token:verse.tokens[wi],vk:verse.vk,page:verse.page,wi});
+    // Index consecutive triples: avoids thousands of expensive DP alignments.
+    for(let i=0;i+2<this.words.length;i++){
+      const a=this.words[i],b=this.words[i+1],c=this.words[i+2];
+      const key=[a.token,b.token,c.token].join('|');
+      if(!this.startIndex.has(key))this.startIndex.set(key,[]);
+      this.startIndex.get(key).push(i);
+    }
   }
-  locate(text,options={}){
-    const heard=tokens(text).slice(-32);
-    if(heard.length<2)return null;
-    const localPage=Number(options.page)||0;
-    const candidates=[];
-    const counts=new Map();
-    for(const term of new Set(heard))for(const i of this.index.get(term)||[])counts.set(i,(counts.get(i)||0)+1);
-    const ranked=[...counts].sort((a,b)=>{
-      const pa=this.entries[a[0]].page===localPage?1:0,pb=this.entries[b[0]].page===localPage?1:0;
-      return b[1]-a[1]||pb-pa;
-    }).slice(0,96);
-    for(const [i] of ranked){
-      const verse=this.entries[i];
-      const next=this.entries[i+1];
-      const sameSurah=next&&next.vk.split(':')[0]===verse.vk.split(':')[0];
-      const span=[verse,...(sameSurah?[next]:[])];
-      const expected=span.flatMap(v=>v.tokens.map((value,wi)=>({expected:value,wi,vk:v.vk,page:v.page})));
-      // Try all starts, including the middle of a verse.
-      for(let offset=0;offset<verse.tokens.length;offset++){
-        const window=expected.slice(offset);
-        const ops=align(window,heard.join(' '),{cursor:0,located:true});
-        if(!ops||ops.strong<Math.min(3,heard.length)||ops.score<.78)continue;
-        const first=ops.ops.find(op=>op.type==='match')?.word;
-        if(!first)continue;
-        const score=ops.score+(verse.page===localPage ? .045 : 0);
-        candidates.push({vk:first.vk,page:first.page,wi:first.wi,score,strong:ops.strong});
+  locate(text){
+    const spoken=tokens(text).slice(-48);
+    // The opening invocation is not evidence for a Quran location.
+    const opening=['اعوذ','بالله','من','الشيطان','الرجيم','بسم','الله','الرحمن','الرحيم'];
+    let start=0;
+    while(start<spoken.length&&opening.includes(spoken[start])&&start<9)start++;
+    // Avoid removing Quran words: trim only recognizable complete invocation.
+    const heard=(start>=5&&spoken.slice(0,5).join(' ')==='اعوذ بالله من الشيطان الرجيم')
+      ?spoken.slice(spoken.slice(5,9).join(' ')==='بسم الله الرحمن الرحيم'?9:5)
+      :spoken.slice(0,4).join(' ')==='بسم الله الرحمن الرحيم'?spoken.slice(4):spoken;
+    if(heard.length<3)return null;
+    const candidates=new Map();
+    for(let k=0;k+2<heard.length;k++){
+      const hits=this.startIndex.get(heard.slice(k,k+3).join('|'))||[];
+      for(const i of hits){
+        const origin=i-k;if(origin<0)continue;
+        const first=this.words[origin];if(!first)continue;
+        const key=first.vk+'#'+first.wi;
+        const prior=candidates.get(key)||{first,origin,score:0,matched:0};
+        prior.score+=3;prior.matched++;
+        candidates.set(key,prior);
       }
     }
-    candidates.sort((a,b)=>b.strong-a.strong||b.score-a.score);
-    const best=candidates[0];
-    if(!best)return null;
-    const conflicting=candidates.find(c=>c.vk!==best.vk&&c.strong===best.strong&&c.score>=best.score-.035);
-    if(conflicting)return null;
-    return best;
+    const ranked=[...candidates.values()].sort((a,b)=>b.score-a.score).slice(0,120);
+    const scored=[];
+    for(const item of ranked){
+      let matches=0,mismatches=0;
+      for(let k=0;k<heard.length;k++){
+        const ref=this.words[item.origin+k];
+        if(!ref)break;
+        if(ref.token===heard[k])matches++;else mismatches++;
+      }
+      if(matches<3||matches/Math.max(heard.length,1)<.76)continue;
+      scored.push({...item,matched:matches,quality:matches/Math.max(heard.length,1)});
+    }
+    scored.sort((a,b)=>b.matched-a.matched||b.quality-a.quality);
+    const best=scored[0];if(!best)return null;
+    const second=scored.find(v=>v.first.vk!==best.first.vk||v.first.wi!==best.first.wi);
+    // Continue listening through mutashabihat; never choose by page proximity.
+    if(second&&second.matched>=best.matched-1&&second.quality>=best.quality-.08)return null;
+    return {vk:best.first.vk,page:best.first.page,wi:best.first.wi,score:best.quality,strong:best.matched};
   }
 }
 
