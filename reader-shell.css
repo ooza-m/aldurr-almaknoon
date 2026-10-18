@@ -105,3 +105,8 @@ button:disabled{opacity:.4;cursor:default}.audio-field[hidden]{display:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media(min-width:700px){.pane{padding-inline:6px}.sheet{max-width:580px;margin-inline:auto}.ov-top,.ov>.seg,.ov>.page-jump{width:min(calc(100% - 36px),680px);margin-inline:auto}}
 @media(max-height:620px){.mini-top{min-height:23px;flex-basis:23px;padding-block:1px}.chrome-top{min-height:44px;height:44px}.chrome-bot{min-height:48px;flex-basis:48px}.reader-action{min-height:40px}.face-listen-bar{padding-block:5px}.listen-transport{min-height:34px}}
+
+/* v104: recitation remains live when the overlay controls are folded away. */
+body.reciting.rec-controls-hidden #recBar{opacity:0!important;visibility:hidden!important;pointer-events:none!important;transform:translateY(105%);transition:opacity .18s,transform .18s,visibility .18s}
+body.reciting:not(.rec-controls-hidden) #recBar{transition:opacity .18s,transform .18s}
+body.reciting.rec-controls-hidden .rec-engine,body.reciting.rec-controls-hidden .rec-session-chip,body.reciting.rec-controls-hidden .rec-tip{opacity:0;visibility:hidden;pointer-events:none}
