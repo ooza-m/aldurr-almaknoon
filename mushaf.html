@@ -1008,8 +1008,8 @@ let ayCur='';
 function buildHlRow(){
   const r=$('hlRow');
   const cur=hlMap.get(ayCur)||'';
-  r.innerHTML=HLC.map(c=>`<button class="${cur===c?'on':''}" style="background:${c}" data-c="${c}" aria-label="تمييز"></button>`).join('')
-    +`<button class="clear${cur?'':' on'}" data-c="" aria-label="إزالة التمييز"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M6.5 6.5l11 11"/></svg></button>`;
+  r.innerHTML=HLC.map(c=>`<button class="${cur===c?'on':''}" style="background:${c}" data-c="${c}" aria-label="وضع فاصل ملون"></button>`).join('')
+    +`<button class="clear${cur?'':' on'}" data-c="" aria-label="إزالة الفاصل"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M6.5 6.5l11 11"/></svg></button>`;
   r.querySelectorAll('button').forEach(b=>b.onclick=()=>toggleHl(ayCur,b.dataset.c));
 }
 async function openAyah(vk){
@@ -1830,6 +1830,7 @@ $('ayLib').onclick=()=>{const key=ayCur;openFaceTafsir(tfTab,key,versePage(key))
 
 function toggleHl(vk,c){
   if(c)hlMap.set(vk,c);else hlMap.delete(vk);saveHl();
+  if(readerToolsV86?.store){const bookmarks=readerToolsV86.store;const entry=bookmarks.items.find(b=>b.vk===vk);if(c){if(!entry){const [sid,ayah]=vk.split(':').map(Number);bookmarks.put(vk,versePage(vk),surahName(sid)+' · آية '+ARA(ayah));}}else if(entry)bookmarks.remove(vk);readerToolsV86.paintBookmarks();}
   [paneCur,panePrev,paneNext].forEach(pn=>pn.querySelectorAll('.qw[data-vk="'+vk+'"]').forEach(w=>{w.classList.remove('lp');w.classList.toggle('hl',!!c);w.style.backgroundColor=c||'';w.style.borderRadius='';}));
   roundRuns();buildHlRow();
 }
@@ -1865,7 +1866,7 @@ function syncReaderViewport(){
 }
 window.addEventListener('resize',syncReaderViewport,{passive:true});
 if(window.visualViewport){visualViewport.addEventListener('resize',syncReaderViewport,{passive:true});visualViewport.addEventListener('scroll',syncReaderViewport,{passive:true});}
-readerToolsV86=DurrReaderUI.mount({document,window,storage:localStorage,player:audioController,reciters:DurrReader.RECITERS,AudioDownloads:DurrAudio.AudioDownloads,getData:()=>DATA,getPage:()=>cur,getVerse:()=>ayCur,pageOfVerse:versePage,surahName,closeAll,toast:recTip,digits:ARA,navigate:async(page,vk)=>{if(recMode)finishReciteSession(false);await settle(page);flashVerse(vk);}});
+readerToolsV86=DurrReaderUI.mount({document,window,storage:localStorage,setSeparator:(vk,color)=>toggleHl(vk,color),getSeparator:vk=>hlMap.get(vk)||'',player:audioController,reciters:DurrReader.RECITERS,AudioDownloads:DurrAudio.AudioDownloads,getData:()=>DATA,getPage:()=>cur,getVerse:()=>ayCur,pageOfVerse:versePage,surahName,closeAll,toast:recTip,digits:ARA,navigate:async(page,vk)=>{if(recMode)finishReciteSession(false);await settle(page);flashVerse(vk);}});
 audioController.setGap(+LS('durr-audio-gap-v87','0'));
 readerStudyV87=DurrStudy.mount({document,window,storage:localStorage,getPage:()=>cur,getVerse:()=>ayCur,pageOfVerse:versePage,surahName,closeAll,toast:recTip,digits:ARA,faceVerses,ensureSearch,verseText,isReciting:()=>recMode,
 navigate:async(page,vk)=>{if(recMode)finishReciteSession(false);await settle(page);flashVerse(vk);},
