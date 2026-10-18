@@ -380,7 +380,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 .qasr-setrow{align-items:flex-start}.qasr-status{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;color:var(--muted)}.qasr-status i{width:9px;height:9px;border-radius:50%;background:#b8b2b5}.qasr-status.ok{color:#49653C}.qasr-status.ok i{background:#6f8a63}.qasr-status.limited{color:#8A671A}.qasr-status.limited i{background:#C89B3C}.qasr-status.bad{color:#9C5362}.qasr-status.bad i{background:#C77486}.qasr-test{width:100%;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-family:inherit;border-radius:12px;padding:9px 12px;font-size:.72rem;font-weight:700;margin-top:8px}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
-<link rel="stylesheet" href="reader-shell.css?v=89">
+<link rel="stylesheet" href="reader-shell.css?v=102">
 <script src="reader-core.js?v=89"></script>
 <script src="audio-library.js?v=89"></script>
 <script src="reader-audio.js?v=89"></script>
@@ -795,8 +795,10 @@ function updateChrome(){
   $('mtSurah').textContent=names.length>1?names.join(' · '):'سورة '+(names[0]||'');
   $('chromeTtl').textContent='الجزء '+AR(pg.j)+' · وجه '+AR(cur);
   const foot=$('pagefoot');
-  const isHizbStart=DATA.hizbStart&&DATA.hizbStart.includes(cur);
-  const hzTxt=isHizbStart?('الحزب '+AR(DATA.hizb[String(cur)])):'';
+  const hzPages=(DATA.hizbStart||[]).map(Number).filter(p=>p<=cur).sort((a,b)=>a-b);
+  const hzPage=hzPages.length?hzPages[hzPages.length-1]:null;
+  const hzNum=hzPage===null?null:(DATA.hizb?.[String(hzPage)]||hzPages.length);
+  const hzTxt=hzNum?('الحزب '+AR(hzNum)):'';
   const pnEl='<span class="pn">وجه '+AR(cur)+'</span>',hzEl='<span class="hz">'+hzTxt+'</span>';
   foot.innerHTML=(cur%2===0)?(hzEl+pnEl):(pnEl+hzEl);
   $('pageSlider').value=cur;$('pageJump').value=cur;paintPlayingVerse();
