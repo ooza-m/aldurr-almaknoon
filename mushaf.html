@@ -50,7 +50,7 @@ body.chrome .chrome-top{transform:none;opacity:1;pointer-events:auto}
 /* ===== منطقة القراءة (شريط ثلاثيّ الأوجه) ===== */
 .track{flex:1;position:relative;overflow:hidden;min-height:0;touch-action:none;will-change:transform}
 .pane{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
-  padding:14px 16px;will-change:transform}
+  padding:10px 16px;will-change:transform}
 .qline{display:flex;justify-content:center;align-items:center;width:100%;line-height:1;white-space:nowrap;flex:0 0 auto}
 .qw{font-size:30px;color:var(--quran);cursor:pointer;line-height:1;transition:background .14s,color .14s}
 .qw.qend{color:var(--accent)}
@@ -685,11 +685,11 @@ function fitPane(pane){
   // الأسطر القرآنية العادية تحافظ على نفس إيقاع الصفحات التي كانت جيدة أصلًا.
   // عند وجود عنوان سورة/بسملة نمنحهما مساحة مستقلة من الهامش الرأسي بدل ضغط بقية النص.
   let rowH,blockH;
-  const baseFull=availH*0.94/15;
+  const baseFull=availH*0.965/15;
   if(full && specialCount && !openingPage){
     const normalLines=lines.filter(l=>!l.classList.contains('hdr')&&!l.classList.contains('bism')&&!l.querySelector('.surah-frame'));
     const normalH=baseFull;
-    const targetBlock=availH*0.985;
+    const targetBlock=availH*0.99;
     const normalBlock=normalLines.length*normalH;
     const wantedHdr=baseFull*1.42;
     const wantedBism=baseFull*1.20;
