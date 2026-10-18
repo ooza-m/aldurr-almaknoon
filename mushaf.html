@@ -1347,14 +1347,14 @@ function dispatchRecitationV89(ctx,page,text,source,meta={}){
  ctx.voiceText=((ctx.voiceText||'')+' '+text).trim().split(/\s+/).slice(-36).join(' ');
  const sec=ctx.sections.get(page),local=ctx.session.freeLocated&&sec?.tracker.preview(text);
  if(local&&!ctx.voiceMoving)return applyContextTranscriptV86(ctx,page,text,source,meta);
- const match=voiceLocatorV89?.locate(ctx.voiceText);if(!match){if(recSession?.id===ctx.session.id)setEngine('live','التسميع الحر · واصلي حتى يتضح موضعك');return;}
+ const match=voiceLocatorV89?.locate(ctx.voiceText,{page});if(!match){if(recSession?.id===ctx.session.id)setEngine('live','التسميع الحر · واصلي حتى يتضح موضعك');return;}
  if(ctx.session.freeLocated&&match.page===page)return applyContextTranscriptV86(ctx,page,text,source,meta);
  const heard=ctx.voiceText;ctx.voiceText='';ctx.voiceMoving=true;
  ctx.voiceQueue=(ctx.voiceQueue||Promise.resolve()).then(async()=>{
   if(ctx.finalized||!recMode||recSession?.id!==ctx.session.id)return;
   const old=ctx.sections.get(cur);if(old&&!old.state.covered.size&&!old.state.errors.size){ctx.sections.delete(cur);ctx.session.pages=ctx.session.pages.filter(p=>p.page!==cur);}
   await settle(+match.page);if(ctx.finalized||!recMode||recSession?.id!==ctx.session.id)return;
-  reMaskFace();ctx.session.freeLocated=true;ensureRecContextV86();ctx.page=cur;setEngine('live','تم تحديد موضعك · '+surahName(+match.vk.split(':')[0]));if(source!=='browser-preview')applyContextTranscriptV86(ctx,cur,heard,source,meta);
+  reMaskFace();ctx.session.freeLocated=true;ensureRecContextV86();ctx.page=cur;const targetSection=ctx.sections.get(cur);const offset=targetSection?.words.findIndex(w=>w.vk===match.vk&&w.wi===match.wi);if(offset>=0){targetSection.tracker.cursor=offset;targetSection.tracker.located=true;recWordPos=offset;}setEngine('live','تم تحديد موضعك · '+surahName(+match.vk.split(':')[0]));if(source!=='browser-preview')applyContextTranscriptV86(ctx,cur,heard,source,meta);
  }).catch(()=>{if(recSession?.id===ctx.session.id)setEngine('','تعذّر الانتقال؛ واصلي القراءة للمحاولة');}).finally(()=>{ctx.voiceMoving=false;});
  return ctx.voiceQueue;
 }
@@ -1631,7 +1631,7 @@ let recPreviewWords=[];
 function clearSpeechPreview(){recPreviewWords.forEach(el=>el.classList.remove('rec-preview'));recPreviewWords=[];}
 function previewSpeechV84(txt){
  clearSpeechPreview();if(!recOn||!recMode)return;const ctx=ensureRecContextV86(),sec=ctx?.sections.get(cur);if(!sec)return;
- if(ctx.session.freeSearch&&!ctx.session.freeLocated){const match=voiceLocatorV89?.locate(txt);if(match)dispatchRecitationV89(ctx,cur,txt,'browser-preview');return;}
+ if(ctx.session.freeSearch&&!ctx.session.freeLocated){const match=voiceLocatorV89?.locate(txt,{page:cur});if(match)dispatchRecitationV89(ctx,cur,txt,'browser-preview');return;}
  const result=sec.tracker.preview(txt);if(!result)return;
  if(!sec.tracker.located)sec.words.slice(0,result.start).forEach(w=>{w.el.classList.add('rec-preview');recPreviewWords.push(w.el);});
  const stop=Math.min(Infinity,...result.ops.filter(o=>o.type==='omit').map(o=>o.index),...(sec.gateWaiting?[...sec.gate.deadlines.keys()].map(key=>sec.tracker.errors.get(key)?.index??Infinity):[]));
