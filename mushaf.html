@@ -434,7 +434,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 
   <!-- الفهرس -->
   <div class="ov" id="indexOv">
-    <div class="ov-top"><div class="ov-title">الفهرس</div><button type="button" id="indexSearchButton" aria-label="البحث في المصحف" style="background:var(--wash);border:0;border-radius:12px;color:var(--ink);padding:8px 12px;font:inherit">بحث</button><button class="ov-x" data-close aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="ov-top"><div class="ov-title">الفهرس</div><input id="indexQuickSearch" type="search" placeholder="ابحث في المصحف…" aria-label="البحث في المصحف" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:9px 12px;border-radius:13px;font:inherit;font-size:.75rem"><button class="ov-x" data-close aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <form class="page-jump" id="readerJumpForm" hidden aria-hidden="true"><label for="pageJump">الانتقال إلى وجه</label><input id="pageJump" type="number" min="1" max="604" value="1" inputmode="numeric" required><button type="submit">انتقال</button></form>
     
     <div hidden aria-hidden="true"><button type="button" id="openNotes">ملاحظات الآيات</button><button type="button" id="openPractice">تدريب الاستدعاء</button></div>
@@ -1774,7 +1774,7 @@ document.querySelectorAll('#stWrap [data-face-state]').forEach(st=>st.onclick=()
 /* ===== أشرطة/نوافذ ===== */
 function closeAll(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('open'));closeSheets();showReaderTools(false);document.body.classList.remove('face-tafsir-open');faceTfToken++;faceTfLoaded=false;}
 $('btnIndex').onclick=e=>{e.stopPropagation();openIndex();};
-$('btnSearch').onclick=e=>{e.stopPropagation();openSearch();};$('indexSearchButton').onclick=()=>openSearch();
+$('btnSearch').onclick=e=>{e.stopPropagation();openSearch();};$('indexQuickSearch').addEventListener('input',e=>{const term=e.target.value;if(!term.trim())return;openSearch();$('searchInput').value=term;doSearch(term);});
 function refitVisiblePanes(){requestAnimationFrame(()=>{[paneCur,panePrev,paneNext].forEach(p=>p&&fitPane(p));});}
 function showReaderTools(visible){
  document.body.classList.toggle('chrome',!!visible);
