@@ -434,8 +434,8 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 
   <!-- الفهرس -->
   <div class="ov" id="indexOv">
-    <div class="ov-top"><div class="ov-title">الفهرس</div><button type="button" id="indexSearchButton" aria-label="البحث في المصحف" style="background:transparent;border:0;color:var(--ink);padding:8px;font:inherit">بحث</button><button class="ov-x" data-close aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <form class="page-jump" id="readerJumpForm"><label for="pageJump">الانتقال إلى وجه</label><input id="pageJump" type="number" min="1" max="604" value="1" inputmode="numeric" required><button type="submit">انتقال</button></form>
+    <div class="ov-top"><div class="ov-title">الفهرس</div><button type="button" id="indexSearchButton" aria-label="البحث في المصحف" style="background:var(--wash);border:0;border-radius:12px;color:var(--ink);padding:8px 12px;font:inherit">بحث</button><button class="ov-x" data-close aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <form class="page-jump" id="readerJumpForm" hidden aria-hidden="true"><label for="pageJump">الانتقال إلى وجه</label><input id="pageJump" type="number" min="1" max="604" value="1" inputmode="numeric" required><button type="submit">انتقال</button></form>
     
     <button type="button" class="bookmark-index-link" id="openBookmarks"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>فواصل الآيات</button>
     <div class="seg"><button class="on" data-t="surah">السور</button><button data-t="rub">الأرباع</button></div>
