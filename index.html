@@ -4146,6 +4146,58 @@ initCloud();
 
 function renderAll(){document.body.classList.add('home-active');initDatepicks();renderToday();loadPlan();consumePendingLearningV61();consumePendingRecitationV55();mirrorFaceLearningV61();refreshV50();maybeAskPath();const wanted=new URLSearchParams(location.search).get('tab');const allowed=['home','today','manual','map','more','calendar','khatma','tafsir','planning','stages','stats','tajweed','errors'];switchTab(allowed.includes(wanted)?wanted:'home');if(typeof scheduleNotifs==='function')try{scheduleNotifs();}catch(e){}}
 renderAll();
+(function initFreeRecitationReviewV105(){
+ const home=document.getElementById('homeAccountBtn');
+ if(!home)return;
+ const button=document.createElement('button');
+ button.type='button';button.id='freeRecitationReviewBtn';
+ button.textContent='ربط التسميع';
+ button.setAttribute('aria-label','مراجعة ربط التسميع الحر بخطط الحفظ والمراجعة');
+ button.style.cssText='font:inherit;font-size:.69rem;border:1px solid var(--line,#decdd2);border-radius:14px;background:var(--surface,#fff);color:var(--ink,#543c45);padding:8px 10px;cursor:pointer';
+ home.parentNode.insertBefore(button,home);
+ const cover=document.createElement('div');
+ cover.id='freeRecitationReviewOverlay';
+ cover.style.cssText='display:none;position:fixed;inset:0;z-index:9999;background:rgba(34,25,31,.4);align-items:center;justify-content:center;padding:18px';
+ const box=document.createElement('section');
+ box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label','مراجعة ربط التسميع الحر');
+ box.dir='rtl';
+ box.style.cssText='width:min(100%,520px);max-height:80dvh;overflow:auto;border-radius:24px;padding:20px;background:var(--page,#fbf7f2);color:var(--ink,#543c45);font-family:inherit;box-shadow:0 12px 50px #0002';
+ box.innerHTML='<div style="display:flex;justify-content:space-between;gap:15px;align-items:center"><b>ربط جلسات التسميع الحر</b><button type="button" data-close style="font:inherit;padding:7px;border:0;background:transparent">إغلاق</button></div><p style="font-size:.77rem;line-height:1.9">اقتراحات مبنية على توافق الوجه مع خطة اليوم. اعتماد الربط لا يعني إتقان الوجه ولا يُكمل المهمة تلقائيًا.</p><div data-items></div>';
+ cover.appendChild(box);document.body.appendChild(cover);
+ const list=box.querySelector('[data-items]');
+ const escapeHTML=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const title={new:'حفظ جديد',near:'مراجعة قريبة أو تثبيت',far:'مراجعة بعيدة'};
+ const refresh=()=>{
+   const sessions=(S.recitationSessions||[]).filter(x=>x?.task==='free'&&x.suggestedPlanLinks?.length).slice(-60).reverse();
+   list.replaceChildren();
+   if(!sessions.length){list.textContent='لا توجد جلسات ذات ارتباطات مقترحة حاليًا.';return;}
+   for(const session of sessions){
+     const block=document.createElement('div');
+     block.style.cssText='border-top:1px solid #b4a0a033;padding:13px 0';
+     const when=new Date(session.endedAt||session.startedAt||Date.now()).toLocaleDateString('ar-AE');
+     const head=document.createElement('b');head.textContent='جلسة '+when;block.appendChild(head);
+     for(let i=0;i<session.suggestedPlanLinks.length;i++){
+       const link=session.suggestedPlanLinks[i];
+       const row=document.createElement('div');row.style.cssText='padding:8px 0;line-height:1.8;font-size:.75rem';
+       const label=document.createElement('div');label.textContent=(title[link.type]||link.type)+' — وجه '+link.pages.join('، ')+' — '+(link.status==='accepted'?'رُبطت بالجلسة':link.status==='rejected'?'مرفوض':'بانتظار المراجعة');
+       row.appendChild(label);
+       if(link.status==='suggested'){
+         for(const [word,status] of [['اعتماد الربط','accepted'],['رفض','rejected']]){
+           const action=document.createElement('button');action.type='button';action.textContent=word;
+           action.style.cssText='font:inherit;margin:5px 0 0 8px;padding:6px 12px;border:1px solid #c6afb4;border-radius:12px;background:transparent;color:inherit';
+           action.onclick=()=>{link.status=status;link.reviewedAt=Date.now();session.planLinkStatus=session.suggestedPlanLinks.some(x=>x.status==='suggested')?'suggested-review':'reviewed';save();refresh();};
+           row.appendChild(action);
+         }
+       }
+       block.appendChild(row);
+     }
+     list.appendChild(block);
+   }
+ };
+ button.onclick=()=>{refresh();cover.style.display='flex';};
+ box.querySelector('[data-close]').onclick=()=>{cover.style.display='none';};
+ cover.addEventListener('click',e=>{if(e.target===cover)cover.style.display='none';});
+})();
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
