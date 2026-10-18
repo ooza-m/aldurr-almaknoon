@@ -363,7 +363,7 @@ body.face-listening .face-listen-bar{display:flex}
 body.face-listening .app-bottom-nav{opacity:0;pointer-events:none;transform:translate(-50%,120%)}
 body.face-listening .screen{height:var(--app-vh)!important}
 .listen-main{flex:1;min-width:0}.listen-main b{display:block;font-size:.82rem;color:var(--ink)}.listen-main small{display:block;font-size:.66rem;color:var(--muted);margin-top:2px}
-.listen-progress{height:4px;border-radius:99px;background:var(--wash-2);overflow:hidden;margin-top:6px}.listen-progress i{display:block;height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width .25s}
+.listen-progress{direction:rtl;height:4px;border-radius:99px;background:var(--wash-2);overflow:hidden;margin-top:6px}.listen-progress i{display:block;height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width .25s}
 .listen-play{width:48px;height:48px;border:0;border-radius:50%;background:linear-gradient(145deg,var(--accent),var(--accent-2));color:#fff;display:grid;place-items:center}.listen-play svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2}
 .listen-close{width:34px;height:34px;border:0;border-radius:50%;background:var(--wash);color:var(--ink-2);font-size:1.15rem}
 
@@ -381,7 +381,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 .qasr-setrow{align-items:flex-start}.qasr-status{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;color:var(--muted)}.qasr-status i{width:9px;height:9px;border-radius:50%;background:#b8b2b5}.qasr-status.ok{color:#49653C}.qasr-status.ok i{background:#6f8a63}.qasr-status.limited{color:#8A671A}.qasr-status.limited i{background:#C89B3C}.qasr-status.bad{color:#9C5362}.qasr-status.bad i{background:#C77486}.qasr-test{width:100%;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-family:inherit;border-radius:12px;padding:9px 12px;font-size:.72rem;font-weight:700;margin-top:8px}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
-<link rel="stylesheet" href="reader-shell.css?v=104">
+<link rel="stylesheet" href="reader-shell.css?v=106">
 <script src="reader-core.js?v=89"></script>
 <script src="audio-library.js?v=89"></script>
 <script src="reader-audio.js?v=89"></script>
@@ -434,9 +434,9 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 
   <!-- الفهرس -->
   <div class="ov" id="indexOv">
-    <div class="ov-top"><div class="ov-title">الفهرس</div><button class="ov-x" data-close aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="ov-top"><div class="ov-title">الفهرس</div><button type="button" id="indexSearchButton" aria-label="البحث في المصحف" style="background:transparent;border:0;color:var(--ink);padding:8px;font:inherit">⌕ بحث</button><button class="ov-x" data-close aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <form class="page-jump" id="readerJumpForm"><label for="pageJump">الانتقال إلى وجه</label><input id="pageJump" type="number" min="1" max="604" value="1" inputmode="numeric" required><button type="submit">انتقال</button></form>
-    <div class="study-index-links"><button type="button" class="bookmark-index-link" id="openNotes">ملاحظات الآيات</button><button type="button" class="bookmark-index-link" id="openPractice">تدريب الاستدعاء</button></div>
+    
     <button type="button" class="bookmark-index-link" id="openBookmarks"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>فواصل المصحف</button>
     <div class="seg"><button class="on" data-t="surah">السور</button><button data-t="rub">الأرباع</button></div>
     <div class="ov-wrap"><div class="ov-body" id="idxBody"></div><div class="juzrail" id="juzRail"></div></div>
@@ -558,15 +558,15 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 
 <div class="face-listen-bar" id="faceListenBar" aria-label="مشغّل التلاوة">
  <div class="listen-row"><button type="button" class="listen-close" id="faceListenClose" aria-label="إغلاق المشغّل">×</button><div class="listen-main"><button type="button" id="faceListenReader" class="listen-reader">اختيار القارئ</button><b id="faceListenTitle">التلاوة</b><small id="faceListenSub" role="status"></small></div><button type="button" class="listen-options" id="faceListenOptions" aria-label="نطاق الاستماع"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg></button><button type="button" id="faceListenAirPlay" class="listen-options" aria-label="اختيار مخرج الصوت" hidden><svg viewBox="0 0 24 24"><path d="M5 15a10 10 0 1 1 14 0M8 12a6 6 0 1 1 8 0M12 12l-5 9h10z"/></svg></button></div>
- <div class="listen-timeline"><span id="faceListenElapsed">0:00</span><div class="listen-progress" role="progressbar" aria-label="تقدّم الاستماع" aria-valuemin="0" aria-valuemax="100"><i id="faceListenProgress"></i><input type="range" id="faceListenSeek" min="0" max="1000" value="0" aria-label="التحريك داخل الآية"></div><span id="faceListenRemaining">−0:00</span></div>
+ <div class="listen-timeline"><span id="faceListenElapsed">0:00</span><div class="listen-progress" dir="rtl" role="progressbar" aria-label="تقدّم الاستماع" aria-valuemin="0" aria-valuemax="100"><i id="faceListenProgress"></i><input type="range" id="faceListenSeek" dir="rtl" min="0" max="1000" value="0" aria-label="التحريك داخل الآية"></div><span id="faceListenRemaining">−0:00</span></div>
  <div class="listen-row listen-transport"><button type="button" class="listen-step" id="faceListenRepeat" aria-label="التكرار"><svg viewBox="0 0 24 24"><path d="M17 3l4 4-4 4M3 11V7h18M7 21l-4-4 4-4M21 13v4H3"/></svg><small id="faceListenRepeatCount">1</small></button><button type="button" class="listen-step" id="faceListenPrev" aria-label="الآية السابقة"><svg viewBox="0 0 24 24"><path d="M6 5v14M18 6l-9 6 9 6z"/></svg></button><button type="button" class="listen-play" id="faceListenPlay" aria-label="تشغيل"><svg id="faceListenIcon" viewBox="0 0 24 24"><path d="M9 6l9 6-9 6z"/></svg><svg id="faceListenDownloadRing" class="download-ring" viewBox="0 0 36 36" hidden><circle class="ring-track" cx="18" cy="18" r="15"/><circle class="ring-value" cx="18" cy="18" r="15" pathLength="100"/><path d="M14 14h8v8h-8z"/></svg></button><button type="button" class="listen-step" id="faceListenNext" aria-label="الآية التالية"><svg viewBox="0 0 24 24"><path d="M18 5v14M6 6l9 6-9 6z"/></svg></button><button type="button" class="listen-rate" id="faceListenRate" aria-label="تغيير سرعة التلاوة">1×</button></div>
 </div>
-<div class="sheet-wrap" id="audioOptionsWrap"><div class="sheet-bg" data-closesheet></div><form class="sheet" id="audioForm"><div class="grab"></div><div class="ay-head"><button type="button" class="ov-x" data-closesheet aria-label="إغلاق">×</button><div class="ay-ttl">الاستماع</div></div>
+<div class="sheet-wrap" id="audioOptionsWrap"><div class="sheet-bg" data-closesheet></div><form class="sheet" id="audioForm" style="position:relative"><div class="grab"></div><div class="ay-head"><button type="button" class="ov-x" data-closesheet aria-label="إغلاق">×</button><div class="ay-ttl">الاستماع</div></div>
   <label class="audio-field" for="audioReciter">القارئ<select id="audioReciter"></select></label>
   <div class="audio-settings-grid"><label class="audio-field" for="audioRate">السرعة<select id="audioRate"></select></label><label class="audio-field" for="audioScope">نطاق الاستماع<select id="audioScope"><option value="face">الوجه الحالي</option><option value="verse">الآية المحددة</option><option value="surah">السورة كاملة</option><option value="custom">من الآية المحددة إلى…</option></select></label></div>
   <label class="audio-field" id="audioRangeLabel" for="audioEndAyah">آخر آية في النطاق<input id="audioEndAyah" type="number" min="1" inputmode="numeric"></label>
-  <button type="button" id="openAudioLibrary" class="audio-library-link">اختيار التلاوة وإدارة تنزيل السور</button>
-  <p class="audio-note">بعد التشغيل، افتحي رمز التكرار لضبط بداية النطاق ونهايته وتكرار كل آية أو النطاق كاملًا.</p>
+  <button type="button" id="openAudioLibrary" class="listen-options" aria-label="مكتبة التلاوات والتنزيلات" title="مكتبة التلاوات" style="position:absolute;top:12px;left:15px;border:0;background:var(--wash);width:36px;height:36px;border-radius:12px"><svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg></button>
+  
   <p class="audio-note" id="audioRangeNote"></p><button class="audio-start" id="audioStart" type="submit">بدء الاستماع</button>
 </form></div>
 
@@ -1773,7 +1773,7 @@ document.querySelectorAll('#stWrap [data-face-state]').forEach(st=>st.onclick=()
 /* ===== أشرطة/نوافذ ===== */
 function closeAll(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('open'));closeSheets();showReaderTools(false);document.body.classList.remove('face-tafsir-open');faceTfToken++;faceTfLoaded=false;}
 $('btnIndex').onclick=e=>{e.stopPropagation();openIndex();};
-$('btnSearch').onclick=e=>{e.stopPropagation();openSearch();};
+$('btnSearch').onclick=e=>{e.stopPropagation();openSearch();};$('indexSearchButton').onclick=()=>openSearch();
 function refitVisiblePanes(){requestAnimationFrame(()=>{[paneCur,panePrev,paneNext].forEach(p=>p&&fitPane(p));});}
 function showReaderTools(visible){
  document.body.classList.toggle('chrome',!!visible);
