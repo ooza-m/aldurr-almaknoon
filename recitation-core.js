@@ -114,7 +114,7 @@
         if(!ops||ops.strong<Math.min(3,heard.length)||ops.score<.78)continue;
         const first=ops.ops.find(op=>op.type==='match')?.word;
         if(!first)continue;
-        const score=ops.score+(verse.page===localPage?.045:0);
+        const score=ops.score+(verse.page===localPage ? .045 : 0);
         candidates.push({vk:first.vk,page:first.page,wi:first.wi,score,strong:ops.strong});
       }
     }
