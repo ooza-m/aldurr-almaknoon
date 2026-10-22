@@ -3951,7 +3951,16 @@ function cloudPush(){
     }).catch(e=>{const m=document.getElementById('cloudMini');if(m){m.textContent='⚠ سيُعاد المزامنة';m.style.color='var(--clay)';}});
   },1200);
 }
-function hasData(s){return s&&((s.logs&&s.logs.length)||(s.errors&&s.errors.length)||(s.tafsir&&s.tafsir.length)||(s.stages&&s.stages.length)||(s.pages&&Object.keys(s.pages).length)||(s.recitationSessions&&s.recitationSessions.length)||(s.khatma));}
+function hasData(s){return s&&((s.quickCompletions&&s.quickCompletions.length)||(s.logs&&s.logs.length)||(s.errors&&s.errors.length)||(s.tafsir&&s.tafsir.length)||(s.stages&&s.stages.length)||(s.pages&&Object.keys(s.pages).length)||(s.recitationSessions&&s.recitationSessions.length)||(s.khatma));}
+/* Refresh local state when returning from the standalone mushaf, before cloud comparison. */
+function refreshQuickCompletionState(){
+ try{const disk=JSON.parse(localStorage.getItem(KEY)||'null');if(!disk||!Array.isArray(disk.quickCompletions))return;
+ const a=new Set((S.quickCompletions||[]).map(x=>x.id));
+ if(disk.quickCompletions.some(x=>!a.has(x.id))){S=disk;reRenderAll();cloudPush();}
+ }catch(e){console.warn('Quick completion refresh failed',e)}
+}
+window.addEventListener('pageshow',refreshQuickCompletionState);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshQuickCompletionState()});
 function cloudPull(silent,done){
   if(!cloudReady||!fbUser){if(done)done();return;}
   pullingNow=true;
