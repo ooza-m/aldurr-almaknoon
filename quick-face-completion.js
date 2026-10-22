@@ -70,6 +70,7 @@ overlay.querySelector('#dqForm').addEventListener('submit',function(e){
   if(kind==='read'&&quality!=='retry')log.tilawa=true;
   state.updatedAt=Date.now();
   localStorage.setItem(KEY,JSON.stringify(state));
+  localStorage.setItem('durr-quick-pending-sync',event.id);
   close();
   const old=trigger.textContent;trigger.textContent='✓ سُجّل الإنجاز';
   setTimeout(()=>trigger.textContent=old,2200);
