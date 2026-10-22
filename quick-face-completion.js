@@ -51,14 +51,15 @@ overlay.querySelector('#dqForm').addEventListener('submit',function(e){
   state.quickCompletions=Array.isArray(state.quickCompletions)?state.quickCompletions:[];
   const event={id:'manual_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),date,page:p,kind,quality,source,manual:true,createdAt:Date.now()};
   state.quickCompletions.push(event);
+  // A retry-needed attempt stays in the audit trail, but does not fulfil the daily task.
   let log=state.logs.find(x=>x.date===day);
   if(!log){log={date:day,new:'',memList:[],rev:'',near:'',far:'',revList:[],tilawa:false,tilawaTxt:'',tafsir:false,tafsirTxt:'',halaqa:false,mreview:false};state.logs.push(log)}
   const targets=(pg.s||[]).map(x=>Number(x.id)).filter(Number.isInteger);
-  if(kind==='memorize'||kind==='review'||kind==='recite'){
+  if(quality!=='retry'&&(kind==='memorize'||kind==='review'||kind==='recite')){
    const listKey=kind==='memorize'?'memList':'revList';
    if(!Array.isArray(log[listKey]))log[listKey]=[];
    for(const sid of targets){
-    if(!log[listKey].some(x=>Number(x.surahId)===sid&&Number(x.from)===p&&Number(x.to)===p)){
+    if(!log[listKey].some(x=>Number(x.surahId)===sid&&((Number(x.from)<=p&&Number(x.to)>=p)||(x.from==null&&x.to==null)))){
      const item={surahId:sid,from:p,to:p,source:'manual'};
      if(listKey==='revList')item.type='near';
      log[listKey].push(item);
@@ -66,7 +67,7 @@ overlay.querySelector('#dqForm').addEventListener('submit',function(e){
    }
   }
   // Reading intentionally remains separate from memorisation/review accounting.
-  if(kind==='read')log.tilawa=true;
+  if(kind==='read'&&quality!=='retry')log.tilawa=true;
   state.updatedAt=Date.now();
   localStorage.setItem(KEY,JSON.stringify(state));
   close();
