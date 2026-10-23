@@ -16,7 +16,7 @@ css.textContent=`
 .dq-options input{accent-color:var(--ink,#5E3A4D)}
 .dq-save{width:100%;padding:13px;background:var(--ink,#5E3A4D);color:#fff;border-radius:12px;font-size:15px;font-weight:700}
 .dq-hint{font-size:12px;color:var(--muted,#9A8189);margin:6px 0 14px}
-.dq-range{display:flex;gap:8px;align-items:center}.dq-range input{width:90px;min-width:0;border:1px solid var(--line,#dbc5c9);border-radius:10px;padding:9px;font:inherit;background:#fff;text-align:center;direction:ltr}
+.dq-range[hidden]{display:none!important}.dq-range{display:flex;gap:8px;align-items:center}.dq-range input{width:90px;min-width:0;border:1px solid var(--line,#dbc5c9);border-radius:10px;padding:9px;font:inherit;background:#fff;text-align:center;direction:ltr}
 .dq-small{font-size:12px;color:var(--muted,#9A8189)}
 body.reciting .dq-trigger{display:none}
 @media(min-width:700px){.dq-overlay{align-items:center}.dq-sheet{border-radius:22px}}
@@ -43,7 +43,7 @@ document.body.append(trigger,overlay);
 const close=()=>overlay.classList.remove('open');
 const rangeEl=overlay.querySelector('#dqRange');
 overlay.querySelectorAll('input[name="scope"]').forEach(x=>x.addEventListener('change',()=>{rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range'}));
-trigger.addEventListener('click',()=>{overlay.querySelector('#dqTitle').textContent='إنجاز الوجه '+cur;overlay.querySelector('#dqFrom').value=cur;overlay.querySelector('#dqTo').value=cur;overlay.classList.add('open')});
+trigger.addEventListener('click',()=>{overlay.querySelector('#dqTitle').textContent='إنجاز الوجه '+cur;overlay.querySelector('#dqFrom').value=cur;overlay.querySelector('#dqTo').value=cur;rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range';overlay.classList.add('open')});
 overlay.querySelector('.dq-close').addEventListener('click',close);
 overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
