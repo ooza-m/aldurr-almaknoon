@@ -40,11 +40,20 @@ def main():
         elif endpoint=="/model-info":
             record["engine_loaded"]=body.get("engine_loaded")
             record["transcript_backend"]=body.get("backend")
+            record["model"]=body.get("model")
             record["passed"]=status==200 and bool(body.get("model"))
         else:
             record["passed"]=status==200 and body.get("engine_loaded") is True
             if status!=200: record["reason"]="Model not ready; HTTP success from /health alone is insufficient"
         results.append(record)
+    if len(results)==3 and all("http_status" in x for x in results):
+        health, model, ready = results
+        if health.get("backend") and model.get("transcript_backend") and health["backend"] != model["transcript_backend"]:
+            model["passed"] = False
+            model["reason"] = "Backend mismatch between /health and /model-info"
+        if health.get("model") and model.get("model") and health["model"] != model["model"]:
+            model["passed"] = False
+            model["reason"] = "Model mismatch between /health and /model-info"
     print(json.dumps({"service":BASE,"tests":results,"note":"Read-only contract check; accuracy, error detection and cost require separate verification."},ensure_ascii=False,indent=2))
     return 0 if len(results)==3 and all(x.get("passed") for x in results) else 1
 
