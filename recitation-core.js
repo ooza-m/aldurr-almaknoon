@@ -64,6 +64,12 @@
        // At least a right anchor is required. Silence and unanchored transcript tails are not errors.
        const previousWord=this.words[Math.max(0,op.index-1)],previousAnchor=!initial&&previousWord&&this.covered.has(previousWord.vk+'#'+previousWord.wi);
        if(!before||after<1||(result.strong<2&&!previousAnchor))return;
+       // Browser speech recognition is optimized for ordinary dictation; it regularly
+       // substitutes correct Quran words. Retain positive tracking, but never promote
+       // its lexical disagreements to verified recitation mistakes.
+       if(source==='browser-speech'||source==='browser-preview')return;
+       // Two strong right anchors reduce spurious omissions on continuous chunks.
+       if((op.type==='omit'||op.type==='extra')&&after<2)return;
        const word=op.word||this.words[Math.max(0,Math.min(this.words.length-1,op.index-1))];if(!word)return;
        const key=word.vk+'#'+word.wi;if(this.dismissed.has(key))return;const previous=this.errors.get(key),event={vk:word.vk,wi:word.wi,index:word.index,type:op.type==='omit'?'omission':op.type==='sub'?'substitution':'extra',expected:word.expected,heard:op.heard||'',source,active:true,automatic:true,confidence:Math.min(.97,Math.max(.5,result.score)),confidenceKind:'alignment-not-acoustic',ts:Date.now()};
        if(!previous||!previous.active||previous.type!==event.type||previous.heard!==event.heard){this.errors.set(key,event);this.events.push(event);updates.push(event);}
