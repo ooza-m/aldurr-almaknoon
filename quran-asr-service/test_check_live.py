@@ -50,6 +50,15 @@ class LiveContractTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertFalse(report["tests"][0]["passed"])
 
+    def test_model_mismatch_is_failure(self):
+        code, report = self.run_check({
+            "/health": (200, {"ok": True, "quran_specialized": True, "engine_loaded": True, "backend": "quran-zipformer-ctc", "model": "Quran-Lab/zipformer_p-arabic-v3"}),
+            "/model-info": (200, {"model": "unexpected-model", "backend": "quran-zipformer-ctc", "engine_loaded": True}),
+            "/ready": (200, {"engine_loaded": True}),
+        })
+        self.assertEqual(code, 1)
+        self.assertIn("mismatch", report["tests"][1]["reason"])
+
     def test_connection_error_is_explicit(self):
         with patch.object(checker, "get", side_effect=TimeoutError()):
             with contextlib.redirect_stdout(io.StringIO()) as output:
