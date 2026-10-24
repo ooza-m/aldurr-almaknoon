@@ -24,3 +24,11 @@ test('phoneme preview does not award covered-word credit or grade errors',()=>{
 test('fallback does not repeatedly start browser recognition',()=>{
  assert.match(html,/if\(speechAvailable&&!speechStarted\)startSpeech\(\)/);
 });
+
+test('async phoneme reference results must not overwrite a newer preview',()=>{
+ const first=html.indexOf('async function previewQuranPhonemesV90(');
+ const end=html.indexOf('\nfunction buildRecSeq()',first);
+ const body=html.slice(first,end);
+ assert.match(body,/previewGeneration=sec\.phonemePreviewGeneration/);
+ assert.match(body,/previewGeneration!==sec\.phonemePreviewGeneration/);
+});
