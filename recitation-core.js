@@ -37,13 +37,28 @@
    return best;
  }
  class Tracker{
-   constructor(words,{cursor=0,located=false,recall=null}={}){this.words=words.map((w,index)=>({...w,index,norm:normalize(w.expected)}));this.cursor=cursor;this.located=located;this.recall=recall;this.startedAt=null;this.pending='';this.covered=new Set();this.errors=new Map();this.dismissed=new Set();this.events=[];this.lastResult=null;}
+   constructor(words,{cursor=0,located=false,recall=null}={}){this.words=words.map((w,index)=>({...w,index,norm:normalize(w.expected)}));this.cursor=cursor;this.located=located;this.recall=recall;this.startedAt=null;this.pending='';this.covered=new Set();this.errors=new Map();this.pendingErrors=new Map();this.observationCounter=0;this.dismissed=new Set();this.events=[];this.lastResult=null;}
    preview(text){return align(this.words,(this.pending+' '+text).trim(),this)||(this.pending?align(this.words,text,this):null);}
-   feed(text,{source='browser-speech',final=true}={}){
+   feed(text,{source='browser-speech',final=true,observationId=null}={}){
+     const observation=observationId==null?'feed-'+(++this.observationCounter):String(observationId);
      if(!final)return this.preview(text);
      const heard=(this.pending+' '+text).trim();let result=align(this.words,heard,this),recovered=false;
      if(!result&&this.pending){const fresh=align(this.words,text,this);if(fresh?.strong>=2){result=fresh;recovered=true;}}
      if(!result){this.pending=tokens(heard).slice(-35).join(' ');return null;}this.pending='';
+     // Preserve unresolved candidates after cursor movement, but never indefinitely.
+     const now=Date.now();
+     for(const [key,candidate] of this.pendingErrors){
+       if(now-candidate.at>5000||this.dismissed.has(key))this.pendingErrors.delete(key);
+     }
+     // Later speech can provide right-hand context, but it is NOT a second
+     // independent acoustic observation of an earlier suspect word.
+     // Keep such candidates visible for review without inventing certainty.
+     for(const candidate of this.pendingErrors.values()){
+       if(candidate.index < this.cursor && result.start > candidate.index &&
+          observation !== candidate.lastObservation && source===candidate.source){
+         candidate.contextAdvanced=true;
+       }
+     }
      const initial=!this.located,oldCursor=this.cursor;this.located=true;if(initial)this.startedAt=result.start;
      const updates=[];
      // A jump is revealed for orientation, never counted as recited or turned into a long run of errors.
@@ -53,7 +68,7 @@
      const ops=[...omittedPrefix,...body];
      ops.forEach((op,i)=>{
        if(op.type==='match'){
-         const key=op.word.vk+'#'+op.word.wi;this.covered.add(key);const prior=this.errors.get(key);
+         const key=op.word.vk+'#'+op.word.wi;this.covered.add(key);this.pendingErrors.delete(key);const prior=this.errors.get(key);
          if(prior&&prior.active){prior.active=false;prior.correctedAt=Date.now();updates.push({...prior,corrected:true});}return;
        }
        if(op.type==='extra'){
@@ -64,14 +79,47 @@
        // At least a right anchor is required. Silence and unanchored transcript tails are not errors.
        const previousWord=this.words[Math.max(0,op.index-1)],previousAnchor=!initial&&previousWord&&this.covered.has(previousWord.vk+'#'+previousWord.wi);
        if(!before||after<1||(result.strong<2&&!previousAnchor))return;
+       // Browser speech recognition is optimized for ordinary dictation; it regularly
+       // substitutes correct Quran words. Retain positive tracking, but never promote
+       // its lexical disagreements to verified recitation mistakes.
+       if(source==='browser-speech'||source==='browser-preview')return;
+       // Two strong right anchors reduce spurious omissions on continuous chunks.
+       if((op.type==='omit'||op.type==='extra')&&after<2)return;
        const word=op.word||this.words[Math.max(0,Math.min(this.words.length-1,op.index-1))];if(!word)return;
        const key=word.vk+'#'+word.wi;if(this.dismissed.has(key))return;const previous=this.errors.get(key),event={vk:word.vk,wi:word.wi,index:word.index,type:op.type==='omit'?'omission':op.type==='sub'?'substitution':'extra',expected:word.expected,heard:op.heard||'',source,active:true,automatic:true,confidence:Math.min(.97,Math.max(.5,result.score)),confidenceKind:'alignment-not-acoustic',ts:Date.now()};
+       // An uncalibrated ASR disagreement is a candidate first, not an immediate alarm.
+       // Require the same finding across two *distinct* observations.
+       const priorCandidate=this.pendingErrors.get(key);
+       const signature=event.type+'|'+event.heard;
+       if(!priorCandidate||priorCandidate.signature!==signature||now-priorCandidate.at>5000){
+         this.pendingErrors.set(key,{signature,seen:1,at:now,lastObservation:observation,type:event.type,expected:event.expected,heard:event.heard,source,index:word.index});
+         // Keep only a small window around the current reading; this is not an error log.
+         if(this.pendingErrors.size>24)this.pendingErrors.delete(this.pendingErrors.keys().next().value);
+         return;
+       }
+       if(priorCandidate.lastObservation===observation)return;
+       priorCandidate.lastObservation=observation;
+       priorCandidate.seen++;
+       if(priorCandidate.seen<2)return;
+       this.pendingErrors.delete(key);
        if(!previous||!previous.active||previous.type!==event.type||previous.heard!==event.heard){this.errors.set(key,event);this.events.push(event);updates.push(event);}
      });
      this.cursor=result.end;this.lastResult={...result,ops,initial,oldCursor,updates};return this.lastResult;
    }
-   dismiss(key){this.dismissed.add(key);const event=this.errors.get(key);if(event)event.active=false;}
-   export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],events:this.events.slice()};}
+   reviewWindow(key,{radius=3}={}){
+     const candidate=this.pendingErrors.get(key);
+     if(!candidate||Date.now()-candidate.at>5000)return null;
+     const index=candidate.index;
+     if(!Number.isInteger(index)||index<0||index>=this.words.length)return null;
+     const width=Math.max(1,Math.min(8,Math.floor(Number(radius)||3)));
+     const start=Math.max(0,index-width),end=Math.min(this.words.length,index+width+1);
+     // This is contextual reference text, NOT a new acoustic observation.
+     return {key,start,end,focus:index,expected:this.words.slice(start,end).map(w=>w.expected),
+       seen:candidate.seen,contextAdvanced:!!candidate.contextAdvanced,
+       requiresNewAudio:true,confirmed:false};
+   }
+   dismiss(key){this.pendingErrors.delete(key);this.dismissed.add(key);const event=this.errors.get(key);if(event)event.active=false;}
+   export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],pendingErrors:[...this.pendingErrors].filter(([,e])=>Date.now()-e.at<=5000).map(([key,e])=>({key,type:e.type,expected:e.expected,heard:e.heard,seen:e.seen,contextAdvanced:!!e.contextAdvanced})),events:this.events.slice()};}
  }
  class RevealGate{
   constructor(words,delay=3000){this.words=words;this.delay=delay;this.pending=new Map();this.deadlines=new Map();this.handled=new Set();}

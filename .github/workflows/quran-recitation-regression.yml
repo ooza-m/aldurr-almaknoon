@@ -1,0 +1,31 @@
+name: Quran recitation regression
+on:
+  push:
+    branches: [main, feat/quick-face-completion]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  recitation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test recitation rules
+        run: node --test tests/browser-asr-false-positives.test.cjs tests/recitation-candidate-observations.test.cjs tests/recitation-scenarios.test.cjs tests/phoneme-whitespace.test.cjs tests/phoneme-multiverse.test.cjs tests/recitation-feedback.test.cjs tests/recitation-integration-gate.test.cjs tests/recitation-detection-gap.test.cjs tests/recitation-review-window.test.cjs tests/recitation-audio-window.test.cjs tests/recitation-pcm-ring.test.cjs
+      - name: Check Quran ASR probes
+        run: python3 -m unittest discover -s quran-asr-service -p test_check_live.py
+      - name: Install API test packages
+        run: python3 -m pip install fastapi httpx numpy
+      - name: Review API contract tests
+        run: python3 -m unittest discover -s quran-asr-service -p test_review_audio_contract.py
+      - name: Review API runtime tests
+        run: python3 -m unittest discover -s quran-asr-service -p test_review_audio_runtime.py
+      - name: Test recording evaluation metrics
+        run: python3 -m unittest discover -s quran-asr-service -p test_evaluate_recordings.py
+      - name: Validate human recording scenario plan
+        run: python3 -m unittest discover -s quran-asr-service -p test_recording_plan.py
+      - name: Verify recording benchmark safeguards
+        run: python3 -m unittest discover -s quran-asr-service -p test_run_recording_benchmark.py
