@@ -1709,8 +1709,8 @@ function previewSpeechV84(txt){
  // Only advance when the existing tracker is already at the final few words
  // and the interim alignment independently reaches the page's last word.
  if(!recAdvancing&&!recFinishing&&!sec.gateWaiting&&recWords.length>5&&
-    recWordPos>=recWords.length-3&&result.end>=recWords.length&&
-    result.strong>=3&&result.ops.slice(-3).filter(o=>o.type==='match').length>=2){
+    result.end>=recWords.length&&result.strong>=4&&
+    result.ops.filter(o=>o.type==='match'&&o.index>=recWords.length-5).length>=3){
    clearSpeechPreview();autoAdvance();return;
  }
  if(!sec.tracker.located)sec.words.slice(0,result.start).forEach(w=>{w.el.classList.add('rec-preview');recPreviewWords.push(w.el);});
