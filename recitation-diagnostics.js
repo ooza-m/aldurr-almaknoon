@@ -21,6 +21,7 @@ function render(){
  ['متوسط المطابقة',fmt(stats.alignmentMs,stats.alignmentN)],
  ['طلبات التنبيه',String(stats.errorAlertCount||0)],
  ['تجاوز سعة انتظار الصوت',String(stats.quranQueueOverflow||0)],
+ ['الانتقال للوضع المحدود',String(stats.asrFallbacks||0)],
  ['وصول مقاطع المحرك',String(stats.quranChunks||0)],
  ['نتائج المتصفح',String(stats.browserChunks||0)]
  ];
