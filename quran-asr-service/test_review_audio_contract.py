@@ -18,5 +18,12 @@ class ReviewAudioContract(unittest.TestCase):
         self.assertNotIn('_sessions[', body)
         self.assertNotIn('_transcribe_sherpa(', body)
 
+    def test_review_is_disabled_before_decode(self):
+        import ast
+        tree = ast.parse(SOURCE)
+        fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "review_audio")
+        statements = fn.body
+        self.assertTrue(any(isinstance(n, ast.If) and 'QASR_ENABLE_REVIEW' in ast.get_source_segment(SOURCE,n) for n in statements[:2]))
+
 if __name__ == "__main__":
     unittest.main()
