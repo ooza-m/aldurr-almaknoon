@@ -18,7 +18,7 @@ class FakeRecognizer:
 class ReviewRuntimeTests(unittest.TestCase):
     def setUp(self):
         self.client=TestClient(app.app)
-        self.audio=base64.b64encode(b"\\x00\\x00"*3200).decode("ascii")
+        self.audio=base64.b64encode(bytes(6400)).decode("ascii")
         self.payload={"audio_b64":self.audio,"sample_rate":16000,"final":True}
 
     def test_disabled_returns_404_without_loading_model(self):
@@ -39,7 +39,7 @@ class ReviewRuntimeTests(unittest.TestCase):
             self.assertEqual(self.client.post("/review-audio",json={**self.payload,"session_id":"live"}).status_code,400)
 
     def test_more_than_five_seconds_is_rejected(self):
-        long_audio=base64.b64encode(b"\\x00\\x00"*80001).decode("ascii")
+        long_audio=base64.b64encode(bytes(160002)).decode("ascii")
         with patch.dict(os.environ,{"QASR_ENABLE_REVIEW":"1"}), patch.object(app,"_load_engine",side_effect=AssertionError("model used")):
             self.assertEqual(self.client.post("/review-audio",json={**self.payload,"audio_b64":long_audio}).status_code,400)
 
