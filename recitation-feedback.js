@@ -11,5 +11,15 @@ function record(storage,entry){
  data.push({id,vk:String(entry.vk),wi:entry.wi,type:String(entry.type||'unknown'),label:'dismissed_unverified',time:Date.now()});
  storage.setItem(KEY,JSON.stringify(data.slice(-MAX)));return true;
 }
-return {record,KEY};
+function list(storage){
+ try{const value=JSON.parse(storage.getItem(KEY)||'[]');return Array.isArray(value)?value.filter(x=>x&&typeof x.id==='string').slice(-MAX):[];}catch(_){return [];}
+}
+function classify(storage,id,label){
+ if(!['correct_reading','actual_error','unsure'].includes(label))return false;
+ const data=list(storage),item=data.find(x=>x.id===id);
+ if(!item)return false;
+ item.label=label;item.reviewedAt=Date.now();
+ storage.setItem(KEY,JSON.stringify(data));return true;
+}
+return {record,list,classify,KEY};
 });
