@@ -82,7 +82,10 @@
        // Browser speech recognition is optimized for ordinary dictation; it regularly
        // substitutes correct Quran words. Retain positive tracking, but never promote
        // its lexical disagreements to verified recitation mistakes.
-       if(source==='browser-speech'||source==='browser-preview')return;
+       if(source==='browser-preview')return;
+       // Restore practical feedback from final browser recognition only. Strong two-sided
+       // lexical context is required; uncertain short particles remain excluded.
+       if(source==='browser-speech'&&(result.strong<4||after<2||!before))return;
        // Two strong right anchors reduce spurious omissions on continuous chunks.
        if((op.type==='omit'||op.type==='extra')&&after<2)return;
        const word=op.word||this.words[Math.max(0,Math.min(this.words.length-1,op.index-1))];if(!word)return;
@@ -97,6 +100,10 @@
        const key=word.vk+'#'+word.wi;if(this.dismissed.has(key))return;const previous=this.errors.get(key),event={vk:word.vk,wi:word.wi,index:word.index,type:op.type==='omit'?'omission':op.type==='sub'?'substitution':'extra',expected:word.expected,heard:op.heard||'',source,active:true,automatic:true,confidence:Math.min(.97,Math.max(.5,result.score)),confidenceKind:'alignment-not-acoustic',ts:Date.now()};
        // An uncalibrated ASR disagreement is a candidate first, not an immediate alarm.
        // Require the same finding across two *distinct* observations.
+       if(source==='browser-speech'&&event.type!=='extra'){
+         if(!previous||!previous.active||previous.type!==event.type||previous.heard!==event.heard){this.errors.set(key,event);this.events.push(event);updates.push(event);}
+         return;
+       }
        const priorCandidate=this.pendingErrors.get(key);
        const signature=event.type+'|'+event.heard;
        if(!priorCandidate||priorCandidate.signature!==signature||now-priorCandidate.at>5000){
