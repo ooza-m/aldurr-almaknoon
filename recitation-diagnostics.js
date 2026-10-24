@@ -20,6 +20,7 @@ function render(){
  ['أطول استجابة',stats.quranLatencyN?Math.round(stats.quranLatencyMax||0)+' مللي ثانية':'لا توجد قياسات'],
  ['متوسط المطابقة',fmt(stats.alignmentMs,stats.alignmentN)],
  ['طلبات التنبيه',String(stats.errorAlertCount||0)],
+ ['تجاوز سعة انتظار الصوت',String(stats.quranQueueOverflow||0)],
  ['وصول مقاطع المحرك',String(stats.quranChunks||0)],
  ['نتائج المتصفح',String(stats.browserChunks||0)]
  ];
