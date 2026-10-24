@@ -25,7 +25,7 @@ function align(heard,words){
  return {matchedWords:confirmed,candidateWords:candidate,errors:[],completed:false,status:'provisional',referencePrefixTokens:end,editDistance:best};
 }
 function exactPrefix(heard,segments){
- const normalize=s=>String(s||'').replace(/\\s+/g,'').trim();
+ const normalize=s=>String(s||'').replace(/\s+/g,'').trim();
  if(!Array.isArray(segments)||!segments.length||!segments.every(s=>typeof s==='string'&&s.trim()))return {matchedWords:[],status:'invalid_reference',errors:[],completed:false};
  const spoken=normalize(heard);if(!spoken)return {matchedWords:[],status:'no_speech',errors:[],completed:false};
  let offset=0;const matched=[];
