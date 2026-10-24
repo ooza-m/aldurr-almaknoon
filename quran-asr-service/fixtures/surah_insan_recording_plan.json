@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "surah": 76,
+  "description": "Human-recorded audio evaluation plan. Cases are NOT recordings or ASR results.",
+  "cases": [
+    {
+      "id": "insan-01",
+      "verse": "76:1",
+      "scenario": "correct",
+      "reference": "هَلْ أَتَىٰ عَلَى الْإِنسَانِ حِينٌ مِّنَ الدَّهْرِ لَمْ يَكُن شَيْئًا مَّذْكُورًا",
+      "expected_error": false
+    },
+    {
+      "id": "insan-02",
+      "verse": "76:1",
+      "scenario": "word_omission",
+      "target": "الدَّهْرِ",
+      "expected_error": true
+    },
+    {
+      "id": "insan-03",
+      "verse": "76:1",
+      "scenario": "word_substitution",
+      "target": "الدَّهْرِ",
+      "expected_error": true
+    },
+    {
+      "id": "insan-04",
+      "verse": "76:1",
+      "scenario": "vowel_error",
+      "target": "يَكُن",
+      "expected_error": true
+    },
+    {
+      "id": "insan-05",
+      "verse": "76:1",
+      "scenario": "mid_verse_start",
+      "start_at": "حِينٌ",
+      "expected_error": false
+    },
+    {
+      "id": "insan-06",
+      "verse": "76:1",
+      "scenario": "brief_pause_then_continue",
+      "expected_error": false
+    },
+    {
+      "id": "insan-07",
+      "verse": "76:1",
+      "scenario": "word_repetition_then_self_correction",
+      "target": "الْإِنسَانِ",
+      "expected_error": false
+    },
+    {
+      "id": "insan-08",
+      "verse": "76:1",
+      "scenario": "skip_and_resume",
+      "target": "لَمْ يَكُن",
+      "expected_error": true
+    }
+  ],
+  "recording_protocol": {
+    "source": "consented human recitation",
+    "file_format": "wav",
+    "sample_rate": 16000,
+    "channels": 1,
+    "ground_truth": "human verified verse, target and error timing",
+    "measurements": [
+      "word_alignment",
+      "false_positive",
+      "false_negative",
+      "alert_latency_ms"
+    ],
+    "recordings_in_repository": false
+  }
+}
