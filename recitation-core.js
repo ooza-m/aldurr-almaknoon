@@ -37,7 +37,7 @@
    return best;
  }
  class Tracker{
-   constructor(words,{cursor=0,located=false,recall=null}={}){this.words=words.map((w,index)=>({...w,index,norm:normalize(w.expected)}));this.cursor=cursor;this.located=located;this.recall=recall;this.startedAt=null;this.pending='';this.covered=new Set();this.errors=new Map();this.dismissed=new Set();this.events=[];this.lastResult=null;}
+   constructor(words,{cursor=0,located=false,recall=null}={}){this.words=words.map((w,index)=>({...w,index,norm:normalize(w.expected)}));this.cursor=cursor;this.located=located;this.recall=recall;this.startedAt=null;this.pending='';this.covered=new Set();this.errors=new Map();this.pendingErrors=new Map();this.dismissed=new Set();this.events=[];this.lastResult=null;}
    preview(text){return align(this.words,(this.pending+' '+text).trim(),this)||(this.pending?align(this.words,text,this):null);}
    feed(text,{source='browser-speech',final=true}={}){
      if(!final)return this.preview(text);
@@ -53,7 +53,7 @@
      const ops=[...omittedPrefix,...body];
      ops.forEach((op,i)=>{
        if(op.type==='match'){
-         const key=op.word.vk+'#'+op.word.wi;this.covered.add(key);const prior=this.errors.get(key);
+         const key=op.word.vk+'#'+op.word.wi;this.covered.add(key);this.pendingErrors.delete(key);const prior=this.errors.get(key);
          if(prior&&prior.active){prior.active=false;prior.correctedAt=Date.now();updates.push({...prior,corrected:true});}return;
        }
        if(op.type==='extra'){
@@ -72,11 +72,22 @@
        if((op.type==='omit'||op.type==='extra')&&after<2)return;
        const word=op.word||this.words[Math.max(0,Math.min(this.words.length-1,op.index-1))];if(!word)return;
        const key=word.vk+'#'+word.wi;if(this.dismissed.has(key))return;const previous=this.errors.get(key),event={vk:word.vk,wi:word.wi,index:word.index,type:op.type==='omit'?'omission':op.type==='sub'?'substitution':'extra',expected:word.expected,heard:op.heard||'',source,active:true,automatic:true,confidence:Math.min(.97,Math.max(.5,result.score)),confidenceKind:'alignment-not-acoustic',ts:Date.now()};
+       // An uncalibrated ASR disagreement is a candidate first, not an immediate alarm.
+       // Require the same finding across two *distinct* observations.
+       const priorCandidate=this.pendingErrors.get(key);
+       const signature=event.type+'|'+event.heard;
+       if(!priorCandidate||priorCandidate.signature!==signature){
+         this.pendingErrors.set(key,{signature,seen:1,at:Date.now()});
+         return;
+       }
+       priorCandidate.seen++;
+       if(priorCandidate.seen<2)return;
+       this.pendingErrors.delete(key);
        if(!previous||!previous.active||previous.type!==event.type||previous.heard!==event.heard){this.errors.set(key,event);this.events.push(event);updates.push(event);}
      });
      this.cursor=result.end;this.lastResult={...result,ops,initial,oldCursor,updates};return this.lastResult;
    }
-   dismiss(key){this.dismissed.add(key);const event=this.errors.get(key);if(event)event.active=false;}
+   dismiss(key){this.pendingErrors.delete(key);this.dismissed.add(key);const event=this.errors.get(key);if(event)event.active=false;}
    export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],events:this.events.slice()};}
  }
  class RevealGate{
