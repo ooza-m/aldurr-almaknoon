@@ -16,6 +16,14 @@ class Ledger{
   const matching=this.chunks.filter(c=>c.page===page&&c.position!=null&&Math.abs(c.position-focus)<=radius);
   return {runId:this.runId,chunkSequences:matching.map(c=>c.seq),requiresNewAudio:true,confirmed:false};
  }
+ review(tracker,key,page,radius=4){
+  const window=tracker?.reviewWindow?.(key,{radius});
+  if(!window)return null;
+  const context=this.context(page,window.focus,radius);
+  return {...window,page,runId:context.runId,chunkSequences:context.chunkSequences,
+    // Chunk proximity is coarse metadata, not verified speech-word timing.
+    evidence:'metadata_only',requiresNewAudio:true,confirmed:false};
+ }
  clear(){this.chunks=[];this.runId=null;}
 }
 return {Ledger};
