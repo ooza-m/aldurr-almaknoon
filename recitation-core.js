@@ -86,6 +86,14 @@
        // Two strong right anchors reduce spurious omissions on continuous chunks.
        if((op.type==='omit'||op.type==='extra')&&after<2)return;
        const word=op.word||this.words[Math.max(0,Math.min(this.words.length-1,op.index-1))];if(!word)return;
+       // Very short particles are repeatedly mistranscribed by ordinary ASR,
+       // e.g. أَنْ / إِنَّا. Without a calibrated acoustic distinction,
+       // never promote a lexical difference between these forms to an error.
+       if(op.type==='sub'){
+         const actual=baseNormalize(op.heard||''),expected=baseNormalize(word.expected||'');
+         const shortParticles=new Set(['ان','انا','انه','اننا']);
+         if(shortParticles.has(actual)&&shortParticles.has(expected))return;
+       }
        const key=word.vk+'#'+word.wi;if(this.dismissed.has(key))return;const previous=this.errors.get(key),event={vk:word.vk,wi:word.wi,index:word.index,type:op.type==='omit'?'omission':op.type==='sub'?'substitution':'extra',expected:word.expected,heard:op.heard||'',source,active:true,automatic:true,confidence:Math.min(.97,Math.max(.5,result.score)),confidenceKind:'alignment-not-acoustic',ts:Date.now()};
        // An uncalibrated ASR disagreement is a candidate first, not an immediate alarm.
        // Require the same finding across two *distinct* observations.
