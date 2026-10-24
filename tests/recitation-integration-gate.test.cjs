@@ -11,8 +11,10 @@ test('reader ships all local feedback/report assets in correct order',()=>{
  assert.ok(offsets[0]<offsets[1]&&offsets[1]<offsets[2]);
  for(const name of names)assert.ok(fs.existsSync(path.join(__dirname,'..',name)));
 });
-test('browser dictation is excluded from automatic Quran mistakes',()=>{
- assert.match(core,/source==='browser-speech'\|\|source==='browser-preview'/);
+test('browser interim and substitutions remain excluded while strongly anchored final omissions are allowed',()=>{
+ assert.match(core,/if\(source==='browser-preview'\)return/);
+ assert.match(core,/if\(source==='browser-speech'&&op.type!=='omit'\)return/);
+ assert.match(core,/if\(source==='browser-speech'&&event.type==='omission'\)/);
 });
 test('phoneme preview does not award covered-word credit or grade errors',()=>{
  const first=html.indexOf('async function previewQuranPhonemesV90(');
