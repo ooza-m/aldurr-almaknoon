@@ -10,6 +10,8 @@ class ReviewAudioContract(unittest.TestCase):
         end = SOURCE.index('@app.post("/transcribe")', start)
         body = SOURCE[start:end]
         self.assertIn('not req.final', body)
+        self.assertIn('QASR_ENABLE_REVIEW', body)
+        self.assertIn('isolated review disabled', body)
         self.assertIn('16000 * 5', body)
         self.assertIn('"independent_observation": False', body)
         self.assertIn('"can_confirm_error": False', body)
