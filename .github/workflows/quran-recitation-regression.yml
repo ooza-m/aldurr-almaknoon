@@ -23,3 +23,5 @@ jobs:
         run: python3 -m unittest discover -s quran-asr-service -p test_review_audio_contract.py
       - name: Review API runtime tests
         run: python3 -m unittest discover -s quran-asr-service -p test_review_audio_runtime.py
+      - name: Test recording evaluation metrics
+        run: python3 -m unittest discover -s quran-asr-service -p test_evaluate_recordings.py
