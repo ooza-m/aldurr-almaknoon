@@ -106,6 +106,18 @@
      });
      this.cursor=result.end;this.lastResult={...result,ops,initial,oldCursor,updates};return this.lastResult;
    }
+   reviewWindow(key,{radius=3}={}){
+     const candidate=this.pendingErrors.get(key);
+     if(!candidate||Date.now()-candidate.at>5000)return null;
+     const index=candidate.index;
+     if(!Number.isInteger(index)||index<0||index>=this.words.length)return null;
+     const width=Math.max(1,Math.min(8,Math.floor(Number(radius)||3)));
+     const start=Math.max(0,index-width),end=Math.min(this.words.length,index+width+1);
+     // This is contextual reference text, NOT a new acoustic observation.
+     return {key,start,end,focus:index,expected:this.words.slice(start,end).map(w=>w.expected),
+       seen:candidate.seen,contextAdvanced:!!candidate.contextAdvanced,
+       requiresNewAudio:true,confirmed:false};
+   }
    dismiss(key){this.pendingErrors.delete(key);this.dismissed.add(key);const event=this.errors.get(key);if(event)event.active=false;}
    export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],pendingErrors:[...this.pendingErrors].filter(([,e])=>Date.now()-e.at<=5000).map(([key,e])=>({key,type:e.type,expected:e.expected,heard:e.heard,seen:e.seen,contextAdvanced:!!e.contextAdvanced})),events:this.events.slice()};}
  }
