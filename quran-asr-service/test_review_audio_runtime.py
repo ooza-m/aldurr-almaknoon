@@ -43,4 +43,19 @@ class ReviewRuntimeTests(unittest.TestCase):
         with patch.dict(os.environ,{"QASR_ENABLE_REVIEW":"1"}), patch.object(app,"_load_engine",side_effect=AssertionError("model used")):
             self.assertEqual(self.client.post("/review-audio",json={**self.payload,"audio_b64":long_audio}).status_code,400)
 
+    def test_non_final_request_rejected_before_loading_model(self):
+        with patch.dict(os.environ,{"QASR_ENABLE_REVIEW":"1"}), patch.object(app,"_load_engine",side_effect=AssertionError("model used")):
+            response=self.client.post("/review-audio",json={**self.payload,"final":False})
+        self.assertEqual(response.status_code,400)
+
+    def test_unsupported_backend_rejected_before_loading_model(self):
+        with patch.dict(os.environ,{"QASR_ENABLE_REVIEW":"1"}), patch.object(app,"BACKEND","tarteel-whisper"), patch.object(app,"_load_engine",side_effect=AssertionError("model used")):
+            response=self.client.post("/review-audio",json=self.payload)
+        self.assertEqual(response.status_code,501)
+
+    def test_empty_audio_rejected_before_loading_model(self):
+        with patch.dict(os.environ,{"QASR_ENABLE_REVIEW":"1"}), patch.object(app,"_load_engine",side_effect=AssertionError("model used")):
+            response=self.client.post("/review-audio",json={**self.payload,"audio_b64":""})
+        self.assertEqual(response.status_code,400)
+
 if __name__=="__main__": unittest.main()
