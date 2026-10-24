@@ -858,6 +858,15 @@ function rotate(step){
   if(step>0){const oldCur=paneCur,oldPrev=panePrev;paneCur=paneNext;panePrev=oldCur;paneNext=oldPrev;cur=Math.min(604,cur+1);}
   else{const oldCur=paneCur,oldNext=paneNext;paneCur=panePrev;paneNext=oldCur;panePrev=oldNext;cur=Math.max(1,cur-1);}
   applyBases();updateChrome();
+  if(recMode&&recSession){
+    // Browsing is allowed, but never marks an unseen face as recited.
+    clearTimeout(recAdvanceTimer);
+    if(recPageState)snapshotPage(false);
+    recSession.freeSearch=true;recSession.freeLocated=false;
+    const ctx=ensureRecContextV86();if(ctx){ctx.voiceText='';ctx.voiceMoving=false;}
+    reMaskFace();ensureRecContextV86();
+    recTip('تصفّحي بحرية · عند متابعة التلاوة سيُحدَّد موضع صوتك');
+  }
   // اللوح المُعاد تدويره على الطرف يحتاج إعادة بناء
   if(step>0)fillPane(paneNext,cur+1);else fillPane(panePrev,cur-1);
   requestAnimationFrame(()=>{fitPane(paneCur);});
@@ -873,7 +882,7 @@ track.addEventListener('click',e=>{if(Date.now()-lastTouchAt<800||document.query
 function trackDim(){return scrollDir==='v';}
 track.addEventListener('touchstart',e=>{
   lastTouchAt=Date.now();if(e.touches.length===1&&e.cancelable)e.preventDefault();window.getSelection()?.removeAllRanges();
-  if(recMode){recTapStart(e);return;}
+  if(recMode)recTapStart(e);
   if(e.touches.length>1){moved=true;clearTimeout(lpTimer);return;}
   const t=e.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now();dragging=false;decided=false;lpFired=false;moved=false;
   lpTarget=e.target.closest('.qw[data-vk]');
@@ -888,7 +897,6 @@ track.addEventListener('touchstart',e=>{
   },LP_MS);
 },{passive:false});
 track.addEventListener('touchmove',e=>{
-  if(recMode)return;
   if(e.touches.length>1){moved=true;clearTimeout(lpTimer);return;}
   const t=e.touches[0];const dx=t.clientX-sx,dy=t.clientY-sy;
   if(Math.abs(dx)>SLOP||Math.abs(dy)>SLOP){moved=true;clearTimeout(lpTimer);}
@@ -905,8 +913,8 @@ track.addEventListener('touchmove',e=>{
 },{passive:false});
 track.addEventListener('touchend',e=>{
   lastTouchAt=Date.now();
-  if(recMode){const t=e.changedTouches?.[0];if(t&&Date.now()-recTouchTime<450&&Math.abs(t.clientX-rsx)<12&&Math.abs(t.clientY-rsy)<12&&!document.querySelector('.ov.open,.sheet-wrap.open'))toggleRecControlsV104();else recTapEnd(e);return;}
   clearTimeout(lpTimer);
+  if(recMode&&!dragging){const t=e.changedTouches?.[0];if(t&&Date.now()-recTouchTime<450&&Math.abs(t.clientX-rsx)<12&&Math.abs(t.clientY-rsy)<12&&!document.querySelector('.ov.open,.sheet-wrap.open'))toggleRecControlsV104();else recTapEnd(e);return;}
   if(lpFired)return; // التظليل يبقى حتى تُغلق قائمة الآية (closeSheets يزيله)
   if(dragging){
     const t=e.changedTouches[0];const V=trackDim();const d=V?(t.clientY-sy):(t.clientX-sx);
