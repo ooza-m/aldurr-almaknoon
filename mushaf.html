@@ -1314,7 +1314,12 @@ function ensureRecContextV86(){
  if(!recSession||!recPageState)return null;
  let ctx=recContexts.get(recSession.id);if(!ctx){ctx={session:recSession,sections:new Map(),runs:new Set(),finalized:false};recContexts.set(recSession.id,ctx);}
  let sec=ctx.sections.get(recPageState.page);
- if(!sec||sec.words!==recWords){sec={page:recPageState.page,words:recWords,seq:recSeq,state:recPageState,gate:new DurrRecitation.RevealGate(recWords),tracker:new DurrRecitation.Tracker(recWords,{cursor:recWordPos,located:recWordPos>0,recall:recSession.recall?.vk||null})};ctx.sections.set(sec.page,sec);}
+ if(!sec||sec.words!==recWords){
+  const tracker=new DurrRecitation.Tracker(recWords,{cursor:recWordPos,located:recWordPos>0,recall:recSession.recall?.vk||null});
+  for(const key of recPageState.covered)tracker.covered.add(key);
+  sec={page:recPageState.page,words:recWords,seq:recSeq,state:recPageState,gate:new DurrRecitation.RevealGate(recWords),tracker};
+  ctx.sections.set(sec.page,sec);
+}
  ctx.page=sec.page;return ctx;
 }
 function snapshotStateV86(session,state,forceComplete=false){
