@@ -50,6 +50,15 @@
      for(const [key,candidate] of this.pendingErrors){
        if(now-candidate.at>5000||this.dismissed.has(key))this.pendingErrors.delete(key);
      }
+     // Later speech can provide right-hand context, but it is NOT a second
+     // independent acoustic observation of an earlier suspect word.
+     // Keep such candidates visible for review without inventing certainty.
+     for(const candidate of this.pendingErrors.values()){
+       if(candidate.index < this.cursor && result.start > candidate.index &&
+          observation !== candidate.lastObservation && source===candidate.source){
+         candidate.contextAdvanced=true;
+       }
+     }
      const initial=!this.located,oldCursor=this.cursor;this.located=true;if(initial)this.startedAt=result.start;
      const updates=[];
      // A jump is revealed for orientation, never counted as recited or turned into a long run of errors.
@@ -98,7 +107,7 @@
      this.cursor=result.end;this.lastResult={...result,ops,initial,oldCursor,updates};return this.lastResult;
    }
    dismiss(key){this.pendingErrors.delete(key);this.dismissed.add(key);const event=this.errors.get(key);if(event)event.active=false;}
-   export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],pendingErrors:[...this.pendingErrors].filter(([,e])=>Date.now()-e.at<=5000).map(([key,e])=>({key,type:e.type,expected:e.expected,heard:e.heard,seen:e.seen})),events:this.events.slice()};}
+   export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],pendingErrors:[...this.pendingErrors].filter(([,e])=>Date.now()-e.at<=5000).map(([key,e])=>({key,type:e.type,expected:e.expected,heard:e.heard,seen:e.seen,contextAdvanced:!!e.contextAdvanced})),events:this.events.slice()};}
  }
  class RevealGate{
   constructor(words,delay=3000){this.words=words;this.delay=delay;this.pending=new Map();this.deadlines=new Map();this.handled=new Set();}
