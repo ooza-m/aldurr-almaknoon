@@ -435,6 +435,8 @@ def warmup():
 @app.post("/review-audio")
 def review_audio(req: TranscribeRequest):
     """Optional isolated acoustic review, never part of live session evidence."""
+    if os.getenv("QASR_ENABLE_REVIEW", "0").strip().lower() not in {"1", "true", "yes"}:
+        raise HTTPException(status_code=404, detail="isolated review disabled")
     if BACKEND not in {"quran-zipformer-ctc", "sherpa-fastconformer"}:
         raise HTTPException(status_code=501, detail="isolated review unsupported for backend")
     if req.session_id or req.seq or not req.final:
