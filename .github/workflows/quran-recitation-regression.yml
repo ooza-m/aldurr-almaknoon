@@ -1,0 +1,18 @@
+name: Quran recitation regression
+on:
+  push:
+    branches: [main, feat/quick-face-completion]
+  pull_request:
+jobs:
+  recitation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test recitation rules
+        run: node --test tests/browser-asr-false-positives.test.cjs
+      - name: Check Quran ASR probes
+        run: python3 -m unittest discover -s quran-asr-service -p test_check_live.py
