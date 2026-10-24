@@ -12,6 +12,10 @@ host.insertAdjacentElement('afterend',btn);btn.insertAdjacentElement('afterend',
 const labels=[['correct_reading','قراءتي صحيحة'],['actual_error','أخطأت فعلًا'],['unsure','غير متأكدة']];
 function render(){
  panel.replaceChildren();
+ const counts=API.summary(localStorage);
+ const summary=document.createElement('p');summary.className='durr-feedback-note';
+ summary.textContent='مراجعاتك: صحيحة '+counts.correct_reading+' · أخطاء فعلية '+counts.actual_error+' · غير متأكدة '+counts.unsure+' · بانتظار المراجعة '+counts.unreviewed;
+ panel.append(summary);
  const note=document.createElement('p');note.className='durr-feedback-note';note.textContent='ملاحظات حذف الرصد الآلي فقط؛ أحكامكِ تُحفظ على هذا الجهاز ولا تُرسل للتدريب.';panel.append(note);
  const entries=API.list(localStorage).slice().reverse();
  if(!entries.length){const empty=document.createElement('p');empty.textContent='لا توجد ملاحظات للمراجعة حتى الآن.';panel.append(empty);return;}
