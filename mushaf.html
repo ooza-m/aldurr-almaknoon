@@ -1508,9 +1508,11 @@ async function warmQasrV78(){
   }catch(e){return false;}
 }
 function failQasrV79(message){
-  if(recSession)recSession.analysisIncomplete=true;
-  qasrQueue=[];stopQuranAsrV73(false);setEngine('',message||'تعذّر إكمال التحليل القرآني · وضع محدود');
-  if(recOn&&speechAvailable)startSpeech();
+  if(recSession){recSession.analysisIncomplete=true;recSession.stats.asrFallbacks=(recSession.stats.asrFallbacks||0)+1;}
+  qasrQueue=[];void stopQuranAsrV73(false);
+  if(!recOn||!recMode)return;
+  setEngine('limited',message||'تعذّر إكمال التحليل القرآني · وضع محدود');
+  if(speechAvailable&&!speechStarted)startSpeech();
 }
 function pumpQasrV73(run=qasrRunsV86.get(qasrRunId)){
  if(!run)return Promise.resolve();if(run.promise)return run.promise;qasrBusy=true;
@@ -1669,7 +1671,7 @@ function initSpeech(){
  };
  return r;
 }
-function startSpeech(){if(!recOn||!recMode||!speechAvailable)return false;if(!speechRec||speechRec._stopping||speechRec._noRestart)speechRec=initSpeech();try{speechRec.start();speechStarted=true;if(recSession)recSession.engine=recSession.stats.quranChunks?'mixed':'browser-speech';setEngine('live','تتبّع المتصفح · الرصد الآلي قابل للتصحيح');return true;}catch(_){return false;}}
+function startSpeech(){if(!recOn||!recMode||!speechAvailable)return false;if(speechStarted&&speechRec&&!speechRec._stopping&&!speechRec._stopped)return true;if(!speechRec||speechRec._stopping||speechRec._noRestart)speechRec=initSpeech();try{speechRec.start();speechStarted=true;if(recSession)recSession.engine=recSession.stats.quranChunks?'mixed':'browser-speech';setEngine('live','تتبّع المتصفح · الرصد الآلي قابل للتصحيح');return true;}catch(_){return false;}}
 function stopSpeech(){
  clearSpeechPreview();const r=speechRec;if(r)clearTimeout(r._restartTimer);if(r?._stopping)return r._stopPromise;if(!r||!speechStarted){if(r)r._stopped=true;speechRec=null;return Promise.resolve();}
  const ctx=recContexts.get(recSession?.id);r._stopping=true;
