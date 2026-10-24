@@ -19,5 +19,7 @@ jobs:
         run: python3 -m unittest discover -s quran-asr-service -p test_check_live.py
       - name: Install API test packages
         run: python3 -m pip install fastapi httpx numpy
+      - name: Review API contract tests
+        run: python3 -m unittest discover -s quran-asr-service -p test_review_audio_contract.py
       - name: Review API runtime tests
         run: python3 -m unittest discover -s quran-asr-service -p test_review_audio_runtime.py
