@@ -3,6 +3,7 @@ on:
   push:
     branches: [main, feat/quick-face-completion]
   pull_request:
+  workflow_dispatch:
 jobs:
   recitation:
     runs-on: ubuntu-latest
