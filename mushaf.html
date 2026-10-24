@@ -1600,6 +1600,8 @@ async function getPhonemeVerseV90(vk){
 async function previewQuranPhonemesV90(ctx,page,transcript){
  const sec=ctx?.sections?.get(page);
  if(!sec||!window.DurrPhonemeAligner?.exactPrefix||!transcript)return;
+ // Only the latest acoustic hypothesis may update the face after async reference fetches.
+ const previewGeneration=sec.phonemePreviewGeneration=(sec.phonemePreviewGeneration||0)+1;
  // Quran ASR returns a cumulative phoneme hypothesis for the current stream.
  // Anchor the preview once; do not re-anchor at the moving browser-word cursor.
  if(!sec.phonemeOrigin||sec.phonemeOrigin.runId!==qasrRunId){
@@ -1617,7 +1619,7 @@ async function previewQuranPhonemesV90(ctx,page,transcript){
    if(verseKeys.length>=4)break;
  }
  const groups=await Promise.all(verseKeys.slice(0,3).map(async vk=>({vk,reference:await getPhonemeVerseV90(vk)})));
- if(ctx.finalized||recSession?.id!==ctx.session.id||cur!==page||anchor!==sec.phonemeOrigin||anchor.runId!==qasrRunId)return;
+ if(ctx.finalized||recSession?.id!==ctx.session.id||cur!==page||anchor!==sec.phonemeOrigin||anchor.runId!==qasrRunId||previewGeneration!==sec.phonemePreviewGeneration)return;
  const alignedWords=[],segments=[];
  for(const {vk,reference} of groups){
    const wordGroup=sec.words.filter(w=>w.vk===vk);
