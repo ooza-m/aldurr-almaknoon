@@ -33,7 +33,7 @@ class Ledger{
   let total=this.pcm.reduce((n,c)=>n+c.length,0);
   while(total>this.maxPcmSamples&&this.pcm.length){const first=this.pcm[0],overflow=total-this.maxPcmSamples;if(overflow>=first.length){this.pcm.shift();total-=first.length;}else{this.pcm[0]=first.slice(overflow);total-=overflow;}}
  }
- clear(){this.chunks=[];this.runId=null;this.elapsedMs=0;this.pcm=[];}
+ clear(){this.chunks=[];this.runId=null;this.elapsedMs=0;for(const chunk of this.pcm)chunk.fill(0);this.pcm=[];}
  get bufferedMs(){return this.pcm.reduce((n,c)=>n+c.length,0)/16;}
 }
 return {Ledger};
