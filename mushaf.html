@@ -1407,7 +1407,7 @@ function dispatchRecitationV89(ctx,page,text,source,meta={}){
  ctx.voiceQueue=(ctx.voiceQueue||Promise.resolve()).then(async()=>{
   if(ctx.finalized||!recMode||recSession?.id!==ctx.session.id)return;
   const old=ctx.sections.get(cur);if(old&&!old.state.covered.size&&!old.state.errors.size){ctx.sections.delete(cur);ctx.session.pages=ctx.session.pages.filter(p=>p.page!==cur);}
-  await settle(+match.page);if(ctx.finalized||!recMode||recSession?.id!==ctx.session.id)return;
+  saveRecFaceVisualV111();await settle(+match.page);if(ctx.finalized||!recMode||recSession?.id!==ctx.session.id)return;
   reMaskFace();ctx.session.freeLocated=true;ensureRecContextV86();ctx.page=cur;const targetSection=ctx.sections.get(cur);const offset=targetSection?.words.findIndex(w=>w.vk===match.vk&&w.wi===match.wi);if(offset>=0){targetSection.tracker.cursor=offset;targetSection.tracker.located=true;recWordPos=offset;}setEngine('live','تم تحديد موضعك · '+surahName(+match.vk.split(':')[0]));if(source!=='browser-preview')applyContextTranscriptV86(ctx,cur,heard,source,meta);
  }).catch(()=>{if(recSession?.id===ctx.session.id)setEngine('','تعذّر الانتقال؛ واصلي القراءة للمحاولة');}).finally(()=>{ctx.voiceMoving=false;});
  return ctx.voiceQueue;
@@ -1723,7 +1723,7 @@ function markErrVisual(el){if(el.dataset.err)el.classList.add('rec-err');}
 function toggleEye(){if(recFinishing)return;eyeShown=!eyeShown;if(eyeShown){recSeq.forEach(s=>{s.el.classList.add('rvl');markErrVisual(s.el);if(s.wi!==null)markCoverage(s,'eye');});recPos=recSeq.length;recWordPos=recWords.length;setCurrent(null);if(recSession)recSession.stats.eyeShows++;}else{recSeq.forEach(s=>s.el.classList.remove('rvl','rec-cur'));recPos=0;recWordPos=0;}setEye();}
 function autoAdvance(){
   if(!recMode||recFinishing||recAdvancing||recSession&&recSession.recall)return;
-  snapshotPage(true);recAdvancing=true;
+  saveRecFaceVisualV111();snapshotPage(true);recAdvancing=true;
   if(ACTIVE_TASK_SESSION){
     const pages=(ACTIVE_TASK_SESSION.pages||[]).filter(p=>DATA.pages[String(p)]);
     let i=pages.indexOf(cur);if(i<0)i=ACTIVE_TASK_SESSION.pos||0;
@@ -1758,7 +1758,7 @@ function clearPhonemePreviewV106(){
 function clearSpeechPreview(){recPreviewWords.forEach(el=>el.classList.remove('rec-preview','rec-preview-suspected'));recPreviewWords=[];}
 function previewSpeechV84(txt){
  clearSpeechPreview();if(!recOn||!recMode)return;const ctx=ensureRecContextV86(),sec=ctx?.sections.get(cur);if(!sec)return;
- if(ctx.session.freeSearch&&!ctx.session.freeLocated){const match=voiceLocatorV89?.locate(txt,{page:cur});if(match)dispatchRecitationV89(ctx,cur,txt,'browser-preview');return;}
+ if(ctx.session.freeSearch&&!ctx.session.freeLocated){voiceLocatorV89=voiceLocatorV89||new DurrRecitation.Locator(SEARCH);const match=voiceLocatorV89?.locate(txt,{page:cur});if(match)dispatchRecitationV89(ctx,cur,txt,'browser-preview');return;}
  const result=sec.tracker.preview(txt);if(!result)return;
  // Interim speech is suitable for navigation hints, never for grading errors.
  // Only advance when the existing tracker is already at the final few words
