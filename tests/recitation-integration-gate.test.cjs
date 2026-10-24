@@ -11,10 +11,10 @@ test('reader ships all local feedback/report assets in correct order',()=>{
  assert.ok(offsets[0]<offsets[1]&&offsets[1]<offsets[2]);
  for(const name of names)assert.ok(fs.existsSync(path.join(__dirname,'..',name)));
 });
-test('browser interim and substitutions remain excluded while strongly anchored final omissions are allowed',()=>{
+test('classic anchored errors are restored but interim recognition remains non-grading',()=>{
  assert.match(core,/if\(source==='browser-preview'\)return/);
- assert.match(core,/if\(source==='browser-speech'&&op.type!=='omit'&&op.type!=='sub'\)return/);
- assert.match(core,/if\(source==='browser-speech'&&event.type==='omission'\)/);
+ assert.match(core,/const before=ops\.slice\(0,i\)/);
+ assert.doesNotMatch(core,/if\(source==='browser-speech'&&op\.type!=='omit'/);
 });
 test('phoneme preview does not award covered-word credit or grade errors',()=>{
  const first=html.indexOf('async function previewQuranPhonemesV90(');

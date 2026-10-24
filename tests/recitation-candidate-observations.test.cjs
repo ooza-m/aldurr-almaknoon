@@ -2,10 +2,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {Tracker}=require('../recitation-core.js');
 const words=['هل','أتى','على','الإنسان','حين','من','الدهر','لم','يكن','شيئا','مذكورا'].map((expected,wi)=>({expected,vk:'76:1',wi,seqIndex:wi}));
-test('unconfirmed automatic findings do not trigger active errors',()=>{
+test('classic anchored substitutions are immediately visible',()=>{
  const t=new Tracker(words);
  t.feed('هل أتى على الإنسان حين من الذكر لم يكن شيئا مذكورا',{source:'quran-asr',observationId:'chunk-1'});
- assert.equal(t.errors.size,0);
+ assert.equal(t.errors.size,1);
  assert.ok(t.pendingErrors instanceof Map);
 });
 test('correctly recognized words clear prior candidates',()=>{

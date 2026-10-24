@@ -1372,6 +1372,16 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
      else if(ctx.session.suspectedFindings.length<80)ctx.session.suspectedFindings.push(item);
    }
  }
+ // Keep type-specific visual styling on a revealed error immediately.
+ for(const event of result.updates){
+  if(!event.active)continue;
+  const word=sec.words.find(w=>w.vk===event.vk&&w.wi===event.wi);
+  if(!word?.el)continue;
+  word.el.classList.add('rvl','rec-err');
+  word.el.classList.toggle('rec-omission',event.type==='omission');
+  word.el.classList.toggle('rec-extra',event.type==='extra');
+  word.el.dataset.err='1';
+ }
  const audibleHint=result.updates.find(e=>e.active&&['omission','extra','substitution'].includes(e.type));
  if(audibleHint){const st=ctx.session.stats;st.errorAlertCount=(st.errorAlertCount||0)+1;st.lastErrorAlertAt=Date.now();playRecErrorToneV91(audibleHint.type);}
  if(result.updates.some(e=>e.active))navigator.vibrate?.(25);
