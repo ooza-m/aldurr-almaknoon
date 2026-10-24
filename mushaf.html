@@ -1625,7 +1625,12 @@ async function previewQuranPhonemesV90(ctx,page,transcript){
  }
  if(!segments.length)return;
  const result=DurrPhonemeAligner.exactPrefix(transcript,segments);
- if(result.status!=='prefix')return;
+ if(result.status!=='prefix'){
+   // A revised cumulative hypothesis invalidates old temporary highlights.
+   if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-preview');
+   sec.phonemePreviewEls=[];
+   return;
+ }
  // Preview is ephemeral and never modifies covered/errors/scores.
  if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-preview');
  sec.phonemePreviewEls=[];
