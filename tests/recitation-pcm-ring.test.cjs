@@ -11,3 +11,11 @@ test('duration follows actual PCM samples',()=>{
  const l=new Ledger();l.add({runId:'a',seq:0,page:575,position:0,durationMs:625});
  assert.equal(l.chunks[0].endMs,625);
 });
+
+test('clear overwrites retained PCM before releasing reference',()=>{
+ const l=new Ledger(),samples=new Int16Array(16000).fill(333);
+ l.addPcm(samples);
+ const held=l.pcm[0];l.clear();
+ assert.equal(held.every(v=>v===0),true);
+ assert.equal(l.bufferedMs,0);
+});
