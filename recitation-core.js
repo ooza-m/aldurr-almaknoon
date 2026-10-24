@@ -76,7 +76,7 @@
        // Require the same finding across two *distinct* observations.
        const priorCandidate=this.pendingErrors.get(key);
        const signature=event.type+'|'+event.heard;
-       if(!priorCandidate||priorCandidate.signature!==signature){
+       if(!priorCandidate||priorCandidate.signature!==signature||Date.now()-priorCandidate.at>5000){
          this.pendingErrors.set(key,{signature,seen:1,at:Date.now()});
          return;
        }
