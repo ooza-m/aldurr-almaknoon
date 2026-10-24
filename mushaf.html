@@ -1599,19 +1599,21 @@ async function getPhonemeVerseV90(vk){
 async function previewQuranPhonemesV90(ctx,page,transcript){
  const sec=ctx?.sections?.get(page);
  if(!sec||!window.DurrPhonemeAligner?.exactPrefix||!transcript)return;
- const vk=sec.words.find(w=>w.vk)?.vk;
- if(!vk)return;
+ // Acoustic previews have no reliable word offset yet. Never scan every verse
+ // and invent a location based on an accidental prefix.
+ const startIndex=Math.max(0,sec.tracker?.cursor||0);
+ const start=sec.words[startIndex];if(!start)return;
+ const vk=start.vk,verseWords=sec.words.filter(w=>w.vk===vk);
  const segments=await getPhonemeVerseV90(vk);
  if(!segments||ctx.finalized||recSession?.id!==ctx.session.id||cur!==page)return;
- const verseWords=sec.words.filter(w=>w.vk===vk);
- if(verseWords.length!==segments.length)return;
+ if(verseWords.length!==segments.length||start.wi!==0)return;
  const result=DurrPhonemeAligner.exactPrefix(transcript,segments);
  if(result.status!=='prefix')return;
  for(const index of result.matchedWords){
-   const item=verseWords[index];
-   if(item?.el){item.el.classList.add('rvl');item.el.classList.remove('rec-skipped');}
+  const item=verseWords[index];
+  if(item?.el){item.el.classList.add('rec-preview');recPreviewWords.push(item.el);}
  }
- if(result.matchedWords.length)setEngine('live','متابعة صوتية أولية · لا تُحتسب أخطاء أو إتمام قبل التحقق');
+ if(result.matchedWords.length)setEngine('live','مطابقة صوتية تجريبية للآية الحالية · دون تسجيل إتمام أو أخطاء');
 }
 function buildRecSeq(){recSeq=[];recWords=[];const seen={};paneCur.querySelectorAll('.qw[data-vk]').forEach(el=>{const vk=el.dataset.vk,isEnd=el.classList.contains('qend');if(!(vk in seen))seen[vk]=0;let wi=null;if(!isEnd){wi=seen[vk];seen[vk]++;}el._wi=wi;el.classList.remove('rvl','rec-cur','rec-err','rec-context','rec-corrected','rec-omission','rec-extra','rec-skipped');if(wi!==null&&ERR.some(x=>x.vk===vk&&x.wi===wi&&x.session===(recSession&&recSession.id)))el.dataset.err='1';else el.removeAttribute('data-err');const item={el,vk,wi};recSeq.push(item);if(wi!==null)recWords.push({...item,seqIndex:recSeq.length-1,expected:wordFor(vk,wi)});});recWordPos=0;if(recMode){if(recPageState&&recPageState.page!==cur)snapshotPage(false);recPageState=makePageState();}}
 function reMaskFace(){paneCur.classList.add('reciting');buildRecSeq();recPos=0;eyeShown=false;setEye();}
