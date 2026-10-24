@@ -45,6 +45,11 @@
      const heard=(this.pending+' '+text).trim();let result=align(this.words,heard,this),recovered=false;
      if(!result&&this.pending){const fresh=align(this.words,text,this);if(fresh?.strong>=2){result=fresh;recovered=true;}}
      if(!result){this.pending=tokens(heard).slice(-35).join(' ');return null;}this.pending='';
+     // Preserve unresolved candidates after cursor movement, but never indefinitely.
+     const now=Date.now();
+     for(const [key,candidate] of this.pendingErrors){
+       if(now-candidate.at>5000||this.dismissed.has(key))this.pendingErrors.delete(key);
+     }
      const initial=!this.located,oldCursor=this.cursor;this.located=true;if(initial)this.startedAt=result.start;
      const updates=[];
      // A jump is revealed for orientation, never counted as recited or turned into a long run of errors.
@@ -77,8 +82,10 @@
        // Require the same finding across two *distinct* observations.
        const priorCandidate=this.pendingErrors.get(key);
        const signature=event.type+'|'+event.heard;
-       if(!priorCandidate||priorCandidate.signature!==signature||Date.now()-priorCandidate.at>5000){
-         this.pendingErrors.set(key,{signature,seen:1,at:Date.now(),lastObservation:observation,type:event.type,expected:event.expected,heard:event.heard,source});
+       if(!priorCandidate||priorCandidate.signature!==signature||now-priorCandidate.at>5000){
+         this.pendingErrors.set(key,{signature,seen:1,at:now,lastObservation:observation,type:event.type,expected:event.expected,heard:event.heard,source,index:word.index});
+         // Keep only a small window around the current reading; this is not an error log.
+         if(this.pendingErrors.size>24)this.pendingErrors.delete(this.pendingErrors.keys().next().value);
          return;
        }
        if(priorCandidate.lastObservation===observation)return;
@@ -91,7 +98,7 @@
      this.cursor=result.end;this.lastResult={...result,ops,initial,oldCursor,updates};return this.lastResult;
    }
    dismiss(key){this.pendingErrors.delete(key);this.dismissed.add(key);const event=this.errors.get(key);if(event)event.active=false;}
-   export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],pendingErrors:[...this.pendingErrors].map(([key,e])=>({key,type:e.type,expected:e.expected,heard:e.heard,seen:e.seen})),events:this.events.slice()};}
+   export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],pendingErrors:[...this.pendingErrors].filter(([,e])=>Date.now()-e.at<=5000).map(([key,e])=>({key,type:e.type,expected:e.expected,heard:e.heard,seen:e.seen})),events:this.events.slice()};}
  }
  class RevealGate{
   constructor(words,delay=3000){this.words=words;this.delay=delay;this.pending=new Map();this.deadlines=new Map();this.handled=new Set();}
