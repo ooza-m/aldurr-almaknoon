@@ -1317,7 +1317,7 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
  if(!ctx||ctx.finalized)return;const sec=ctx.sections.get(page);if(!sec)return;
  const active=recMode&&recSession?.id===ctx.session.id&&cur===page&&sec.words===recWords;
  if(active&&recWordPos!==sec.tracker.cursor){sec.tracker.cursor=recWordPos;if(recWordPos>0)sec.tracker.located=true;}
- const result=sec.tracker.feed(text,{source});if(source==='quran-asr')ctx.session.stats.quranChunks++;else ctx.session.stats.browserChunks++;
+ const alignmentStart=performance.now(),result=sec.tracker.feed(text,{source});if(ctx.session?.stats){const st=ctx.session.stats;st.alignmentMs=(st.alignmentMs||0)+Math.round(performance.now()-alignmentStart);st.alignmentN=(st.alignmentN||0)+1;}if(source==='quran-asr')ctx.session.stats.quranChunks++;else ctx.session.stats.browserChunks++;
  if(!result){if(active)setEngine('live','جارٍ تحديد موضع التلاوة · واصلي القراءة');return;}
  for(const key of sec.tracker.covered){sec.state.covered.add(key);const split=key.lastIndexOf('#'),vk=key.slice(0,split),wi=+key.slice(split+1);sec.state.verses[vk]?.covered.add(wi);}
  result.updates.forEach(event=>{
@@ -1336,7 +1336,7 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
  for(const [key,event] of sec.tracker.errors){const w=sec.words.find(w=>w.vk+'#'+w.wi===key);if(w){w.el.classList.toggle('rec-err',event.active);w.el.classList.toggle('rec-corrected',!event.active);w.el.classList.toggle('rec-omission',event.active&&event.type==='omission');w.el.classList.toggle('rec-extra',event.active&&event.type==='extra');w.el.dataset.err=event.active?'1':'';}}
  recWordPos=sec.tracker.cursor;recPos=recWordPos<recWords.length?recWords[recWordPos].seqIndex:recSeq.length;setCurrent(sec.words[Math.max(0,result.end-1)]?.el);updateErrCount();
  const audibleHint=result.updates.find(e=>e.active&&['omission','extra','substitution'].includes(e.type));
- if(audibleHint)playRecErrorToneV91(audibleHint.type);
+ if(audibleHint){const st=ctx.session.stats;st.errorAlertCount=(st.errorAlertCount||0)+1;st.lastErrorAlertAt=Date.now();playRecErrorToneV91(audibleHint.type);}
  if(result.updates.some(e=>e.active))navigator.vibrate?.(25);
  const recallEnd=ctx.session.recall&&sec.words.findLastIndex(w=>w.vk===ctx.session.recall.vk)+1;
  if((recWordPos>=recWords.length||recallEnd&&recWordPos>=recallEnd)&&!sec.gateWaiting&&recOn&&!recFinishing){snapshotPage(true);clearTimeout(recAdvanceTimer);recAdvanceTimer=setTimeout(()=>recSession?.recall?finishReciteSession(false):autoAdvance(),420);}
@@ -1487,7 +1487,7 @@ function queueQasrChunkV73(float32,inRate,final=false){
  if(!QASR_URL||!qasrRunId||!recSession)return;
  let run=qasrRunsV86.get(qasrRunId);if(!run){const ctx=ensureRecContextV86();run={id:qasrRunId,ctx,owner:recSession.id,queue:[],promise:null,controller:null};qasrRunsV86.set(run.id,run);ctx?.runs.add(run.id);}
  let audio_b64='';if(float32?.length)audio_b64=b64PcmV73(f32To16kPcmV73(float32,inRate));else if(!final)return;
- run.queue.push({audio_b64,sample_rate:16000,page:cur,position:recWordPos,session_id:run.id,seq:qasrSeq++,final:!!final,owner:run.owner});qasrQueue=run.queue;
+ run.queue.push({audio_b64,sample_rate:16000,page:cur,position:recWordPos,session_id:run.id,seq:qasrSeq++,final:!!final,owner:run.owner,queuedAt:performance.now()});qasrQueue=run.queue;
  if(run.queue.length>5){if(run.ctx)run.ctx.session.analysisIncomplete=true;run.queue.length=0;return Promise.resolve();}
  return pumpQasrV73(run);
 }
@@ -1516,8 +1516,9 @@ function pumpQasrV73(run=qasrRunsV86.get(qasrRunId)){
  if(!run)return Promise.resolve();if(run.promise)return run.promise;qasrBusy=true;
  run.promise=(async()=>{
    while(run.queue.length&&!run.ctx?.finalized){const item=run.queue.shift(),start=performance.now();
+     if(run.ctx?.session?.stats){const st=run.ctx.session.stats;st.quranQueueWaitMs=(st.quranQueueWaitMs||0)+Math.max(0,start-(item.queuedAt||start));st.quranQueueWaitN=(st.quranQueueWaitN||0)+1;st.quranQueueMax=Math.max(st.quranQueueMax||0,Math.round(start-(item.queuedAt||start)));}
      try{let data;for(let attempt=0;attempt<2;attempt++){const controller=new AbortController();run.controller=controller;let timer;
-       try{data=await Promise.race([(async()=>{const {owner,...body}=item,response=await fetch(QASR_URL+'/transcribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});if(!response.ok)throw Error('ASR HTTP '+response.status);return response.json();})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('ASR timeout'));},7000);})]);break;}catch(error){if(attempt===1||run.ctx?.finalized)throw error;}finally{clearTimeout(timer);}
+       try{data=await Promise.race([(async()=>{const {owner,queuedAt,...body}=item,response=await fetch(QASR_URL+'/transcribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});if(!response.ok)throw Error('ASR HTTP '+response.status);return response.json();})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('ASR timeout'));},7000);})]);break;}catch(error){if(attempt===1||run.ctx?.finalized)throw error;}finally{clearTimeout(timer);}
      }
      const ctx=run.ctx;if(!ctx||ctx.finalized)continue;if(data.seq!==item.seq)throw Error('ASR sequence mismatch');
      const tx=String(Object.prototype.hasOwnProperty.call(data,'transcript_delta')?data.transcript_delta:(data.transcript||'')).trim(),ms=Math.round(performance.now()-start),stats=ctx.session.stats;
