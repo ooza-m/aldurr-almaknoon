@@ -1401,7 +1401,20 @@ function dispatchRecitationV89(ctx,page,text,source,meta={}){
  const sec=ctx.sections.get(page),local=ctx.session.freeLocated&&sec?.tracker.preview(text);
  // Always check competing locations before committing an ambiguous continuation.
  const match=voiceLocatorV89?.locate(ctx.voiceText,{page});if(!match){recordRecLocationDiagnosticV103('ambiguous');if(ctx.session.freeLocated&&local&&!ctx.voiceMoving)return applyContextTranscriptV86(ctx,page,text,source,meta);if(recSession?.id===ctx.session.id)setEngine('live','التسميع الحر · ننتظر اللفظ المميّز بين المواضع');return;}
- if(ctx.session.freeLocated&&match.page===page)return applyContextTranscriptV86(ctx,page,text,source,meta);
+ if(match.page===page){
+   // Do not rebuild the same face on first acoustic location: this used to
+   // discard the first final segment and reset visual feedback.
+   if(!ctx.session.freeLocated){
+     ctx.session.freeLocated=true;ctx.voiceText='';
+     const current=ctx.sections.get(page);
+     if(current&&Number.isInteger(match.wi)){
+       const offset=current.words.findIndex(w=>w.vk===match.vk&&w.wi===match.wi);
+       if(offset>=0&&!current.tracker.located){current.tracker.cursor=offset;current.tracker.located=true;recWordPos=offset;}
+     }
+   }
+   if(source!=='browser-preview')return applyContextTranscriptV86(ctx,page,text,source,meta);
+   return;
+ }
  recordRecLocationDiagnosticV103(ctx.session.freeLocated?'relocated':'located');
  const heard=ctx.voiceText;ctx.voiceText='';ctx.voiceMoving=true;
  ctx.voiceQueue=(ctx.voiceQueue||Promise.resolve()).then(async()=>{
