@@ -14,7 +14,7 @@ jobs:
         with:
           node-version: '22'
       - name: Test recitation rules
-        run: node --test tests/browser-asr-false-positives.test.cjs tests/recitation-candidate-observations.test.cjs tests/recitation-scenarios.test.cjs tests/phoneme-whitespace.test.cjs tests/phoneme-multiverse.test.cjs tests/recitation-feedback.test.cjs tests/recitation-integration-gate.test.cjs tests/recitation-detection-gap.test.cjs tests/recitation-review-window.test.cjs tests/recitation-audio-window.test.cjs tests/recitation-pcm-ring.test.cjs tests/recitation-session-fixes.test.cjs tests/restore-practical-errors.test.cjs
+        run: node --test tests/browser-asr-false-positives.test.cjs tests/recitation-candidate-observations.test.cjs tests/recitation-scenarios.test.cjs tests/phoneme-whitespace.test.cjs tests/phoneme-multiverse.test.cjs tests/recitation-feedback.test.cjs tests/recitation-integration-gate.test.cjs tests/recitation-detection-gap.test.cjs tests/recitation-review-window.test.cjs tests/recitation-audio-window.test.cjs tests/recitation-pcm-ring.test.cjs tests/recitation-session-fixes.test.cjs tests/restore-practical-errors.test.cjs tests/recitation-first-final-routing.test.cjs
       - name: Check Quran ASR probes
         run: python3 -m unittest discover -s quran-asr-service -p test_check_live.py
       - name: Install API test packages
