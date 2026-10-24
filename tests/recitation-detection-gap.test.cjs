@@ -10,5 +10,6 @@ test('real substitution can remain unconfirmed after forward cursor moves',()=>{
  tracker.feed('لم يكن شيئا مذكورا',{source:'quran-asr',observationId:'two'});
  assert.equal(tracker.errors.size,0);
  assert.equal(tracker.pendingErrors.has('76:1#6'),true);
+ assert.equal(tracker.pendingErrors.get('76:1#6').contextAdvanced,true);
  // Not a success case: documents current sensitivity gap, not detection.
 });
