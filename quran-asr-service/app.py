@@ -432,6 +432,38 @@ def warmup():
     }
 
 
+@app.post("/review-audio")
+def review_audio(req: TranscribeRequest):
+    """Optional isolated acoustic review, never part of live session evidence."""
+    if BACKEND not in {"quran-zipformer-ctc", "sherpa-fastconformer"}:
+        raise HTTPException(status_code=501, detail="isolated review unsupported for backend")
+    if req.session_id or req.seq or not req.final:
+        raise HTTPException(status_code=400, detail="review requires no session, seq=0 and final=true")
+    audio = _decode_pcm(req)
+    if not 0 < audio.size <= 16000 * 5:
+        raise HTTPException(status_code=400, detail="review requires at most five seconds of audio")
+    try:
+        recognizer = _load_engine()
+        stream = recognizer.create_stream()
+        stream.accept_waveform(16000, audio)
+        stream.accept_waveform(16000, np.zeros(4800, dtype=np.float32))
+        stream.input_finished()
+        while recognizer.is_ready(stream):
+            recognizer.decode_stream(stream)
+        transcript = _result_text(recognizer.get_result(stream))
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="isolated review unavailable") from exc
+    return {
+        "transcript": transcript,
+        "transcript_format": "phonemes" if BACKEND == "quran-zipformer-ctc" else "words",
+        "independent_observation": False,
+        "can_confirm_error": False,
+        "confidence_calibrated": False,
+        "replayed_audio": True,
+        "backend": BACKEND,
+    }
+
+
 @app.post("/transcribe")
 def transcribe(req: TranscribeRequest):
     audio = _decode_pcm(req)
