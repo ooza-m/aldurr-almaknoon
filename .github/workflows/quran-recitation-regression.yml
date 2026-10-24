@@ -25,3 +25,5 @@ jobs:
         run: python3 -m unittest discover -s quran-asr-service -p test_review_audio_runtime.py
       - name: Test recording evaluation metrics
         run: python3 -m unittest discover -s quran-asr-service -p test_evaluate_recordings.py
+      - name: Validate human recording scenario plan
+        run: python3 -m unittest discover -s quran-asr-service -p test_recording_plan.py
