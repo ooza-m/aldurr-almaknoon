@@ -1668,7 +1668,8 @@ function autoAdvance(){
 let rsx=0,rsy=0,recTouchTime=0;function recTapStart(e){const t=e.touches?e.touches[0]:e;rsx=t.clientX;rsy=t.clientY;recTouchTime=Date.now();}function recTapEnd(e){const t=e.changedTouches?e.changedTouches[0]:e;if(Date.now()-recTouchTime<450)return;if(Math.abs(t.clientX-rsx)>10||Math.abs(t.clientY-rsy)>10)return;const el=document.elementFromPoint(t.clientX,t.clientY);const w=el&&el.closest&&el.closest('.qw[data-vk]');if(!w||!w.classList.contains('rvl')||w.classList.contains('qend')||w._wi==null)return;const index=ERR.findIndex(error=>error.vk===w.dataset.vk&&error.wi===w._wi&&error.session===recSession?.id);if(confirm(index>=0?'إزالة رصد الخطأ عن هذه الكلمة؟':'تسجيل هذه الكلمة خطأً في التسميع؟')){if(index>=0&&ERR[index].automatic)dismissErrorV86(index);else toggleErr(w);}}
 function toggleErr(el){const vk=el.dataset.vk,wi=el._wi,i=ERR.findIndex(x=>x.vk===vk&&x.wi===wi&&x.p===cur&&x.session===(recSession&&recSession.id));if(i>=0){ERR.splice(i,1);el.dataset.err='';el.removeAttribute('data-err');el.classList.remove('rec-err');if(recPageState){const k=vk+'#'+wi;recPageState.errors.delete(k);const v=recPageState.verses[vk];if(v)v.errors.delete(wi);}}else{ERR.push({vk,wi,p:cur,t:Date.now(),userConfirmed:true,session:recSession&&recSession.id});el.dataset.err='1';el.classList.add('rec-err');markSessionError(vk,wi,'confirmed');navigator.vibrate&&navigator.vibrate(10);}saveErr();updateErrCount();}
 function dismissErrorV86(index){
- const error=ERR[index];if(!error)return;const key=error.vk+'#'+error.wi,ctx=recContexts.get(error.session),sec=ctx?.sections.get(error.p);sec?.tracker.dismiss(key);sec?.state.errors.delete(key);sec?.state.verses[error.vk]?.errors.delete(error.wi);
+ const error=ERR[index];if(!error)return;
+ if(error.automatic)try{window.DurrRecFeedback?.record(localStorage,error);}catch(_){}const key=error.vk+'#'+error.wi,ctx=recContexts.get(error.session),sec=ctx?.sections.get(error.p);sec?.tracker.dismiss(key);sec?.state.errors.delete(key);sec?.state.verses[error.vk]?.errors.delete(error.wi);
  if(ctx)for(const f of ctx.session.findings)if(f.vk===error.vk&&f.wi===error.wi)f.dismissed=true;
  try{const list=JSON.parse(LS('durr-error-dismissals-v86','[]')),id=error.session+'|'+key;if(!list.includes(id))list.push(id);LSet('durr-error-dismissals-v86',JSON.stringify(list.slice(-1500)));}catch(_){}
  ERR.splice(index,1);saveErr();updateErrCount();
@@ -1942,5 +1943,6 @@ if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWo
 </script>
 <script src="quick-face-completion.js?v=1"></script>
 <script src="recitation-diagnostics.js?v=1"></script>
+<script src="recitation-feedback.js?v=1"></script>
 </body>
 </html>
