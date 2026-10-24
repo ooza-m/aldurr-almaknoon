@@ -21,5 +21,16 @@ function classify(storage,id,label){
  item.label=label;item.reviewedAt=Date.now();
  storage.setItem(KEY,JSON.stringify(data));return true;
 }
-return {record,list,classify,KEY};
+function summary(storage){
+ const rows=list(storage);
+ const counts={correct_reading:0,actual_error:0,unsure:0,unreviewed:0,total:rows.length};
+ for(const item of rows){
+  if(item.label==='correct_reading')counts.correct_reading++;
+  else if(item.label==='actual_error')counts.actual_error++;
+  else if(item.label==='unsure')counts.unsure++;
+  else counts.unreviewed++;
+ }
+ return counts;
+}
+return {record,list,classify,summary,KEY};
 });
