@@ -79,50 +79,14 @@
        // At least a right anchor is required. Silence and unanchored transcript tails are not errors.
        const previousWord=this.words[Math.max(0,op.index-1)],previousAnchor=!initial&&previousWord&&this.covered.has(previousWord.vk+'#'+previousWord.wi);
        if(!before||after<1||(result.strong<2&&!previousAnchor))return;
-       // Browser speech recognition is optimized for ordinary dictation; it regularly
-       // substitutes correct Quran words. Retain positive tracking, but never promote
-       // its lexical disagreements to verified recitation mistakes.
        if(source==='browser-preview')return;
-       // Restore practical feedback from final browser recognition only. Strong two-sided
-       // lexical context is required; uncertain short particles remain excluded.
-       if(source==='browser-speech'&&(result.strong<4||after<2||!before))return;
-       // Two strong right anchors reduce spurious omissions on continuous chunks.
-       if((op.type==='omit'||op.type==='extra')&&after<2)return;
-       const word=op.word||this.words[Math.max(0,Math.min(this.words.length-1,op.index-1))];if(!word)return;
-       // Very short particles are repeatedly mistranscribed by ordinary ASR,
-       // e.g. أَنْ / إِنَّا. Without a calibrated acoustic distinction,
-       // never promote a lexical difference between these forms to an error.
+       // Avoid the known ambiguous short particles without silencing other errors.
        if(op.type==='sub'){
-         const actual=baseNormalize(op.heard||''),expected=baseNormalize(word.expected||'');
-         const shortParticles=new Set(['ان','انا','انه','اننا']);
-         if(shortParticles.has(actual)&&shortParticles.has(expected))return;
+         const heard=baseNormalize(op.heard||''),expected=baseNormalize(op.word?.expected||'');
+         if(['ان','انا','انه','اننا'].includes(heard)&&['ان','انا','انه','اننا'].includes(expected))return;
        }
-       if(source==='browser-speech'&&op.type!=='omit'&&op.type!=='sub')return;
+       const word=op.word||this.words[Math.max(0,Math.min(this.words.length-1,op.index-1))];if(!word)return;
        const key=word.vk+'#'+word.wi;if(this.dismissed.has(key))return;const previous=this.errors.get(key),event={vk:word.vk,wi:word.wi,index:word.index,type:op.type==='omit'?'omission':op.type==='sub'?'substitution':'extra',expected:word.expected,heard:op.heard||'',source,active:true,automatic:true,confidence:Math.min(.97,Math.max(.5,result.score)),confidenceKind:'alignment-not-acoustic',ts:Date.now()};
-       // An uncalibrated ASR disagreement is a candidate first, not an immediate alarm.
-       // Require the same finding across two *distinct* observations.
-       if(source==='browser-speech'&&event.type==='omission'){
-         if(!previous||!previous.active||previous.type!==event.type||previous.heard!==event.heard){this.errors.set(key,event);this.events.push(event);updates.push(event);}
-         return;
-       }
-       if(source==='browser-speech'&&event.type==='substitution'){
-         // Only a provisional candidate: displayed in the current face, never graded.
-         this.pendingErrors.set(key,{signature:event.type+'|'+event.heard,seen:1,at:now,lastObservation:observation,type:event.type,expected:event.expected,heard:event.heard,source,index:word.index});
-         return;
-       }
-       const priorCandidate=this.pendingErrors.get(key);
-       const signature=event.type+'|'+event.heard;
-       if(!priorCandidate||priorCandidate.signature!==signature||now-priorCandidate.at>5000){
-         this.pendingErrors.set(key,{signature,seen:1,at:now,lastObservation:observation,type:event.type,expected:event.expected,heard:event.heard,source,index:word.index});
-         // Keep only a small window around the current reading; this is not an error log.
-         if(this.pendingErrors.size>24)this.pendingErrors.delete(this.pendingErrors.keys().next().value);
-         return;
-       }
-       if(priorCandidate.lastObservation===observation)return;
-       priorCandidate.lastObservation=observation;
-       priorCandidate.seen++;
-       if(priorCandidate.seen<2)return;
-       this.pendingErrors.delete(key);
        if(!previous||!previous.active||previous.type!==event.type||previous.heard!==event.heard){this.errors.set(key,event);this.events.push(event);updates.push(event);}
      });
      this.cursor=result.end;this.lastResult={...result,ops,initial,oldCursor,updates};return this.lastResult;
