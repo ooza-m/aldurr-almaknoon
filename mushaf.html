@@ -1601,9 +1601,12 @@ async function previewQuranPhonemesV90(ctx,page,transcript){
  if(!sec||!window.DurrPhonemeAligner?.exactPrefix||!transcript)return;
  // Quran ASR returns a cumulative phoneme hypothesis for the current stream.
  // Anchor the preview once; do not re-anchor at the moving browser-word cursor.
- if(!sec.phonemeOrigin){const cursor=Math.max(0,sec.tracker?.cursor||0);sec.phonemeOrigin={cursor,runId:qasrRunId};}
+ if(!sec.phonemeOrigin||sec.phonemeOrigin.runId!==qasrRunId){
+   if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-preview');
+   sec.phonemePreviewEls=[];
+   const cursor=Math.max(0,sec.tracker?.cursor||0);sec.phonemeOrigin={cursor,runId:qasrRunId};
+ }
  const anchor=sec.phonemeOrigin;
- if(anchor.runId!==qasrRunId)return;
  const first=sec.words[anchor.cursor];
  if(!first||first.wi!==0)return; // Mid-verse streaming requires a verified acoustic offset.
  const verseKeys=[];
