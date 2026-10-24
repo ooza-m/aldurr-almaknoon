@@ -379,6 +379,7 @@ body.face-listening .screen{height:var(--app-vh)!important}
 .face-tafsir-done.show{opacity:.94;transform:none}
 body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 .qasr-setrow{align-items:flex-start}.qasr-status{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;color:var(--muted)}.qasr-status i{width:9px;height:9px;border-radius:50%;background:#b8b2b5}.qasr-status.ok{color:#49653C}.qasr-status.ok i{background:#6f8a63}.qasr-status.limited{color:#8A671A}.qasr-status.limited i{background:#C89B3C}.qasr-status.bad{color:#9C5362}.qasr-status.bad i{background:#C77486}.qasr-test{width:100%;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-family:inherit;border-radius:12px;padding:9px 12px;font-size:.72rem;font-weight:700;margin-top:8px}
+.rec-phoneme-preview:not(.rvl){box-shadow:inset 0 -2px 0 rgba(88,131,139,.5);}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <link rel="stylesheet" href="reader-shell.css?v=106">
@@ -1602,7 +1603,7 @@ async function previewQuranPhonemesV90(ctx,page,transcript){
  // Quran ASR returns a cumulative phoneme hypothesis for the current stream.
  // Anchor the preview once; do not re-anchor at the moving browser-word cursor.
  if(!sec.phonemeOrigin||sec.phonemeOrigin.runId!==qasrRunId){
-   if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-preview');
+   if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-phoneme-preview');
    sec.phonemePreviewEls=[];
    const cursor=Math.max(0,sec.tracker?.cursor||0);sec.phonemeOrigin={cursor,runId:qasrRunId};
  }
@@ -1627,17 +1628,18 @@ async function previewQuranPhonemesV90(ctx,page,transcript){
  const result=DurrPhonemeAligner.exactPrefix(transcript,segments);
  if(result.status!=='prefix'){
    // A revised cumulative hypothesis invalidates old temporary highlights.
-   if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-preview');
+   if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-phoneme-preview');
    sec.phonemePreviewEls=[];
    return;
  }
  // Preview is ephemeral and never modifies covered/errors/scores.
- if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-preview');
+ if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-phoneme-preview');
  sec.phonemePreviewEls=[];
- for(const index of result.matchedWords){const el=alignedWords[index]?.el;if(el){el.classList.add('rec-preview');sec.phonemePreviewEls.push(el);}}
+ for(const index of result.matchedWords){const el=alignedWords[index]?.el;if(el){el.classList.add('rec-phoneme-preview');sec.phonemePreviewEls.push(el);}}
  if(result.matchedWords.length)setEngine('live','متابعة صوتية أولية عبر الآيات · دون احتساب أخطاء أو إتمام');
 }
-function buildRecSeq(){recSeq=[];recWords=[];const seen={};paneCur.querySelectorAll('.qw[data-vk]').forEach(el=>{const vk=el.dataset.vk,isEnd=el.classList.contains('qend');if(!(vk in seen))seen[vk]=0;let wi=null;if(!isEnd){wi=seen[vk];seen[vk]++;}el._wi=wi;el.classList.remove('rvl','rec-cur','rec-err','rec-context','rec-corrected','rec-omission','rec-extra','rec-skipped');if(wi!==null&&ERR.some(x=>x.vk===vk&&x.wi===wi&&x.session===(recSession&&recSession.id)))el.dataset.err='1';else el.removeAttribute('data-err');const item={el,vk,wi};recSeq.push(item);if(wi!==null)recWords.push({...item,seqIndex:recSeq.length-1,expected:wordFor(vk,wi)});});recWordPos=0;if(recMode){if(recPageState&&recPageState.page!==cur)snapshotPage(false);recPageState=makePageState();}}
+function buildRecSeq(){
+ clearPhonemePreviewV106();recSeq=[];recWords=[];const seen={};paneCur.querySelectorAll('.qw[data-vk]').forEach(el=>{const vk=el.dataset.vk,isEnd=el.classList.contains('qend');if(!(vk in seen))seen[vk]=0;let wi=null;if(!isEnd){wi=seen[vk];seen[vk]++;}el._wi=wi;el.classList.remove('rvl','rec-cur','rec-err','rec-context','rec-corrected','rec-omission','rec-extra','rec-skipped');if(wi!==null&&ERR.some(x=>x.vk===vk&&x.wi===wi&&x.session===(recSession&&recSession.id)))el.dataset.err='1';else el.removeAttribute('data-err');const item={el,vk,wi};recSeq.push(item);if(wi!==null)recWords.push({...item,seqIndex:recSeq.length-1,expected:wordFor(vk,wi)});});recWordPos=0;if(recMode){if(recPageState&&recPageState.page!==cur)snapshotPage(false);recPageState=makePageState();}}
 function reMaskFace(){paneCur.classList.add('reciting');buildRecSeq();recPos=0;eyeShown=false;setEye();}
 function setEye(){const b=$('recEye');if(!b)return;b.classList.toggle('off',!eyeShown);$('recEyeIcon').innerHTML=eyeShown?'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>':'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>';}
 function setCurrent(el){recSeq.forEach(s=>s.el.classList.remove('rec-cur'));if(el)el.classList.add('rec-cur');}
@@ -1673,6 +1675,13 @@ function dismissErrorV86(index){
 }
 function updateErrCount(){const b=$('recErrs');if(!b)return;const n=recPageState?recPageState.errors.size:0;$('recErrCount').textContent=n?('أخطاء '+ARA(n)):'أخطاء';b.classList.toggle('has',!!n);}
 let recPreviewWords=[];
+// Separate acoustic and browser temporary highlights: clearing one never erases the other.
+function clearPhonemePreviewV106(){
+ for(const ctx of recContexts.values())for(const sec of ctx.sections.values()){
+   if(sec.phonemePreviewEls)for(const el of sec.phonemePreviewEls)el.classList.remove('rec-phoneme-preview');
+   sec.phonemePreviewEls=[];sec.phonemeOrigin=null;
+ }
+}
 function clearSpeechPreview(){recPreviewWords.forEach(el=>el.classList.remove('rec-preview'));recPreviewWords=[];}
 function previewSpeechV84(txt){
  clearSpeechPreview();if(!recOn||!recMode)return;const ctx=ensureRecContextV86(),sec=ctx?.sections.get(cur);if(!sec)return;
