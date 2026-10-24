@@ -37,9 +37,10 @@
    return best;
  }
  class Tracker{
-   constructor(words,{cursor=0,located=false,recall=null}={}){this.words=words.map((w,index)=>({...w,index,norm:normalize(w.expected)}));this.cursor=cursor;this.located=located;this.recall=recall;this.startedAt=null;this.pending='';this.covered=new Set();this.errors=new Map();this.pendingErrors=new Map();this.dismissed=new Set();this.events=[];this.lastResult=null;}
+   constructor(words,{cursor=0,located=false,recall=null}={}){this.words=words.map((w,index)=>({...w,index,norm:normalize(w.expected)}));this.cursor=cursor;this.located=located;this.recall=recall;this.startedAt=null;this.pending='';this.covered=new Set();this.errors=new Map();this.pendingErrors=new Map();this.observationCounter=0;this.dismissed=new Set();this.events=[];this.lastResult=null;}
    preview(text){return align(this.words,(this.pending+' '+text).trim(),this)||(this.pending?align(this.words,text,this):null);}
-   feed(text,{source='browser-speech',final=true}={}){
+   feed(text,{source='browser-speech',final=true,observationId=null}={}){
+     const observation=observationId==null?'feed-'+(++this.observationCounter):String(observationId);
      if(!final)return this.preview(text);
      const heard=(this.pending+' '+text).trim();let result=align(this.words,heard,this),recovered=false;
      if(!result&&this.pending){const fresh=align(this.words,text,this);if(fresh?.strong>=2){result=fresh;recovered=true;}}
@@ -77,9 +78,11 @@
        const priorCandidate=this.pendingErrors.get(key);
        const signature=event.type+'|'+event.heard;
        if(!priorCandidate||priorCandidate.signature!==signature||Date.now()-priorCandidate.at>5000){
-         this.pendingErrors.set(key,{signature,seen:1,at:Date.now()});
+         this.pendingErrors.set(key,{signature,seen:1,at:Date.now(),lastObservation:observation,type:event.type,expected:event.expected,heard:event.heard,source});
          return;
        }
+       if(priorCandidate.lastObservation===observation)return;
+       priorCandidate.lastObservation=observation;
        priorCandidate.seen++;
        if(priorCandidate.seen<2)return;
        this.pendingErrors.delete(key);
@@ -88,7 +91,7 @@
      this.cursor=result.end;this.lastResult={...result,ops,initial,oldCursor,updates};return this.lastResult;
    }
    dismiss(key){this.pendingErrors.delete(key);this.dismissed.add(key);const event=this.errors.get(key);if(event)event.active=false;}
-   export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],events:this.events.slice()};}
+   export(){return {cursor:this.cursor,located:this.located,startedAt:this.startedAt,covered:[...this.covered],errors:[...this.errors.values()],pendingErrors:[...this.pendingErrors].map(([key,e])=>({key,type:e.type,expected:e.expected,heard:e.heard,seen:e.seen})),events:this.events.slice()};}
  }
  class RevealGate{
   constructor(words,delay=3000){this.words=words;this.delay=delay;this.pending=new Map();this.deadlines=new Map();this.handled=new Set();}
