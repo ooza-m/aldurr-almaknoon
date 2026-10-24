@@ -1486,9 +1486,11 @@ function b64PcmV73(pcm){
 }
 function queueQasrChunkV73(float32,inRate,final=false){
  if(!QASR_URL||!qasrRunId||!recSession)return;
- let run=qasrRunsV86.get(qasrRunId);if(!run){const ctx=ensureRecContextV86();run={id:qasrRunId,ctx,owner:recSession.id,queue:[],promise:null,controller:null};qasrRunsV86.set(run.id,run);ctx?.runs.add(run.id);}
+ let run=qasrRunsV86.get(qasrRunId);if(!run){const ctx=ensureRecContextV86();run={id:qasrRunId,ctx,owner:recSession.id,queue:[],promise:null,controller:null,audioLedger:window.DurrAudioWindow?new DurrAudioWindow.Ledger():null};qasrRunsV86.set(run.id,run);ctx?.runs.add(run.id);}
  let audio_b64='';if(float32?.length)audio_b64=b64PcmV73(f32To16kPcmV73(float32,inRate));else if(!final)return;
- run.queue.push({audio_b64,sample_rate:16000,page:cur,position:recWordPos,session_id:run.id,seq:qasrSeq++,final:!!final,owner:run.owner,queuedAt:performance.now()});qasrQueue=run.queue;
+ const seq=qasrSeq++,queuedAt=performance.now();
+ run.audioLedger?.add({runId:run.id,seq,page:cur,position:recWordPos,queuedAt,final:!!final});
+ run.queue.push({audio_b64,sample_rate:16000,page:cur,position:recWordPos,session_id:run.id,seq,final:!!final,owner:run.owner,queuedAt});qasrQueue=run.queue;
  if(run.queue.length>5){if(run.ctx){run.ctx.session.analysisIncomplete=true;run.ctx.session.stats.quranQueueOverflow=(run.ctx.session.stats.quranQueueOverflow||0)+1;}failQasrV79('تراكمت المقاطع الصوتية · انتقلنا إلى التتبّع المحدود دون إصدار أحكام صوتية');return Promise.resolve();}
  return pumpQasrV73(run);
 }
@@ -1948,5 +1950,6 @@ if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWo
 <script src="recitation-feedback.js?v=1"></script>
 <script src="recitation-feedback-ui.js?v=1"></script>
 <script src="recitation-report.js?v=1"></script>
+<script src="recitation-audio-window.js?v=1"></script>
 </body>
 </html>
