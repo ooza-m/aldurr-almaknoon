@@ -97,12 +97,17 @@
          const shortParticles=new Set(['ان','انا','انه','اننا']);
          if(shortParticles.has(actual)&&shortParticles.has(expected))return;
        }
-       if(source==='browser-speech'&&op.type!=='omit')return;
+       if(source==='browser-speech'&&op.type!=='omit'&&op.type!=='sub')return;
        const key=word.vk+'#'+word.wi;if(this.dismissed.has(key))return;const previous=this.errors.get(key),event={vk:word.vk,wi:word.wi,index:word.index,type:op.type==='omit'?'omission':op.type==='sub'?'substitution':'extra',expected:word.expected,heard:op.heard||'',source,active:true,automatic:true,confidence:Math.min(.97,Math.max(.5,result.score)),confidenceKind:'alignment-not-acoustic',ts:Date.now()};
        // An uncalibrated ASR disagreement is a candidate first, not an immediate alarm.
        // Require the same finding across two *distinct* observations.
        if(source==='browser-speech'&&event.type==='omission'){
          if(!previous||!previous.active||previous.type!==event.type||previous.heard!==event.heard){this.errors.set(key,event);this.events.push(event);updates.push(event);}
+         return;
+       }
+       if(source==='browser-speech'&&event.type==='substitution'){
+         // Only a provisional candidate: displayed in the current face, never graded.
+         this.pendingErrors.set(key,{signature:event.type+'|'+event.heard,seen:1,at:now,lastObservation:observation,type:event.type,expected:event.expected,heard:event.heard,source,index:word.index});
          return;
        }
        const priorCandidate=this.pendingErrors.get(key);

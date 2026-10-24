@@ -13,7 +13,7 @@ test('reader ships all local feedback/report assets in correct order',()=>{
 });
 test('browser interim and substitutions remain excluded while strongly anchored final omissions are allowed',()=>{
  assert.match(core,/if\(source==='browser-preview'\)return/);
- assert.match(core,/if\(source==='browser-speech'&&op.type!=='omit'\)return/);
+ assert.match(core,/if\(source==='browser-speech'&&op.type!=='omit'&&op.type!=='sub'\)return/);
  assert.match(core,/if\(source==='browser-speech'&&event.type==='omission'\)/);
 });
 test('phoneme preview does not award covered-word credit or grade errors',()=>{
