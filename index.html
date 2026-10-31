@@ -1016,6 +1016,7 @@ window.FIREBASE_CONFIG = {
   <h3 id="pmTitle">الوجه</h3><p class="msub" id="pmSub"></p>
   <div id="pmReviewInfo" style="margin-bottom:12px"></div>
   <div id="pmStateInfo" style="margin-bottom:12px"></div>
+  <div id="pmMastery" style="margin-bottom:12px"></div>
   <div id="pmLearningInfo" style="margin-bottom:12px"></div>
   <div id="pmVerseInfo" style="margin-bottom:12px"></div>
   <div id="pmErrors" style="margin-top:6px"></div>
@@ -1376,6 +1377,7 @@ const DEF={pages:{},logs:[],stages:[],tajweed:[],errors:[],tafsir:[],khatma:null
   notif:{wird:false,wirdTime:'06:00',tafsir:false,tafsirTime:'21:00'}, // تذكيرات الورد
   reviewSched:{},                             // جدولة قديمة على مستوى السورة
   pageReviewSched:{},                          // v62 جدولة المراجعة على مستوى الوجه
+  pageMastery:{},                              // تقييم شخصي مستقل لضبط كل وجه
   faceLearning:{},                             // v61 حالات السماع/التفسير/الحفظ/التسميع
   recitationSessions:[],                       // v51 جلسات التسميع التفصيلية
   verseReview:{},                              // {surah:ayah:{lastReview,lastScore,page,...}}
@@ -2372,6 +2374,7 @@ function fillJuzPages(j){
       const cov=m.partial?Math.max(4,Math.round(m.coverage*100)):0;
       const txt=((m.state==='fresh'||m.state==='weak')&&!m.partial&&phase!=='fix')?'color:#fff;':'color:var(--ink);';
       const phaseClass=phase==='fix'?' phase-fix':phase==='near'?' phase-near':phase==='far'?' phase-far':'';
+      const mastery=masteryOfPageV116(p);
       const cls='pg'+phaseClass+(m.partial?' partial':'')+(hasErr?' has-err':'');
       let bg='background:'+m.color+';';
       if(phase==='fix')bg='background:linear-gradient(180deg,#F8EDD0,#E7C878);';
@@ -2381,8 +2384,9 @@ function fillJuzPages(j){
         phase==='near'?'<i class="phase-mark near"></i>':
         phase==='far'?'<i class="phase-mark far"></i>':'';
       const cover=m.partial?'<i class="cover-bar" style="--cover:'+cov+'%"></i>':'';
-      const title='وجه '+p+(m.label?' · '+m.label:'')+(hasErr?' · خطأ نشط':'');
-      cells+='<button type="button" class="'+cls+'" data-page="'+p+'" data-surah="'+seg.sur[0]+'" title="'+title+'" style="'+bg+txt+dim+'"><span>'+toAr(p)+'</span>'+phaseMark+cover+'</button>';
+      const title='وجه '+p+(m.label?' · '+m.label:'')+(mastery?' · ضبط: '+MASTERY_LEVELS_V116[mastery.level]:'')+(hasErr?' · خطأ نشط':'');
+      const masteryMark=mastery?'<i aria-hidden="true" style="position:absolute;inset-inline-start:1px;bottom:1px;width:6px;height:6px;border-radius:50%;background:'+(mastery.level==='strong'?'#2F7458':mastery.level==='good'?'#5F9D81':mastery.level==='needs'?'#D38B45':'#AF4E60')+';border:1px solid #fff"></i>':'';
+      cells+='<button type="button" class="'+cls+'" data-page="'+p+'" data-surah="'+seg.sur[0]+'" title="'+title+'" style="position:relative;'+bg+txt+dim+'"><span>'+toAr(p)+'</span>'+phaseMark+cover+masteryMark+'</button>';
     }
     return '<div class="surah-group"><div class="surah-label">'+seg.sur[1]+'</div><div class="pg-row">'+cells+'</div></div>';
   }).join('');
@@ -2507,6 +2511,30 @@ async function renderFaceVerseDetailsV63(p,sid){
   box.querySelectorAll('[data-vk]').forEach(b=>b.addEventListener('click',()=>openMushafAtV50(+b.dataset.p,'','',b.dataset.vk)));
 }
 
+const MASTERY_LEVELS_V116={strong:'ثابت',good:'جيد',needs:'يحتاج تثبيت',weak:'متفلّت'};
+function masteryOfPageV116(page){
+  const rec=(S.pageMastery||{})[page];
+  return rec&&MASTERY_LEVELS_V116[rec.level]?rec:null;
+}
+function renderPageMasteryV116(page){
+  const box=document.getElementById('pmMastery');if(!box)return;
+  const rec=masteryOfPageV116(page),evidence=pageReviewEvidenceV115(page);
+  const saved=rec?MASTERY_LEVELS_V116[rec.level]:'لم يُقيّم بعد';
+  box.innerHTML='<div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.65)">'+
+    '<b style="font-size:.86rem">ضبط الوجه · تقييمك الشخصي</b>'+
+    '<p style="font-size:.76rem;color:var(--muted);margin:3px 0 9px">مستقل عن تاريخ المراجعة، ولا يغير لون مرحلة الحفظ.</p>'+
+    '<div style="font-size:.8rem;margin-bottom:8px">الحالة: <b>'+saved+'</b>'+(evidence.activeErrors?' · '+toAr(evidence.activeErrors)+' خطأ مسجّل':'')+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:6px">'+
+      Object.entries(MASTERY_LEVELS_V116).map(([id,name])=>'<button type="button" class="btn btn-sm '+(rec?.level===id?'btn-primary':'btn-ghost')+'" data-mastery="'+id+'">'+name+'</button>').join('')+
+      (rec?'<button type="button" class="btn btn-sm btn-ghost" data-mastery="clear">إلغاء التقييم</button>':'')+'</div></div>';
+  box.querySelectorAll('[data-mastery]').forEach(btn=>btn.addEventListener('click',()=>{
+    const level=btn.dataset.mastery;
+    S.pageMastery=S.pageMastery||{};
+    if(level==='clear')delete S.pageMastery[page];
+    else if(MASTERY_LEVELS_V116[level])S.pageMastery[page]={level,date:todayKey(),updatedAt:Date.now(),source:'manual'};
+    save();renderPageMasteryV116(page);renderMap();refreshV50();
+  }));
+}
 function openPage(p,surahId){
   curPage=p;curPageSurah=(surahId!=null)?surahId:null;
   const s=(surahId!=null)?(SURAHS.find(x=>x[0]===surahId)||surahOfPage(p)):surahOfPage(p);
@@ -2521,6 +2549,7 @@ function openPage(p,surahId){
     const phase=eng.phase==='far'?'مراجعة بعيدة':'مراجعة قريبة',due=eng.nextDue?fmtD(eng.nextDue):null;
     ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>'+phase+'</b>'+(due?' · الموعد '+due.d+' '+due.m:'')+(eng.due?' · <span style="color:var(--clay)">مستحقة الآن</span>':'')+'</div>';
   }
+  renderPageMasteryV116(p);
   const stateLabels={unseen:['لم يُحفظ','var(--muted)'],fix:['قيد التثبيت','var(--gold)'],fresh:['متقن / حديث المراجعة','var(--green)'],due:['يحتاج مراجعة','#C89B3C'],weak:['متفلّت — راجعيه قريبًا','var(--clay)']};
   const sl=stateLabels[m.state]||stateLabels.unseen;
   document.getElementById('pmStateInfo').innerHTML='<div style="display:flex;align-items:center;gap:8px;font-size:.9rem"><span style="width:14px;height:14px;border-radius:4px;background:'+m.color+';display:inline-block;border:1px solid rgba(0,0,0,.1)"></span><b style="color:'+sl[1]+'">'+sl[0]+'</b>'+(m.partial?'<span style="margin-inline-start:auto;color:#7E6B8B;font-size:.76rem">تغطية '+toAr(Math.round(m.coverage*100))+'٪ فقط</span>':'')+'</div>';
