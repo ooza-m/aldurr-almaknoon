@@ -971,7 +971,7 @@ window.FIREBASE_CONFIG = {
       <button class="btn btn-primary btn-sm" id="btnAddErr2" style="margin-bottom:16px">+ تسجيل خطأ جديد</button>
       <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px">
         <b>استيراد أخطاء ترتيل</b>
-        <p class="hint">حمّلي ملف JSON أو CSV المستخرج من حسابك. ستظهر معاينة قبل الحفظ؛ ولا تُضاف مواضع لم يُتحقق من رقم وجهها.</p>
+        <p class="hint">استخرجي ملف durr_tarteel_import.json من الحزمة ZIP، ثم ارفعيه هنا للمعاينة. لا تُعتمد نتائج ترتيل الآلية كأخطاء مؤكدة.</p>
         <input type="file" id="tarteelFile" accept=".json,.csv,application/json,text/csv" style="max-width:100%;font-size:.8rem">
         <div id="tarteelPreview" style="margin-top:10px"></div>
       </div>
@@ -4371,7 +4371,7 @@ renderAll();
   };
   input.addEventListener('change',async()=>{
     candidates=[];rejected=0;sourceRows=0;fields=[];box.textContent='';const file=input.files&&input.files[0];if(!file)return;
-    if(file.size>15*1024*1024){box.textContent='حجم الملف يتجاوز 15 MB';return;}
+    if(file.size>60*1024*1024){box.textContent='حجم الملف يتجاوز 60 MB';return;}
     try{
       const text=await file.text();
       const parsed=/\.csv$/i.test(file.name)?null:JSON.parse(text);
