@@ -1487,11 +1487,23 @@ function rangeSetV50(items,filter){const set=new Set();(items||[]).filter(x=>!fi
 function firstMemDateMapV50(){const out={};[...S.logs].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(l=>{(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)if(!out[p])out[p]=l.date;});});(S.recitationSessions||[]).filter(x=>x&&x.task==='new').sort((a,b)=>(a.endedAt||0)-(b.endedAt||0)).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now()));(rs.pages||[]).filter(pg=>pg.complete&&pg.coverage>=.95).forEach(pg=>{if(!out[pg.page])out[pg.page]=d;});});return out;}
 const NEAR_INTERVALS_V62=[3,7,14],FAR_INTERVALS_V62=[30,60,90,120];
 function addDaysKeyV62(k,n){const d=parseKey(k);d.setDate(d.getDate()+n);return keyOf(d);}
-function completeReviewTodayV62(p){
-  const day=todayKey();
-  return (S.recitationSessions||[]).some(rs=>{
-    const d=keyOf(new Date(rs.endedAt||rs.startedAt||0));if(d!==day)return false;
+function completeReviewTodayV62(p,day=todayKey()){
+  // A completed, explicitly scheduled review may come from the mushaf or manual log.
+  // Free recitation alone does not silently complete a scheduled review.
+  const valid=new Set(['fix','near','far']);
+  const completedInMushaf=(S.recitationSessions||[]).some(rs=>{
+    if(!valid.has(rs.task))return false;
+    const stamp=rs.endedAt||rs.startedAt;
+    if(!stamp||keyOf(new Date(stamp))!==day)return false;
     return (rs.pages||[]).some(pg=>+pg.page===+p&&pg.complete&&pg.coverage>=.95);
+  });
+  if(completedInMushaf)return true;
+  return (S.logs||[]).some(log=>{
+    if(log.date!==day)return false;
+    return (log.revList||[]).some(item=>{
+      const range=item.from&&item.to?[Math.min(+item.from,+item.to),Math.max(+item.from,+item.to)]:pagesOfSurah(+item.surahId);
+      return range&&+p>=range[0]&&+p<=range[1];
+    });
   });
 }
 function firstMemDateV62(p){
@@ -1507,15 +1519,15 @@ function ensurePageSchedV62(p){
     x={page:+p,firstMemDate:first,phase:age<=30?'fix':'near',nearLevel:0,farLevel:0,nextDue:age<=30?todayKey():todayKey(),lastReview:null,updatedAt:Date.now()};
     S.pageReviewSched[p]=x;
   }else if(!x.firstMemDate)x.firstMemDate=first;
-  if(age<=30){x.phase='fix';x.nextDue=todayKey();}
-  else if(x.phase==='fix'){x.phase='near';x.nearLevel=0;x.nextDue=x.nextDue&&x.nextDue>first?x.nextDue:todayKey();}
+  if(age<=30){x.phase='fix';x.nextDue=addDaysKeyV62(x.lastReview||first,1);}
+  else if(x.phase==='fix'){x.phase='near';x.nearLevel=0;x.nextDue=todayKey();}
   return x;
 }
 function reviewEngineStateV62(p){
   const first=firstMemDateV62(p);if(!first)return{phase:'unseen',due:false,firstMemDate:null};
   const age=Math.max(0,daysBetween(first,todayKey())),doneToday=completeReviewTodayV62(p);
   const x=ensurePageSchedV62(p);
-  if(age<=30)return{phase:'fix',day:Math.min(30,Math.max(1,age)),due:age>=1&&!doneToday,doneToday,firstMemDate:first,nextDue:doneToday?addDaysKeyV62(todayKey(),1):todayKey(),schedule:x};
+  if(age<=30)return{phase:'fix',day:Math.min(30,Math.max(1,age)),due:age>=1&&!doneToday,doneToday,firstMemDate:first,nextDue:doneToday?addDaysKeyV62(todayKey(),1):(x.nextDue||todayKey()),schedule:x};
   const phase=x&&x.phase==='far'?'far':'near',dueDate=(x&&x.nextDue)||todayKey();
   return{phase,due:!doneToday&&dueDate<=todayKey(),doneToday,firstMemDate:first,nextDue:dueDate,overdueDays:dueDate<=todayKey()?Math.max(0,daysBetween(dueDate,todayKey())):0,schedule:x};
 }
