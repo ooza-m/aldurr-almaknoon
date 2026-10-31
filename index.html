@@ -974,6 +974,8 @@ window.FIREBASE_CONFIG = {
         <p class="hint">استخرجي ملف durr_tarteel_import.json من الحزمة ZIP، ثم ارفعيه هنا للمعاينة. لا تُعتمد نتائج ترتيل الآلية كأخطاء مؤكدة.</p>
         <input type="file" id="tarteelFile" accept=".json,.csv,application/json,text/csv" style="max-width:100%;font-size:.8rem">
         <div id="tarteelPreview" style="margin-top:10px"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="tarteelHistoryOpen" style="margin-top:9px">عرض السجل التاريخي المحفوظ</button>
+        <div id="tarteelHistoryPanel" style="margin-top:10px"></div>
       </div>
       <div id="errHot"></div>
       <div id="errList"></div>
@@ -4289,6 +4291,76 @@ renderAll();
  button.onclick=()=>{refresh();cover.style.display='flex';};
  box.querySelector('[data-close]').onclick=()=>{cover.style.display='none';};
  cover.addEventListener('click',e=>{if(e.target===cover)cover.style.display='none';});
+})();
+
+/* التاريخ المستورد منفصل عن الأخطاء المؤكدة؛ تُعرض أول النتائج فقط لتجنب تعليق الهاتف. */
+(function initTarteelHistoryViewerV118(){
+ const button=document.getElementById('tarteelHistoryOpen'),panel=document.getElementById('tarteelHistoryPanel');
+ if(!button||!panel)return;
+ let archive=null,items=[];
+ const labels={EXTRA_WORDS:'زيادة كلمات',INCORRECT_WORDS:'قراءة غير مطابقة',MISSED_WORDS:'سقوط كلمات',INCORRECT_TASHKEEL:'خطأ تشكيل',PEEKED_WORDS:'استعانة بالمصحف'};
+ const safe=v=>esc(String(v??''));
+ const load=()=>new Promise((resolve,reject)=>{
+   const req=indexedDB.open('durr-tarteel-history',1);
+   req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('archives'))req.result.createObjectStore('archives');};
+   req.onerror=()=>reject(req.error);
+   req.onsuccess=()=>{
+     const db=req.result,tx=db.transaction('archives','readonly'),get=tx.objectStore('archives').get('durr-tarteel-history-v1');
+     get.onsuccess=()=>{resolve(get.result||null);db.close();};get.onerror=()=>{reject(get.error);db.close();};
+   };
+ });
+ const draw=()=>{
+   const sid=Number(panel.querySelector('#thSurah')?.value||0),type=panel.querySelector('#thType')?.value||'';
+   const rows=[];let count=0;
+   for(const m of archive.mistakes||[]){
+     if(type&&m.type!==type)continue;
+     for(const pos of m.positions||[]){
+       const surah=+pos.surah_number,ayah=+pos.ayah_number;
+       if(!(surah>=1&&surah<=114&&ayah>=1)||sid&&surah!==sid)continue;
+       count++;
+       if(rows.length<80)rows.push({m,pos,surah,ayah});
+     }
+   }
+   items=rows;
+   const view=panel.querySelector('#thResults');
+   view.innerHTML='<p class="hint">'+count+' موضعًا مطابقًا · تُعرض أول '+rows.length+' نتيجة</p>'+
+    rows.map((r,i)=>{
+      const page=Number(r.pos.page_number||r.pos.mushaf_page||r.pos.page),range=pagesOfSurah(r.surah);
+      const valid=Number.isInteger(page)&&page>=1&&page<=604&&range&&page>=range[0]&&page<=range[1];
+      const already=(S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===String(r.m.id||'')&&e.verseKey===r.surah+':'+r.ayah);
+      return '<div style="padding:8px 0;border-top:1px solid var(--line);font-size:.8rem"><b>'+safe((SURAHS.find(x=>x[0]===r.surah)||[])[1]||r.surah)+' · آية '+r.ayah+'</b> · '+safe(labels[r.m.type]||r.m.type||'ملاحظة')+
+        '<div style="color:var(--muted)">'+(valid?'وجه '+page:'الوجه غير محدد')+' · ملاحظة آلية غير مؤكدة</div>'+
+        (valid?'<button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':'')+'</div>';
+    }).join('');
+   view.querySelectorAll('[data-th-approve]').forEach(b=>b.addEventListener('click',()=>{
+     const r=items[+b.dataset.thApprove];if(!r)return;
+     const page=Number(r.pos.page_number||r.pos.mushaf_page||r.pos.page),range=pagesOfSurah(r.surah);
+     if(!Number.isInteger(page)||page<1||page>604||!range||page<range[0]||page>range[1])return;
+     const id=String(r.m.id||'');
+     if((S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===id&&e.verseKey===r.surah+':'+r.ayah))return;
+     S.errors.push({surah:(SURAHS.find(x=>x[0]===r.surah)||[])[1]||'',surahId:r.surah,ayah:r.ayah,page,verseKey:r.surah+':'+r.ayah,
+       type:labels[r.m.type]||'خطأ من ترتيل',desc:'اعتمدته المستخدمة من السجل التاريخي',source:'tarteel',externalId:id,
+       date:todayKey(),archived:false,userConfirmed:true,verification:'manual-confirmation'});
+     save();renderErrors();renderMap();refreshV50();draw();
+   }));
+ };
+ button.addEventListener('click',async()=>{
+   panel.textContent='جارٍ قراءة السجل المحلي…';
+   try{
+     if(!archive)archive=await load();
+     if(!archive){panel.textContent='لا يوجد سجل محفوظ على هذا الجهاز. استوردي الحزمة واحفظيها أولًا.';return;}
+     panel.innerHTML='<div style="border:1px solid var(--line);border-radius:12px;padding:10px">'+
+       '<b>ملاحظات ترتيل التاريخية</b><p class="hint">هذه ليست أخطاء مؤكدة. لا يمكنك اعتماد موضع بلا وجه موثوق.</p>'+
+       '<div style="display:flex;gap:7px;flex-wrap:wrap"><select id="thSurah" style="flex:1;min-width:130px"><option value="">كل السور</option>'+
+        SURAHS.map(s=>'<option value="'+s[0]+'">'+safe(s[1])+'</option>').join('')+'</select>'+
+       '<select id="thType" style="flex:1;min-width:130px"><option value="">جميع الأنواع</option>'+
+        Object.entries(labels).map(([k,v])=>'<option value="'+k+'">'+safe(v)+'</option>').join('')+'</select></div>'+
+       '<div id="thResults" style="max-height:340px;overflow:auto;margin-top:8px"></div></div>';
+     panel.querySelector('#thSurah').addEventListener('change',draw);
+     panel.querySelector('#thType').addEventListener('change',draw);
+     draw();
+   }catch(e){panel.textContent='تعذّر فتح السجل المحلي. قد تكون بيانات الموقع قد حُذفت أو مساحة التخزين غير متاحة.';}
+ });
 })();
 
 /* Import is deliberately conservative: no inferred ayah/page and no network uploads. */
