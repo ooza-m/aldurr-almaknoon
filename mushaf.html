@@ -1309,7 +1309,8 @@ let lastRecErrorSessionId=null;
 let ERR=[];try{const dismissed=new Set(JSON.parse(LS('durr-error-dismissals-v86','[]')));ERR=(JSON.parse(LS('durr-errors','[]'))||[]).filter(e=>!dismissed.has(e.session+'|'+e.vk+'#'+e.wi));}catch(e){ERR=[];}
 function saveErr(){LSet('durr-errors',JSON.stringify(ERR));}
 function sid(){return 'rs_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);}
-function newRecSession(){return{id:sid(),task:REC_RUNTIME_TASK||'free',planId:ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.id||'',plannedPages:ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.pages?ACTIVE_TASK_SESSION.pages.slice():[],startedAt:Date.now(),startPage:cur,engine:'session-only',engineModel:'',pages:[],findings:[],stats:{wordHints:0,ayahHints:0,eyeShows:0,spokenMatches:0,suspectedSkips:0,quranChunks:0,browserChunks:0,uncertain:0,mutashabih:0,quranLatencyMs:0,quranLatencyN:0,quranLatencyMax:0,warmupMs:0},version:86};}
+const DURR_FOLLOW_ONLY_V1=true;
+function newRecSession(){return{id:sid(),task:REC_RUNTIME_TASK||'free',planId:ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.id||'',plannedPages:ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.pages?ACTIVE_TASK_SESSION.pages.slice():[],startedAt:Date.now(),startPage:cur,engine:'follow-along',engineModel:'',errorDetectionEnabled:false,pages:[],findings:[],stats:{wordHints:0,ayahHints:0,eyeShows:0,spokenMatches:0,suspectedSkips:0,quranChunks:0,browserChunks:0,uncertain:0,mutashabih:0,quranLatencyMs:0,quranLatencyN:0,quranLatencyMax:0,warmupMs:0},version:86};}
 
 const recContexts=new Map(),qasrRunsV86=new Map();
 function ensureRecContextV86(){
@@ -1336,7 +1337,9 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
  if(!ctx||ctx.finalized)return;const sec=ctx.sections.get(page);if(!sec)return;
  const active=recMode&&recSession?.id===ctx.session.id&&cur===page&&sec.words===recWords;
  if(active&&recWordPos!==sec.tracker.cursor){sec.tracker.cursor=recWordPos;if(recWordPos>0)sec.tracker.located=true;}
- const alignmentStart=performance.now(),result=sec.tracker.feed(text,{source});if(ctx.session?.liveTrace){if(result)ctx.session.liveTrace.aligned++;else ctx.session.liveTrace.blocked++;if(result?.updates?.length)ctx.session.liveTrace.updates+=result.updates.filter(e=>e.active).length;}if(ctx.session?.stats){const st=ctx.session.stats;st.alignmentMs=(st.alignmentMs||0)+Math.round(performance.now()-alignmentStart);st.alignmentN=(st.alignmentN||0)+1;}if(source==='quran-asr')ctx.session.stats.quranChunks++;else ctx.session.stats.browserChunks++;
+ const alignmentStart=performance.now(),result=sec.tracker.feed(text,{source});
+ // Follow-along is not an accuracy assessment. Never persist or display ASR errors.
+ if(DURR_FOLLOW_ONLY_V1){sec.tracker.errors.clear();sec.tracker.pendingErrors.clear();if(result)result.updates=[];}if(ctx.session?.liveTrace){if(result)ctx.session.liveTrace.aligned++;else ctx.session.liveTrace.blocked++;if(result?.updates?.length)ctx.session.liveTrace.updates+=result.updates.filter(e=>e.active).length;}if(ctx.session?.stats){const st=ctx.session.stats;st.alignmentMs=(st.alignmentMs||0)+Math.round(performance.now()-alignmentStart);st.alignmentN=(st.alignmentN||0)+1;}if(source==='quran-asr')ctx.session.stats.quranChunks++;else ctx.session.stats.browserChunks++;
  if(!result){if(active)setEngine('live','جارٍ تحديد موضع التلاوة · واصلي القراءة');return;}
  for(const key of sec.tracker.covered){sec.state.covered.add(key);const split=key.lastIndexOf('#'),vk=key.slice(0,split),wi=+key.slice(split+1);sec.state.verses[vk]?.covered.add(wi);}
  result.updates.forEach(event=>{
@@ -1347,7 +1350,7 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
    const previous=ctx.session.findings.find(f=>f.automatic&&f.page===page&&f.vk===event.vk&&f.wi===event.wi);
    const finding={...event,type:'automatic_'+event.type,page,automatic:true,userConfirmed:false};if(previous)Object.assign(previous,finding);else ctx.session.findings.push(finding);
  });
- if(result.updates.length)saveErr();
+ if(result.updates.length&&!DURR_FOLLOW_ONLY_V1)saveErr();
  snapshotStateV86(ctx.session,sec.state);
  if(!active)return;
  if(result.initial){const startSeq=sec.words[result.start]?.seqIndex||0;sec.seq.forEach((item,index)=>{if(index<startSeq)item.el.classList.add('rvl','rec-context');});setEngine('live','تم تحديد موضعك · التتبّع مستمر');}
@@ -1390,8 +1393,8 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
 }
 function renderRecitationV89(ctx,sec,ops=[]){
  clearTimeout(sec.gateTimer);const gate=sec.gate||(sec.gate=new DurrRecitation.RevealGate(sec.words)),state=gate.update(ops,sec.tracker.errors);sec.gateWaiting=state.waiting;
- for(const item of state.visible){item.word.el?.classList.add('rvl');item.word.el?.classList.toggle('rec-skipped',item.omitted);}
- if(state.waiting){setEngine('live','يوجد سقط قبل موضعك · يمكنك العودة لتصحيحه');sec.gateTimer=setTimeout(()=>{if(ctx.finalized||!recMode||recSession?.id!==ctx.session.id||cur!==sec.page)return;renderRecitationV89(ctx,sec);if(!sec.gateWaiting&&recOn&&!recFinishing){const end=ctx.session.recall?sec.words.findLastIndex(w=>w.vk===ctx.session.recall.vk)+1:recWords.length;if(recWordPos>=end)ctx.session.recall?finishReciteSession(false):autoAdvance();}},Math.max(1,state.remaining+5));}
+ for(const item of state.visible){item.word.el?.classList.add('rvl');item.word.el?.classList.remove('rec-skipped');}
+ if(state.waiting&&!DURR_FOLLOW_ONLY_V1){setEngine('live','يوجد سقط قبل موضعك · يمكنك العودة لتصحيحه');sec.gateTimer=setTimeout(()=>{if(ctx.finalized||!recMode||recSession?.id!==ctx.session.id||cur!==sec.page)return;renderRecitationV89(ctx,sec);if(!sec.gateWaiting&&recOn&&!recFinishing){const end=ctx.session.recall?sec.words.findLastIndex(w=>w.vk===ctx.session.recall.vk)+1:recWords.length;if(recWordPos>=end)ctx.session.recall?finishReciteSession(false):autoAdvance();}},Math.max(1,state.remaining+5));}
 }
 let voiceLocatorV89=null;
 function recordRecLocationDiagnosticV103(event){
