@@ -4297,7 +4297,7 @@ renderAll();
 (function initTarteelHistoryViewerV118(){
  const button=document.getElementById('tarteelHistoryOpen'),panel=document.getElementById('tarteelHistoryPanel');
  if(!button||!panel)return;
- let archive=null,items=[],versePages=null;
+ let archive=null,items=[],versePages=null,historyIndex=null;
  const labels={EXTRA_WORDS:'زيادة كلمات',INCORRECT_WORDS:'قراءة غير مطابقة',MISSED_WORDS:'سقوط كلمات',INCORRECT_TASHKEEL:'خطأ تشكيل',PEEKED_WORDS:'استعانة بالمصحف'};
  const safe=v=>esc(String(v??''));
  const loadVersePages=async()=>{
@@ -4330,29 +4330,32 @@ renderAll();
      get.onsuccess=()=>{resolve(get.result||null);db.close();};get.onerror=()=>{reject(get.error);db.close();};
    };
  });
- const draw=()=>{
-   const sid=Number(panel.querySelector('#thSurah')?.value||0),type=panel.querySelector('#thType')?.value||'';
-   const rows=[];let count=0;
-   for(const m of archive.mistakes||[]){
-     if(type&&m.type!==type)continue;
-     for(const pos of m.positions||[]){
-       const surah=+pos.surah_number,ayah=+pos.ayah_number;
-       if(!(surah>=1&&surah<=114&&ayah>=1)||sid&&surah!==sid)continue;
-       count++;
-       if(rows.length<80)rows.push({m,pos,surah,ayah});
+ const buildHistoryIndex=()=>{
+   if(historyIndex)return historyIndex;
+   const all=[],bySurah=new Map(),byType=new Map(),byPair=new Map();
+   for(const m of archive.mistakes||[])for(const pos of m.positions||[]){
+     const surah=+pos.surah_number,ayah=+pos.ayah_number;
+     if(!(surah>=1&&surah<=114&&ayah>=1))continue;
+     const item={m,pos,surah,ayah},idx=all.push(item)-1;
+     for(const [map,key] of [[bySurah,surah],[byType,m.type||'other'],[byPair,surah+'|'+(m.type||'other')]]){
+       if(!map.has(key))map.set(key,[]);map.get(key).push(idx);
      }
    }
+   historyIndex={all,bySurah,byType,byPair};return historyIndex;
+ };
+ const draw=()=>{
+   const sid=Number(panel.querySelector('#thSurah')?.value||0),type=panel.querySelector('#thType')?.value||'';
+   const ix=buildHistoryIndex();
+   const indices=sid&&type?(ix.byPair.get(sid+'|'+type)||[]):sid?(ix.bySurah.get(sid)||[]):type?(ix.byType.get(type)||[]):null;
+   const iterable=indices||ix.all.map((_,i)=>i);
+   const count=iterable.length,rows=iterable.slice(0,80).map(i=>ix.all[i]);
    items=rows;
    const view=panel.querySelector('#thResults');
    const counts=new Map();
-   for(const m of archive.mistakes||[]){
-     if(type&&m.type!==type)continue;
-     for(const pos of m.positions||[]){
-       const surah=+pos.surah_number,ayah=+pos.ayah_number;
-       if(!(surah>=1&&surah<=114&&ayah>=1)||(sid&&sid!==surah))continue;
-       const key=surah+':'+ayah+'|'+(m.type||'other');
-       counts.set(key,(counts.get(key)||0)+1);
-     }
+   for(const index of iterable){
+     const {surah,ayah,m}=ix.all[index];
+     const key=surah+':'+ayah+'|'+(m.type||'other');
+     counts.set(key,(counts.get(key)||0)+1);
    }
    const top=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
    const summary=panel.querySelector('#thSummary');
@@ -4367,8 +4370,16 @@ renderAll();
       const already=(S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===String(r.m.id||'')&&e.verseKey===r.surah+':'+r.ayah);
       return '<div style="padding:8px 0;border-top:1px solid var(--line);font-size:.8rem"><b>'+safe((SURAHS.find(x=>x[0]===r.surah)||[])[1]||r.surah)+' · آية '+r.ayah+'</b> · '+safe(labels[r.m.type]||r.m.type||'ملاحظة')+
         '<div style="color:var(--muted)">'+(valid?'وجه '+page:'الوجه غير محدد')+' · ملاحظة آلية غير مؤكدة</div>'+
+        (valid?'<button class="btn btn-ghost btn-sm" data-th-open="'+i+'" data-th-page="'+page+'">فتح الآية</button>':choices.length>1?'<button class="btn btn-ghost btn-sm" data-th-open="'+i+'">فتح الآية</button>':'')+
         (valid?'<button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" data-th-page="'+page+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':choices.length>1?'<label style="display:block;margin-top:5px">حددي موضع الخطأ <select data-th-select="'+i+'" style="max-width:160px"><option value="">اختاري الوجه</option>'+choices.map(p=>'<option value="'+p+'">وجه '+p+'</option>').join('')+'</select></label><button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':'')+'</div>';
     }).join('');
+   view.querySelectorAll('[data-th-open]').forEach(b=>b.addEventListener('click',()=>{
+     const r=items[+b.dataset.thOpen];if(!r)return;
+     const chosen=view.querySelector('[data-th-select="'+b.dataset.thOpen+'"]');
+     const page=Number(chosen?chosen.value:b.dataset.thPage);
+     if(!page||!pagesFor(r.surah,r.ayah).includes(page)){toast('اختاري الوجه أولًا لفتح الآية في موضعها الصحيح');return;}
+     openMushafAtV50(page,'','',r.surah+':'+r.ayah);
+   }));
    view.querySelectorAll('[data-th-approve]').forEach(b=>b.addEventListener('click',()=>{
      const r=items[+b.dataset.thApprove];if(!r)return;
      const selection=view.querySelector('[data-th-select="'+b.dataset.thApprove+'"]');
