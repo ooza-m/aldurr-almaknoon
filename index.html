@@ -1983,26 +1983,33 @@ function scheduleReview(surahId,success){
   const d=new Date();d.setDate(d.getDate()+days);rec.due=keyOf(d);rec.last=todayKey();
   S.reviewSched[surahId]=rec;
 }
+/* أولوية المراجعة دليل إرشادي، وليست حكمًا آليًا على جودة حفظ الوجه. */
+function pageReviewEvidenceV115(p){
+  const errors=(S.errors||[]).filter(e=>+e.page===+p&&!e.archived&&e.aiDetected!==true);
+  const sessions=(S.recitationSessions||[]).filter(rs=>['fix','near','far','new'].includes(rs.task)).flatMap(rs=>
+    (rs.pages||[]).filter(pg=>+pg.page===+p&&pg.complete&&pg.coverage>=.95).map(pg=>({rs,pg})));
+  const scored=sessions.filter(({rs,pg})=>rs.errorDetectionEnabled===true&&rs.analysisIncomplete!==true&&Number.isFinite(+pg.score));
+  const latest=scored.sort((a,b)=>(b.rs.endedAt||0)-(a.rs.endedAt||0))[0];
+  return{activeErrors:errors.length,verifiedScore:latest?+latest.pg.score:null,
+    scoreSource:latest?'verified-recitation':null};
+}
 function buildReviewSuggestions(){
-  const sugg=[];
-  // اجمعي حالة الأوجه تلقائيًا حسب السورة (باستثناء الفاتحة — متقنة دائمًا)
-  const weakSur={},dueSur={};
-  for(let p=2;p<=604;p++){ // نبدأ من ٢ لاستثناء وجه الفاتحة
-    const info=autoPageInfo(p);if(info.state==='unseen'||info.state==='fresh')continue;
-    const s=surahOfPage(p);if(!s||s[0]===1)continue; // استثناء سورة الفاتحة
-    if(info.state==='weak'){weakSur[s[0]]=weakSur[s[0]]||{n:0,days:0};weakSur[s[0]].n++;weakSur[s[0]].days=Math.max(weakSur[s[0]].days,info.days||0);}
-    else if(info.state==='due'){dueSur[s[0]]=dueSur[s[0]]||{n:0,days:0};dueSur[s[0]].n++;dueSur[s[0]].days=Math.max(dueSur[s[0]].days,info.days||0);}
+  const groups=new Map(),today=todayKey();
+  for(let p=2;p<=604;p++){
+    const eng=reviewEngineStateV62(p);
+    if(eng.phase==='unseen'||!eng.due)continue;
+    const sur=surahOfPage(p);if(!sur||sur[0]===1)continue;
+    const info=autoPageInfo(p),ev=pageReviewEvidenceV115(p),sid=sur[0];
+    const needsAttention=ev.activeErrors>0;
+    const priority=(needsAttention?1000:0)+(info.state==='weak'?400:0)+Math.min(365,eng.overdueDays||info.days||0);
+    let group=groups.get(sid);if(!group){group={sur:sur[1],pages:0,highest:0,errors:0,oldest:0,firstPage:p};groups.set(sid,group);}
+    group.pages++;group.highest=Math.max(group.highest,priority);group.errors+=needsAttention?1:0;
+    group.oldest=Math.max(group.oldest,eng.overdueDays||0);
   }
-  const seen={};
-  // ١) المتفلّت (أولوية قصوى) — الأكثر تأخّرًا أولًا
-  Object.entries(weakSur).sort((a,b)=>b[1].days-a[1].days).slice(0,3).forEach(([sid,o])=>{
-    const nm=(SURAHS.find(s=>s[0]==sid)||[])[1]||'';seen[sid]=1;
-    sugg.push({sur:nm,pages:o.n,reason:`متفلّتة · منذ ${toAr(o.days)} يومًا`,level:'high'});});
-  // ٢) يحتاج مراجعة
-  Object.entries(dueSur).filter(([sid])=>!seen[sid]).sort((a,b)=>b[1].days-a[1].days).slice(0,3).forEach(([sid,o])=>{
-    const nm=(SURAHS.find(s=>s[0]==sid)||[])[1]||'';
-    sugg.push({sur:nm,pages:o.n,reason:`تحتاج مراجعة · منذ ${toAr(o.days)} يومًا`,level:'mid'});});
-  return sugg.slice(0,5);
+  return [...groups.values()].sort((a,b)=>b.highest-a.highest||b.oldest-a.oldest||a.firstPage-b.firstPage).slice(0,5).map(g=>({
+    sur:g.sur,pages:g.pages,level:g.errors?'high':g.highest>=400?'high':'mid',
+    reason:g.errors?'أخطاء مسجّلة · '+toAr(g.errors)+' وجهًا يحتاج عناية':g.oldest?'مستحقة منذ '+toAr(g.oldest)+' يومًا':'حان موعد المراجعة'
+  }));
 }
 let smartReviewOpen=false;
 function renderSmartReview(){
@@ -2020,7 +2027,7 @@ function renderSmartReview(){
         <span class="att-dot" style="background:${s.level==='high'?'var(--clay)':s.level==='mid'?'var(--gold)':'var(--gold-soft)'}"></span>
         <span style="flex:1;font-size:.86rem"><b>${esc(s.sur)}</b> <span style="color:var(--muted);font-size:.78rem">· ${s.pages?facesShort(s.pages)+' · ':''}${esc(s.reason)}</span></span>
       </div>`).join('')}
-      <p class="hint" style="margin:8px 0 0">راجعي هذه المواضع اليوم لتثبيتها بإذن الله. تُجدوَل المواعيد تلقائيًا بالتباعد.</p>
+      <p class="hint" style="margin:8px 0 0">الترتيب بحسب موعد المراجعة والأخطاء المسجّلة، ولا يُعد تقييمًا آليًا للإتقان.</p>
     </div>
   </div>`;
   const head=document.getElementById('srHead');
