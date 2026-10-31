@@ -1528,7 +1528,15 @@ function reviewEngineStateV62(p){
   const age=Math.max(0,daysBetween(first,todayKey())),doneToday=completeReviewTodayV62(p);
   const x=ensurePageSchedV62(p);
   if(age<=30)return{phase:'fix',day:Math.min(30,Math.max(1,age)),due:age>=1&&!doneToday,doneToday,firstMemDate:first,nextDue:doneToday?addDaysKeyV62(todayKey(),1):(x.nextDue||todayKey()),schedule:x};
-  const phase=x&&x.phase==='far'?'far':'near',dueDate=(x&&x.nextDue)||todayKey();
+  // A manual review is not a scored recitation. Respect its date without
+  // promoting mastery levels or overwriting the original schedule/history.
+  const latestManual=(S.logs||[]).filter(log=>log.date&&log.date>=first&&log.date<=todayKey()&&(log.revList||[]).some(item=>{
+    const range=item.from&&item.to?[Math.min(+item.from,+item.to),Math.max(+item.from,+item.to)]:pagesOfSurah(+item.surahId);
+    return range&&+p>=range[0]&&+p<=range[1];
+  })).reduce((latest,log)=>!latest||log.date>latest?log.date:latest,null);
+  const phase=x&&x.phase==='far'?'far':'near';
+  const manualIsLatest=latestManual&&(!x.lastReview||latestManual>x.lastReview);
+  const dueDate=manualIsLatest?addDaysKeyV62(latestManual,phase==='far'?7:3):((x&&x.nextDue)||todayKey());
   return{phase,due:!doneToday&&dueDate<=todayKey(),doneToday,firstMemDate:first,nextDue:dueDate,overdueDays:dueDate<=todayKey()?Math.max(0,daysBetween(dueDate,todayKey())):0,schedule:x};
 }
 function updateReviewEngineV62(p,task,date,pg){
