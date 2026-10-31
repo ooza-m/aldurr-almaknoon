@@ -969,6 +969,12 @@ window.FIREBASE_CONFIG = {
       <h2><span class="em">✦</span> سجلّ الأخطاء</h2>
       <p class="hint">كلّ خطأ مرتبطٌ بموضعه في المصحف (سورة/صفحة/آية) وبتاريخه. المواضع التي تتكرّر تُبرَز تلقائيًا لتركّزي عليها في المراجعة.</p>
       <button class="btn btn-primary btn-sm" id="btnAddErr2" style="margin-bottom:16px">+ تسجيل خطأ جديد</button>
+      <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px">
+        <b>استيراد أخطاء ترتيل</b>
+        <p class="hint">حمّلي ملف JSON أو CSV المستخرج من حسابك. ستظهر معاينة قبل الحفظ؛ ولا تُضاف مواضع لم يُتحقق من رقم وجهها.</p>
+        <input type="file" id="tarteelFile" accept=".json,.csv,application/json,text/csv" style="max-width:100%;font-size:.8rem">
+        <div id="tarteelPreview" style="margin-top:10px"></div>
+      </div>
       <div id="errHot"></div>
       <div id="errList"></div>
     </div>
@@ -4284,6 +4290,95 @@ renderAll();
  box.querySelector('[data-close]').onclick=()=>{cover.style.display='none';};
  cover.addEventListener('click',e=>{if(e.target===cover)cover.style.display='none';});
 })();
+
+/* Import is deliberately conservative: no inferred ayah/page and no network uploads. */
+(function setupTarteelImportV117(){
+  const input=document.getElementById('tarteelFile'),box=document.getElementById('tarteelPreview');
+  if(!input||!box)return;
+  let candidates=[];
+  const escapeText=v=>esc(String(v??''));
+  function parseCsv(text){
+    const rows=[];let row=[],field='',quoted=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}
+      else if(c===','&&!quoted){row.push(field);field='';}
+      else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);if(row.some(v=>v.trim()))rows.push(row);row=[];field='';}
+      else field+=c;
+    }
+    row.push(field);if(row.some(v=>v.trim()))rows.push(row);
+    const heads=(rows.shift()||[]).map(v=>v.trim().replace(/^\uFEFF/,''));
+    return rows.map(cells=>Object.fromEntries(heads.map((h,i)=>[h,cells[i]||''])));
+  }
+  function flatten(json){
+    const out=[],seen=new WeakSet();
+    const walk=(obj,depth)=>{
+      if(!obj||depth>7||out.length>15000)return;
+      if(Array.isArray(obj)){obj.forEach(x=>walk(x,depth+1));return;}
+      if(typeof obj!=='object'||seen.has(obj))return;seen.add(obj);
+      const keys=Object.keys(obj),lower=keys.map(k=>k.toLowerCase());
+      if(lower.some(k=>/surah|sura|chapter|verse_key|ayah/.test(k))&&lower.some(k=>/mistake|expected|heard|word|ayah|verse/.test(k)))out.push(obj);
+      else keys.forEach(k=>{if(obj[k]&&typeof obj[k]==='object')walk(obj[k],depth+1);});
+    };
+    walk(json,0);return out;
+  }
+  function normalize(record){
+    const lower=Object.fromEntries(Object.entries(record).map(([k,v])=>[k.toLowerCase(),v]));
+    const field=(...keys)=>{for(const key of keys){if(lower[key]!=null&&lower[key]!=='')return lower[key];}return null;};
+    const verseKey=String(field('verse_key','versekey','ayah_key')||'');
+    const parts=verseKey.match(/^(\d{1,3}):(\d{1,3})$/);
+    const sid=Number(field('surah_id','surah_number','surah','sura','chapter_id','chapter')||(parts&&parts[1]));
+    const ayah=Number(field('ayah','ayah_number','verse_number','verse','verse_id')||(parts&&parts[2]));
+    let page=Number(field('page','page_number','mushaf_page'));
+    if(!Number.isInteger(page)||page<1||page>604)page=null;
+    if(!Number.isInteger(sid)||sid<1||sid>114||!Number.isInteger(ayah)||ayah<1)return null;
+    const type=String(field('mistake_type','error_type','type','kind')||'خطأ مستورد').slice(0,80);
+    const expected=String(field('expected','expected_word','correct_word','correct')||'').slice(0,100);
+    const heard=String(field('heard','recited','actual','spoken_word')||'').slice(0,100);
+    const rawDate=String(field('date','created_at','timestamp','occurred_at')||'');
+    const date=/^\d{4}-\d{2}-\d{2}/.test(rawDate)?rawDate.slice(0,10):todayKey();
+    const rawIndex=field('word_index','word_position','word_number','wordindex');
+    const wi=rawIndex!==null&&Number.isInteger(Number(rawIndex))&&Number(rawIndex)>=0?Number(rawIndex):null;
+    const range=pagesOfSurah(sid);
+    if(page&&range&&(page<range[0]||page>range[1]))page=null;
+    // Only a single-page surah can be located without a page field.
+    if(!page&&range&&range[0]===range[1])page=range[0];
+    const reference=String(field('id','mistake_id','error_id')||'').slice(0,120);
+    return{surahId:sid,ayah,page,wordIndex:wi,type,expected,heard,date,reference};
+  }
+  const fingerprint=x=>[x.surahId,x.ayah,x.wordIndex??'',x.type,x.expected,x.heard,x.date].join('|');
+  const previous=e=>e.source==='tarteel'&&e.importKey;
+  const draw=()=>{
+    const valid=candidates.filter(x=>x.page),unlinked=candidates.filter(x=>!x.page);
+    const existing=new Set((S.errors||[]).filter(previous).map(x=>x.importKey));
+    const unique=valid.filter(x=>!existing.has(fingerprint(x)));
+    box.innerHTML='<div class="hint">'+candidates.length+' موضعًا مقروءًا · '+unique.length+' جديدًا صالحًا · '+(valid.length-unique.length)+' مكررًا · '+unlinked.length+' بلا وجه مؤكد</div>'+
+      (unique.length?'<div style="max-height:230px;overflow:auto;margin:8px 0">'+unique.slice(0,60).map(x=>
+      '<div style="border-top:1px solid var(--line);padding:6px 0;font-size:.78rem">سورة '+x.surahId+' · آية '+x.ayah+' · وجه '+x.page+' · '+escapeText(x.type)+(x.expected?' · '+escapeText(x.expected):'')+'</div>').join('')+(unique.length>60?'<small>تُعرض أول 60 نتيجة فقط</small>':'')+'</div>':'')+
+      (unlinked.length?'<p class="hint">المواضع التي لا تحمل رقم وجه موثوقًا لن تُستورد. يمكنك تسجيلها يدويًا أو استخدام ملف يتضمن رقم الوجه.</p>':'')+
+      '<button type="button" class="btn btn-primary btn-sm" id="tarteelCommit" '+(!unique.length?'disabled':'')+'>اعتماد '+unique.length+' خطأ</button>';
+    box.querySelector('#tarteelCommit')?.addEventListener('click',()=>{
+      const current=new Set((S.errors||[]).filter(previous).map(x=>x.importKey));let added=0;
+      for(const x of candidates){if(!x.page)continue;const key=fingerprint(x);if(current.has(key))continue;current.add(key);
+        S.errors.push({surah:(SURAHS.find(z=>z[0]===x.surahId)||[])[1]||'',surahId:x.surahId,page:x.page,ayah:x.ayah,verseKey:x.surahId+':'+x.ayah,
+          wordIndex:x.wordIndex,type:x.type,desc:[x.expected?'الصواب: '+x.expected:'',x.heard?'المسموع: '+x.heard:''].filter(Boolean).join(' · '),
+          date:x.date,source:'tarteel',importKey:key,externalId:x.reference,archived:false,verification:'imported-unverified'});added++;
+      }
+      if(added){S.errors.sort((a,b)=>(b.date||'').localeCompare(a.date||''));save();renderErrors();renderMap();refreshV50();}
+      draw();toast('أُضيف '+added+' خطأ من ملف ترتيل');
+    });
+  };
+  input.addEventListener('change',async()=>{
+    candidates=[];box.textContent='';const file=input.files&&input.files[0];if(!file)return;
+    if(file.size>15*1024*1024){box.textContent='حجم الملف يتجاوز 15 MB';return;}
+    try{
+      const text=await file.text();
+      const rows=/\.csv$/i.test(file.name)?parseCsv(text):flatten(JSON.parse(text));
+      const set=new Set();for(const row of rows){const x=normalize(row);if(!x)continue;const key=fingerprint(x);if(!set.has(key)){set.add(key);candidates.push(x);}}
+      draw();
+    }catch(e){box.textContent='تعذّرت قراءة الملف. اختاري JSON أو CSV يحتوي سجلات أخطاء مفصلة.';}
+  });
+})();
+
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
