@@ -4373,7 +4373,7 @@ renderAll();
       const valid=Number.isInteger(page)&&choices.includes(page);
       const already=(S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===String(r.m.id||'')&&e.verseKey===r.surah+':'+r.ayah);
       const rawDate=ix.sessionDates.get(String(r.m.session_id||''))||r.m.created_at||r.m.date||'';
-      const date=typeof rawDate==='string'&&/^\\d{4}-\\d{2}-\\d{2}/.test(rawDate)?rawDate.slice(0,10):'';
+      const date=typeof rawDate==='string'&&/^\d{4}-\d{2}-\d{2}/.test(rawDate)?rawDate.slice(0,10):'';
       return '<div style="padding:8px 0;border-top:1px solid var(--line);font-size:.8rem"><b>'+safe((SURAHS.find(x=>x[0]===r.surah)||[])[1]||r.surah)+' · آية '+r.ayah+'</b> · '+safe(labels[r.m.type]||r.m.type||'ملاحظة')+
         '<div style="color:var(--muted)">'+(valid?'وجه '+page:'الوجه غير محدد')+' · '+(already?'خطأ معتمد':'ملاحظة آلية غير مؤكدة')+(date?' · جلسة '+safe(date):' · تاريخ الجلسة غير متاح')+'</div>'+
         (valid?'<button class="btn btn-ghost btn-sm" data-th-open="'+i+'" data-th-page="'+page+'">فتح الآية</button>':choices.length>1?'<button class="btn btn-ghost btn-sm" data-th-open="'+i+'">فتح الآية</button>':'')+
