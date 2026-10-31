@@ -4352,12 +4352,13 @@ renderAll();
       const already=(S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===String(r.m.id||'')&&e.verseKey===r.surah+':'+r.ayah);
       return '<div style="padding:8px 0;border-top:1px solid var(--line);font-size:.8rem"><b>'+safe((SURAHS.find(x=>x[0]===r.surah)||[])[1]||r.surah)+' · آية '+r.ayah+'</b> · '+safe(labels[r.m.type]||r.m.type||'ملاحظة')+
         '<div style="color:var(--muted)">'+(valid?'وجه '+page:'الوجه غير محدد')+' · ملاحظة آلية غير مؤكدة</div>'+
-        (valid?'<button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" data-th-page="'+page+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':choices.length>1?'<small>آية تمتد عبر عدة أوجه؛ يلزم تعيين موضع الخطأ يدويًا</small>':'')+'</div>';
+        (valid?'<button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" data-th-page="'+page+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':choices.length>1?'<label style="display:block;margin-top:5px">حددي موضع الخطأ <select data-th-select="'+i+'" style="max-width:160px"><option value="">اختاري الوجه</option>'+choices.map(p=>'<option value="'+p+'">وجه '+p+'</option>').join('')+'</select></label><button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':'')+'</div>';
     }).join('');
    view.querySelectorAll('[data-th-approve]').forEach(b=>b.addEventListener('click',()=>{
      const r=items[+b.dataset.thApprove];if(!r)return;
-     const page=Number(b.dataset.thPage);
-     if(!Number.isInteger(page)||!pagesFor(r.surah,r.ayah).includes(page))return;
+     const selection=view.querySelector('[data-th-select="'+b.dataset.thApprove+'"]');
+     const page=Number(selection?selection.value:b.dataset.thPage);
+     if(!page||!Number.isInteger(page)||!pagesFor(r.surah,r.ayah).includes(page))return;
      const id=String(r.m.id||'');
      if((S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===id&&e.verseKey===r.surah+':'+r.ayah))return;
      S.errors.push({surah:(SURAHS.find(x=>x[0]===r.surah)||[])[1]||'',surahId:r.surah,ayah:r.ayah,page,verseKey:r.surah+':'+r.ayah,
