@@ -4344,6 +4344,21 @@ renderAll();
    }
    items=rows;
    const view=panel.querySelector('#thResults');
+   const counts=new Map();
+   for(const m of archive.mistakes||[]){
+     if(type&&m.type!==type)continue;
+     for(const pos of m.positions||[]){
+       const surah=+pos.surah_number,ayah=+pos.ayah_number;
+       if(!(surah>=1&&surah<=114&&ayah>=1)||(sid&&sid!==surah))continue;
+       const key=surah+':'+ayah+'|'+(m.type||'other');
+       counts.set(key,(counts.get(key)||0)+1);
+     }
+   }
+   const top=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+   const summary=panel.querySelector('#thSummary');
+   if(summary)summary.innerHTML='<b style="font-size:.82rem">أكثر المواضع تكرارًا في التصدير</b>'+
+     (top.length?top.map(([key,n])=>{const parts=key.split('|'),verse=parts[0].split(':'),name=(SURAHS.find(s=>s[0]===+verse[0])||[])[1]||verse[0];return '<div style="font-size:.78rem;border-top:1px solid var(--line);padding:5px 0">'+safe(name)+' · آية '+verse[1]+' · '+safe(labels[parts[1]]||parts[1])+' · '+n+' ملاحظة</div>';}).join(''):'<p class="hint">لا توجد مواضع مطابقة.</p>')+
+     '<p class="hint">التكرار هنا عدد الملاحظات الآلية، وليس عدد أخطاء الحفظ المؤكدة.</p>';
    view.innerHTML='<p class="hint">'+count+' موضعًا مطابقًا · تُعرض أول '+rows.length+' نتيجة</p>'+
     rows.map((r,i)=>{
       const choices=pagesFor(r.surah,r.ayah),raw=Number(r.pos.page_number||r.pos.mushaf_page||r.pos.page);
@@ -4379,7 +4394,7 @@ renderAll();
         SURAHS.map(s=>'<option value="'+s[0]+'">'+safe(s[1])+'</option>').join('')+'</select>'+
        '<select id="thType" style="flex:1;min-width:130px"><option value="">جميع الأنواع</option>'+
         Object.entries(labels).map(([k,v])=>'<option value="'+k+'">'+safe(v)+'</option>').join('')+'</select></div>'+
-       '<div id="thResults" style="max-height:340px;overflow:auto;margin-top:8px"></div></div>';
+       '<div id="thSummary" style="margin-top:12px;margin-bottom:10px"></div><div id="thResults" style="max-height:340px;overflow:auto;margin-top:8px"></div></div>';
      panel.querySelector('#thSurah').addEventListener('change',draw);
      panel.querySelector('#thType').addEventListener('change',draw);
      draw();
