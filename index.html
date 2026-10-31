@@ -4389,13 +4389,52 @@ renderAll();
             if(surah>=1&&surah<=114&&ayah>=1)positions.add(surah+':'+ayah);else missing++;
           }
         }
+        const archiveKey='durr-tarteel-history-v1';
+        async function saveHistoricalArchive(){
+          if(!window.indexedDB)throw new Error('indexeddb unavailable');
+          const db=await new Promise((resolve,reject)=>{
+            const request=indexedDB.open('durr-tarteel-history',1);
+            request.onupgradeneeded=()=>{const d=request.result;if(!d.objectStoreNames.contains('archives'))d.createObjectStore('archives');};
+            request.onsuccess=()=>resolve(request.result);
+            request.onerror=()=>reject(request.error);
+          });
+          try{
+            // A single imported snapshot, not 114k synced Firestore error rows.
+            await new Promise((resolve,reject)=>{
+              const tx=db.transaction('archives','readwrite');
+              tx.objectStore('archives').put({
+                format:parsed.format,version:parsed.version,importedAt:new Date().toISOString(),
+                sessions,mistakes,bookmarks,metadata:parsed.metadata||{}
+              },archiveKey);
+              tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+            });
+          }finally{db.close();}
+        }
+        async function archiveExists(){
+          if(!window.indexedDB)return false;
+          return new Promise(resolve=>{
+            const request=indexedDB.open('durr-tarteel-history',1);
+            request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('archives'))request.result.createObjectStore('archives');};
+            request.onerror=()=>resolve(false);
+            request.onsuccess=()=>{const db=request.result,tx=db.transaction('archives','readonly'),get=tx.objectStore('archives').getKey(archiveKey);get.onsuccess=()=>{resolve(get.result!==undefined);db.close();};get.onerror=()=>{resolve(false);db.close();};};
+          });
+        }
         box.innerHTML='<div style="padding:10px;border:1px solid var(--line);border-radius:10px">'+
           '<b>حزمة ترتيل المعتمدة · الإصدار 1</b>'+
           '<p class="hint">الجلسات: '+sessions.length+' · الملاحظات الصوتية: '+mistakes.length+' · علامات الآيات: '+bookmarks.length+'</p>'+
           '<p class="hint">مواضع آيات متميزة: '+positions.size+' · ملاحظات بلا جلسة: '+orphan+' · مواضع غير مفهومة: '+missing+'</p>'+
           Object.entries(counts).map(([key,n])=>'<div style="font-size:.8rem;padding:3px 0">'+escapeText(labels[key]||key)+' : '+n+'</div>').join('')+
-          '<p class="hint" style="color:var(--clay)">الملاحظات مستنتجة بواسطة ترتيل ولا تعد أخطاء مؤكدة. لم يُستورد شيء إلى سجل الأخطاء أو خطة الحفظ. يلزم ربط المواضع بمصحف المدينة وتصميم سجل منفصل للملاحظات التاريخية قبل اعتماد البيانات.</p>'+
+          '<p class="hint" style="color:var(--clay)">النتائج آلية وغير مؤكدة. تُحفظ الحزمة في هذا الجهاز فقط، ولا تدخل في أخطاء الحفظ أو الإنجاز أو مزامنة Firebase. لم يُعتمد ربط الأوجه بعد.</p>'+
+          '<button type="button" class="btn btn-primary btn-sm" id="tarteelArchive">حفظ السجل التاريخي محليًا</button> <span id="tarteelArchiveState" class="hint"></span>'+
           '</div>';
+        const button=box.querySelector('#tarteelArchive'),state=box.querySelector('#tarteelArchiveState');
+        archiveExists().then(exists=>{if(exists)state.textContent='توجد حزمة محفوظة على هذا الجهاز؛ إعادة الحفظ تستبدلها.';});
+        button.addEventListener('click',async()=>{
+          button.disabled=true;state.textContent='جارٍ حفظ السجل في مساحة الجهاز…';
+          try{await saveHistoricalArchive();state.textContent='حُفظ السجل التاريخي على هذا الجهاز، دون إضافة أخطاء مؤكدة.';}
+          catch(e){state.textContent='تعذّر الحفظ المحلي؛ تأكدي من توفر مساحة كافية في المتصفح.';}
+          finally{button.disabled=false;}
+        });
         return;
       }
       const rows=parsed===null?parseCsv(text):flatten(parsed);
