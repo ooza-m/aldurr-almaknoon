@@ -1605,10 +1605,12 @@ function taskPagesV60(id){
   }
   if(id==='fix')return fixationPagesV50().filter(p=>reviewEngineStateV62(p).due&&!allRev.has(p)&&!doneAuto.has(p));
   const bucket=reviewBucketsV50();
-  if(id==='near')return bucket.near.filter(x=>!nearDone.has(x.p)&&!allRev.has(x.p)&&!doneAuto.has(x.p)).map(x=>x.p);
+  if(id==='near')return bucket.near.filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
   if(id==='far'){
-    const daily=Math.min(bucket.far.length,memCount()>402?60:40);
-    return bucket.far.slice(0,daily).filter(x=>!farDone.has(x.p)&&!allRev.has(x.p)&&!doneAuto.has(x.p)).map(x=>x.p);
+    const completedFar=new Set([...allRev,...recitedPagesTodayV51('fix'),...recitedPagesTodayV51('near'),...recitedPagesTodayV51('far')]);
+    const alreadyDone=[...completedFar].filter(p=>firstMemDateV62(p)&&daysBetween(firstMemDateV62(p),todayKey())>30&&reviewEngineStateV62(p).phase==='far').length;
+    const daily=Math.max(0,Math.min(bucket.far.length,(memCount()>402?60:40)-alreadyDone));
+    return bucket.far.slice(0,daily).filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
   }
   return[];
 }
@@ -1617,9 +1619,14 @@ function tasksV50(){
   const memAuto=recitedPagesTodayV51('new'),fixAuto=recitedPagesTodayV51('fix'),nearAuto=recitedPagesTodayV51('near'),farAuto=recitedPagesTodayV51('far');
   const memDoneSet=new Set([...memLegacy,...memAuto]);
   const fix=fixationPagesV50(),bucket=reviewBucketsV50();
-  const fixDone=fix.filter(p=>allRev.has(p)||fixAuto.has(p)).length;
-  const nearTarget=bucket.near.length,nearDoneN=bucket.near.filter(x=>nearDone.has(x.p)||allRev.has(x.p)||nearAuto.has(x.p)).length;
-  const farDaily=Math.min(bucket.far.length,memCount()>402?60:40),farTargetPages=bucket.far.slice(0,farDaily),farDoneN=farTargetPages.filter(x=>farDone.has(x.p)||allRev.has(x.p)||farAuto.has(x.p)).length;
+  // Count distinct completed faces as well as pending ones: due buckets exclude completed faces.
+  const completedReview=new Set([...allRev,...fixAuto,...nearAuto,...farAuto]);
+  const fixDone=fix.filter(p=>completedReview.has(p)).length;
+  const reviewedNear=[...completedReview].filter(p=>{const first=firstMemDateV62(p);if(!first||daysBetween(first,todayKey())<=30)return false;return reviewEngineStateV62(p).phase==='near';});
+  const reviewedFar=[...completedReview].filter(p=>{const first=firstMemDateV62(p);if(!first||daysBetween(first,todayKey())<=30)return false;return reviewEngineStateV62(p).phase==='far';});
+  const nearDoneN=reviewedNear.length,nearTarget=bucket.near.length+nearDoneN;
+  const farLimit=memCount()>402?60:40;
+  const farDoneN=Math.min(reviewedFar.length,farLimit),farDaily=Math.min(bucket.far.length+farDoneN,farLimit);
   const newTarget=Math.max(1,(S.goal&&S.goal.pages)||1),halaqa=isHalaqaDay(todayKey(),new Date().getDay());
   const arr=[
     {id:'new',label:'حفظ جديد',done:memDoneSet.size,target:newTarget,pages:taskPagesV60('new'),kind:'book',action:'ابدئي جلسة الحفظ',color:'var(--green)'},
