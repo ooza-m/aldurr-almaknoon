@@ -4297,9 +4297,30 @@ renderAll();
 (function initTarteelHistoryViewerV118(){
  const button=document.getElementById('tarteelHistoryOpen'),panel=document.getElementById('tarteelHistoryPanel');
  if(!button||!panel)return;
- let archive=null,items=[];
+ let archive=null,items=[],versePages=null;
  const labels={EXTRA_WORDS:'زيادة كلمات',INCORRECT_WORDS:'قراءة غير مطابقة',MISSED_WORDS:'سقوط كلمات',INCORRECT_TASHKEEL:'خطأ تشكيل',PEEKED_WORDS:'استعانة بالمصحف'};
  const safe=v=>esc(String(v??''));
+ const loadVersePages=async()=>{
+   if(versePages)return versePages;
+   const response=await fetch('data/mushaf-data.json');
+   if(!response.ok)throw Error('تعذّر تحميل بيانات المصحف');
+   const data=await response.json(),map=new Map();
+   for(let page=1;page<=604;page++){
+     const segments=data.pages?.[String(page)]?.s||[];
+     for(const seg of segments){
+       const sid=Number(seg.id),start=Number(seg.vs),end=Number(seg.ve);
+       if(!Number.isInteger(sid)||!Number.isInteger(start)||!Number.isInteger(end)||end<start)continue;
+       for(let ayah=start;ayah<=end;ayah++){
+         const key=sid+':'+ayah,arr=map.get(key)||[];
+         if(!arr.includes(page))arr.push(page);
+         map.set(key,arr);
+       }
+     }
+   }
+   if(map.size<6000)throw Error('فهرس المصحف غير مكتمل');
+   versePages=map;return map;
+ };
+ const pagesFor=(sid,ayah)=>versePages?.get(sid+':'+ayah)||[];
  const load=()=>new Promise((resolve,reject)=>{
    const req=indexedDB.open('durr-tarteel-history',1);
    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('archives'))req.result.createObjectStore('archives');};
@@ -4325,17 +4346,18 @@ renderAll();
    const view=panel.querySelector('#thResults');
    view.innerHTML='<p class="hint">'+count+' موضعًا مطابقًا · تُعرض أول '+rows.length+' نتيجة</p>'+
     rows.map((r,i)=>{
-      const page=Number(r.pos.page_number||r.pos.mushaf_page||r.pos.page),range=pagesOfSurah(r.surah);
-      const valid=Number.isInteger(page)&&page>=1&&page<=604&&range&&page>=range[0]&&page<=range[1];
+      const choices=pagesFor(r.surah,r.ayah),raw=Number(r.pos.page_number||r.pos.mushaf_page||r.pos.page);
+      const page=choices.includes(raw)?raw:choices.length===1?choices[0]:null;
+      const valid=Number.isInteger(page)&&choices.includes(page);
       const already=(S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===String(r.m.id||'')&&e.verseKey===r.surah+':'+r.ayah);
       return '<div style="padding:8px 0;border-top:1px solid var(--line);font-size:.8rem"><b>'+safe((SURAHS.find(x=>x[0]===r.surah)||[])[1]||r.surah)+' · آية '+r.ayah+'</b> · '+safe(labels[r.m.type]||r.m.type||'ملاحظة')+
         '<div style="color:var(--muted)">'+(valid?'وجه '+page:'الوجه غير محدد')+' · ملاحظة آلية غير مؤكدة</div>'+
-        (valid?'<button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':'')+'</div>';
+        (valid?'<button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" data-th-page="'+page+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':choices.length>1?'<small>آية تمتد عبر عدة أوجه؛ يلزم تعيين موضع الخطأ يدويًا</small>':'')+'</div>';
     }).join('');
    view.querySelectorAll('[data-th-approve]').forEach(b=>b.addEventListener('click',()=>{
      const r=items[+b.dataset.thApprove];if(!r)return;
-     const page=Number(r.pos.page_number||r.pos.mushaf_page||r.pos.page),range=pagesOfSurah(r.surah);
-     if(!Number.isInteger(page)||page<1||page>604||!range||page<range[0]||page>range[1])return;
+     const page=Number(b.dataset.thPage);
+     if(!Number.isInteger(page)||!pagesFor(r.surah,r.ayah).includes(page))return;
      const id=String(r.m.id||'');
      if((S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===id&&e.verseKey===r.surah+':'+r.ayah))return;
      S.errors.push({surah:(SURAHS.find(x=>x[0]===r.surah)||[])[1]||'',surahId:r.surah,ayah:r.ayah,page,verseKey:r.surah+':'+r.ayah,
@@ -4349,6 +4371,7 @@ renderAll();
    try{
      if(!archive)archive=await load();
      if(!archive){panel.textContent='لا يوجد سجل محفوظ على هذا الجهاز. استوردي الحزمة واحفظيها أولًا.';return;}
+     await loadVersePages();
      panel.innerHTML='<div style="border:1px solid var(--line);border-radius:12px;padding:10px">'+
        '<b>ملاحظات ترتيل التاريخية</b><p class="hint">هذه ليست أخطاء مؤكدة. لا يمكنك اعتماد موضع بلا وجه موثوق.</p>'+
        '<div style="display:flex;gap:7px;flex-wrap:wrap"><select id="thSurah" style="flex:1;min-width:130px"><option value="">كل السور</option>'+
