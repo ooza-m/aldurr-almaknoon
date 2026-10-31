@@ -685,6 +685,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
+       <div id="smartReview"></div>
       <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
@@ -1664,6 +1665,7 @@ function renderHomeV50(){
   if(recent){const arr=[],streak=calcStreak(),month=pagesMemorizedInMonth();if(streak>0)arr.push([streak+' يومًا','سلسلة الاستمرار الحالية']);if(month>0)arr.push([month+' وجهًا','حفظ جديد هذا الشهر']);const listen=(S.activityEvents||[]).filter(e=>e&&e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir').length;if(listen)arr.push([listen+' جلسة سماع','سُجّلت تلقائيًا']);if(tf)arr.push([tf+' وجه تفسير','أُنجزت قراءته']);if(!arr.length)arr.push(['ابدئي أول جلسة','سيظهر تقدمك الحقيقي هنا']);recent.innerHTML=arr.slice(0,4).map(x=>'<div class="v50-glass v50-ach"><b>'+esc(x[0])+'</b><small>'+esc(x[1])+'</small></div>').join('');}
 }
 function renderTodayV50(){
+  renderSmartReview();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
@@ -1996,51 +1998,52 @@ function pageReviewEvidenceV115(p){
     scoreSource:latest?'verified-recitation':null};
 }
 function buildReviewSuggestions(){
-  const groups=new Map(),today=todayKey();
+  const rows=[];
+  const masteryRank={weak:4,needs:3,good:1,strong:0};
   for(let p=2;p<=604;p++){
     const eng=reviewEngineStateV62(p);
     if(eng.phase==='unseen'||!eng.due)continue;
     const sur=surahOfPage(p);if(!sur||sur[0]===1)continue;
-    const info=autoPageInfo(p),ev=pageReviewEvidenceV115(p),sid=sur[0];
-    const needsAttention=ev.activeErrors>0,mastery=masteryOfPageV116(p);
-    // Personal ratings rank due reviews; they never prove errors or alter due dates.
-    const masteryRank={weak:4,needs:3,good:1,strong:0};
-    const ratingPriority=mastery?masteryRank[mastery.level]||0:2;
-    const priority=ratingPriority*10000+(needsAttention?5000:0)+(info.state==='weak'?1000:0)+Math.min(365,eng.overdueDays||info.days||0);
-    let group=groups.get(sid);if(!group){group={sur:sur[1],pages:0,highest:0,errors:0,oldest:0,firstPage:p,weakRatings:0,needsRatings:0};groups.set(sid,group);}
-    group.pages++;group.highest=Math.max(group.highest,priority);group.errors+=needsAttention?1:0;
-    if(mastery?.level==='weak')group.weakRatings++;
-    if(mastery?.level==='needs')group.needsRatings++;
-    group.oldest=Math.max(group.oldest,eng.overdueDays||0);
+    const info=autoPageInfo(p),evidence=pageReviewEvidenceV115(p),mastery=masteryOfPageV116(p);
+    const ratingPriority=mastery?masteryRank[mastery.level]??2:2;
+    const overdue=Math.max(0,eng.overdueDays||0);
+    const priority=ratingPriority*10000+(evidence.activeErrors?5000:0)+(info.state==='weak'?1000:0)+Math.min(365,overdue);
+    const reasons=[];
+    if(mastery?.level==='weak')reasons.push('ضبط متفلّت');
+    else if(mastery?.level==='needs')reasons.push('يحتاج تثبيت');
+    else if(mastery?.level==='good')reasons.push('ضبط جيد');
+    else if(mastery?.level==='strong')reasons.push('ضبط ثابت');
+    if(evidence.activeErrors)reasons.push('أخطاء مسجّلة');
+    if(overdue)reasons.push('متأخر '+overdue+' يومًا');
+    else if(!reasons.length)reasons.push('مراجعة مستحقة');
+    rows.push({page:p,sur:sur[1],phase:eng.phase,priority,reasons,
+      level:mastery?.level==='weak'||mastery?.level==='needs'||evidence.activeErrors?'high':'mid'});
   }
-  return [...groups.values()].sort((a,b)=>b.highest-a.highest||b.oldest-a.oldest||a.firstPage-b.firstPage).slice(0,5).map(g=>({
-    sur:g.sur,pages:g.pages,level:g.weakRatings||g.needsRatings||g.errors?'high':'mid',
-    reason:g.weakRatings?'ضبط متفلّت · '+toAr(g.weakRatings)+' وجهًا':g.needsRatings?'يحتاج تثبيت · '+toAr(g.needsRatings)+' وجهًا':g.errors?'أخطاء مسجّلة · '+toAr(g.errors)+' وجهًا يحتاج عناية':g.oldest?'مستحقة منذ '+toAr(g.oldest)+' يومًا':'حان موعد المراجعة'
-  }));
+  return rows.sort((a,b)=>b.priority-a.priority||a.page-b.page).slice(0,8);
 }
-let smartReviewOpen=false;
+let smartReviewOpen=true;
 function renderSmartReview(){
   const box=document.getElementById('smartReview');if(!box)return;
-  const sugg=buildReviewSuggestions();
-  if(!sugg.length){box.innerHTML='';return;}
-  const open=smartReviewOpen;
-  box.innerHTML=`<div style="background:linear-gradient(160deg,#fff,var(--parch-2));border:1px solid var(--line);border-radius:14px;overflow:hidden">
-    <div id="srHead" style="display:flex;align-items:center;gap:8px;padding:14px;cursor:pointer">
-      <span style="font-weight:700;font-size:.9rem;color:var(--ink);flex:1"> اقتراح مراجعة اليوم <span style="color:var(--gold);font-size:.78rem;font-weight:600">(${toAr(sugg.length)})</span></span>
-      <span id="srChev" style="color:var(--muted);transition:.2s;transform:rotate(${open?'180deg':'0'})">▾</span>
-    </div>
-    <div id="srBody" style="padding:0 14px 14px;${open?'':'display:none'}">
-      ${sugg.map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)">
-        <span class="att-dot" style="background:${s.level==='high'?'var(--clay)':s.level==='mid'?'var(--gold)':'var(--gold-soft)'}"></span>
-        <span style="flex:1;font-size:.86rem"><b>${esc(s.sur)}</b> <span style="color:var(--muted);font-size:.78rem">· ${s.pages?facesShort(s.pages)+' · ':''}${esc(s.reason)}</span></span>
-      </div>`).join('')}
-      <p class="hint" style="margin:8px 0 0">الترتيب بحسب موعد المراجعة والأخطاء المسجّلة، ولا يُعد تقييمًا آليًا للإتقان.</p>
-    </div>
-  </div>`;
-  const head=document.getElementById('srHead');
-  if(head)head.addEventListener('click',()=>{smartReviewOpen=!smartReviewOpen;
-    document.getElementById('srBody').style.display=smartReviewOpen?'':'none';
-    document.getElementById('srChev').style.transform=smartReviewOpen?'rotate(180deg)':'rotate(0)';});
+  const suggestions=buildReviewSuggestions();
+  if(!suggestions.length){box.innerHTML='';return;}
+  box.innerHTML='<div class="v50-glass v50-card" style="padding:14px">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">'+
+      '<div><small style="color:var(--muted)">المراجعة المتباعدة</small><h3 style="font-size:1rem">أوجه مقترحة اليوم</h3></div>'+
+      '<button class="btn btn-ghost btn-sm" id="srToggle" type="button" aria-expanded="'+smartReviewOpen+'">'+(smartReviewOpen?'طيّ':'عرض')+'</button>'+
+    '</div>'+
+    '<div id="srBody" style="'+(smartReviewOpen?'':'display:none')+'">'+
+      suggestions.map(item=>'<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid var(--line)">'+
+        '<span style="min-width:44px;text-align:center;font-weight:800;color:var(--ink)">ص '+item.page+'</span>'+
+        '<div style="flex:1;min-width:0"><b style="font-size:.86rem">'+esc(item.sur)+'</b>'+
+          '<div style="font-size:.74rem;color:var(--muted)">'+esc(item.reasons.join(' · '))+'</div></div>'+
+        '<button class="btn btn-primary btn-sm" type="button" data-sr-page="'+item.page+'" data-sr-task="'+item.phase+'">راجعي</button>'+
+      '</div>').join('')+
+      '<p class="hint" style="margin-top:9px">هذه أولويات مقترحة، وليست حكمًا آليًا على مستوى الحفظ.</p>'+
+    '</div></div>';
+  document.getElementById('srToggle')?.addEventListener('click',()=>{smartReviewOpen=!smartReviewOpen;const el=document.getElementById('srBody');if(el)el.style.display=smartReviewOpen?'':'none';renderSmartReview();});
+  box.querySelectorAll('[data-sr-page]').forEach(btn=>btn.addEventListener('click',()=>{
+    openMushafAtV50(+btn.dataset.srPage,'recite',btn.dataset.srTask);
+  }));
 }
 /* ===== إحصاءات ملهمة ===== */
 function pagesMemorizedInMonth(){
