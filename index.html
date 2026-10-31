@@ -4352,6 +4352,7 @@ renderAll();
    }
    historyIndex={all,bySurah,byType,byPair,sessionDates,uniqueSessions,months,byPage,bySurahCount};return historyIndex;
  };
+ // This key uses the actual exported finding fields, not a nonexistent mistake ID.
  const historicalKey=r=>[
     r.m.session_id||'',r.m.type||'',r.m.created_at||'',
     r.m.start_ms??'',r.m.end_ms??'',r.surah,r.ayah,r.pos.word_number??'',
