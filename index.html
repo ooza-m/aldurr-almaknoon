@@ -4334,7 +4334,7 @@ renderAll();
  const buildHistoryIndex=()=>{
    if(historyIndex)return historyIndex;
    const all=[],bySurah=new Map(),byType=new Map(),byPair=new Map();
-   const sessionDates=new Map((archive.sessions||[]).map(session=>[String(session.id),session.started_at||session.created_at||session.date||session.ended_at||'']));
+   const sessionDates=new Map((archive.sessions||[]).map(session=>[String(session.id),session.start||session.started_at||session.created_at||session.date||session.end||session.ended_at||'']));
    const uniqueSessions=new Set(),months=new Map(),byPage=new Map(),bySurahCount=new Map();
    for(const m of archive.mistakes||[])for(const pos of m.positions||[]){
      const surah=+pos.surah_number,ayah=+pos.ayah_number;
@@ -4352,6 +4352,11 @@ renderAll();
    }
    historyIndex={all,bySurah,byType,byPair,sessionDates,uniqueSessions,months,byPage,bySurahCount};return historyIndex;
  };
+ const historicalKey=r=>[
+    r.m.session_id||'',r.m.type||'',r.m.created_at||'',
+    r.m.start_ms??'',r.m.end_ms??'',r.surah,r.ayah,r.pos.word_number??'',
+    r.m.expected||'',r.m.received||''
+   ].map(v=>encodeURIComponent(String(v))).join('|');
  const drawStatistics=()=>{
    const ix=buildHistoryIndex(),target=panel.querySelector('#thStats');
    if(!target)return;
@@ -4394,7 +4399,8 @@ renderAll();
       const choices=pagesFor(r.surah,r.ayah),raw=Number(r.pos.page_number||r.pos.mushaf_page||r.pos.page);
       const page=choices.includes(raw)?raw:choices.length===1?choices[0]:null;
       const valid=Number.isInteger(page)&&choices.includes(page);
-      const already=(S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===String(r.m.id||'')&&e.verseKey===r.surah+':'+r.ayah);
+      const key=historicalKey(r);
+      const already=(S.errors||[]).some(e=>e.source==='tarteel'&&e.importKey===key);
       const rawDate=ix.sessionDates.get(String(r.m.session_id||''))||r.m.created_at||r.m.date||'';
       const date=typeof rawDate==='string'&&/^\d{4}-\d{2}-\d{2}/.test(rawDate)?rawDate.slice(0,10):'';
       return '<div style="padding:8px 0;border-top:1px solid var(--line);font-size:.8rem"><b>'+safe((SURAHS.find(x=>x[0]===r.surah)||[])[1]||r.surah)+' · آية '+r.ayah+'</b> · '+safe(labels[r.m.type]||r.m.type||'ملاحظة')+
@@ -4417,10 +4423,11 @@ renderAll();
      const selection=view.querySelector('[data-th-select="'+b.dataset.thApprove+'"]');
      const page=Number(selection?selection.value:b.dataset.thPage);
      if(!page||!Number.isInteger(page)||!pagesFor(r.surah,r.ayah).includes(page))return;
-     const id=String(r.m.id||'');
-     if((S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===id&&e.verseKey===r.surah+':'+r.ayah))return;
+     const id=String(r.m.session_id||'');
+     const key=historicalKey(r);
+     if((S.errors||[]).some(e=>e.source==='tarteel'&&e.importKey===key))return;
      S.errors.push({surah:(SURAHS.find(x=>x[0]===r.surah)||[])[1]||'',surahId:r.surah,ayah:r.ayah,page,verseKey:r.surah+':'+r.ayah,
-       type:labels[r.m.type]||'خطأ من ترتيل',desc:'اعتمدته المستخدمة من السجل التاريخي',source:'tarteel',externalId:id,
+       type:labels[r.m.type]||'خطأ من ترتيل',desc:'اعتمدته المستخدمة من السجل التاريخي'+(r.m.expected?' · الصواب: '+String(r.m.expected).slice(0,90):''),source:'tarteel',externalId:id,importKey:key,
        date:todayKey(),archived:false,userConfirmed:true,verification:'manual-confirmation'});
      save();renderErrors();renderMap();refreshV50();draw();
    }));
