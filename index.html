@@ -4297,7 +4297,7 @@ renderAll();
 (function initTarteelHistoryViewerV118(){
  const button=document.getElementById('tarteelHistoryOpen'),panel=document.getElementById('tarteelHistoryPanel');
  if(!button||!panel)return;
- let archive=null,items=[],versePages=null,historyIndex=null,historyPage=0;
+ let archive=null,items=[],versePages=null,historyIndex=null,historyPage=0,historyView='records';
  const HISTORY_SIZE=30;
  const labels={EXTRA_WORDS:'زيادة كلمات',INCORRECT_WORDS:'قراءة غير مطابقة',MISSED_WORDS:'سقوط كلمات',INCORRECT_TASHKEEL:'خطأ تشكيل',PEEKED_WORDS:'استعانة بالمصحف'};
  const safe=v=>esc(String(v??''));
@@ -4335,15 +4335,38 @@ renderAll();
    if(historyIndex)return historyIndex;
    const all=[],bySurah=new Map(),byType=new Map(),byPair=new Map();
    const sessionDates=new Map((archive.sessions||[]).map(session=>[String(session.id),session.started_at||session.created_at||session.date||session.ended_at||'']));
+   const uniqueSessions=new Set(),months=new Map(),byPage=new Map(),bySurahCount=new Map();
    for(const m of archive.mistakes||[])for(const pos of m.positions||[]){
      const surah=+pos.surah_number,ayah=+pos.ayah_number;
      if(!(surah>=1&&surah<=114&&ayah>=1))continue;
      const item={m,pos,surah,ayah},idx=all.push(item)-1;
+     const sessionId=String(m.session_id||'');if(sessionId)uniqueSessions.add(sessionId);
+     const rawDate=sessionDates.get(sessionId)||m.created_at||m.date||'';
+     const month=String(rawDate).slice(0,7);if(/^\d{4}-\d{2}$/.test(month))months.set(month,(months.get(month)||0)+1);
+     bySurahCount.set(surah,(bySurahCount.get(surah)||0)+1);
+     const pgList=versePages?.get(surah+':'+ayah)||[];
+     for(const page of pgList)byPage.set(page,(byPage.get(page)||0)+1);
      for(const [map,key] of [[bySurah,surah],[byType,m.type||'other'],[byPair,surah+'|'+(m.type||'other')]]){
        if(!map.has(key))map.set(key,[]);map.get(key).push(idx);
      }
    }
-   historyIndex={all,bySurah,byType,byPair,sessionDates};return historyIndex;
+   historyIndex={all,bySurah,byType,byPair,sessionDates,uniqueSessions,months,byPage,bySurahCount};return historyIndex;
+ };
+ const drawStatistics=()=>{
+   const ix=buildHistoryIndex(),target=panel.querySelector('#thStats');
+   if(!target)return;
+   const topSurahs=[...ix.bySurahCount].sort((a,b)=>b[1]-a[1]).slice(0,12);
+   const topPages=[...ix.byPage].sort((a,b)=>b[1]-a[1]).slice(0,12);
+   const monthly=[...ix.months].sort((a,b)=>a[0].localeCompare(b[0]));
+   const max=Math.max(1,...monthly.map(x=>x[1]));
+   const series=(items,names)=>items.map(([key,n])=>'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:.78rem"><span style="min-width:88px">'+safe(names(key))+'</span><div style="flex:1;height:7px;background:var(--line);border-radius:8px;overflow:hidden"><span style="display:block;width:'+Math.round(n/Math.max(1,items[0]?.[1]||1)*100)+'%;height:100%;background:var(--clay)"></span></div><strong>'+n+'</strong></div>').join('');
+   target.innerHTML='<p class="hint">إحصاءات نشاط ترتيل التاريخي، وليست تقييمًا لإتقان الحفظ.</p>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap"><div class="card" style="flex:1;min-width:120px;padding:12px">مواضع الملاحظات<br><strong>'+ix.all.length+'</strong></div><div class="card" style="flex:1;min-width:120px;padding:12px">جلسات مرتبطة<br><strong>'+ix.uniqueSessions.size+'</strong></div><div class="card" style="flex:1;min-width:120px;padding:12px">سور ظهرت بها ملاحظات<br><strong>'+ix.bySurahCount.size+'</strong></div></div>'+
+     '<h3 style="font-size:.95rem;margin-top:15px">التوزيع عبر الأشهر</h3>'+
+     (monthly.length?'<div style="max-height:220px;overflow:auto">'+monthly.map(([month,n])=>'<div style="display:flex;align-items:center;gap:8px;font-size:.75rem;padding:4px 0"><span style="min-width:66px">'+safe(month)+'</span><div style="flex:1;background:var(--line);height:9px;border-radius:9px"><div style="width:'+Math.round(n/max*100)+'%;height:100%;background:var(--clay);border-radius:9px"></div></div><b>'+n+'</b></div>').join('')+'</div>':'<p class="hint">لا تتوفر تواريخ جلسات كافية لعرض تطور زمني.</p>')+
+     '<h3 style="font-size:.95rem;margin-top:15px">السور الأكثر ورودًا في الملاحظات</h3>'+series(topSurahs,id=>(SURAHS.find(x=>x[0]===id)||[])[1]||id)+
+     '<h3 style="font-size:.95rem;margin-top:15px">الأوجه الأكثر ورودًا</h3>'+series(topPages,id=>'وجه '+id)+
+     '<p class="hint">قد تُحسب الملاحظة على أكثر من وجه عند امتداد الآية؛ هذه كثافة مواضع وليست عدد أخطاء مؤكدة.</p>';
  };
  const draw=()=>{
    const sid=Number(panel.querySelector('#thSurah')?.value||0),type=panel.querySelector('#thType')?.value||'';
@@ -4414,10 +4437,14 @@ renderAll();
         SURAHS.map(s=>'<option value="'+s[0]+'">'+safe(s[1])+'</option>').join('')+'</select>'+
        '<select id="thType" style="flex:1;min-width:130px"><option value="">جميع الأنواع</option>'+
         Object.entries(labels).map(([k,v])=>'<option value="'+k+'">'+safe(v)+'</option>').join('')+'</select></div>'+
-       '<div id="thSummary" style="margin-top:12px;margin-bottom:10px"></div><div id="thResults" style="max-height:340px;overflow:auto;margin-top:8px"></div></div>';
+       '<div style="display:flex;gap:6px;margin-top:12px"><button type="button" id="thShowRecords" class="btn btn-ghost btn-sm">الملاحظات</button><button type="button" id="thShowStats" class="btn btn-ghost btn-sm">الإحصاءات التاريخية</button></div>'+ 
+       '<div id="thStats" style="display:none;margin-top:10px"></div><div id="thRecordSection"><div id="thSummary" style="margin-top:12px;margin-bottom:10px"></div><div id="thResults" style="max-height:340px;overflow:auto;margin-top:8px"></div></div></div>';
      panel.querySelector('#thSurah').addEventListener('change',()=>{historyPage=0;draw();});
      panel.querySelector('#thType').addEventListener('change',()=>{historyPage=0;draw();});
-     draw();
+     const showMode=mode=>{historyView=mode;panel.querySelector('#thStats').style.display=mode==='stats'?'block':'none';panel.querySelector('#thRecordSection').style.display=mode==='records'?'block':'none';if(mode==='stats')drawStatistics();};
+     panel.querySelector('#thShowRecords').addEventListener('click',()=>showMode('records'));
+     panel.querySelector('#thShowStats').addEventListener('click',()=>showMode('stats'));
+     draw();showMode(historyView);
    }catch(e){panel.textContent='تعذّر فتح السجل المحلي. قد تكون بيانات الموقع قد حُذفت أو مساحة التخزين غير متاحة.';}
  });
 })();
