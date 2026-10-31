@@ -25,7 +25,7 @@ function setup(){
  keyOf:()=>day,
  pagesOfSurah:()=>[10,12],todayLogV50:()=>S.logs.find(x=>x.date===day)||{},rangeSetV50:(list)=>new Set((list||[]).flatMap(x=>Array.from({length:(x.to||x.from)-(x.from||x.to)+1},(_,i)=>(x.from||x.to)+i))),
  memCount:()=>100,firstMemDateV62:()=> '2026-09-01',recitedPagesTodayV51:()=>new Set(),
- dayFactsV71:()=>({}),reviewBucketsV50:()=>({near:[],far:[]}),ensurePageSchedV62:()=>({phase:'near',nextDue:day}),daysBetween:()=>60,autoPageInfo:()=>({state:'due'})};
+ dayFactsV71:()=>({}),reviewBucketsV50:()=>({near:[{p:10}],far:[]}),ensurePageSchedV62:()=>({phase:'near',nextDue:day}),daysBetween:()=>60,autoPageInfo:()=>({state:'due'})};
  vm.createContext(ctx);
  vm.runInContext(['completeReviewTodayV62','recitedPagesTodayV51','taskPagesV60','reviewEngineStateV62'].map(extract).join('\n'),ctx);
  return{ctx,S,day,ts};
@@ -49,11 +49,11 @@ test('free recitation and unfinished review do not mark planned review complete'
  S.recitationSessions.push({task:'near',endedAt:ts,pages:[{page:10,complete:false,coverage:.7}]});
  assert.equal(ctx.completeReviewTodayV62(10),false);
 });
-test('manual and Mushaf completion overlap without duplicating due tasks',()=>{
+test('manual and Mushaf completion overlap without duplicating a genuinely due face',()=>{
  const{ctx,S,day,ts}=setup();
  S.logs.push({date:day,revList:[{surahId:2,from:10,to:10,type:'near'}]});
  S.recitationSessions.push({task:'near',endedAt:ts,pages:[{page:10,complete:true,coverage:1}]});
- ctx.reviewEngineStateV62=()=>({due:false,phase:'near'});
+ ctx.reviewEngineStateV62=()=>({due:true,phase:'near'});
  assert.equal(ctx.taskPagesV60('near').length,0);
  assert.equal(ctx.completeReviewTodayV62(10),true);
 });
@@ -71,4 +71,12 @@ test('replayed session ID does not multiply the distinct completed faces',()=>{
  const completed=ctx.recitedPagesTodayV51('near');
  assert.equal(completed.size,1);
  assert.equal(completed.has(10),true);
+});
+
+test('a due face without completion remains in the review task',()=>{
+ const {ctx}=setup();
+ ctx.reviewEngineStateV62=()=>({due:true,phase:'near'});
+ const pages=ctx.taskPagesV60('near');
+ assert.equal(pages.length,1);
+ assert.equal(pages[0],10);
 });
