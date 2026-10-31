@@ -13,6 +13,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Test follow-along without grading
+        run: node --test tests/follow-along-only.test.cjs
       - name: Test recitation rules
         run: node --test tests/browser-asr-false-positives.test.cjs tests/recitation-candidate-observations.test.cjs tests/recitation-scenarios.test.cjs tests/phoneme-whitespace.test.cjs tests/phoneme-multiverse.test.cjs tests/recitation-feedback.test.cjs tests/recitation-integration-gate.test.cjs tests/recitation-detection-gap.test.cjs tests/recitation-review-window.test.cjs tests/recitation-audio-window.test.cjs tests/recitation-pcm-ring.test.cjs tests/recitation-session-fixes.test.cjs tests/restore-practical-errors.test.cjs tests/recitation-first-final-routing.test.cjs
       - name: Test local Tarteel import
