@@ -4333,7 +4333,7 @@ renderAll();
  });
  const buildHistoryIndex=()=>{
    if(historyIndex)return historyIndex;
-   const all=[],bySurah=new Map(),byType=new Map(),byPair=new Map();
+   const all=[],bySurah=new Map(),byType=new Map(),byPair=new Map(),byVerseType=new Map();
    const sessionDates=new Map((archive.sessions||[]).map(session=>[String(session.id),session.start||session.started_at||session.created_at||session.date||session.end||session.ended_at||'']));
    const uniqueSessions=new Set(),months=new Map(),byPage=new Map(),bySurahCount=new Map();
    for(const m of archive.mistakes||[])for(const pos of m.positions||[]){
@@ -4346,11 +4346,13 @@ renderAll();
      bySurahCount.set(surah,(bySurahCount.get(surah)||0)+1);
      const pgList=versePages?.get(surah+':'+ayah)||[];
      for(const page of pgList)byPage.set(page,(byPage.get(page)||0)+1);
+     const verseType=surah+':'+ayah+'|'+(m.type||'other');
+     byVerseType.set(verseType,(byVerseType.get(verseType)||0)+1);
      for(const [map,key] of [[bySurah,surah],[byType,m.type||'other'],[byPair,surah+'|'+(m.type||'other')]]){
        if(!map.has(key))map.set(key,[]);map.get(key).push(idx);
      }
    }
-   historyIndex={all,bySurah,byType,byPair,sessionDates,uniqueSessions,months,byPage,bySurahCount};return historyIndex;
+   historyIndex={all,bySurah,byType,byPair,byVerseType,sessionDates,uniqueSessions,months,byPage,bySurahCount,allIndices:all.map((_,i)=>i),summaryCache:new Map()};return historyIndex;
  };
  // This key uses the actual exported finding fields, not a nonexistent mistake ID.
  const historicalKey=r=>[
@@ -4378,19 +4380,25 @@ renderAll();
    const sid=Number(panel.querySelector('#thSurah')?.value||0),type=panel.querySelector('#thType')?.value||'';
    const ix=buildHistoryIndex();
    const indices=sid&&type?(ix.byPair.get(sid+'|'+type)||[]):sid?(ix.bySurah.get(sid)||[]):type?(ix.byType.get(type)||[]):null;
-   const iterable=indices||ix.all.map((_,i)=>i);
+   const iterable=indices||ix.allIndices;
    const count=iterable.length,totalPages=Math.max(1,Math.ceil(count/HISTORY_SIZE));
    historyPage=Math.max(0,Math.min(historyPage,totalPages-1));
    const rows=iterable.slice(historyPage*HISTORY_SIZE,(historyPage+1)*HISTORY_SIZE).map(i=>ix.all[i]);
    items=rows;
    const view=panel.querySelector('#thResults');
-   const counts=new Map();
-   for(const index of iterable){
-     const {surah,ayah,m}=ix.all[index];
-     const key=surah+':'+ayah+'|'+(m.type||'other');
-     counts.set(key,(counts.get(key)||0)+1);
+   const summaryKey=sid+'|'+type;
+   let top=ix.summaryCache.get(summaryKey);
+   if(!top){
+     const counts=new Map();
+     if(!sid&&!type)for(const entry of ix.byVerseType)counts.set(...entry);
+     else for(const index of iterable){
+       const {surah,ayah,m}=ix.all[index];
+       const key=surah+':'+ayah+'|'+(m.type||'other');
+       counts.set(key,(counts.get(key)||0)+1);
+     }
+     top=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+     ix.summaryCache.set(summaryKey,top);
    }
-   const top=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
    const summary=panel.querySelector('#thSummary');
    if(summary)summary.innerHTML='<b style="font-size:.82rem">أكثر المواضع تكرارًا في التصدير</b>'+
      (top.length?top.map(([key,n])=>{const parts=key.split('|'),verse=parts[0].split(':'),name=(SURAHS.find(s=>s[0]===+verse[0])||[])[1]||verse[0];return '<div style="font-size:.78rem;border-top:1px solid var(--line);padding:5px 0">'+safe(name)+' · آية '+verse[1]+' · '+safe(labels[parts[1]]||parts[1])+' · '+n+' ملاحظة</div>';}).join(''):'<p class="hint">لا توجد مواضع مطابقة.</p>')+
