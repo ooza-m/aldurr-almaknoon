@@ -4374,7 +4374,31 @@ renderAll();
     if(file.size>15*1024*1024){box.textContent='حجم الملف يتجاوز 15 MB';return;}
     try{
       const text=await file.text();
-      const rows=/\.csv$/i.test(file.name)?parseCsv(text):flatten(JSON.parse(text));
+      const parsed=/\.csv$/i.test(file.name)?null:JSON.parse(text);
+      if(parsed&&parsed.format==='durr-maknun-tarteel-import'&&parsed.version===1){
+        // Real Tarteel data exchange: positions are nested; ASR findings are unverified.
+        const sessions=Array.isArray(parsed.sessions)?parsed.sessions:[],mistakes=Array.isArray(parsed.mistakes)?parsed.mistakes:[],bookmarks=Array.isArray(parsed.bookmarks)?parsed.bookmarks:[];
+        const sessionIds=new Set(sessions.map(x=>String(x.id||'')));
+        const labels={EXTRA_WORDS:'زيادة',INCORRECT_WORDS:'قراءة غير مطابقة',MISSED_WORDS:'سقط',INCORRECT_TASHKEEL:'تشكيل',PEEKED_WORDS:'استعانة بالمصحف'};
+        const counts={};const positions=new Set();let missing=0,orphan=0;
+        for(const m of mistakes){
+          counts[m.type]=(counts[m.type]||0)+1;
+          if(!sessionIds.has(String(m.session_id||'')))orphan++;
+          for(const pos of m.positions||[]){
+            const surah=+pos.surah_number,ayah=+pos.ayah_number;
+            if(surah>=1&&surah<=114&&ayah>=1)positions.add(surah+':'+ayah);else missing++;
+          }
+        }
+        box.innerHTML='<div style="padding:10px;border:1px solid var(--line);border-radius:10px">'+
+          '<b>حزمة ترتيل المعتمدة · الإصدار 1</b>'+
+          '<p class="hint">الجلسات: '+sessions.length+' · الملاحظات الصوتية: '+mistakes.length+' · علامات الآيات: '+bookmarks.length+'</p>'+
+          '<p class="hint">مواضع آيات متميزة: '+positions.size+' · ملاحظات بلا جلسة: '+orphan+' · مواضع غير مفهومة: '+missing+'</p>'+
+          Object.entries(counts).map(([key,n])=>'<div style="font-size:.8rem;padding:3px 0">'+escapeText(labels[key]||key)+' : '+n+'</div>').join('')+
+          '<p class="hint" style="color:var(--clay)">الملاحظات مستنتجة بواسطة ترتيل ولا تعد أخطاء مؤكدة. لم يُستورد شيء إلى سجل الأخطاء أو خطة الحفظ. يلزم ربط المواضع بمصحف المدينة وتصميم سجل منفصل للملاحظات التاريخية قبل اعتماد البيانات.</p>'+
+          '</div>';
+        return;
+      }
+      const rows=parsed===null?parseCsv(text):flatten(parsed);
       sourceRows=rows.length;fields=[...new Set(rows.slice(0,20).flatMap(row=>Object.keys(row||{})))];
       const set=new Set();for(const row of rows){const x=normalize(row);if(!x){rejected++;continue;}const key=fingerprint(x);if(!set.has(key)){set.add(key);candidates.push(x);}}
       draw();
