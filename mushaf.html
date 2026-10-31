@@ -1328,7 +1328,7 @@ function ensureRecContextV86(){
 function snapshotStateV86(session,state,forceComplete=false){
  if(!session||!state)return null;const total=state.wordsTotal||1,cov=state.covered.size/total,assist=state.assisted.size/total,err=state.errors.size,sus=state.suspected.size;
  const verses=Object.values(state.verses).map(v=>({vk:v.vk,totalWords:v.total,coveredWords:v.covered.size,coverage:v.total?v.covered.size/v.total:0,coveredWordIndexes:[...v.covered],assistedWords:v.assisted.size,assistedWordIndexes:[...v.assisted],errorWords:v.errors.size,errorWordIndexes:[...v.errors],suspectedWords:v.suspected.size,suspectedWordIndexes:[...v.suspected]}));
- const score=Math.max(0,Math.round(cov*100-err/total*38-assist*18)),qualified=!['ai-review','practice'].includes(session.task)&&!session.analysisIncomplete&&cov>=.95&&assist<=.35&&err===0&&sus/total<=.08;
+ const score=Math.max(0,Math.round(cov*100-(DURR_FOLLOW_ONLY_V1?0:err/total*38)-assist*18)),qualified=!['ai-review','practice'].includes(session.task)&&!session.analysisIncomplete&&cov>=.95&&assist<=.35&&err===0&&sus/total<=.08;
  const rv=session.recall&&verses.find(v=>v.vk===session.recall.vk),recallSuccess=!!(!session.recall?.hinted&&rv&&rv.coverage>=.9&&!rv.errorWords&&!rv.suspectedWords&&!rv.assistedWords&&!session.analysisIncomplete&&!(session.findings||[]).some(f=>f.page===state.page&&f.active!==false&&!f.dismissed&&(!f.vk||f.vk===rv.vk)));
  const out={page:state.page,surahIds:state.surahIds,startedAt:state.startedAt,endedAt:Date.now(),wordsTotal:state.wordsTotal,wordsCovered:state.covered.size,coverage:+cov.toFixed(3),assistRate:+assist.toFixed(3),errorCount:err,suspectedCount:sus,suspectedRate:+(sus/total).toFixed(3),score,complete:qualified,reachedEnd:!!forceComplete,recallSuccess,verses};
  const i=session.pages.findIndex(p=>p.page===state.page);if(i<0)session.pages.push(out);else session.pages[i]=out;return out;
@@ -1357,7 +1357,7 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
  renderRecitationV89(ctx,sec,result.ops);
  for(const [key,event] of sec.tracker.errors){const w=sec.words.find(w=>w.vk+'#'+w.wi===key);if(w){w.el.classList.toggle('rec-err',event.active);w.el.classList.toggle('rec-corrected',!event.active);w.el.classList.toggle('rec-omission',event.active&&event.type==='omission');w.el.classList.toggle('rec-extra',event.active&&event.type==='extra');w.el.dataset.err=event.active?'1':'';}}
  recWordPos=sec.tracker.cursor;recPos=recWordPos<recWords.length?recWords[recWordPos].seqIndex:recSeq.length;setCurrent(sec.words[Math.max(0,result.end-1)]?.el);updateErrCount();
- if(active){
+ if(active&&!DURR_FOLLOW_ONLY_V1){
    for(const w of sec.words)w.el?.classList.remove('rec-suspected-live');
    for(const [key,candidate] of sec.tracker.pendingErrors){
      if(Date.now()-candidate.at>5000)continue;
@@ -1385,7 +1385,7 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
   word.el.classList.toggle('rec-extra',event.type==='extra');
   word.el.dataset.err='1';
  }
- const audibleHint=result.updates.find(e=>e.active&&['omission','extra','substitution'].includes(e.type));
+ const audibleHint=(DURR_FOLLOW_ONLY_V1?[]:result.updates).find(e=>e.active&&['omission','extra','substitution'].includes(e.type));
  if(audibleHint){const st=ctx.session.stats;st.errorAlertCount=(st.errorAlertCount||0)+1;st.lastErrorAlertAt=Date.now();playRecErrorToneV91(audibleHint.type);}
  if(result.updates.some(e=>e.active))navigator.vibrate?.(25);
  const recallEnd=ctx.session.recall&&sec.words.findLastIndex(w=>w.vk===ctx.session.recall.vk)+1;
@@ -1779,7 +1779,7 @@ function dismissErrorV86(index){
  try{const list=JSON.parse(LS('durr-error-dismissals-v86','[]')),id=error.session+'|'+key;if(!list.includes(id))list.push(id);LSet('durr-error-dismissals-v86',JSON.stringify(list.slice(-1500)));}catch(_){}
  ERR.splice(index,1);saveErr();updateErrCount();
 }
-function updateErrCount(){const b=$('recErrs');if(!b)return;const n=recSession?ERR.filter(e=>e.session===recSession.id&&!e.corrected).length:0;$('recErrCount').textContent=n?('أخطاء '+ARA(n)):'أخطاء';b.classList.toggle('has',!!n);}
+function updateErrCount(){const b=$('recErrs');if(!b)return;if(DURR_FOLLOW_ONLY_V1){b.hidden=true;return;}const n=recSession?ERR.filter(e=>e.session===recSession.id&&!e.corrected).length:0;$('recErrCount').textContent=n?('أخطاء '+ARA(n)):'أخطاء';b.classList.toggle('has',!!n);}
 let recPreviewWords=[];
 // Separate acoustic and browser temporary highlights: clearing one never erases the other.
 function clearPhonemePreviewV106(){
