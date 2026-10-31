@@ -621,7 +621,7 @@ window.FIREBASE_CONFIG = {
     </div>
     <div class="head-actions">
       <button class="acct-chip" id="acctChip">👤 <span id="acctName">دخول</span></button>
-      <button class="icon-btn" id="settingsBtn" title="الإعدادات">⚙️</button>
+      
     </div>
   </div>
   <p class="ayah">﴿ سَنُقْرِئُكَ فَلَا تَنسَىٰ ﴾</p>
@@ -955,7 +955,7 @@ window.FIREBASE_CONFIG = {
       </div></div>
       <div class="v70-more-section"><h3>أدوات</h3><div class="v70-more-list">
         <button data-v50-route="manual"><span><b>التسجيل اليدوي</b><small>للجلسات التي تمت خارج التطبيق</small></span><i>‹</i></button>
-        <button id="moreSettingsBtn"><span><b>الإعدادات</b><small>التفضيلات والحلقة والتذكيرات</small></span><i>‹</i></button>
+        <button id="moreSettingsBtn"><span><b>الإعدادات</b><small>التفضيلات والحساب والنسخ الاحتياطية</small></span><i>‹</i></button>
       </div></div>
     </div>
   </section>
@@ -4169,7 +4169,7 @@ setGateMode('signin');});
   document.getElementById('reminderModal')?.addEventListener('click',e=>{if(e.target.id==='reminderModal')e.currentTarget.classList.remove('open');});
   
   const r=document.getElementById('todayRefreshV50');if(r)r.addEventListener('click',()=>refreshV50());
-  ['moreSettingsBtn','moreSettingsTop'].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener('click',openSettings);});
+  ['moreSettingsBtn'].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener('click',openSettings);});
   const st=document.getElementById('moreStagesBtn');if(st)st.addEventListener('click',()=>switchTab('stages'));
 })();
 
@@ -4202,7 +4202,7 @@ function openSettings(){
   document.getElementById('settingsModal').classList.add('open');
   if(typeof initNotif==='function')try{initNotif();}catch(e){}
 }
-document.getElementById('settingsBtn').addEventListener('click',openSettings);
+// The legacy header settings shortcut is retired; use المزيد ← الإعدادات.
 (function(){const b=document.getElementById('set-close');if(b)b.addEventListener('click',()=>document.getElementById('settingsModal').classList.remove('open'));})();
 document.getElementById('set-name-save').addEventListener('click',()=>{
   const nm=document.getElementById('set-name').value.trim();
