@@ -2015,13 +2015,14 @@ function buildReviewSuggestions(){
     const info=autoPageInfo(p),evidence=pageReviewEvidenceV115(p),mastery=masteryOfPageV116(p);
     const ratingPriority=mastery?masteryRank[mastery.level]??2:2;
     const overdue=Math.max(0,eng.overdueDays||0);
-    const priority=ratingPriority*10000+(evidence.activeErrors?5000:0)+(info.state==='weak'?1000:0)+Math.min(365,overdue);
+    // Documented active errors outrank personal confidence; neither changes the stored mastery rating.
+    const priority=(evidence.activeErrors?50000:0)+ratingPriority*10000+(info.state==='weak'?1000:0)+Math.min(365,overdue);
     const reasons=[];
     if(mastery?.level==='weak')reasons.push('ضبط متفلّت');
     else if(mastery?.level==='needs')reasons.push('يحتاج تثبيت');
     else if(mastery?.level==='good')reasons.push('ضبط جيد');
     else if(mastery?.level==='strong')reasons.push('ضبط ثابت');
-    if(evidence.activeErrors)reasons.push('أخطاء مسجّلة');
+    if(evidence.activeErrors)reasons.unshift('أخطاء نشطة: '+evidence.activeErrors);
     if(overdue)reasons.push('متأخر '+overdue+' يومًا');
     else if(!reasons.length)reasons.push('مراجعة مستحقة');
     rows.push({page:p,sur:sur[1],phase:eng.phase,priority,reasons,
@@ -2475,6 +2476,8 @@ function renderPageErrors(p){
     const e=S.errors[+b.dataset.arch];if(!e)return;
     e.archived=true;e.archivedDate=todayKey();save();
     renderPageErrors(p);
+    renderPageMasteryV116(p);
+    refreshV50();
     // بعد زوال الأخطاء قد يصبح الوجه مؤهّلًا للترقية عند المراجعة القادمة
     if(typeof renderMap==='function')try{renderMap();}catch(_){}
     toast('أُرشِف الخطأ. يبقى في سجلّ الأخطاء كمُتقَن.');
@@ -3115,7 +3118,7 @@ document.getElementById('erSave').addEventListener('click',()=>{
   S.errors.push(e);S.errors.sort((a,b)=>b.date.localeCompare(a.date));
   // إن كان الوجه متقنًا ووُجد فيه خطأ، أنزليه إلى «يحتاج مراجعة»
   if(S.pages[e.page]==='solid')S.pages[e.page]='review';
-  save();renderErrors();
+  save();renderErrors();refreshV50();
   if(typeof renderMap==='function')try{renderMap();}catch(_){}
   if(document.getElementById('pageModal').classList.contains('open')&&typeof curPage!=='undefined')renderPageErrors(curPage);
   document.getElementById('errModal').classList.remove('open');document.getElementById('erDesc').value='';
