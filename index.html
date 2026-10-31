@@ -681,7 +681,7 @@ window.FIREBASE_CONFIG = {
       <div class="v50-top">
         <button class="v50-round" data-v50-route="calendar" aria-label="التقويم"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></button>
         <div class="v50-title"><h1>اليوم</h1><p id="todayDateV50"></p></div>
-        <button class="v50-round" id="todayTuneBtn" aria-label="الإعدادات"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4"/></svg></button>
+        <span aria-hidden="true" style="width:44px;flex:none"></span>
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
@@ -1056,6 +1056,18 @@ window.FIREBASE_CONFIG = {
   <div class="modal-actions"><button class="btn btn-primary" id="rgApply" style="flex:1">تطبيق</button><button class="btn btn-ghost" id="rgClose">إلغاء</button></div>
 </div></div>
 
+<div class="modal-bg" id="reminderModal"><div class="modal v70-settings-modal" role="dialog" aria-modal="true" aria-labelledby="reminderHeading">
+ <button type="button" class="modal-x" id="reminderClose" aria-label="إغلاق التذكيرات">✕</button>
+ <div class="v70-settings-head"><span>التنبيهات</span><h3 id="reminderHeading">التذكيرات</h3><p>إدارة تنبيهات الورد والتفسير فقط.</p></div>
+   <div class="v70-set-group">
+    <h4>التذكيرات</h4>
+    <p class="hint">تذكيرات المتصفح تعمل بقدر ما يسمح به النظام والمتصفح، ولا تُعد نظام إشعارات خلفي مضمونًا.</p>
+    <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntWird"> ورد التلاوة</label><input type="time" id="ntWirdTime"></div>
+    <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntTafsir"> قراءة التفسير</label><input type="time" id="ntTafsirTime"></div>
+    <p class="hint" id="ntStatus" style="margin-top:6px"></p>
+  </div>
+
+ </div></div>
 <div class="modal-bg" id="settingsModal"><div class="modal v70-settings-modal"><button class="modal-x" onclick="document.getElementById('settingsModal').classList.remove('open')" aria-label="إغلاق">✕</button>
   <div class="v70-settings-head"><span>التفضيلات</span><h3>الإعدادات</h3><p>إعدادات التطبيق فقط؛ بيانات الحفظ والتقدّم تبقى في صفحاتها المختصة.</p></div>
   <div data-app-preferences></div>
@@ -1069,13 +1081,7 @@ window.FIREBASE_CONFIG = {
     <div class="field"><label>بداية الأسبوع</label><div class="check-row" id="weekStartPick"><label class="chip-check" data-ws="0"><input type="radio" name="ws"> الأحد</label><label class="chip-check" data-ws="1"><input type="radio" name="ws"> الاثنين</label></div></div>
     <div class="field"><label>أيام الحلقة</label><p class="hint">تظهر في التقويم لتسجيل الحضور والغياب، ولا تغيّر خطة الحفظ تلقائيًا.</p><div id="halaqaDayPick" class="check-row" style="margin-bottom:10px"></div><button class="btn btn-primary btn-sm" id="halaqaSave" style="width:100%">حفظ أيام الحلقة</button><p class="hint" id="halaqaSaveMsg" style="margin:8px 0 0;color:var(--green)"></p></div>
   </div>
-  <div class="v70-set-group">
-    <h4>التذكيرات</h4>
-    <p class="hint">تذكيرات المتصفح تعمل بقدر ما يسمح به النظام والمتصفح، ولا تُعد نظام إشعارات خلفي مضمونًا.</p>
-    <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntWird"> ورد التلاوة</label><input type="time" id="ntWirdTime"></div>
-    <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntTafsir"> قراءة التفسير</label><input type="time" id="ntTafsirTime"></div>
-    <p class="hint" id="ntStatus" style="margin-top:6px"></p>
-  </div>
+  <div class="v70-set-group"><h4>التذكيرات</h4><p class="hint">إدارة التذكيرات من زر التنبيهات في الرئيسية.</p><button type="button" class="btn btn-ghost btn-sm" id="openRemindersFromSettings">فتح التذكيرات</button></div>
   <div class="v70-set-group"><h4>النسخ الاحتياطية</h4><p class="hint">تتضمن بيانات الحفظ والفواصل وتفضيلات العرض. التنزيلات الصوتية تبقى على الجهاز ولا تدخل في ملف النسخة.</p><div class="v70-set-pair"><button class="btn btn-ghost" type="button" id="settingsBackup">تصدير نسخة</button><button class="btn btn-ghost" type="button" id="settingsRestore">استيراد نسخة</button></div><button class="btn btn-ghost btn-sm" type="button" id="settingsUndoRestore" style="width:100%;margin-top:8px">استرجاع النسخة السابقة لآخر استيراد</button></div>
   <div class="v70-set-danger"><b>مسح بيانات التقدّم</b><p>يمسح السجل والخريطة والأخطاء والختمة والمرحليات. لا يمكن التراجع بعد التأكيد.</p><button class="btn btn-sm" id="set-reset">مسح جميع بيانات التقدّم</button></div>
   <div class="v70-about"><div class="amiri">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div><span>الدُّرُّ المكنون · مصحف المدينة · حفص عن عاصم</span><b>النسخة v89</b></div>
@@ -4156,8 +4162,12 @@ setGateMode('signin');});
 /* ===== ربط عناصر v50 ===== */
 (function(){
   const a=document.getElementById('homeAccountBtn');if(a)a.addEventListener('click',()=>document.getElementById('acctChip').click());
-  const n=document.getElementById('homeNotifBtn');if(n)n.addEventListener('click',()=>openSettings());
-  const t=document.getElementById('todayTuneBtn');if(t)t.addEventListener('click',()=>openSettings());
+  const openReminders=()=>{document.getElementById('settingsModal').classList.remove('open');document.getElementById('reminderModal').classList.add('open');initNotif();};
+  const n=document.getElementById('homeNotifBtn');if(n)n.addEventListener('click',openReminders);
+  document.getElementById('openRemindersFromSettings')?.addEventListener('click',openReminders);
+  document.getElementById('reminderClose')?.addEventListener('click',()=>document.getElementById('reminderModal').classList.remove('open'));
+  document.getElementById('reminderModal')?.addEventListener('click',e=>{if(e.target.id==='reminderModal')e.currentTarget.classList.remove('open');});
+  
   const r=document.getElementById('todayRefreshV50');if(r)r.addEventListener('click',()=>refreshV50());
   ['moreSettingsBtn','moreSettingsTop'].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener('click',openSettings);});
   const st=document.getElementById('moreStagesBtn');if(st)st.addEventListener('click',()=>switchTab('stages'));
