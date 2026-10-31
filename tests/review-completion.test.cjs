@@ -22,8 +22,9 @@ function setup(){
  const day='2026-10-31',ts=new Date(day+'T12:00:00').getTime();
  const S={logs:[],recitationSessions:[],faceLearning:{},pageReviewSched:{}};
  const ctx={S,Set,Date,Math,Map,Number,todayKey:()=>day,
- keyOf:()=>day,firstMemDateV62:()=> '2026-09-01',
- pagesOfSurah:()=>[10,12],recitedPagesTodayV51:()=>new Set(),
+ keyOf:()=>day,
+ pagesOfSurah:()=>[10,12],todayLogV50:()=>S.logs.find(x=>x.date===day)||{},rangeSetV50:(list)=>new Set((list||[]).flatMap(x=>Array.from({length:(x.to||x.from)-(x.from||x.to)+1},(_,i)=>(x.from||x.to)+i))),
+ memCount:()=>100,firstMemDateV62:()=> '2026-09-01',recitedPagesTodayV51:()=>new Set(),
  dayFactsV71:()=>({}),reviewBucketsV50:()=>({near:[],far:[]})};
  vm.createContext(ctx);
  vm.runInContext(['completeReviewTodayV62','recitedPagesTodayV51','taskPagesV60'].map(extract).join('\n'),ctx);
