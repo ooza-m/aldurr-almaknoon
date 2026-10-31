@@ -4297,7 +4297,8 @@ renderAll();
 (function initTarteelHistoryViewerV118(){
  const button=document.getElementById('tarteelHistoryOpen'),panel=document.getElementById('tarteelHistoryPanel');
  if(!button||!panel)return;
- let archive=null,items=[],versePages=null,historyIndex=null;
+ let archive=null,items=[],versePages=null,historyIndex=null,historyPage=0;
+ const HISTORY_SIZE=30;
  const labels={EXTRA_WORDS:'زيادة كلمات',INCORRECT_WORDS:'قراءة غير مطابقة',MISSED_WORDS:'سقوط كلمات',INCORRECT_TASHKEEL:'خطأ تشكيل',PEEKED_WORDS:'استعانة بالمصحف'};
  const safe=v=>esc(String(v??''));
  const loadVersePages=async()=>{
@@ -4333,6 +4334,7 @@ renderAll();
  const buildHistoryIndex=()=>{
    if(historyIndex)return historyIndex;
    const all=[],bySurah=new Map(),byType=new Map(),byPair=new Map();
+   const sessionDates=new Map((archive.sessions||[]).map(session=>[String(session.id),session.started_at||session.created_at||session.date||session.ended_at||'']));
    for(const m of archive.mistakes||[])for(const pos of m.positions||[]){
      const surah=+pos.surah_number,ayah=+pos.ayah_number;
      if(!(surah>=1&&surah<=114&&ayah>=1))continue;
@@ -4341,14 +4343,16 @@ renderAll();
        if(!map.has(key))map.set(key,[]);map.get(key).push(idx);
      }
    }
-   historyIndex={all,bySurah,byType,byPair};return historyIndex;
+   historyIndex={all,bySurah,byType,byPair,sessionDates};return historyIndex;
  };
  const draw=()=>{
    const sid=Number(panel.querySelector('#thSurah')?.value||0),type=panel.querySelector('#thType')?.value||'';
    const ix=buildHistoryIndex();
    const indices=sid&&type?(ix.byPair.get(sid+'|'+type)||[]):sid?(ix.bySurah.get(sid)||[]):type?(ix.byType.get(type)||[]):null;
    const iterable=indices||ix.all.map((_,i)=>i);
-   const count=iterable.length,rows=iterable.slice(0,80).map(i=>ix.all[i]);
+   const count=iterable.length,totalPages=Math.max(1,Math.ceil(count/HISTORY_SIZE));
+   historyPage=Math.max(0,Math.min(historyPage,totalPages-1));
+   const rows=iterable.slice(historyPage*HISTORY_SIZE,(historyPage+1)*HISTORY_SIZE).map(i=>ix.all[i]);
    items=rows;
    const view=panel.querySelector('#thResults');
    const counts=new Map();
@@ -4362,17 +4366,22 @@ renderAll();
    if(summary)summary.innerHTML='<b style="font-size:.82rem">أكثر المواضع تكرارًا في التصدير</b>'+
      (top.length?top.map(([key,n])=>{const parts=key.split('|'),verse=parts[0].split(':'),name=(SURAHS.find(s=>s[0]===+verse[0])||[])[1]||verse[0];return '<div style="font-size:.78rem;border-top:1px solid var(--line);padding:5px 0">'+safe(name)+' · آية '+verse[1]+' · '+safe(labels[parts[1]]||parts[1])+' · '+n+' ملاحظة</div>';}).join(''):'<p class="hint">لا توجد مواضع مطابقة.</p>')+
      '<p class="hint">التكرار هنا عدد الملاحظات الآلية، وليس عدد أخطاء الحفظ المؤكدة.</p>';
-   view.innerHTML='<p class="hint">'+count+' موضعًا مطابقًا · تُعرض أول '+rows.length+' نتيجة</p>'+
+   view.innerHTML='<p class="hint">'+count+' موضعًا مطابقًا · الصفحة '+(historyPage+1)+' من '+totalPages+'</p>'+
     rows.map((r,i)=>{
       const choices=pagesFor(r.surah,r.ayah),raw=Number(r.pos.page_number||r.pos.mushaf_page||r.pos.page);
       const page=choices.includes(raw)?raw:choices.length===1?choices[0]:null;
       const valid=Number.isInteger(page)&&choices.includes(page);
       const already=(S.errors||[]).some(e=>e.source==='tarteel'&&e.externalId===String(r.m.id||'')&&e.verseKey===r.surah+':'+r.ayah);
+      const rawDate=ix.sessionDates.get(String(r.m.session_id||''))||r.m.created_at||r.m.date||'';
+      const date=typeof rawDate==='string'&&/^\\d{4}-\\d{2}-\\d{2}/.test(rawDate)?rawDate.slice(0,10):'';
       return '<div style="padding:8px 0;border-top:1px solid var(--line);font-size:.8rem"><b>'+safe((SURAHS.find(x=>x[0]===r.surah)||[])[1]||r.surah)+' · آية '+r.ayah+'</b> · '+safe(labels[r.m.type]||r.m.type||'ملاحظة')+
-        '<div style="color:var(--muted)">'+(valid?'وجه '+page:'الوجه غير محدد')+' · ملاحظة آلية غير مؤكدة</div>'+
+        '<div style="color:var(--muted)">'+(valid?'وجه '+page:'الوجه غير محدد')+' · '+(already?'خطأ معتمد':'ملاحظة آلية غير مؤكدة')+(date?' · جلسة '+safe(date):' · تاريخ الجلسة غير متاح')+'</div>'+
         (valid?'<button class="btn btn-ghost btn-sm" data-th-open="'+i+'" data-th-page="'+page+'">فتح الآية</button>':choices.length>1?'<button class="btn btn-ghost btn-sm" data-th-open="'+i+'">فتح الآية</button>':'')+
         (valid?'<button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" data-th-page="'+page+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':choices.length>1?'<label style="display:block;margin-top:5px">حددي موضع الخطأ <select data-th-select="'+i+'" style="max-width:160px"><option value="">اختاري الوجه</option>'+choices.map(p=>'<option value="'+p+'">وجه '+p+'</option>').join('')+'</select></label><button class="btn btn-ghost btn-sm" data-th-approve="'+i+'" '+(already?'disabled':'')+'>'+(already?'معتمدة سابقًا':'اعتماد كخطأ')+'</button>':'')+'</div>';
-    }).join('');
+    }).join('')+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px"><button class="btn btn-ghost btn-sm" id="thPrev" '+(historyPage===0?'disabled':'')+'>السابق</button><span class="hint">'+(historyPage+1)+' / '+totalPages+'</span><button class="btn btn-ghost btn-sm" id="thNext" '+(historyPage>=totalPages-1?'disabled':'')+'>التالي</button></div>';
+   view.querySelector('#thPrev')?.addEventListener('click',()=>{historyPage--;draw();});
+   view.querySelector('#thNext')?.addEventListener('click',()=>{historyPage++;draw();});
    view.querySelectorAll('[data-th-open]').forEach(b=>b.addEventListener('click',()=>{
      const r=items[+b.dataset.thOpen];if(!r)return;
      const chosen=view.querySelector('[data-th-select="'+b.dataset.thOpen+'"]');
@@ -4406,8 +4415,8 @@ renderAll();
        '<select id="thType" style="flex:1;min-width:130px"><option value="">جميع الأنواع</option>'+
         Object.entries(labels).map(([k,v])=>'<option value="'+k+'">'+safe(v)+'</option>').join('')+'</select></div>'+
        '<div id="thSummary" style="margin-top:12px;margin-bottom:10px"></div><div id="thResults" style="max-height:340px;overflow:auto;margin-top:8px"></div></div>';
-     panel.querySelector('#thSurah').addEventListener('change',draw);
-     panel.querySelector('#thType').addEventListener('change',draw);
+     panel.querySelector('#thSurah').addEventListener('change',()=>{historyPage=0;draw();});
+     panel.querySelector('#thType').addEventListener('change',()=>{historyPage=0;draw();});
      draw();
    }catch(e){panel.textContent='تعذّر فتح السجل المحلي. قد تكون بيانات الموقع قد حُذفت أو مساحة التخزين غير متاحة.';}
  });
