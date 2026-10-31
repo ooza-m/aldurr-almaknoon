@@ -1822,14 +1822,24 @@ function initSpeech(){
  const r=new SR(),ctx=ensureRecContextV86();r.lang='ar-SA';r.continuous=true;r.interimResults=true;r.maxAlternatives=1;const finalized=new Set();
  r.onstart=()=>{finalized.clear();if(r===speechRec)clearSpeechPreview();};
  r.onresult=e=>{if(!ctx||ctx.finalized||r._stopped)return;let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const result=e.results[i],text=result[0].transcript||'';if(result.isFinal){if(!finalized.has(i)){finalized.add(i);if(recSession?.id===ctx.session.id&&recMode)ensureRecContextV86();dispatchRecitationV89(ctx,recSession?.id===ctx.session.id?cur:ctx.page,text,'browser-speech');}}else interim+=' '+text;}if(r===speechRec&&interim.trim())previewSpeechV84(interim);};
- r.onerror=e=>{if(['not-allowed','service-not-allowed','audio-capture'].includes(e.error))r._noRestart=true;if(r===speechRec&&e.error!=='no-speech')setEngine('','تعذّر التعرّف الصوتي · أوقفي الميكروفون وأعيدي تشغيله للمحاولة');};
+ r.onerror=e=>{
+   const error=e?.error||'';
+   if(['not-allowed','service-not-allowed','audio-capture','language-not-supported'].includes(error))r._noRestart=true;
+   if(r!==speechRec||error==='no-speech')return;
+   const msg=error==='not-allowed'||error==='service-not-allowed'?'المتصفح منع الوصول إلى الميكروفون. راجعي إذن الميكروفون ثم أعيدي المحاولة.':
+     error==='audio-capture'?'الميكروفون غير متاح. تحققي من اتصاله وإذن استخدامه.':
+     error==='network'?'خدمة التعرّف الصوتي في المتصفح غير متاحة حاليًا. يبقى المصحف صالحًا للقراءة والتسجيل اليدوي.':
+     error==='language-not-supported'?'التعرّف على العربية غير مدعوم في هذا المتصفح. استخدمي التسجيل اليدوي.':
+     'توقفت المتابعة الصوتية. يمكنك إعادة تشغيلها أو متابعة القراءة يدويًا.';
+   setEngine('',msg);
+ };
  r.onend=()=>{if(r._stopDone){r._stopDone();return;}if(r!==speechRec)return;speechStarted=false;finalized.clear();let attempts=0;
  const restart=()=>{if(r!==speechRec||!recOn||!recMode||r._stopping||r._noRestart||ctx.finalized)return;try{r.start();speechStarted=true;}catch(_){if(++attempts<3)r._restartTimer=setTimeout(restart,250);else setEngine('','توقف التعرّف؛ أعيدي تشغيل الميكروفون للمحاولة.');}};
  r._restartTimer=setTimeout(restart,120);
  };
  return r;
 }
-function startSpeech(){if(!recOn||!recMode||!speechAvailable)return false;if(speechStarted&&speechRec&&!speechRec._stopping&&!speechRec._stopped)return true;if(!speechRec||speechRec._stopping||speechRec._noRestart)speechRec=initSpeech();try{speechRec.start();speechStarted=true;if(recSession)recSession.engine='browser-speech';setEngine('live','متابعة التلاوة عبر المتصفح · دون كشف أخطاء');return true;}catch(_){return false;}}
+function startSpeech(){if(!recOn||!recMode||!speechAvailable)return false;if(speechStarted&&speechRec&&!speechRec._stopping&&!speechRec._stopped)return true;if(!speechRec||speechRec._stopping||speechRec._noRestart)speechRec=initSpeech();try{speechRec.start();speechStarted=true;if(recSession)recSession.engine='browser-speech';setEngine('live','متابعة موضع التلاوة فقط · دون كشف أخطاء أو تقييم للحفظ');return true;}catch(_){return false;}}
 function stopSpeech(){
  clearSpeechPreview();const r=speechRec;if(r)clearTimeout(r._restartTimer);if(r?._stopping)return r._stopPromise;if(!r||!speechStarted){if(r)r._stopped=true;speechRec=null;return Promise.resolve();}
  const ctx=recContexts.get(recSession?.id);r._stopping=true;
@@ -1839,7 +1849,7 @@ function stopSpeech(){
 }
 let recAliasesPromiseV86=null;
 function loadRecAliasesV86(){if(!recAliasesPromiseV86)recAliasesPromiseV86=fetchJSONV86('data/recitation-aliases.json',5000).then(data=>{DurrRecitation.configureAliases(data.aliases);return true;}).catch(()=>false);return recAliasesPromiseV86;}
-async function enterRecite(taskOverride){if(recFinishing||recMode)return;if(typeof closeFaceListening==='function')closeFaceListening();await ensureSearch();await loadRecAliasesV86();ensureMuta().catch(()=>{});closeAll();if(taskOverride)REC_RUNTIME_TASK=taskOverride;else if(!REC_RUNTIME_TASK)REC_RUNTIME_TASK=REC_TASK||'free';recMode=true;document.body.classList.remove('rec-controls-hidden');$('recBar').inert=false;$('recBar').setAttribute('aria-hidden','false');recSession=newRecSession();recSession.faceStates=new Map();recSession.faceVisuals=new Map();lastRecErrorSessionId=recSession.id;if(!ACTIVE_TASK_SESSION&&taskOverride!=='ai-review'&&taskOverride!=='practice'){recSession.freeSearch=true;recSession.freeLocated=false;recSession.navigationPending=true;voiceLocatorV89=voiceLocatorV89||new DurrRecitation.Locator(SEARCH);}document.body.classList.add('reciting');showReaderTools(false);reMaskFace();updateErrCount();syncTaskSessionChip();setEngine(qasrAvailable?'ok':(speechAvailable?'ok':''),qasrAvailable?'المحرك القرآني · يبدأ عند تشغيل الميكروفون':(speechAvailable?'وضع محدود · تعرّف المتصفح':'الجلسة ستُسجّل دون تحليل آلي'));recTip(ACTIVE_TASK_SESSION?((ACTIVE_TASK_SESSION.label||taskSessionLabel(REC_RUNTIME_TASK))+' · '+ARA(1)+' من '+ARA((ACTIVE_TASK_SESSION.pages||[]).length)):(REC_RUNTIME_TASK==='new'?'سمِّعي الوجه بعد حفظه ليُثبت تلقائيًا':'سمِّعي من حفظك · يبدأ التحليل عند تشغيل الميكروفون'));}
+async function enterRecite(taskOverride){if(recFinishing||recMode)return;if(typeof closeFaceListening==='function')closeFaceListening();await ensureSearch();await loadRecAliasesV86();ensureMuta().catch(()=>{});closeAll();if(taskOverride)REC_RUNTIME_TASK=taskOverride;else if(!REC_RUNTIME_TASK)REC_RUNTIME_TASK=REC_TASK||'free';recMode=true;document.body.classList.remove('rec-controls-hidden');$('recBar').inert=false;$('recBar').setAttribute('aria-hidden','false');recSession=newRecSession();recSession.faceStates=new Map();recSession.faceVisuals=new Map();lastRecErrorSessionId=recSession.id;if(!ACTIVE_TASK_SESSION&&taskOverride!=='ai-review'&&taskOverride!=='practice'){recSession.freeSearch=true;recSession.freeLocated=false;recSession.navigationPending=true;voiceLocatorV89=voiceLocatorV89||new DurrRecitation.Locator(SEARCH);}document.body.classList.add('reciting');showReaderTools(false);reMaskFace();updateErrCount();syncTaskSessionChip();setEngine(speechAvailable?'ok':'',speechAvailable?'متابعة عبر المتصفح · دون كشف أخطاء':'المتابعة الصوتية غير مدعومة هنا · التسجيل اليدوي متاح');recTip(ACTIVE_TASK_SESSION?((ACTIVE_TASK_SESSION.label||taskSessionLabel(REC_RUNTIME_TASK))+' · '+ARA(1)+' من '+ARA((ACTIVE_TASK_SESSION.pages||[]).length)):(REC_RUNTIME_TASK==='new'?'تابعي التسميع بعد الحفظ؛ لا يُقيّم التطبيق صحة التلاوة':'تابعي موضع القراءة صوتيًا؛ لا تُسجَّل أخطاء تلقائية'));}
 async function startRecallV76(vk,rid,practice=false,hinted=false){
   await enterRecite(practice?'practice':'ai-review');
   const first=recWords.findIndex(w=>w.vk===vk);if(first<0){recTip('تعذّر تحديد موضع الاستدعاء');return;}
