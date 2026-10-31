@@ -1298,7 +1298,8 @@ function syncTaskSessionChip(){
 let recSeq=[],recPos=0,recWords=[],recWordPos=0,eyeShown=false,recStream=null,recOn=false,recTimerH=null,recT0=0;
 let recSession=null,recPageState=null,speechRec=null,speechAvailable=!!(window.SpeechRecognition||window.webkitSpeechRecognition),speechStarted=false;
 const QASR_CONFIG=(window.DURR_CONFIG&&window.DURR_CONFIG.quranAsr)||{};
-const QASR_URL=QASR_CONFIG.enabled===false?'':String(QASR_CONFIG.url||LS('durr-quran-asr-url','')||'').replace(/\/$/,'');
+// The hosted recognizer is retired; saved legacy endpoints must never be reused.
+const QASR_URL='';
 let qasrActive=false,qasrCtx=null,qasrSource=null,qasrNode=null,qasrGain=null,qasrChunks=[],qasrSamples=0,qasrQueue=[],qasrBusy=false,qasrFailures=0,qasrSeq=0,qasrWarmed=false,qasrRunId="",qasrPumpPromise=null,qasrAbort=null;
 let recStarting=false,recFinishing=false,recAdvancing=false,recAdvanceTimer=null,recStartGenerationV86=0;
 let speechStopPromise=null,speechStopResolve=null;
