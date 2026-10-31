@@ -4298,6 +4298,7 @@ renderAll();
  const button=document.getElementById('tarteelHistoryOpen'),panel=document.getElementById('tarteelHistoryPanel');
  if(!button||!panel)return;
  let archive=null,items=[],versePages=null,historyIndex=null,historyPage=0,historyView='records';
+ window.addEventListener('durr-tarteel-history-updated',()=>{archive=null;historyIndex=null;historyPage=0;panel.replaceChildren();panel.textContent='تحدّث السجل المحفوظ. اضغطي «عرض السجل التاريخي المحفوظ» لإعادة فتحه.';});
  const HISTORY_SIZE=30;
  const labels={EXTRA_WORDS:'زيادة كلمات',INCORRECT_WORDS:'قراءة غير مطابقة',MISSED_WORDS:'سقوط كلمات',INCORRECT_TASHKEEL:'خطأ تشكيل',PEEKED_WORDS:'استعانة بالمصحف'};
  const safe=v=>esc(String(v??''));
@@ -4605,7 +4606,7 @@ renderAll();
         archiveExists().then(exists=>{if(exists)state.textContent='توجد حزمة محفوظة على هذا الجهاز؛ إعادة الحفظ تستبدلها.';});
         button.addEventListener('click',async()=>{
           button.disabled=true;state.textContent='جارٍ حفظ السجل في مساحة الجهاز…';
-          try{await saveHistoricalArchive();state.textContent='حُفظ السجل التاريخي على هذا الجهاز، دون إضافة أخطاء مؤكدة.';}
+          try{await saveHistoricalArchive();state.textContent='حُفظ السجل التاريخي على هذا الجهاز، دون إضافة أخطاء مؤكدة.';window.dispatchEvent(new Event('durr-tarteel-history-updated'));}
           catch(e){state.textContent='تعذّر الحفظ المحلي؛ تأكدي من توفر مساحة كافية في المتصفح.';}
           finally{button.disabled=false;}
         });
