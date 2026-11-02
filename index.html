@@ -1696,33 +1696,44 @@ function renderHomeV50(){
   if(recent){const arr=[],streak=calcStreak(),month=pagesMemorizedInMonth();if(streak>0)arr.push([streak+' يومًا','سلسلة الاستمرار الحالية']);if(month>0)arr.push([month+' وجهًا','حفظ جديد هذا الشهر']);const listen=(S.activityEvents||[]).filter(e=>e&&e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir').length;if(listen)arr.push([listen+' جلسة سماع','سُجّلت تلقائيًا']);if(tf)arr.push([tf+' وجه تفسير','أُنجزت قراءته']);if(!arr.length)arr.push(['ابدئي أول جلسة','سيظهر تقدمك الحقيقي هنا']);recent.innerHTML=arr.slice(0,4).map(x=>'<div class="v50-glass v50-ach"><b>'+esc(x[0])+'</b><small>'+esc(x[1])+'</small></div>').join('');}
 }
 function reviewCapacityV123(){const v=+(S.reviewDailyCapacity||20);return [5,10,15,20,30,40,60].includes(v)?v:20;}
-function teacherCatchupV129(){
+function teacherCatchupProgressV130(){
  const latest=new Map();
  for(const test of (S.teacherTests||[])){
   const results=Array.isArray(test.results)?test.results:(test.pages||[]).map(page=>({page,level:test.level}));
   for(const x of results){
-   const p=+x.page;if(p<1||p>604||!MASTERY_LEVELS_V116[x.level])continue;
+   const p=+x.page;if(p<1||p>604||!['weak','needs','good','strong'].includes(x.level))continue;
    const prev=latest.get(p);
    if(!prev||test.date>prev.date||(test.date===prev.date&&(test.createdAt||0)>(prev.createdAt||0)))
     latest.set(p,{p,level:x.level,date:test.date,createdAt:test.createdAt||0});
   }
  }
- return [...latest.values()].filter(x=>{
-  if(!['weak','needs'].includes(x.level)||!firstMemDateV62(x.p)||completeReviewTodayV62(x.p))return false;
-  const mastery=masteryOfPageV116(x.p);
-  return !mastery||!(mastery.date>x.date)&&mastery.level===x.level;
- }).sort((a,b)=>(a.level==='weak'?0:1)-(b.level==='weak'?0:1)||a.date.localeCompare(b.date)||a.p-b.p);
+ const results=[];
+ for(const item of latest.values()){
+  if(!['weak','needs'].includes(item.level)||!firstMemDateV62(item.p))continue;
+  const mastery=masteryOfPageV116(item.p);
+  const isLater=!!(mastery&&mastery.date>item.date);
+  const improved=isLater&&['good','strong'].includes(mastery.level);
+  const stillWeak=isLater&&['weak','needs'].includes(mastery.level);
+  results.push({...item,status:improved?'improved':stillWeak?'still-weak':'pending',current:mastery?.level||null,currentDate:mastery?.date||null});
+ }
+ return results.sort((a,b)=>a.date.localeCompare(b.date)||a.p-b.p);
+}
+function teacherCatchupV129(){
+ return teacherCatchupProgressV130().filter(x=>x.status!=='improved'&&!completeReviewTodayV62(x.p));
 }
 function renderTeacherCatchupV129(){
  const box=document.getElementById('teacherCatchupV129');if(!box)return;
- const pages=teacherCatchupV129(),todaySelected=new Set(reviewQueueV123().selected.map(x=>x.p));
- const now=pages.filter(x=>todaySelected.has(x.p)),later=pages.filter(x=>!todaySelected.has(x.p));
- const links=arr=>arr.map(x=>'<button type="button" class="btn btn-ghost btn-sm" data-v50-mushaf="'+x.p+'" data-mode="recite" data-task="'+faceTaskForV63(x.p)+'" style="margin:3px;padding:7px;border:1px solid var(--line)">وجه '+x.p+' · '+esc(MASTERY_LEVELS_V116[x.level])+'</button>').join('');
- box.innerHTML='<div class="v50-section-head"><h2>استدراك اختبار المعلمة</h2><span>'+pages.length+' وجهًا</span></div>'+
- (pages.length?'<p class="hint">تظهر الأوجه الضعيفة من آخر اختبار لكل وجه. الاستدراك يستخدم النصاب نفسه ولا يُسجّل إنجازًا إضافيًا.</p>'+
+ const progress=teacherCatchupProgressV130(),pages=teacherCatchupV129();
+ const selected=new Set(reviewQueueV123().selected.map(x=>x.p));
+ const now=pages.filter(x=>selected.has(x.p)),later=pages.filter(x=>!selected.has(x.p));
+ const improved=progress.filter(x=>x.status==='improved'),stillWeak=progress.filter(x=>x.status==='still-weak');
+ const links=arr=>arr.map(x=>'<button type="button" class="btn btn-ghost btn-sm" data-v50-mushaf="'+x.p+'" data-mode="recite" data-task="'+faceTaskForV63(x.p)+'" style="margin:3px;padding:7px;border:1px solid var(--line)">وجه '+x.p+' · '+esc(MASTERY_LEVELS_V116[x.current]||MASTERY_LEVELS_V116[x.level])+'</button>').join('');
+ box.innerHTML='<div class="v50-section-head"><h2>استدراك اختبار المعلمة</h2><span>'+pages.length+' وجهًا بحاجة متابعة</span></div>'+
+ '<p class="hint">يُقاس التحسن بتقييم ضبط لاحق للاختبار، لا بنسبة تعرّف الصوت. الوجه الذي تحسّن يخرج من الاستدراك دون حذف نتيجة اختباره.</p>'+
  (now.length?'<b>ضمن نصاب اليوم · '+now.length+'</b><div>'+links(now)+'</div>':'')+
- (later.length?'<details style="margin-top:8px"><summary>بانتظار الدور · '+later.length+'</summary><div>'+links(later)+'</div></details>':'')
- :'<p class="hint">لا توجد أوجه ضعيفة من اختبارات المعلمة تحتاج استدراكًا حاليًا.</p>');
+ (later.length?'<details style="margin-top:8px"><summary>بانتظار الدور · '+later.length+'</summary><div>'+links(later)+'</div></details>':'')+
+ (stillWeak.length?'<details style="margin-top:8px"><summary>أُعيد تقييمها وما زالت تحتاج تثبيتًا · '+stillWeak.length+'</summary><div>'+links(stillWeak)+'</div></details>':'')+
+ (improved.length?'<details style="margin-top:8px"><summary>تحسّن ضبطها بعد الاختبار · '+improved.length+'</summary><div>'+links(improved)+'</div></details>':'');
 }
 function reviewQueueV123(){
  const arr=[];
