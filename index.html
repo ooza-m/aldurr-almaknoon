@@ -1023,6 +1023,7 @@ window.FIREBASE_CONFIG = {
 <!-- نوافذ -->
 <div class="modal-bg" id="pageModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('pageModal').classList.remove('open')" aria-label="إغلاق">✕</button>
   <h3 id="pmTitle">الوجه</h3><p class="msub" id="pmSub"></p>
+  <div id="pmFaceRecord" style="margin-bottom:12px"></div>
   <div id="pmReviewInfo" style="margin-bottom:12px"></div>
   <div id="pmStateInfo" style="margin-bottom:12px"></div>
   <div id="pmMastery" style="margin-bottom:12px"></div>
@@ -2604,8 +2605,28 @@ function renderPageMasteryV116(page){
     S.pageMastery=S.pageMastery||{};
     if(level==='clear')delete S.pageMastery[page];
     else if(MASTERY_LEVELS_V116[level]){S.pageMastery[page]={level,date:todayKey(),updatedAt:Date.now(),source:'manual'};applyManualMasteryScheduleV117(page,level);}
-    save();renderPageMasteryV116(page);renderMap();refreshV50();
+    save();renderUnifiedFaceRecordV121(page);renderPageMasteryV116(page);renderMap();refreshV50();
   }));
+}
+function renderUnifiedFaceRecordV121(page){
+  const target=document.getElementById('pmFaceRecord');if(!target)return;
+  const first=firstMemDateV62(page),status=reviewEngineStateV62(page);
+  const sched=status.schedule||{},mastery=masteryOfPageV116(page);
+  const entries=(S.recitationSessions||[]).flatMap(rs=>(rs.pages||[]).filter(pg=>+pg.page===+page).map(pg=>({
+    id:rs.id,task:rs.task,date:keyOf(new Date(rs.endedAt||rs.startedAt||Date.now())),
+    approved:pg.manualConfirmed===true,graded:pg.manualMasteryLevel||''
+  }))).filter(x=>x.approved).sort((a,b)=>b.date.localeCompare(a.date));
+  const unique=Array.from(new Map(entries.map(x=>[x.id,x])).values());
+  const dateCell=(label,value)=>'<div style="background:var(--parch-2);border-radius:10px;padding:10px"><div style="color:var(--muted);font-size:.72rem">'+label+'</div><b style="font-size:.86rem">'+esc(String(value||'—'))+'</b></div>';
+  const due=status.nextDue||sched.nextDue;
+  target.innerHTML='<section aria-label="ملف الوجه الموحّد" style="border:1px solid var(--line);border-radius:14px;padding:12px">'+
+    '<b style="display:block;margin-bottom:10px">ملف الوجه · الحفظ والمراجعة</b>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
+    dateCell('أول حفظ',first)+dateCell('آخر مراجعة',sched.lastReview)+
+    dateCell('المراجعة القادمة',due)+dateCell('ضبط الوجه',mastery?MASTERY_LEVELS_V116[mastery.level]:'لم يُقيّم')+
+    '</div><div style="font-size:.75rem;color:var(--muted);margin:11px 0 5px">آخر المراجعات المعتمدة</div>'+
+    (unique.length?'<div style="max-height:145px;overflow:auto">'+unique.slice(0,8).map(e=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:.77rem"><span>'+esc(e.date)+' · '+(e.task==='new'?'حفظ جديد':e.task==='fix'?'تثبيت':e.task==='far'?'مراجعة بعيدة':'مراجعة قريبة')+'</span><span>'+esc(MASTERY_LEVELS_V116[e.graded]||'دون تقييم')+'</span></div>').join('')+'</div>':'<div style="font-size:.77rem;color:var(--muted)">لا توجد جلسات مراجعة معتمدة من المصحف بعد.</div>')+
+    '</section>';
 }
 function openPage(p,surahId){
   curPage=p;curPageSurah=(surahId!=null)?surahId:null;
@@ -2621,6 +2642,7 @@ function openPage(p,surahId){
     const phase=eng.phase==='far'?'مراجعة بعيدة':'مراجعة قريبة',due=eng.nextDue?fmtD(eng.nextDue):null;
     ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>'+phase+'</b>'+(eng.schedule?.lastReview?' · آخر مراجعة '+esc(eng.schedule.lastReview):'')+(due?' · الموعد '+due.d+' '+due.m:'')+(eng.due?' · <span style="color:var(--clay)">مستحقة الآن</span>':'')+'</div>';
   }
+  renderUnifiedFaceRecordV121(p);
   renderPageMasteryV116(p);
   const stateLabels={unseen:['لم يُحفظ','var(--muted)'],fix:['قيد التثبيت','var(--gold)'],fresh:['متقن / حديث المراجعة','var(--green)'],due:['يحتاج مراجعة','#C89B3C'],weak:['متفلّت — راجعيه قريبًا','var(--clay)']};
   const sl=stateLabels[m.state]||stateLabels.unseen;
