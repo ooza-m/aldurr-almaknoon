@@ -1614,11 +1614,28 @@ function priorityV50(){
   const p=lastActivityPageV50();return{page:p,title:'اكتملت مهام الحفظ والمراجعة',sub:'يمكنك متابعة التلاوة أو التفسير من بقية مهام اليوم.',kind:'مكتمل',taskId:'free',complete:true};
 }
 function recitedPagesTodayV51(task){const set=new Set(),day=todayKey();(S.recitationSessions||[]).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||0));if(d!==day)return;if(task&&rs.task!==task)return;(rs.pages||[]).forEach(pg=>{if(!['ai-review','practice'].includes(rs.task)&&pg.complete&&pg.coverage>=.95)set.add(+pg.page);});});return set;}
+function weeklyMemorizationV135(date=todayKey()){
+ const goal=Math.max(0,Math.min(80,Number.isFinite(+S.weeklyMemGoal)?Math.floor(+S.weeklyMemGoal):3));
+ const weekday=new Date(date+'T12:00:00').getDay();
+ const start=addDaysKeyV62(date,-((weekday+6)%7));
+ const days=[1,2,3,4];
+ const target=reviewWeekModeV126()==='daily'?Math.max(1,+(S.goal?.pages)||1):
+  (days.includes(weekday)?Math.floor(goal/4)+(days.indexOf(weekday)<goal%4?1:0):0);
+ const completed=new Set();
+ (S.logs||[]).filter(x=>x.date>=start&&x.date<=addDaysKeyV62(start,6)).forEach(log=>(log.memList||[]).forEach(x=>{
+  const range=x.from&&x.to?[+x.from,+x.to]:pagesOfSurah(+x.surahId);
+  if(range)for(let p=Math.min(...range);p<=Math.max(...range);p++)if(p>=1&&p<=604)completed.add(p);
+ }));
+ (S.recitationSessions||[]).filter(x=>x.task==='new'&&x.endedAt&&keyOf(new Date(x.endedAt))>=start&&keyOf(new Date(x.endedAt))<=addDaysKeyV62(start,6)).forEach(rs=>(rs.pages||[]).forEach(pg=>{
+  if(pg.complete&&pg.manualConfirmed===true)completed.add(+pg.page);
+ }));
+ return{goal,dayTarget:target,done:completed.size,start};
+}
 function taskPagesV60(id){
   const log=todayLogV50(),allRev=rangeSetV50(log.revList||[]),nearDone=rangeSetV50(log.revList||[],x=>x.type!=='far'),farDone=rangeSetV50(log.revList||[],x=>x.type==='far');
   const doneAuto=recitedPagesTodayV51(id);
   if(id==='new'){
-    const target=Math.max(1,(S.goal&&S.goal.pages)||1),legacy=rangeSetV50(log.memList||[]),auto=recitedPagesTodayV51('new');
+    const target=weeklyMemorizationV135().dayTarget,legacy=rangeSetV50(log.memList||[]),auto=recitedPagesTodayV51('new');
     const done=new Set([...legacy,...auto]).size,remain=Math.max(0,target-done);
     const dir=S.profile&&S.profile.pathDir==='down'?-1:1;
     let p=nextNewPageV50(),out=[];
@@ -1651,7 +1668,7 @@ function tasksV50(){
   const farDoneN=reviewedFar.length;
   const scheduledFix=taskPagesV60('fix'),scheduledNear=taskPagesV60('near'),scheduledFar=taskPagesV60('far');
   const capacity=reviewCapacityV123();
-  const newTarget=Math.max(1,(S.goal&&S.goal.pages)||1),halaqa=isHalaqaDay(todayKey(),new Date().getDay());
+  const newTarget=weeklyMemorizationV135().dayTarget,halaqa=isHalaqaDay(todayKey(),new Date().getDay());
   const arr=[
     {id:'new',label:'حفظ جديد',done:memDoneSet.size,target:newTarget,pages:taskPagesV60('new'),kind:'book',action:'ابدئي جلسة الحفظ',color:'var(--green)'},
     {id:'fix',label:'تثبيت 30 يومًا',done:fixDone,target:fixDone+scheduledFix.length,pages:scheduledFix,kind:'leaf',action:'ابدئي جلسة التثبيت',color:'var(--gold)'},
@@ -1866,6 +1883,7 @@ function renderStudyPlanSettingsV134(){
  '<p class="hint">تُطبّق الإعدادات على الخطة الحالية دون حذف الإنجازات أو تغيير مواعيد الاستحقاق الأصلية.</p>'+
  '<div style="display:grid;gap:11px;margin-top:12px">'+
  '<label style="display:grid;gap:5px">نصاب الحفظ الجديد (وجه/يوم) <input type="number" id="studyNewGoalV134" min="1" max="20" value="'+goal+'" style="width:95px;padding:7px;border:1px solid var(--line);border-radius:9px"></label>'+
+ '<label style="display:grid;gap:5px">هدف الحفظ الأسبوعي (وجه) <input type="number" id="studyWeeklyGoalV135" min="0" max="80" value="'+weeklyMemorizationV135().goal+'" style="width:95px;padding:7px;border:1px solid var(--line);border-radius:9px"></label><p class="hint">في نظام الحلقة: يوزّع الهدف على الاثنين–الخميس، والجمعة للاختبار والسبت والأحد للاستدراك.</p>'+
  '<label style="display:grid;gap:5px">طاقة المراجعة اليومية '+select('studyCapacityV134',[5,10,15,20,30,40,60].map(n=>[n,n+' وجهًا']),capacity)+'</label>'+
  '<label style="display:grid;gap:5px">نظام الأسبوع '+select('studyWeekV134',[['halaqa','الاثنين–الخميس: حفظ ومراجعة، الجمعة اختبار، السبت والأحد استدراك'],['daily','مراجعة متساوية يوميًا']],mode)+'</label>'+
  '<label style="display:grid;gap:5px">تركيز الأولويات '+select('studyFocusV134',[['balanced','متوازن'],['weak-first','الضعف المتكرر أولًا'],['due-first','المستحق اليوم أولًا']],focus)+'</label>'+
@@ -1873,6 +1891,9 @@ function renderStudyPlanSettingsV134(){
  document.getElementById('studyPlanSaveV134').onclick=()=>{
   const pages=Number(document.getElementById('studyNewGoalV134').value);
   if(!Number.isInteger(pages)||pages<1||pages>20){document.getElementById('studyPlanMsgV134').textContent='حددي نصاب حفظ بين 1 و20 وجهًا';return;}
+  const weekly=Number(document.getElementById('studyWeeklyGoalV135').value);
+  if(!Number.isInteger(weekly)||weekly<0||weekly>80){document.getElementById('studyPlanMsgV134').textContent='حددي هدفًا أسبوعيًا بين 0 و80 وجهًا';return;}
+  S.weeklyMemGoal=weekly;
   S.goal=S.goal||{};S.goal.pages=pages;
   S.reviewDailyCapacity=+document.getElementById('studyCapacityV134').value;
   S.reviewWeekMode=document.getElementById('studyWeekV134').value;
