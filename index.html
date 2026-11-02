@@ -1735,7 +1735,7 @@ function renderReviewForecastV124(){
  const host=document.getElementById('reviewForecastV124');if(!host)return;
  const days=reviewForecastV124();
  host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">المراجعات القادمة · 7 أيام</summary><p class="hint">توزيع مقترح لا يغيّر مواعيد الاستحقاق الأصلية ولا يسجّل أي إنجاز.</p>'+
- days.map(d=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+esc(d.date)+'</b> · '+d.pages.length+' وجهًا'+(d.carry?' · متبقٍ '+d.carry:'')+'<div style="font-size:.75rem;color:var(--muted)">'+(d.pages.length?d.pages.slice(0,12).join('، '):'لا مراجعات موزعة')+'</div></div>').join('')+'</details>';
+ days.map(d=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+esc(d.date)+'</b> · '+d.pages.length+' وجهًا'+(d.carry?' · متبقٍ '+d.carry:'')+'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px">'+(d.pages.length?d.pages.map(p=>'<button type="button" class="btn btn-ghost btn-sm" data-v50-mushaf="'+p+'" data-mode="recite" data-task="'+faceTaskForV63(p)+'" aria-label="افتحي الوجه '+p+' في المصحف" style="padding:6px 9px;border:1px solid var(--line)">'+p+'</button>').join(''):'<span class="hint">لا مراجعات موزعة</span>')+'</div></div>').join('')+'</details>';
 }
 function renderDailyPageQueueV122(){
  const host=document.getElementById('dailyPageQueueV122');if(!host)return;
