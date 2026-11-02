@@ -2762,6 +2762,27 @@ function renderPageMasteryV116(page){
     save();renderUnifiedFaceRecordV121(page);renderPageMasteryV116(page);renderMap();refreshV50();
   }));
 }
+function faceMasteryTimelineV131(page){
+ const events=[];
+ for(const t of S.teacherTests||[]){
+  const grade=Array.isArray(t.results)?t.results.find(x=>+x.page===+page):((t.pages||[]).some(p=>+p===+page)?{level:t.level}:null);
+  if(grade&&MASTERY_LEVELS_V116[grade.level])events.push({id:t.id,date:t.date,level:grade.level,source:'اختبار المعلمة',ts:t.createdAt||0});
+ }
+ for(const rs of S.recitationSessions||[]){
+  for(const pg of rs.pages||[]){
+   if(+pg.page!==+page||pg.manualConfirmed!==true||!MASTERY_LEVELS_V116[pg.manualMasteryLevel])continue;
+   events.push({id:rs.id,date:keyOf(new Date(rs.endedAt||rs.startedAt||Date.now())),level:pg.manualMasteryLevel,source:'تسميع معتمد',ts:rs.endedAt||rs.startedAt||0});
+  }
+ }
+ const manual=masteryOfPageV116(page);
+ if(manual&&manual.source==='manual')events.push({id:'manual:'+manual.updatedAt,date:manual.date,level:manual.level,source:'تقييم يدوي',ts:manual.updatedAt||0});
+ events.sort((a,b)=>a.date.localeCompare(b.date)||a.ts-b.ts);
+ const unique=[...new Map(events.map(e=>[e.source+':'+e.id+':'+e.date,e])).values()];
+ const last=unique.slice(-3),good=x=>x&&['good','strong'].includes(x.level);
+ const weakCount=unique.filter(x=>['weak','needs'].includes(x.level)).length;
+ const state=last.length>=2&&last.every(good)?'تحسّن مستقر مبدئيًا':last.length>=2&&last.some(good)&&last.some(x=>!good(x))?'ضبط متذبذب':weakCount>=2?'ضعف متكرر':'البيانات غير كافية للحكم على الاستقرار';
+ return {events:unique,state,weakCount};
+}
 function renderUnifiedFaceRecordV121(page){
   const target=document.getElementById('pmFaceRecord');if(!target)return;
   const first=firstMemDateV62(page),status=reviewEngineStateV62(page);
@@ -2777,6 +2798,7 @@ function renderUnifiedFaceRecordV121(page){
   const unique=Array.from(new Map(entries.map(x=>[x.id,x])).values());
   const dateCell=(label,value)=>'<div style="background:var(--parch-2);border-radius:10px;padding:10px"><div style="color:var(--muted);font-size:.72rem">'+label+'</div><b style="font-size:.86rem">'+esc(String(value||'—'))+'</b></div>';
   const due=status.nextDue||sched.nextDue;
+  const timeline=faceMasteryTimelineV131(page);
   target.innerHTML='<section aria-label="ملف الوجه الموحّد" style="border:1px solid var(--line);border-radius:14px;padding:12px">'+
     '<b style="display:block;margin-bottom:10px">ملف الوجه · الحفظ والمراجعة</b>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
@@ -2786,6 +2808,9 @@ function renderUnifiedFaceRecordV121(page){
     (unique.length?'<div style="max-height:145px;overflow:auto">'+unique.slice(0,8).map(e=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:.77rem"><span>'+esc(e.date)+' · '+(e.task==='new'?'حفظ جديد':e.task==='fix'?'تثبيت':e.task==='far'?'مراجعة بعيدة':'مراجعة قريبة')+'</span><span>'+esc(MASTERY_LEVELS_V116[e.graded]||'دون تقييم')+'</span></div>').join('')+'</div>':'<div style="font-size:.77rem;color:var(--muted)">لا توجد جلسات مراجعة معتمدة من المصحف بعد.</div>')+
     '<div style="font-size:.75rem;color:var(--muted);margin:11px 0 5px">اختبارات المعلمة</div>'+
     (teacherEntries.length?teacherEntries.slice(0,5).map(e=>'<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:.77rem"><span>'+esc(e.date)+'</span><span>'+esc(e.level==='untested'?'لم يُختبر':MASTERY_LEVELS_V116[e.level]||'دون تقييم')+'</span></div>').join(''):'<div class="hint">لا توجد نتائج اختبارات مسجلة لهذا الوجه.</div>')+
+    '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:700">تطور ضبط الوجه · '+esc(timeline.state)+'</summary>'+
+    '<p class="hint">قراءة وصفية للتقييمات الموثقة، وليست درجة آلية أو حكمًا قطعيًا على الإتقان.</p>'+
+    (timeline.events.length?timeline.events.slice(-12).reverse().map(e=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:.78rem"><span>'+esc(e.date)+' · '+esc(e.source)+'</span><b>'+esc(MASTERY_LEVELS_V116[e.level])+'</b></div>').join(''):'<p class="hint">لم تُسجَّل تقييمات كافية بعد.</p>')+'</details>'+
     '</section>';
 }
 function openPage(p,surahId){
