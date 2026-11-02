@@ -1840,14 +1840,26 @@ function renderReviewForecastV124(){
  const input=document.getElementById('reviewWeekModeV126');
  if(input)input.onchange=()=>{S.reviewWeekMode=input.value;save();renderReviewForecastV124();};
 }
+function reviewPriorityReasonV132(item){
+ const reasons=[];
+ if(item.rank===0)reasons.push('متأخر '+item.days+' '+(item.days===1?'يومًا':'أيام'));
+ else if(item.rank===1)reasons.push('يحتاج تثبيتًا');
+ else reasons.push('موعد المراجعة اليوم');
+ if(item.recurrence>=2)reasons.push('تكرر ضعفه '+item.recurrence+' مرات في آخر 4 تقييمات');
+ return reasons.join(' · ');
+}
 function renderDailyPageQueueV122(){
  const host=document.getElementById('dailyPageQueueV122');if(!host)return;
  const queue=reviewQueueV123(),cap=reviewCapacityV123();
- const group=(label,items)=>items.length?'<div style="margin-top:12px"><b>'+label+' · '+items.length+'</b><div>'+items.map(x=>{const sur=surahOfPage(x.p);return '<button class="btn btn-ghost btn-sm" data-v50-mushaf="'+x.p+'" data-mode="recite" data-task="'+x.task+'" style="padding:8px;margin:3px;border:1px solid var(--line)">وجه '+x.p+' · '+esc(sur[1])+'</button>';}).join('')+'</div></div>':'';
+ const group=(label,items)=>items.length?'<section style="margin-top:12px"><b>'+label+' · '+items.length+'</b><div style="display:grid;gap:7px;margin-top:7px">'+items.map(x=>{
+  const sur=surahOfPage(x.p),reason=reviewPriorityReasonV132(x);
+  return '<button type="button" class="btn btn-ghost btn-sm" data-v50-mushaf="'+x.p+'" data-mode="recite" data-task="'+x.task+'" style="display:flex;justify-content:space-between;align-items:center;gap:9px;padding:10px;border:1px solid var(--line);text-align:right;white-space:normal"><span><b>الوجه '+x.p+' · '+esc(sur[1])+'</b><small style="display:block;color:var(--muted);margin-top:4px">'+esc(reason)+'</small></span><span aria-hidden="true">‹</span></button>';
+ }).join('')+'</div></section>':'';
  host.innerHTML='<div class="v50-section-head"><h2>أولوية المراجعة</h2><span>'+queue.selected.length+' وجهًا اليوم</span></div>'+
  '<label style="display:block;margin:10px 0">الطاقة اليومية <select id="reviewCapacityChoiceV123">'+[5,10,15,20,30,40,60].map(n=>'<option value="'+n+'" '+(n===cap?'selected':'')+'>'+n+' وجهًا</option>').join('')+'</select></label>'+
+ '<p class="hint">يُعرض سبب الأولوية أسفل كل وجه، ولا يغيّر ذلك موعده أو عدد أوجه النصاب.</p>'+
  group('متأخرة',queue.selected.filter(x=>x.rank===0))+group('تحتاج تثبيتًا',queue.selected.filter(x=>x.rank===1))+group('مستحقة اليوم',queue.selected.filter(x=>x.rank===2))+
- (queue.waiting.length?'<details><summary>قائمة الانتظار · '+queue.waiting.length+' وجهًا</summary><p class="hint">تبقى الأوجه غير منجزة حتى مراجعتها واعتمادها.</p></details>':'');
+ (queue.waiting.length?'<details style="margin-top:12px"><summary>قائمة الانتظار · '+queue.waiting.length+' وجهًا</summary><div style="display:grid;gap:7px;margin-top:8px">'+queue.waiting.slice(0,20).map(x=>'<div style="font-size:.8rem;padding:7px;border-bottom:1px solid var(--line)">وجه '+x.p+' · '+esc(reviewPriorityReasonV132(x))+'</div>').join('')+'</div></details>':'');
  const input=document.getElementById('reviewCapacityChoiceV123');
  if(input)input.onchange=()=>{S.reviewDailyCapacity=+input.value;save();refreshV50();};
 }
