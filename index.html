@@ -2731,6 +2731,10 @@ function renderUnifiedFaceRecordV121(page){
     id:rs.id,task:rs.task,date:keyOf(new Date(rs.endedAt||rs.startedAt||Date.now())),
     approved:pg.manualConfirmed===true,graded:pg.manualMasteryLevel||''
   }))).filter(x=>x.approved).sort((a,b)=>b.date.localeCompare(a.date));
+  const teacherEntries=(S.teacherTests||[]).map(test=>{
+    const grade=Array.isArray(test.results)?test.results.find(x=>+x.page===+page):((test.pages||[]).includes(page)?{level:test.level}:null);
+    return grade?{date:test.date,level:grade.level}:null;
+  }).filter(Boolean).sort((a,b)=>b.date.localeCompare(a.date));
   const unique=Array.from(new Map(entries.map(x=>[x.id,x])).values());
   const dateCell=(label,value)=>'<div style="background:var(--parch-2);border-radius:10px;padding:10px"><div style="color:var(--muted);font-size:.72rem">'+label+'</div><b style="font-size:.86rem">'+esc(String(value||'—'))+'</b></div>';
   const due=status.nextDue||sched.nextDue;
@@ -2741,6 +2745,8 @@ function renderUnifiedFaceRecordV121(page){
     dateCell('المراجعة القادمة',due)+dateCell('ضبط الوجه',mastery?MASTERY_LEVELS_V116[mastery.level]:'لم يُقيّم')+
     '</div><div style="font-size:.75rem;color:var(--muted);margin:11px 0 5px">آخر المراجعات المعتمدة</div>'+
     (unique.length?'<div style="max-height:145px;overflow:auto">'+unique.slice(0,8).map(e=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:.77rem"><span>'+esc(e.date)+' · '+(e.task==='new'?'حفظ جديد':e.task==='fix'?'تثبيت':e.task==='far'?'مراجعة بعيدة':'مراجعة قريبة')+'</span><span>'+esc(MASTERY_LEVELS_V116[e.graded]||'دون تقييم')+'</span></div>').join('')+'</div>':'<div style="font-size:.77rem;color:var(--muted)">لا توجد جلسات مراجعة معتمدة من المصحف بعد.</div>')+
+    '<div style="font-size:.75rem;color:var(--muted);margin:11px 0 5px">اختبارات المعلمة</div>'+
+    (teacherEntries.length?teacherEntries.slice(0,5).map(e=>'<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:.77rem"><span>'+esc(e.date)+'</span><span>'+esc(e.level==='untested'?'لم يُختبر':MASTERY_LEVELS_V116[e.level]||'دون تقييم')+'</span></div>').join(''):'<div class="hint">لا توجد نتائج اختبارات مسجلة لهذا الوجه.</div>')+
     '</section>';
 }
 function openPage(p,surahId){
