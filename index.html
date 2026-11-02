@@ -685,7 +685,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
-       <div id="smartReview"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div>
+       <div id="smartReview"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
       <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
@@ -1696,6 +1696,34 @@ function renderHomeV50(){
   if(recent){const arr=[],streak=calcStreak(),month=pagesMemorizedInMonth();if(streak>0)arr.push([streak+' يومًا','سلسلة الاستمرار الحالية']);if(month>0)arr.push([month+' وجهًا','حفظ جديد هذا الشهر']);const listen=(S.activityEvents||[]).filter(e=>e&&e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir').length;if(listen)arr.push([listen+' جلسة سماع','سُجّلت تلقائيًا']);if(tf)arr.push([tf+' وجه تفسير','أُنجزت قراءته']);if(!arr.length)arr.push(['ابدئي أول جلسة','سيظهر تقدمك الحقيقي هنا']);recent.innerHTML=arr.slice(0,4).map(x=>'<div class="v50-glass v50-ach"><b>'+esc(x[0])+'</b><small>'+esc(x[1])+'</small></div>').join('');}
 }
 function reviewCapacityV123(){const v=+(S.reviewDailyCapacity||20);return [5,10,15,20,30,40,60].includes(v)?v:20;}
+function teacherCatchupV129(){
+ const latest=new Map();
+ for(const test of (S.teacherTests||[])){
+  const results=Array.isArray(test.results)?test.results:(test.pages||[]).map(page=>({page,level:test.level}));
+  for(const x of results){
+   const p=+x.page;if(p<1||p>604||!MASTERY_LEVELS_V116[x.level])continue;
+   const prev=latest.get(p);
+   if(!prev||test.date>prev.date||(test.date===prev.date&&(test.createdAt||0)>(prev.createdAt||0)))
+    latest.set(p,{p,level:x.level,date:test.date,createdAt:test.createdAt||0});
+  }
+ }
+ return [...latest.values()].filter(x=>{
+  if(!['weak','needs'].includes(x.level)||!firstMemDateV62(x.p)||completeReviewTodayV62(x.p))return false;
+  const mastery=masteryOfPageV116(x.p);
+  return !mastery||!(mastery.date>x.date)&&mastery.level===x.level;
+ }).sort((a,b)=>(a.level==='weak'?0:1)-(b.level==='weak'?0:1)||a.date.localeCompare(b.date)||a.p-b.p);
+}
+function renderTeacherCatchupV129(){
+ const box=document.getElementById('teacherCatchupV129');if(!box)return;
+ const pages=teacherCatchupV129(),todaySelected=new Set(reviewQueueV123().selected.map(x=>x.p));
+ const now=pages.filter(x=>todaySelected.has(x.p)),later=pages.filter(x=>!todaySelected.has(x.p));
+ const links=arr=>arr.map(x=>'<button type="button" class="btn btn-ghost btn-sm" data-v50-mushaf="'+x.p+'" data-mode="recite" data-task="'+faceTaskForV63(x.p)+'" style="margin:3px;padding:7px;border:1px solid var(--line)">وجه '+x.p+' · '+esc(MASTERY_LEVELS_V116[x.level])+'</button>').join('');
+ box.innerHTML='<div class="v50-section-head"><h2>استدراك اختبار المعلمة</h2><span>'+pages.length+' وجهًا</span></div>'+
+ (pages.length?'<p class="hint">تظهر الأوجه الضعيفة من آخر اختبار لكل وجه. الاستدراك يستخدم النصاب نفسه ولا يُسجّل إنجازًا إضافيًا.</p>'+
+ (now.length?'<b>ضمن نصاب اليوم · '+now.length+'</b><div>'+links(now)+'</div>':'')+
+ (later.length?'<details style="margin-top:8px"><summary>بانتظار الدور · '+later.length+'</summary><div>'+links(later)+'</div></details>':'')
+ :'<p class="hint">لا توجد أوجه ضعيفة من اختبارات المعلمة تحتاج استدراكًا حاليًا.</p>');
+}
 function reviewQueueV123(){
  const arr=[];
  for(let p=1;p<=604;p++){
@@ -1809,7 +1837,7 @@ function renderDailyPageQueueV122(){
  if(input)input.onchange=()=>{S.reviewDailyCapacity=+input.value;save();refreshV50();};
 }
 function renderTodayV50(){
-  renderSmartReview();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();
+  renderSmartReview();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
