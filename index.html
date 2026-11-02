@@ -1570,7 +1570,8 @@ function updateReviewEngineV62(p,task,date,pg){
     x.phase=age>=30?'near':'fix';x.nearLevel=x.nearLevel||0;
     x.nextDue=age>=30?addDaysKeyV62(date,NEAR_INTERVALS_V62[0]):addDaysKeyV62(date,1);
   }else{
-    if(!graded){x.nextDue=addDaysKeyV62(date,x.phase==='far'?7:3);S.pageReviewSched[p]=x;return;}
+    if(!graded){ // A completed follow-along session closes the day's task but must not advance mastery.
+      x.nextDue=addDaysKeyV62(date,x.phase==='far'?7:3);S.pageReviewSched[p]=x;return;}
     const difficult=['weak','needs'].includes(pg.manualMasteryLevel);
     if((x.phase||'near')==='near'){
       let level=Math.max(0,+x.nearLevel||0);
@@ -2607,7 +2608,7 @@ function openPage(p,surahId){
     ri.innerHTML='<div style="background:var(--gold-soft);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>مرحلة التثبيت:</b> اليوم '+toAr(eng.day)+' من 30 · '+(eng.doneToday?'أُنجزت مراجعة اليوم':'مطلوب مراجعته اليوم')+'</div>';
   }else{
     const phase=eng.phase==='far'?'مراجعة بعيدة':'مراجعة قريبة',due=eng.nextDue?fmtD(eng.nextDue):null;
-    ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>'+phase+'</b>'+(due?' · الموعد '+due.d+' '+due.m:'')+(eng.due?' · <span style="color:var(--clay)">مستحقة الآن</span>':'')+'</div>';
+    ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>'+phase+'</b>'+(eng.schedule?.lastReview?' · آخر مراجعة '+esc(eng.schedule.lastReview):'')+(due?' · الموعد '+due.d+' '+due.m:'')+(eng.due?' · <span style="color:var(--clay)">مستحقة الآن</span>':'')+'</div>';
   }
   renderPageMasteryV116(p);
   const stateLabels={unseen:['لم يُحفظ','var(--muted)'],fix:['قيد التثبيت','var(--gold)'],fresh:['متقن / حديث المراجعة','var(--green)'],due:['يحتاج مراجعة','#C89B3C'],weak:['متفلّت — راجعيه قريبًا','var(--clay)']};
@@ -2620,7 +2621,7 @@ function openPage(p,surahId){
     '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(!!listen)+' <b>السماع</b><br><span style="color:var(--muted)">'+(listen?(listen.last||'تم'):'لم يكتمل')+'</span></div>'+
     '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(books.length>0)+' <b>التفسير</b><br><span style="color:var(--muted)">'+(books.length?toAr(books.length)+' كتاب':'لم يكتمل')+'</span></div>'+
     '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(!!h)+' <b>الحفظ</b><br><span style="color:var(--muted)">'+(h?(h.first||'تم'):'لم يثبت')+'</span></div>'+
-    '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(!!rec)+' <b>التسميع</b><br><span style="color:var(--muted)">'+(rec?('آخر درجة '+toAr(rec.score||0)+'٪'):'لا جلسة مكتملة')+'</span></div></div>';
+    '<div style="background:var(--parch-2);border-radius:11px;padding:9px 10px;font-size:.76rem">'+dot(!!rec)+' <b>التسميع</b><br><span style="color:var(--muted)">'+(rec?('آخر متابعة '+esc(rec.last||'')+' · دون تقييم آلي'):'لا جلسة مكتملة')+'</span></div></div>';
   renderPageErrors(p);
   const task=faceTaskForV63(p),reviewBtn=document.getElementById('pmStartReview');
   reviewBtn.dataset.task=task;reviewBtn.textContent=task==='new'?'ابدئي تسميع الحفظ':task==='fix'?'راجعي وجه التثبيت':task==='near'?'ابدئي المراجعة القريبة':'ابدئي المراجعة البعيدة';
@@ -2689,7 +2690,8 @@ function dayFactsV71(k){
   sessions.forEach(r=>(r.pages||[]).forEach(pg=>{
     if(!(pg.complete&&+pg.coverage>=.95))return;
     const p=+pg.page;if(!p)return;
-    const task=['new','fix','near','far'].includes(r.task)?r.task:'near';
+    const task=['new','fix','near','far'].includes(r.task)?r.task:null;
+    if(!task) return; // free/practice/AI follow-along is not an assigned review quota
     groups[task].add(p);
     sessionPages.push({page:p,task,score:+pg.score||0,coverage:+pg.coverage||0,errorCount:+pg.errorCount||0,ts:r.endedAt||r.startedAt||0});
   }));
