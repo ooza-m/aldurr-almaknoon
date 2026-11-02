@@ -25,6 +25,19 @@ test('approved sessions do not reappear as drafts',()=>{
  run("saveReviewDraftV119({id:'s1',pages:[{page:125}],userReviewed:true})");
  assert.equal(run('loadReviewDraftV119()'),null);
 });
+test('two unfinished sessions remain independently recoverable',()=>{
+ const {run}=setup();
+ run("saveReviewDraftV119({id:'s1',pages:[{page:125,draftApproved:true}]})");
+ run("saveReviewDraftV119({id:'s2',pages:[{page:126,draftApproved:false}]})");
+ assert.equal(run('listReviewDraftsV120().length'),2);
+ assert.equal(run('listReviewDraftsV120()[0].pages[0].page'),125);
+ run("saveReviewDraftV119({id:'s1',pages:[{page:125,draftQuality:'good'}]})");
+ assert.equal(run('listReviewDraftsV120().length'),2);
+ assert.equal(run("listReviewDraftsV120().find(x=>x.id==='s1').pages[0].draftQuality"),'good');
+ run("clearReviewDraftV119('s1')");
+ assert.equal(run('listReviewDraftsV120().length'),1);
+ assert.equal(run('loadReviewDraftV119().id'),'s2');
+});
 test('clearing one session never deletes another draft',()=>{
  const {run}=setup();
  run("saveReviewDraftV119({id:'s2',pages:[{page:126}]})");
