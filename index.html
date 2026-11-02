@@ -1743,9 +1743,13 @@ function reviewQueueV123(){
   const late=e.phase!=='fix'&&e.nextDue&&e.nextDue<todayKey();
   const weak=quality==='weak'||quality==='needs';
   if(!late&&!weak&&!e.due)continue;
-  arr.push({p,rank:late?0:weak?1:2,days:late?Math.max(1,daysBetween(e.nextDue,todayKey())):0,task:faceTaskForV63(p)});
+  const history=faceMasteryTimelineV131(p);
+  // Give repeated recent weakness precedence only within the same due/weakness group.
+  const recent=history.events.slice(-4),recentWeak=recent.filter(x=>x.level==='weak'||x.level==='needs').length;
+  const recurrence=recentWeak>=2&&recent.some(x=>x.level==='weak'||x.level==='needs')?recentWeak:0;
+  arr.push({p,rank:late?0:weak?1:2,days:late?Math.max(1,daysBetween(e.nextDue,todayKey())):0,recurrence,task:faceTaskForV63(p)});
  }
- arr.sort((a,b)=>a.rank-b.rank||b.days-a.days||a.p-b.p);
+ arr.sort((a,b)=>a.rank-b.rank||(a.rank===0?b.days-a.days:0)||b.recurrence-a.recurrence||a.p-b.p);
  return {selected:arr.slice(0,reviewCapacityV123()),waiting:arr.slice(reviewCapacityV123())};
 }
 function reviewWeekModeV126(){return S.reviewWeekMode==='daily'?'daily':'halaqa';}
