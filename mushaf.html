@@ -502,7 +502,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
     <div class="sheet"><div class="grab"></div>
       <div class="sh-head"><div class="sn">نتيجة التسميع</div><div class="ss" id="recSummarySub">سُجّلت الجلسة تلقائيًا</div></div>
       <div class="rec-summary" id="recSummaryBody"></div>
-      <div class="rec-sum-actions"><button class="soft" id="recSummaryClose">العودة للمصحف</button><button class="primary" id="recSummaryErrors">مراجعة الأخطاء</button></div>
+      <div class="rec-sum-actions"><button class="soft" id="recSummaryClose">العودة للمصحف</button><button class="primary" id="recSummaryErrors">مراجعة الأخطاء</button><button class="primary" id="recSummarySave" hidden>اعتماد الإنجاز</button></div>
     </div>
   </div>
 
@@ -1892,7 +1892,20 @@ function sendSession(payload){
  try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'durr:recitation-complete',payload},location.origin);}catch(_){}
  try{const pending=JSON.parse(LS('durr-pending-recitations-v86','[]')),index=pending.findIndex(p=>p.id===payload.id);if(index<0)pending.push(payload);else pending[index]=payload;LSet('durr-pending-recitations-v86',JSON.stringify(pending));LSet('durr-last-recitation',JSON.stringify(payload));}catch(_){}
 }
+let pendingReviewApprovalV118=null;
 function showRecSummary(payload){
+  const eligible=DURR_FOLLOW_ONLY_V1&&['new','fix','near','far'].includes(payload.task);
+  pendingReviewApprovalV118=eligible?payload:null;
+  $('recSummarySave').hidden=!eligible;
+  $('recSummaryErrors').hidden=eligible;
+  if(eligible){
+    $('recSummarySub').textContent='اعتماد الإنجاز وتقييم ضبط الأوجه';
+    $('recSummaryBody').innerHTML='<p class="audio-note">المتابعة الصوتية لا تُقيّم جودة الحفظ. اختاري الأوجه التي أنجزتِها ثم قيّمي ضبط كل وجه اختياريًا.</p>'+
+      (payload.pages||[]).map(pg=>'<div class="setrow" style="display:block;padding:10px 0">'+
+      '<label><input type="checkbox" data-approve-page="'+pg.page+'" style="margin-left:8px">أتممتُ الوجه '+ARA(pg.page)+'</label>'+
+      '<select data-quality-page="'+pg.page+'" style="display:block;margin-top:8px;width:100%;padding:9px;border-radius:10px;border:1px solid var(--line)"><option value="">دون تقييم</option><option value="weak">متفلّت</option><option value="needs">يحتاج تثبيتًا</option><option value="good">جيد</option><option value="strong">ثابت</option></select></div>').join('');
+    $('recSummaryWrap').classList.add('open');return;
+  }
   lastFinishedTaskPlan=!!payload.planId;$('recSummaryClose').textContent=lastFinishedTaskPlan?'العودة إلى مهام اليوم':'العودة للمصحف';
   const sm=payload.summary||{},rv=payload.recall&&(payload.pages||[]).flatMap(p=>p.verses||[]).find(v=>v.vk===payload.recall.vk),pct=rv?Math.round(rv.coverage*100):(sm.wordsTotal?Math.round(sm.wordsCovered/sm.wordsTotal*100):0),engine=payload.engine==='quran-asr'?(payload.recitationMode==='chunked'?'تسميع قرآني على مقاطع · تجريبي':'محرك قرآني متخصص'):payload.engine==='browser-speech'?'وضع محدود':payload.engine==='mixed'?'تحليل قرآني ومتصفح · وضع محدود':'دون تحليل آلي',lat=(payload.engine==='quran-asr'&&sm.avgLatencyMs)?(' · متوسط الاستجابة '+ARA((sm.avgLatencyMs/1000).toFixed(1))+' ث'):'' ,isPractice=payload.task==='practice',isRecall=!!payload.recall;
   $('recSummarySub').textContent=isRecall?'اختبار موضع واحد بالاستدعاء النشط':((sm.completedPages||0)+' وجه مكتمل · '+(sm.pages||0)+' وجه في الجلسة');
@@ -1910,12 +1923,11 @@ function finishReciteSession(planCompleted=false){
  try{localStorage.removeItem('durr-active-task-session');}catch(_){}
  return recJobsV86.run({id:ctx.session.id,initial,work:Promise.allSettled([drain]),onTimeout:()=>{ctx.session.analysisIncomplete=true;ctx.runs.forEach(id=>qasrRunsV86.get(id)?.controller?.abort());},finish:async status=>{
    if(status!=='complete')ctx.session.analysisIncomplete=true;ctx.session.analysisStatus=ctx.session.analysisIncomplete?'incomplete':status;const payload=payloadForContextV86(ctx);ctx.finalized=true;
+   // Do not persist the achievement until the user confirms individual pages.
    if(DURR_FOLLOW_ONLY_V1&&['new','fix','near','far'].includes(payload.task)){
-      for(const p of payload.pages||[]){
-        p.complete=window.confirm('هل أتممتِ '+(payload.task==='new'?'حفظ':'مراجعة')+' الوجه '+ARA(p.page)+'؟ هذا إقرار منكِ، وليس تقييمًا صوتيًا.');
-        p.manualConfirmed=p.complete;
-      }
-    }
+     (payload.pages||[]).forEach(p=>{p.complete=false;p.manualConfirmed=false;});
+     ctx.finalized=true;recContexts.delete(ctx.session.id);showRecSummary(payload);return payload;
+   }
     (payload.pages||[]).filter(p=>!['ai-review','practice'].includes(payload.task)&&p.complete).forEach(p=>{updateLocalLearning('recite',p.page,{task:payload.task,manualConfirmed:!!p.manualConfirmed});if(payload.task==='new')updateLocalLearning('hifz',p.page,{});});
    sendSession(payload);ctx.runs.forEach(id=>{const run=qasrRunsV86.get(id);run?.controller?.abort();qasrRunsV86.delete(id);if(QASR_URL)fetch(QASR_URL+'/session/'+encodeURIComponent(id),{method:'DELETE',keepalive:true}).catch(()=>{});});
    recContexts.delete(ctx.session.id);return payload;
@@ -1940,6 +1952,19 @@ $('freeRecite').onclick=async()=>{await enterRecite('free');voiceLocatorV89=voic
 $('recErrs').onclick=()=>openErrLog(false);
 $('recSummaryClose').onclick=()=>{if(lastFinishedTaskPlan){window.location.assign('index.html?tab=today');return;}$('recSummaryWrap').classList.remove('open');};
 $('recSummaryWrap').querySelector('.sheet-bg').onclick=()=>$('recSummaryWrap').classList.remove('open');
+$('recSummarySave').onclick=()=>{
+  const payload=pendingReviewApprovalV118;if(!payload)return;
+  for(const pg of payload.pages||[]){
+    pg.manualConfirmed=!!document.querySelector('[data-approve-page="'+pg.page+'"]')?.checked;
+    pg.complete=pg.manualConfirmed;
+    pg.manualMasteryLevel=pg.manualConfirmed?(document.querySelector('[data-quality-page="'+pg.page+'"]')?.value||''):'';
+    if(pg.complete){updateLocalLearning('recite',pg.page,{task:payload.task,manualConfirmed:true});if(payload.task==='new')updateLocalLearning('hifz',pg.page,{});}
+  }
+  payload.userReviewed=true;payload.confirmedAt=Date.now();
+  pendingReviewApprovalV118=null;sendSession(payload);
+  $('recSummaryWrap').classList.remove('open');
+  if(payload.planId)window.location.assign('index.html?tab=today');
+};
 $('recSummaryErrors').onclick=()=>{$('recSummaryWrap').classList.remove('open');openErrLog(false);};
 // حالات الوجه الأربع
 document.querySelectorAll('#stWrap [data-face-state]').forEach(st=>st.onclick=()=>{
