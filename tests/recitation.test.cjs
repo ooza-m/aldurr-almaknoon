@@ -44,9 +44,12 @@ test('browser final results commit once, and a recognizer restart resets result 
   r.onend();const next=[{transcript:'رب العالمين'}];next.isFinal=true;run(c,'recOn=false');r.onresult({resultIndex:0,results:[next]});assert.equal(run(c,'recPageState.covered.size'),4);
 });
 
-test('anchored omissions are saved automatically without claiming user/acoustic confirmation',()=>{
+test('follow-along does not save automatic errors for omissions in a transcript',()=>{
   const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{confidence:1,confidence_calibrated:true});`);
-  assert.equal(run(c,'ERR.length'),1);assert.equal(run(c,'recPageState.errors.size'),1);assert.equal(run(c,'ERR[0].automatic'),true);assert.equal(run(c,'ERR[0].userConfirmed'),false);assert.equal(run(c,'ERR[0].confidenceKind'),'alignment-not-acoustic');assert.equal(run(c,`recSession.findings.some(f=>f.type.startsWith('confirmed_'))`),false);
+  assert.equal(run(c,'DURR_FOLLOW_ONLY_V1'),true);
+  assert.equal(run(c,'ERR.length'),0);
+  assert.equal(run(c,'recPageState.errors.size'),0);
+  assert.equal(run(c,'recSession.findings.length'),0);
 });
 
 test('a short touch cannot record an error; long touch requires confirmation',()=>{
