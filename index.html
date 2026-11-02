@@ -1709,12 +1709,20 @@ function reviewQueueV123(){
  arr.sort((a,b)=>a.rank-b.rank||b.days-a.days||a.p-b.p);
  return {selected:arr.slice(0,reviewCapacityV123()),waiting:arr.slice(reviewCapacityV123())};
 }
+function reviewWeekModeV126(){return S.reviewWeekMode==='daily'?'daily':'halaqa';}
+function reviewDayPlanV126(date){
+ const day=new Date(date+'T12:00:00').getDay(),regular=reviewCapacityV123();
+ if(reviewWeekModeV126()==='daily')return{kind:'مراجعة يومية',capacity:regular};
+ if(day===5)return{kind:'اختبار المعلمة',capacity:0};
+ if(day===6||day===0)return{kind:'استدراك',capacity:Math.max(1,Math.ceil(regular/2))};
+ return{kind:'حفظ ومراجعة',capacity:regular};
+}
 function reviewForecastV124(days=7){
- const capacity=reviewCapacityV123(),today=todayKey(),daysOut=[];
+ const today=todayKey(),daysOut=[];
  const backlog=reviewQueueV123().selected.concat(reviewQueueV123().waiting);
  const assigned=new Set(),remaining=backlog.slice();
  for(let offset=0;offset<days;offset++){
-  const date=addDaysKeyV62(today,offset);
+  const date=addDaysKeyV62(today,offset),plan=reviewDayPlanV126(date);
   if(offset>0){
    for(let p=1;p<=604;p++){
     if(assigned.has(p)||remaining.some(x=>x.p===p))continue;
@@ -1725,17 +1733,21 @@ function reviewForecastV124(days=7){
    }
   }
   remaining.sort((a,b)=>a.rank-b.rank||b.days-a.days||a.p-b.p);
-  const picked=remaining.splice(0,capacity);
+  const picked=remaining.splice(0,plan.capacity);
   picked.forEach(x=>assigned.add(x.p));
-  daysOut.push({date,pages:picked.map(x=>x.p),carry:remaining.length});
+  daysOut.push({date,kind:plan.kind,capacity:plan.capacity,pages:picked.map(x=>x.p),carry:remaining.length});
  }
  return daysOut;
 }
 function renderReviewForecastV124(){
  const host=document.getElementById('reviewForecastV124');if(!host)return;
- const days=reviewForecastV124();
- host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">المراجعات القادمة · 7 أيام</summary><p class="hint">توزيع مقترح لا يغيّر مواعيد الاستحقاق الأصلية ولا يسجّل أي إنجاز.</p>'+
- days.map(d=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+esc(d.date)+'</b> · '+d.pages.length+' وجهًا'+(d.carry?' · متبقٍ '+d.carry:'')+'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px">'+(d.pages.length?d.pages.map(p=>'<button type="button" class="btn btn-ghost btn-sm" data-v50-mushaf="'+p+'" data-mode="recite" data-task="'+faceTaskForV63(p)+'" aria-label="افتحي الوجه '+p+' في المصحف" style="padding:6px 9px;border:1px solid var(--line)">'+p+'</button>').join(''):'<span class="hint">لا مراجعات موزعة</span>')+'</div></div>').join('')+'</details>';
+ const days=reviewForecastV124(),mode=reviewWeekModeV126();
+ host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">المراجعات القادمة · 7 أيام</summary>'+
+ '<label style="display:block;font-size:.78rem;margin:10px 0">نظام الأسبوع <select id="reviewWeekModeV126" style="padding:6px;border:1px solid var(--line);border-radius:8px"><option value="halaqa" '+(mode==='halaqa'?'selected':'')+'>حلقة: الاثنين–الخميس، الجمعة اختبار، العطلة استدراك</option><option value="daily" '+(mode==='daily'?'selected':'')+'>مراجعة يومية متساوية</option></select></label>'+
+ '<p class="hint">خطة تقديرية لا تُغيّر الاستحقاق الأصلي. يوم الاختبار مخصص للمعلمة، والاستدراك بنصف الطاقة المعتادة.</p>'+
+ days.map(d=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+esc(d.date)+'</b> · '+d.kind+' · '+d.pages.length+' وجهًا'+(d.carry?' · في الانتظار '+d.carry:'')+'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px">'+(d.pages.length?d.pages.map(p=>'<button type="button" class="btn btn-ghost btn-sm" data-v50-mushaf="'+p+'" data-mode="recite" data-task="'+faceTaskForV63(p)+'" style="padding:6px 9px;border:1px solid var(--line)" aria-label="افتحي الوجه '+p+' في المصحف">'+p+'</button>').join(''):'<span class="hint">'+(d.capacity===0?'يوم الاختبار — لا نصاب مراجعة مجدول':'لا مراجعات موزعة')+'</span>')+'</div></div>').join('')+'</details>';
+ const input=document.getElementById('reviewWeekModeV126');
+ if(input)input.onchange=()=>{S.reviewWeekMode=input.value;save();renderReviewForecastV124();};
 }
 function renderDailyPageQueueV122(){
  const host=document.getElementById('dailyPageQueueV122');if(!host)return;
