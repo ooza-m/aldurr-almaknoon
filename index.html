@@ -4169,6 +4169,16 @@ function refreshQuickCompletionState(){
 }
 window.addEventListener('pageshow',refreshQuickCompletionState);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshQuickCompletionState()});
+function backupLocalBeforeCloudReplaceV125(reason){
+ if(!hasData(S))return;
+ const key='durr-local-cloud-backup-v125';
+ const prior=JSON.parse(localStorage.getItem(key)||'[]');
+ const list=Array.isArray(prior)?prior:[];
+ const payload=JSON.stringify(S);
+ if(list.length&&list[list.length-1].payload===payload)return;
+ list.push({savedAt:Date.now(),reason,payload});
+ localStorage.setItem(key,JSON.stringify(list.slice(-3)));
+}
 function cloudPull(silent,done){
   if(!cloudReady||!fbUser){if(done)done();return;}
   pullingNow=true;
@@ -4182,6 +4192,7 @@ function cloudPull(silent,done){
       // ٢) كلاهما فيه بيانات → خذي الأحدث
       // ٣) السحابة فارغة والمحلّي فيه بيانات → ارفعي المحلّي
       if(cloudS&&(cloudHas&&!localHas || (cloudHas&&cloudUpdated>localUpdated))){
+        backupLocalBeforeCloudReplaceV125('cloud-pull');
         S=Object.assign({},JSON.parse(JSON.stringify(DEF)),cloudS);
         localStorage.setItem(KEY,JSON.stringify(S));
         updateAcctChip();renderToday();loadPlan();
@@ -4228,6 +4239,8 @@ function cloudListen(){
       if(cloudUpdated>localUpdated){
         try{
           const cloudS=JSON.parse(d.payload);
+          if(!hasData(cloudS)&&hasData(S))return;
+          backupLocalBeforeCloudReplaceV125('cloud-listener');
           S=Object.assign({},JSON.parse(JSON.stringify(DEF)),cloudS);
           localStorage.setItem(KEY,JSON.stringify(S));
           reRenderAll();
