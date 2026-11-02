@@ -1995,6 +1995,8 @@ $('recSummarySave').onclick=()=>{
   payload.userReviewed=true;payload.confirmedAt=Date.now();
   pendingReviewApprovalV118=null;sendSession(payload);clearReviewDraftV119(payload.id);
   $('recSummaryWrap').classList.remove('open');
+  const next=loadReviewDraftV119();
+  if(next){showRecSummary(next);return;}
   if(payload.planId)window.location.assign('index.html?tab=today');
 };
 // Offer restoration after reload, without auto-crediting any face.
