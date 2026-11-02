@@ -1837,7 +1837,17 @@ function ingestRecitationSessionV51(raw){if(!raw||!raw.id)return;if(!S.recitatio
   }else if(['fix','near','far'].includes(task)){
     const type=task==='far'?'far':'near';sids.forEach(sid=>pushExactRangeV51(log.revList,sid,p,type));
   }
-}else if((pg.coverage||0)>0){partial++;}if(pg.complete&&(pg.manualConfirmed===true||(rs.errorDetectionEnabled===true&&pg.coverage>=.95))&&['new','fix','near','far'].includes(task))updateReviewEngineV62(p,task,date,pg);
+}else if((pg.coverage||0)>0){partial++;}if(pg.complete&&(pg.manualConfirmed===true||(rs.errorDetectionEnabled===true&&pg.coverage>=.95))&&['new','fix','near','far'].includes(task)){
+  updateReviewEngineV62(p,task,date,pg);
+  if(pg.manualConfirmed===true&&['weak','needs','good','strong'].includes(pg.manualMasteryLevel)){
+    S.pageMastery=S.pageMastery||{};
+    const current=S.pageMastery[p];
+    if(!current||current.sessionId!==rs.id){
+      S.pageMastery[p]={level:pg.manualMasteryLevel,date,updatedAt:Date.now(),source:'manual-recite',sessionId:rs.id};
+      applyManualMasteryScheduleV117(p,pg.manualMasteryLevel,date);
+    }
+  }
+}
 S.activityEvents.push({id:rs.id+':'+p,type:'recitation',date,ts:rs.endedAt||Date.now(),page:p,task,coverage:+(pg.coverage||0),score:+(pg.score||0),complete:!!pg.complete});});save();mirrorFaceLearningV61();refreshV50();showV51Toast('سُجّلت جلسة التسميع تلقائيًا',full+(full===1?' وجه مكتمل':' أوجه مكتملة')+(partial?' · '+partial+' جزئي':'')+(errAdded?' · '+errAdded+' خطأ':'') );}
 window.addEventListener('message',e=>{if(e.origin!==location.origin)return;const d=e.data||{};if(d.type==='durr:recitation-complete')ingestRecitationSessionV51(d.payload);});
 window.addEventListener('storage',event=>{if(event.key==='durr-pending-recitations-v86')consumePendingRecitationV55();if(event.key===DurrReaderUI.BOOKMARK_KEY)refreshV50();});
