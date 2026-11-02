@@ -685,7 +685,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
-       <div id="smartReview"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
+       <div id="smartReview"></div><div id="weeklyAchievementV136" class="v50-glass v50-card" style="margin:12px 0"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
       <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
@@ -1879,6 +1879,34 @@ function reviewPriorityReasonV132(item){
  if(item.recurrence>=2)reasons.push('تكرر ضعفه '+item.recurrence+' مرات في آخر 4 تقييمات');
  return reasons.join(' · ');
 }
+function weeklyAchievementV136(){
+ const week=weeklyMemorizationV135(),start=week.start,end=addDaysKeyV62(start,6);
+ const categories={new:new Set(),fix:new Set(),near:new Set(),far:new Set()};
+ const tests=new Set(),catchup=new Set();
+ const add=(type,page)=>{page=+page;if(categories[type]&&Number.isInteger(page)&&page>=1&&page<=604)categories[type].add(page);};
+ (S.logs||[]).filter(x=>x.date>=start&&x.date<=end).forEach(log=>{
+  (log.memList||[]).forEach(x=>{const rg=x.from!=null&&x.to!=null?[+x.from,+x.to]:pagesOfSurah(+x.surahId);if(rg)for(let p=Math.max(1,Math.min(...rg));p<=Math.min(604,Math.max(...rg));p++)add('new',p);});
+  (log.revList||[]).forEach(x=>{const rg=x.from!=null&&x.to!=null?[+x.from,+x.to]:pagesOfSurah(+x.surahId);if(rg)for(let p=Math.max(1,Math.min(...rg));p<=Math.min(604,Math.max(...rg));p++)add(x.type==='far'?'far':(firstMemDateV62(p)&&daysBetween(firstMemDateV62(p),log.date)<=30?'fix':'near'),p);});
+ });
+ (S.recitationSessions||[]).forEach(rs=>{
+  const stamp=rs.endedAt||rs.startedAt;if(!stamp)return;
+  const day=keyOf(new Date(stamp));if(day<start||day>end||!categories[rs.task])return;
+  (rs.pages||[]).forEach(pg=>{if(pg.complete&&pg.manualConfirmed===true)add(rs.task,pg.page);});
+ });
+ (S.teacherTests||[]).filter(x=>x.date>=start&&x.date<=end).forEach(test=>{
+  const grades=Array.isArray(test.results)?test.results:(test.pages||[]).map(p=>({page:p,level:test.level}));
+  grades.forEach(x=>{if(MASTERY_LEVELS_V116[x.level]){tests.add(+x.page);if(['weak','needs'].includes(x.level))catchup.add(+x.page);}});
+ });
+ return {start,end,goal:week.goal,completed:categories.new.size,fix:categories.fix.size,near:categories.near.size,far:categories.far.size,tested:tests.size,needsCatchup:catchup.size};
+}
+function renderWeeklyAchievementV136(){
+ const host=document.getElementById('weeklyAchievementV136');if(!host)return;
+ const x=weeklyAchievementV136();
+ const tiles=[['الحفظ الجديد',x.completed+' / '+x.goal],['التثبيت',x.fix],['المراجعة القريبة',x.near],['المراجعة البعيدة',x.far],['أوجه اختُبرت',x.tested],['تحتاج استدراكًا',x.needsCatchup]];
+ host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">حصيلة الأسبوع · '+esc(x.start)+' – '+esc(x.end)+'</summary>'+
+ '<p class="hint">الأرقام لعدد الأوجه المميزة التي سُجل إنجازها، لا لعدد مرات تكرار التسميع. المقارنة بالهدف متاحة للحفظ الجديد فقط.</p>'+
+ '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'+tiles.map(t=>'<div style="padding:10px;background:var(--parch-2);border-radius:10px"><small style="display:block;color:var(--muted)">'+t[0]+'</small><b>'+t[1]+'</b></div>').join('')+'</div></details>';
+}
 function renderStudyPlanSettingsV134(){
  const host=document.getElementById('studyPlanSettingsV134');if(!host)return;
  const capacity=reviewCapacityV123(),mode=reviewWeekModeV126(),focus=reviewWeaknessModeV133(),goal=Math.max(1,+(S.goal&&S.goal.pages)||1);
@@ -1927,7 +1955,7 @@ function renderDailyPageQueueV122(){
  if(modeInput)modeInput.onchange=()=>{S.reviewWeaknessMode=modeInput.value;save();refreshV50();};
 }
 function renderTodayV50(){
-  renderSmartReview();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
+  renderSmartReview();renderWeeklyAchievementV136();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
