@@ -1879,33 +1879,48 @@ function reviewPriorityReasonV132(item){
  if(item.recurrence>=2)reasons.push('تكرر ضعفه '+item.recurrence+' مرات في آخر 4 تقييمات');
  return reasons.join(' · ');
 }
-function weeklyAchievementV136(){
- const week=weeklyMemorizationV135(),start=week.start,end=addDaysKeyV62(start,6);
- const categories={new:new Set(),fix:new Set(),near:new Set(),far:new Set()};
- const tests=new Set(),catchup=new Set();
+function weeklyAchievementV136(offset=0){
+ const current=weeklyMemorizationV135(),start=addDaysKeyV62(current.start,-7*offset),end=addDaysKeyV62(start,6);
+ const categories={new:new Set(),fix:new Set(),near:new Set(),far:new Set()},tests=new Set(),catchup=new Set();
  const add=(type,page)=>{page=+page;if(categories[type]&&Number.isInteger(page)&&page>=1&&page<=604)categories[type].add(page);};
+ const addRange=(item,type,date)=>{
+  const rg=item.from!=null&&item.to!=null?[+item.from,+item.to]:pagesOfSurah(+item.surahId);
+  if(!rg||!rg.every(Number.isFinite))return;
+  for(let p=Math.max(1,Math.min(...rg));p<=Math.min(604,Math.max(...rg));p++){
+   const phase=type==='review'?(item.type==='far'?'far':(firstMemDateV62(p)&&daysBetween(firstMemDateV62(p),date)<=30?'fix':'near')):type;
+   add(phase,p);
+  }
+ };
  (S.logs||[]).filter(x=>x.date>=start&&x.date<=end).forEach(log=>{
-  (log.memList||[]).forEach(x=>{const rg=x.from!=null&&x.to!=null?[+x.from,+x.to]:pagesOfSurah(+x.surahId);if(rg)for(let p=Math.max(1,Math.min(...rg));p<=Math.min(604,Math.max(...rg));p++)add('new',p);});
-  (log.revList||[]).forEach(x=>{const rg=x.from!=null&&x.to!=null?[+x.from,+x.to]:pagesOfSurah(+x.surahId);if(rg)for(let p=Math.max(1,Math.min(...rg));p<=Math.min(604,Math.max(...rg));p++)add(x.type==='far'?'far':(firstMemDateV62(p)&&daysBetween(firstMemDateV62(p),log.date)<=30?'fix':'near'),p);});
+  (log.memList||[]).forEach(x=>addRange(x,'new',log.date));
+  (log.revList||[]).forEach(x=>addRange(x,'review',log.date));
  });
  (S.recitationSessions||[]).forEach(rs=>{
-  const stamp=rs.endedAt||rs.startedAt;if(!stamp)return;
-  const day=keyOf(new Date(stamp));if(day<start||day>end||!categories[rs.task])return;
+  const stamp=rs.endedAt||rs.startedAt;if(!stamp||!categories[rs.task])return;
+  const day=keyOf(new Date(stamp));if(day<start||day>end)return;
   (rs.pages||[]).forEach(pg=>{if(pg.complete&&pg.manualConfirmed===true)add(rs.task,pg.page);});
  });
  (S.teacherTests||[]).filter(x=>x.date>=start&&x.date<=end).forEach(test=>{
-  const grades=Array.isArray(test.results)?test.results:(test.pages||[]).map(p=>({page:p,level:test.level}));
-  grades.forEach(x=>{if(MASTERY_LEVELS_V116[x.level]){tests.add(+x.page);if(['weak','needs'].includes(x.level))catchup.add(+x.page);}});
+  const grades=Array.isArray(test.results)?test.results:(test.pages||[]).map(page=>({page,level:test.level}));
+  grades.forEach(x=>{if(!MASTERY_LEVELS_V116[x.level])return;tests.add(+x.page);if(['weak','needs'].includes(x.level))catchup.add(+x.page);});
  });
- return {start,end,goal:week.goal,completed:categories.new.size,fix:categories.fix.size,near:categories.near.size,far:categories.far.size,tested:tests.size,needsCatchup:catchup.size};
+ const goal=offset===0?current.goal:null;
+ return{start,end,goal,completed:categories.new.size,fix:categories.fix.size,near:categories.near.size,far:categories.far.size,tested:tests.size,needsCatchup:catchup.size,shortfall:goal===null?null:Math.max(0,goal-categories.new.size)};
 }
-function renderWeeklyAchievementV136(){
+function renderWeeklyAchievementV136(offset){
  const host=document.getElementById('weeklyAchievementV136');if(!host)return;
- const x=weeklyAchievementV136();
- const tiles=[['الحفظ الجديد',x.completed+' / '+x.goal],['التثبيت',x.fix],['المراجعة القريبة',x.near],['المراجعة البعيدة',x.far],['أوجه اختُبرت',x.tested],['تحتاج استدراكًا',x.needsCatchup]];
- host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">حصيلة الأسبوع · '+esc(x.start)+' – '+esc(x.end)+'</summary>'+
- '<p class="hint">الأرقام لعدد الأوجه المميزة التي سُجل إنجازها، لا لعدد مرات تكرار التسميع. المقارنة بالهدف متاحة للحفظ الجديد فقط.</p>'+
- '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'+tiles.map(t=>'<div style="padding:10px;background:var(--parch-2);border-radius:10px"><small style="display:block;color:var(--muted)">'+t[0]+'</small><b>'+t[1]+'</b></div>').join('')+'</div></details>';
+ const prior=host.querySelector('#weeklyHistorySelectV137');
+ const chosen=Number.isInteger(offset)?offset:(prior?+prior.value:0);
+ const selected=Math.max(0,Math.min(11,chosen)),x=weeklyAchievementV136(selected);
+ const tiles=[['الحفظ الجديد',x.completed+(x.goal===null?' وجهًا':' / '+x.goal)],['التثبيت',x.fix],['المراجعة القريبة',x.near],['المراجعة البعيدة',x.far],['أوجه اختُبرت',x.tested],['تحتاج استدراكًا',x.needsCatchup]];
+ host.innerHTML='<details open><summary style="cursor:pointer;font-weight:700">حصيلة الأسبوع · '+esc(x.start)+' – '+esc(x.end)+'</summary>'+
+ '<label style="display:block;margin:10px 0;font-size:.8rem">الأسبوع <select id="weeklyHistorySelectV137">'+Array.from({length:12},(_,i)=>'<option value="'+i+'" '+(i===selected?'selected':'')+'>'+(i===0?'الحالي':i===1?'السابق':'قبل '+i+' أسابيع')+'</option>').join('')+'</select></label>'+
+ '<p class="hint">تُحتسب الأوجه المميزة من السجلات المعتمدة فقط. لا نحسب عدد مرات التسميع إنجازات إضافية.</p>'+
+ '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'+tiles.map(t=>'<div style="padding:10px;background:var(--parch-2);border-radius:10px"><small style="display:block;color:var(--muted)">'+t[0]+'</small><b>'+t[1]+'</b></div>').join('')+'</div>'+
+ (x.shortfall===null?'<p class="hint">لم تكن أهداف الأسابيع السابقة مؤرشفة؛ لذلك لا يمكن الجزم بعدد الأوجه المتأخرة عن خطتها الأصلية.</p>':
+ x.shortfall?'<p class="hint">المتبقي من هدف هذا الأسبوع: '+x.shortfall+' وجهًا. لا توجد قائمة مواضع محفوظة لهذا المتبقي، فلا تُنسب أوجه بعينها إليه.</p>':'<p class="hint">اكتمل هدف الحفظ الجديد للأسبوع بحسب السجل.</p>')+
+ '<p class="hint">يمكن معرفة حجم عدم الإنجاز من الهدف المحفوظ حاليًا، لكن سبب التعثر غير مسجل؛ لذلك لا يُفترض سبب محدد.</p></details>';
+ host.querySelector('#weeklyHistorySelectV137').onchange=e=>renderWeeklyAchievementV136(+e.target.value);
 }
 function renderStudyPlanSettingsV134(){
  const host=document.getElementById('studyPlanSettingsV134');if(!host)return;
