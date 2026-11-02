@@ -1329,7 +1329,7 @@ function ensureRecContextV86(){
 function snapshotStateV86(session,state,forceComplete=false){
  if(!session||!state)return null;const total=state.wordsTotal||1,cov=state.covered.size/total,assist=state.assisted.size/total,err=state.errors.size,sus=state.suspected.size;
  const verses=Object.values(state.verses).map(v=>({vk:v.vk,totalWords:v.total,coveredWords:v.covered.size,coverage:v.total?v.covered.size/v.total:0,coveredWordIndexes:[...v.covered],assistedWords:v.assisted.size,assistedWordIndexes:[...v.assisted],errorWords:v.errors.size,errorWordIndexes:[...v.errors],suspectedWords:v.suspected.size,suspectedWordIndexes:[...v.suspected]}));
- const score=Math.max(0,Math.round(cov*100-(DURR_FOLLOW_ONLY_V1?0:err/total*38)-assist*18)),qualified=!['ai-review','practice'].includes(session.task)&&!session.analysisIncomplete&&cov>=.95&&assist<=.35&&err===0&&sus/total<=.08;
+ const score=Math.max(0,Math.round(cov*100-(DURR_FOLLOW_ONLY_V1?0:err/total*38)-assist*18)),qualified=!DURR_FOLLOW_ONLY_V1&&!['ai-review','practice'].includes(session.task)&&!session.analysisIncomplete&&cov>=.95&&assist<=.35&&err===0&&sus/total<=.08;
  const rv=session.recall&&verses.find(v=>v.vk===session.recall.vk),recallSuccess=!!(!session.recall?.hinted&&rv&&rv.coverage>=.9&&!rv.errorWords&&!rv.suspectedWords&&!rv.assistedWords&&!session.analysisIncomplete&&!(session.findings||[]).some(f=>f.page===state.page&&f.active!==false&&!f.dismissed&&(!f.vk||f.vk===rv.vk)));
  const out={page:state.page,surahIds:state.surahIds,startedAt:state.startedAt,endedAt:Date.now(),wordsTotal:state.wordsTotal,wordsCovered:state.covered.size,coverage:+cov.toFixed(3),assistRate:+assist.toFixed(3),errorCount:err,suspectedCount:sus,suspectedRate:+(sus/total).toFixed(3),score,complete:qualified,reachedEnd:!!forceComplete,recallSuccess,verses};
  const i=session.pages.findIndex(p=>p.page===state.page);if(i<0)session.pages.push(out);else session.pages[i]=out;return out;
@@ -1910,7 +1910,13 @@ function finishReciteSession(planCompleted=false){
  try{localStorage.removeItem('durr-active-task-session');}catch(_){}
  return recJobsV86.run({id:ctx.session.id,initial,work:Promise.allSettled([drain]),onTimeout:()=>{ctx.session.analysisIncomplete=true;ctx.runs.forEach(id=>qasrRunsV86.get(id)?.controller?.abort());},finish:async status=>{
    if(status!=='complete')ctx.session.analysisIncomplete=true;ctx.session.analysisStatus=ctx.session.analysisIncomplete?'incomplete':status;const payload=payloadForContextV86(ctx);ctx.finalized=true;
-   (payload.pages||[]).filter(p=>!['ai-review','practice'].includes(payload.task)&&p.complete&&p.coverage>=.95).forEach(p=>{updateLocalLearning('recite',p.page,{score:p.score,task:payload.task});if(payload.task==='new')updateLocalLearning('hifz',p.page,{});});
+   if(DURR_FOLLOW_ONLY_V1&&['new','fix','near','far'].includes(payload.task)){
+      for(const p of payload.pages||[]){
+        p.complete=window.confirm('هل أتممتِ '+(payload.task==='new'?'حفظ':'مراجعة')+' الوجه '+ARA(p.page)+'؟ هذا إقرار منكِ، وليس تقييمًا صوتيًا.');
+        p.manualConfirmed=p.complete;
+      }
+    }
+    (payload.pages||[]).filter(p=>!['ai-review','practice'].includes(payload.task)&&p.complete).forEach(p=>{updateLocalLearning('recite',p.page,{task:payload.task,manualConfirmed:!!p.manualConfirmed});if(payload.task==='new')updateLocalLearning('hifz',p.page,{});});
    sendSession(payload);ctx.runs.forEach(id=>{const run=qasrRunsV86.get(id);run?.controller?.abort();qasrRunsV86.delete(id);if(QASR_URL)fetch(QASR_URL+'/session/'+encodeURIComponent(id),{method:'DELETE',keepalive:true}).catch(()=>{});});
    recContexts.delete(ctx.session.id);return payload;
  }});
