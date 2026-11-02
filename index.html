@@ -1735,6 +1735,7 @@ function renderTeacherCatchupV129(){
  (stillWeak.length?'<details style="margin-top:8px"><summary>أُعيد تقييمها وما زالت تحتاج تثبيتًا · '+stillWeak.length+'</summary><div>'+links(stillWeak)+'</div></details>':'')+
  (improved.length?'<details style="margin-top:8px"><summary>تحسّن ضبطها بعد الاختبار · '+improved.length+'</summary><div>'+links(improved)+'</div></details>':'');
 }
+function reviewWeaknessModeV133(){return ['balanced','weak-first','due-first'].includes(S.reviewWeaknessMode)?S.reviewWeaknessMode:'balanced';}
 function reviewQueueV123(){
  const arr=[];
  for(let p=1;p<=604;p++){
@@ -1749,7 +1750,16 @@ function reviewQueueV123(){
   const recurrence=recentWeak>=2&&recent.some(x=>x.level==='weak'||x.level==='needs')?recentWeak:0;
   arr.push({p,rank:late?0:weak?1:2,days:late?Math.max(1,daysBetween(e.nextDue,todayKey())):0,recurrence,task:faceTaskForV63(p)});
  }
- arr.sort((a,b)=>a.rank-b.rank||(a.rank===0?b.days-a.days:0)||b.recurrence-a.recurrence||a.p-b.p);
+ const mode=reviewWeaknessModeV133();
+ arr.sort((a,b)=>{
+  if(a.rank===0||b.rank===0){
+   if(a.rank!==b.rank)return a.rank-b.rank;
+   return b.days-a.days||b.recurrence-a.recurrence||a.p-b.p;
+  }
+  if(mode==='weak-first')return b.recurrence-a.recurrence||a.rank-b.rank||a.p-b.p;
+  if(mode==='due-first')return (a.rank===2?0:1)-(b.rank===2?0:1)||b.recurrence-a.recurrence||a.p-b.p;
+  return a.rank-b.rank||b.recurrence-a.recurrence||a.p-b.p;
+ });
  return {selected:arr.slice(0,reviewCapacityV123()),waiting:arr.slice(reviewCapacityV123())};
 }
 function reviewWeekModeV126(){return S.reviewWeekMode==='daily'?'daily':'halaqa';}
@@ -1857,11 +1867,17 @@ function renderDailyPageQueueV122(){
  }).join('')+'</div></section>':'';
  host.innerHTML='<div class="v50-section-head"><h2>أولوية المراجعة</h2><span>'+queue.selected.length+' وجهًا اليوم</span></div>'+
  '<label style="display:block;margin:10px 0">الطاقة اليومية <select id="reviewCapacityChoiceV123">'+[5,10,15,20,30,40,60].map(n=>'<option value="'+n+'" '+(n===cap?'selected':'')+'>'+n+' وجهًا</option>').join('')+'</select></label>'+
- '<p class="hint">يُعرض سبب الأولوية أسفل كل وجه، ولا يغيّر ذلك موعده أو عدد أوجه النصاب.</p>'+
+ '<label style="display:block;margin:10px 0">تركيز المراجعة <select id="reviewWeaknessModeV133">'+
+ '<option value="balanced" '+(reviewWeaknessModeV133()==='balanced'?'selected':'')+'>متوازن</option>'+
+ '<option value="weak-first" '+(reviewWeaknessModeV133()==='weak-first'?'selected':'')+'>التركيز على الضعف المتكرر</option>'+
+ '<option value="due-first" '+(reviewWeaknessModeV133()==='due-first'?'selected':'')+'>المستحق اليوم أولًا</option></select></label>'+
+ '<p class="hint">المتأخرات مقدّمة دائمًا. يغيّر الخيار ترتيب بقية الأوجه دون تغيير مواعيدها أو سعة المراجعة.</p>'+
  group('متأخرة',queue.selected.filter(x=>x.rank===0))+group('تحتاج تثبيتًا',queue.selected.filter(x=>x.rank===1))+group('مستحقة اليوم',queue.selected.filter(x=>x.rank===2))+
  (queue.waiting.length?'<details style="margin-top:12px"><summary>قائمة الانتظار · '+queue.waiting.length+' وجهًا</summary><div style="display:grid;gap:7px;margin-top:8px">'+queue.waiting.slice(0,20).map(x=>'<div style="font-size:.8rem;padding:7px;border-bottom:1px solid var(--line)">وجه '+x.p+' · '+esc(reviewPriorityReasonV132(x))+'</div>').join('')+'</div></details>':'');
  const input=document.getElementById('reviewCapacityChoiceV123');
  if(input)input.onchange=()=>{S.reviewDailyCapacity=+input.value;save();refreshV50();};
+ const modeInput=document.getElementById('reviewWeaknessModeV133');
+ if(modeInput)modeInput.onchange=()=>{S.reviewWeaknessMode=modeInput.value;save();refreshV50();};
 }
 function renderTodayV50(){
   renderSmartReview();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
