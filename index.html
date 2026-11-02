@@ -1625,14 +1625,14 @@ function taskPagesV60(id){
     while(out.length<remain&&p>=1&&p<=604){out.push(p);p+=dir;}
     return out;
   }
-  if(id==='fix')return fixationPagesV50().filter(p=>reviewEngineStateV62(p).due&&!allRev.has(p)&&!doneAuto.has(p));
+  if(id==='fix'){const allowed=new Set(reviewQueueV123().selected.map(x=>x.p));return fixationPagesV50().filter(p=>allowed.has(p)&&reviewEngineStateV62(p).due&&!allRev.has(p)&&!doneAuto.has(p));}
   const bucket=reviewBucketsV50();
-  if(id==='near')return bucket.near.filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
+  if(id==='near'){const allowed=new Set(reviewQueueV123().selected.map(x=>x.p));return bucket.near.filter(x=>allowed.has(x.p)&&!completeReviewTodayV62(x.p)).map(x=>x.p);}
   if(id==='far'){
     const completedFar=new Set([...allRev,...recitedPagesTodayV51('fix'),...recitedPagesTodayV51('near'),...recitedPagesTodayV51('far')]);
     const alreadyDone=[...completedFar].filter(p=>firstMemDateV62(p)&&daysBetween(firstMemDateV62(p),todayKey())>30&&reviewEngineStateV62(p).phase==='far').length;
     const daily=Math.max(0,Math.min(bucket.far.length,(memCount()>402?60:40)-alreadyDone));
-    return bucket.far.slice(0,daily).filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
+    const allowed=new Set(reviewQueueV123().selected.map(x=>x.p));return bucket.far.slice(0,daily).filter(x=>allowed.has(x.p)&&!completeReviewTodayV62(x.p)).map(x=>x.p);
   }
   return[];
 }
@@ -1693,22 +1693,30 @@ function renderHomeV50(){
   const recent=document.getElementById('homeRecent');
   if(recent){const arr=[],streak=calcStreak(),month=pagesMemorizedInMonth();if(streak>0)arr.push([streak+' يومًا','سلسلة الاستمرار الحالية']);if(month>0)arr.push([month+' وجهًا','حفظ جديد هذا الشهر']);const listen=(S.activityEvents||[]).filter(e=>e&&e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir').length;if(listen)arr.push([listen+' جلسة سماع','سُجّلت تلقائيًا']);if(tf)arr.push([tf+' وجه تفسير','أُنجزت قراءته']);if(!arr.length)arr.push(['ابدئي أول جلسة','سيظهر تقدمك الحقيقي هنا']);recent.innerHTML=arr.slice(0,4).map(x=>'<div class="v50-glass v50-ach"><b>'+esc(x[0])+'</b><small>'+esc(x[1])+'</small></div>').join('');}
 }
+function reviewCapacityV123(){const v=+(S.reviewDailyCapacity||20);return [5,10,15,20,30,40,60].includes(v)?v:20;}
+function reviewQueueV123(){
+ const arr=[];
+ for(let p=1;p<=604;p++){
+  const m=mapPageMetaV62(p,null),e=m.engine||{},quality=masteryOfPageV116(p)?.level;
+  if(!m.memorized||e.doneToday)continue;
+  const late=e.phase!=='fix'&&e.nextDue&&e.nextDue<todayKey();
+  const weak=quality==='weak'||quality==='needs';
+  if(!late&&!weak&&!e.due)continue;
+  arr.push({p,rank:late?0:weak?1:2,days:late?Math.max(1,daysBetween(e.nextDue,todayKey())):0,task:faceTaskForV63(p)});
+ }
+ arr.sort((a,b)=>a.rank-b.rank||b.days-a.days||a.p-b.p);
+ return {selected:arr.slice(0,reviewCapacityV123()),waiting:arr.slice(reviewCapacityV123())};
+}
 function renderDailyPageQueueV122(){
  const host=document.getElementById('dailyPageQueueV122');if(!host)return;
- const groups={late:[],weak:[],due:[]};
- for(let page=1;page<=604;page++){
-  const m=mapPageMetaV62(page,null);if(!m.memorized)continue;
-  const e=m.engine||{},level=masteryOfPageV116(page)?.level;if(e.doneToday)continue;
-  if(e.phase!=='fix'&&e.nextDue&&e.nextDue<todayKey())groups.late.push({page,days:Math.max(1,daysBetween(e.nextDue,todayKey()))});
-  else if(level==='weak'||level==='needs')groups.weak.push({page,level});
-  else if(e.due)groups.due.push({page});
- }
- groups.late.sort((a,b)=>b.days-a.days||a.page-b.page);
- groups.weak.sort((a,b)=>(a.level==='weak'?0:1)-(b.level==='weak'?0:1)||a.page-b.page);
- const sections=[['متأخرة عن موعدها',groups.late],['تحتاج تثبيتًا',groups.weak],['مستحقة اليوم',groups.due]];
- const count=sections.reduce((n,x)=>n+x[1].length,0);
- host.innerHTML='<div class="v50-section-head"><h2>أولوية المراجعة</h2><span>'+count+' وجهًا</span></div>'+
- (count?sections.filter(x=>x[1].length).map(([title,items])=>'<div style="margin:10px 0"><b>'+title+' · '+items.length+'</b><div style="margin-top:6px">'+items.slice(0,10).map(x=>{const p=x.page,s=surahOfPage(p);return '<button class="btn btn-ghost btn-sm" data-v50-mushaf="'+p+'" data-mode="recite" data-task="'+faceTaskForV63(p)+'" style="padding:8px;margin:3px;border:1px solid var(--line)">وجه '+p+' · '+esc(s[1])+'</button>';}).join('')+(items.length>10?'<small>و'+(items.length-10)+' وجهًا أخرى في الخريطة</small>':'')+'</div></div>').join(''):'<p class="hint">لا توجد أوجه مستحقة حاليًا.</p>');
+ const queue=reviewQueueV123(),cap=reviewCapacityV123();
+ const group=(label,items)=>items.length?'<div style="margin-top:12px"><b>'+label+' · '+items.length+'</b><div>'+items.map(x=>{const sur=surahOfPage(x.p);return '<button class="btn btn-ghost btn-sm" data-v50-mushaf="'+x.p+'" data-mode="recite" data-task="'+x.task+'" style="padding:8px;margin:3px;border:1px solid var(--line)">وجه '+x.p+' · '+esc(sur[1])+'</button>';}).join('')+'</div></div>':'';
+ host.innerHTML='<div class="v50-section-head"><h2>أولوية المراجعة</h2><span>'+queue.selected.length+' وجهًا اليوم</span></div>'+
+ '<label style="display:block;margin:10px 0">الطاقة اليومية <select id="reviewCapacityChoiceV123">'+[5,10,15,20,30,40,60].map(n=>'<option value="'+n+'" '+(n===cap?'selected':'')+'>'+n+' وجهًا</option>').join('')+'</select></label>'+
+ group('متأخرة',queue.selected.filter(x=>x.rank===0))+group('تحتاج تثبيتًا',queue.selected.filter(x=>x.rank===1))+group('مستحقة اليوم',queue.selected.filter(x=>x.rank===2))+
+ (queue.waiting.length?'<details><summary>قائمة الانتظار · '+queue.waiting.length+' وجهًا</summary><p class="hint">تبقى الأوجه غير منجزة حتى مراجعتها واعتمادها.</p></details>':'');
+ const input=document.getElementById('reviewCapacityChoiceV123');
+ if(input)input.onchange=()=>{S.reviewDailyCapacity=+input.value;save();refreshV50();};
 }
 function renderTodayV50(){
   renderSmartReview();renderDailyPageQueueV122();
