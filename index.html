@@ -1739,18 +1739,22 @@ function reviewForecastV124(days=7){
  }
  return daysOut;
 }
-function recordTeacherTestV127(date,from,to,level){
- if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||date>todayKey())return {error:'اختاري تاريخًا صحيحًا لا يتجاوز اليوم'};
+function recordTeacherTestV128(date,from,to,grades){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>todayKey())return {error:'اختاري تاريخًا صحيحًا لا يتجاوز اليوم'};
  if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||to>604||from>to||to-from>59)return {error:'حددي نطاقًا من 1 إلى 60 وجهًا'};
- if(!MASTERY_LEVELS_V116[level])return {error:'اختاري تقييم الضبط'};
+ const pages=Array.from({length:to-from+1},(_,i)=>from+i);
+ const results=pages.map(page=>({page,level:grades[page]||''}));
+ if(results.some(x=>x.level&&x.level!=='untested'&&!MASTERY_LEVELS_V116[x.level]))return {error:'تقييم غير معروف'};
+ if(results.some(x=>!x.level))return {error:'حددي تقييم كل وجه أو اختاري لم يُختبر'};
+ const tested=results.filter(x=>x.level!=='untested');
+ if(!tested.length)return {error:'لا توجد أوجه مختبرة لاعتمادها'};
  S.teacherTests=S.teacherTests||[];
  const id='teacher:'+date+':'+from+':'+to;
- if(S.teacherTests.some(x=>x.id===id))return {error:'هذا الاختبار مسجّل مسبقًا؛ لم يتكرر احتسابه'};
- const pages=Array.from({length:to-from+1},(_,i)=>from+i);
- const item={id,date,from,to,level,pages,createdAt:Date.now()};
+ if(S.teacherTests.some(x=>x.id===id))return {error:'هذا الاختبار مسجّل مسبقًا'};
+ const item={id,date,from,to,results,pages:tested.map(x=>x.page),createdAt:Date.now(),version:128};
  S.teacherTests.push(item);
  S.pageMastery=S.pageMastery||{};
- pages.forEach(page=>{
+ tested.forEach(({page,level})=>{
   if(!firstMemDateV62(page))return;
   const current=S.pageMastery[page];
   if(current?.date&&current.date>date)return;
@@ -1761,17 +1765,26 @@ function recordTeacherTestV127(date,from,to,level){
 }
 function renderTeacherTestV127(){
  const box=document.getElementById('teacherTestV127');if(!box)return;
- const today=todayKey(),tests=(S.teacherTests||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
- box.innerHTML='<details><summary style="font-weight:700;cursor:pointer">اختبار المعلمة · تسجيل النتيجة</summary>'+
- '<p class="hint">أدخلي الأوجه التي اختُبرت فعلًا وتقييم ضبطها. يُحفظ الاختبار مرة واحدة، ولا يُنشئ جلسة تسميع ثانية.</p>'+
- '<div style="display:flex;flex-wrap:wrap;gap:6px"><input aria-label="تاريخ الاختبار" id="testDateV127" type="date" max="'+today+'" value="'+today+'" style="max-width:150px"><input aria-label="من وجه" id="testFromV127" type="number" min="1" max="604" placeholder="من وجه" style="width:90px"><input aria-label="إلى وجه" id="testToV127" type="number" min="1" max="604" placeholder="إلى وجه" style="width:90px"><select aria-label="تقييم الضبط" id="testLevelV127"><option value="">التقييم</option>'+Object.entries(MASTERY_LEVELS_V116).map(([k,v])=>'<option value="'+k+'">'+v+'</option>').join('')+'</select><button class="btn btn-primary btn-sm" id="testSaveV127">اعتماد النتيجة</button></div>'+
- '<p id="testMsgV127" class="hint" role="status"></p>'+
- (tests.length?'<div class="hint">آخر الاختبارات: '+tests.slice(0,3).map(x=>esc(x.date)+' · '+x.from+'–'+x.to+' · '+esc(MASTERY_LEVELS_V116[x.level]||'')).join(' | ')+'</div>':'')+'</details>';
- document.getElementById('testSaveV127').onclick=()=>{
-  const date=document.getElementById('testDateV127').value,from=Number(document.getElementById('testFromV127').value),to=Number(document.getElementById('testToV127').value),level=document.getElementById('testLevelV127').value;
-  const result=recordTeacherTestV127(date,from,to,level);
-  if(result.error){document.getElementById('testMsgV127').textContent=result.error;return;}
-  refreshV50();
+ const tests=(S.teacherTests||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+ box.innerHTML='<details><summary style="font-weight:700;cursor:pointer">اختبار المعلمة · تقييم كل وجه</summary>'+
+ '<p class="hint">حددي النطاق، ثم قيّمي كل وجه على حدة. الأوجه غير المختبرة لا تغيّر حالة ضبطها.</p>'+
+ '<div style="display:flex;flex-wrap:wrap;gap:6px"><input id="testDateV127" aria-label="تاريخ الاختبار" type="date" max="'+todayKey()+'" value="'+todayKey()+'" style="max-width:150px"><input id="testFromV127" aria-label="من وجه" type="number" min="1" max="604" placeholder="من وجه" style="width:90px"><input id="testToV127" aria-label="إلى وجه" type="number" min="1" max="604" placeholder="إلى وجه" style="width:90px"><button class="btn btn-ghost btn-sm" id="testPrepareV128">عرض الأوجه</button></div>'+
+ '<div id="testPageGradesV128" style="margin-top:9px"></div><p id="testMsgV127" class="hint" role="status"></p>'+
+ (tests.length?'<div class="hint">آخر الاختبارات: '+tests.slice(0,3).map(x=>esc(x.date)+' · '+x.from+'–'+x.to+' · '+(x.results?x.results.filter(y=>y.level!=='untested').length:x.pages.length)+' وجهًا مختبرًا').join(' | ')+'</div>':'')+'</details>';
+ document.getElementById('testPrepareV128').onclick=()=>{
+  const from=Number(document.getElementById('testFromV127').value),to=Number(document.getElementById('testToV127').value);
+  const host=document.getElementById('testPageGradesV128');
+  if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||to>604||from>to||to-from>59){document.getElementById('testMsgV127').textContent='حددي نطاقًا من 1 إلى 60 وجهًا';return;}
+  document.getElementById('testMsgV127').textContent='';
+  const options='<option value="untested">لم يُختبر</option>'+Object.entries(MASTERY_LEVELS_V116).map(([k,v])=>'<option value="'+k+'">'+v+'</option>').join('');
+  host.innerHTML=Array.from({length:to-from+1},(_,i)=>{const p=from+i;return '<label style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:5px 0;padding:7px;border:1px solid var(--line);border-radius:9px"><span>الوجه '+p+' · '+esc(surahOfPage(p)[1])+'</span><select data-teacher-page="'+p+'" style="min-width:120px">'+options+'</select></label>';}).join('')+
+   '<button class="btn btn-primary btn-sm" id="testSaveV128" style="margin-top:9px">اعتماد النتائج</button>';
+  document.getElementById('testSaveV128').onclick=()=>{
+   const grades={};host.querySelectorAll('[data-teacher-page]').forEach(el=>grades[+el.dataset.teacherPage]=el.value);
+   const result=recordTeacherTestV128(document.getElementById('testDateV127').value,from,to,grades);
+   if(result.error){document.getElementById('testMsgV127').textContent=result.error;return;}
+   refreshV50();
+  };
  };
 }
 function renderReviewForecastV124(){
