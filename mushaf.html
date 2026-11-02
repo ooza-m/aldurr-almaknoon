@@ -1893,9 +1893,28 @@ function sendSession(payload){
  try{const pending=JSON.parse(LS('durr-pending-recitations-v86','[]')),index=pending.findIndex(p=>p.id===payload.id);if(index<0)pending.push(payload);else pending[index]=payload;LSet('durr-pending-recitations-v86',JSON.stringify(pending));LSet('durr-last-recitation',JSON.stringify(payload));}catch(_){}
 }
 const REVIEW_DRAFT_KEY_V119='durr-review-draft-v119';
-function loadReviewDraftV119(){try{const raw=JSON.parse(LS(REVIEW_DRAFT_KEY_V119,'null'));return raw&&raw.id&&Array.isArray(raw.pages)&&raw.userReviewed!==true?raw:null;}catch(_){return null;}}
-function saveReviewDraftV119(payload){try{LSet(REVIEW_DRAFT_KEY_V119,JSON.stringify(payload));return true;}catch(_){recTip('تعذّر حفظ مسودة التسميع على هذا الجهاز');return false;}}
-function clearReviewDraftV119(id){const old=loadReviewDraftV119();if(!old||old.id===id)try{localStorage.removeItem(REVIEW_DRAFT_KEY_V119);}catch(_){}}
+function listReviewDraftsV120(){
+ try{
+   const raw=JSON.parse(LS(REVIEW_DRAFT_KEY_V119,'[]'));
+   const items=Array.isArray(raw)?raw:[raw];
+   return items.filter(x=>x&&x.id&&Array.isArray(x.pages)&&x.userReviewed!==true);
+ }catch(_){return [];}
+}
+function loadReviewDraftV119(){return listReviewDraftsV120()[0]||null;}
+function saveReviewDraftV119(payload){
+ try{
+   const drafts=listReviewDraftsV120().filter(x=>x.id!==payload.id);
+   drafts.push(payload);
+   LSet(REVIEW_DRAFT_KEY_V119,JSON.stringify(drafts));
+   return true;
+ }catch(_){recTip('تعذّر حفظ مسودة التسميع على هذا الجهاز');return false;}
+}
+function clearReviewDraftV119(id){
+ try{const drafts=listReviewDraftsV120().filter(x=>x.id!==id);
+   if(drafts.length)LSet(REVIEW_DRAFT_KEY_V119,JSON.stringify(drafts));
+   else localStorage.removeItem(REVIEW_DRAFT_KEY_V119);
+ }catch(_){}
+}
 let pendingReviewApprovalV118=null;
 function showRecSummary(payload){
   const eligible=DURR_FOLLOW_ONLY_V1&&['new','fix','near','far'].includes(payload.task);
