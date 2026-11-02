@@ -1646,15 +1646,17 @@ function tasksV50(){
   const fixDone=fix.filter(p=>completedReview.has(p)).length;
   const reviewedNear=[...completedReview].filter(p=>{const first=firstMemDateV62(p);if(!first||daysBetween(first,todayKey())<=30)return false;return reviewEngineStateV62(p).phase==='near';});
   const reviewedFar=[...completedReview].filter(p=>{const first=firstMemDateV62(p);if(!first||daysBetween(first,todayKey())<=30)return false;return reviewEngineStateV62(p).phase==='far';});
-  const nearDoneN=reviewedNear.length,nearTarget=bucket.near.length+nearDoneN;
+  const nearDoneN=reviewedNear.length;
   const farLimit=memCount()>402?60:40;
-  const farDoneN=Math.min(reviewedFar.length,farLimit),farDaily=Math.min(bucket.far.length+farDoneN,farLimit);
+  const farDoneN=reviewedFar.length;
+  const scheduledFix=taskPagesV60('fix'),scheduledNear=taskPagesV60('near'),scheduledFar=taskPagesV60('far');
+  const capacity=reviewCapacityV123();
   const newTarget=Math.max(1,(S.goal&&S.goal.pages)||1),halaqa=isHalaqaDay(todayKey(),new Date().getDay());
   const arr=[
     {id:'new',label:'حفظ جديد',done:memDoneSet.size,target:newTarget,pages:taskPagesV60('new'),kind:'book',action:'ابدئي جلسة الحفظ',color:'var(--green)'},
-    {id:'fix',label:'تثبيت 30 يومًا',done:fixDone,target:fix.length,pages:taskPagesV60('fix'),kind:'leaf',action:'ابدئي جلسة التثبيت',color:'var(--gold)'},
-    {id:'near',label:'مراجعة قريبة',done:nearDoneN,target:nearTarget,pages:taskPagesV60('near'),kind:'repeat',action:'ابدئي جلسة المراجعة',color:'var(--clay)'},
-    {id:'far',label:'مراجعة بعيدة',done:farDoneN,target:farDaily,pages:taskPagesV60('far'),kind:'far',action:'ابدئي جلسة المراجعة',color:'var(--blue)'},
+    {id:'fix',label:'تثبيت 30 يومًا',done:fixDone,target:fixDone+scheduledFix.length,pages:scheduledFix,kind:'leaf',action:'ابدئي جلسة التثبيت',color:'var(--gold)'},
+    {id:'near',label:'مراجعة قريبة',done:nearDoneN,target:nearDoneN+scheduledNear.length,pages:scheduledNear,kind:'repeat',action:'ابدئي جلسة المراجعة',color:'var(--clay)'},
+    {id:'far',label:'مراجعة بعيدة',done:farDoneN,target:farDoneN+scheduledFar.length,pages:scheduledFar,kind:'far',action:'ابدئي جلسة المراجعة',color:'var(--blue)'},
     {id:'tilawa',label:'ورد التلاوة',done:log.tilawa?1:0,target:1,pages:[S.khatma?Math.max(1,Math.min(604,(S.khatma.current||0)+1)):lastActivityPageV50()],kind:'book',action:'افتحي موضع التلاوة',color:'#A68BB7'},
     {id:'tafsir',label:'ورد التفسير',done:(log.tafsir||(S.activityEvents||[]).some(e=>e&&e.type==='tafsir'&&e.date===todayKey()))?1:0,target:1,pages:[lastActivityPageV50()],kind:'tafsir',action:'افتحي تفسير الوجه',color:'#C89B3C'}
   ];
