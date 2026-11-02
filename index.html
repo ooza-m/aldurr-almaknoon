@@ -685,7 +685,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
-       <div id="smartReview"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
+       <div id="smartReview"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
       <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
@@ -1858,6 +1858,28 @@ function reviewPriorityReasonV132(item){
  if(item.recurrence>=2)reasons.push('تكرر ضعفه '+item.recurrence+' مرات في آخر 4 تقييمات');
  return reasons.join(' · ');
 }
+function renderStudyPlanSettingsV134(){
+ const host=document.getElementById('studyPlanSettingsV134');if(!host)return;
+ const capacity=reviewCapacityV123(),mode=reviewWeekModeV126(),focus=reviewWeaknessModeV133(),goal=Math.max(1,+(S.goal&&S.goal.pages)||1);
+ const select=(id,options,value)=>'<select id="'+id+'" style="padding:7px;border:1px solid var(--line);border-radius:9px;max-width:100%">'+options.map(x=>'<option value="'+x[0]+'" '+(String(x[0])===String(value)?'selected':'')+'>'+x[1]+'</option>').join('')+'</select>';
+ host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">إعدادات خطة الحفظ والمراجعة</summary>'+
+ '<p class="hint">تُطبّق الإعدادات على الخطة الحالية دون حذف الإنجازات أو تغيير مواعيد الاستحقاق الأصلية.</p>'+
+ '<div style="display:grid;gap:11px;margin-top:12px">'+
+ '<label style="display:grid;gap:5px">نصاب الحفظ الجديد (وجه/يوم) <input type="number" id="studyNewGoalV134" min="1" max="20" value="'+goal+'" style="width:95px;padding:7px;border:1px solid var(--line);border-radius:9px"></label>'+
+ '<label style="display:grid;gap:5px">طاقة المراجعة اليومية '+select('studyCapacityV134',[5,10,15,20,30,40,60].map(n=>[n,n+' وجهًا']),capacity)+'</label>'+
+ '<label style="display:grid;gap:5px">نظام الأسبوع '+select('studyWeekV134',[['halaqa','الاثنين–الخميس: حفظ ومراجعة، الجمعة اختبار، السبت والأحد استدراك'],['daily','مراجعة متساوية يوميًا']],mode)+'</label>'+
+ '<label style="display:grid;gap:5px">تركيز الأولويات '+select('studyFocusV134',[['balanced','متوازن'],['weak-first','الضعف المتكرر أولًا'],['due-first','المستحق اليوم أولًا']],focus)+'</label>'+
+ '<button class="btn btn-primary btn-sm" id="studyPlanSaveV134">حفظ إعدادات الخطة</button><p role="status" id="studyPlanMsgV134" class="hint"></p></div></details>';
+ document.getElementById('studyPlanSaveV134').onclick=()=>{
+  const pages=Number(document.getElementById('studyNewGoalV134').value);
+  if(!Number.isInteger(pages)||pages<1||pages>20){document.getElementById('studyPlanMsgV134').textContent='حددي نصاب حفظ بين 1 و20 وجهًا';return;}
+  S.goal=S.goal||{};S.goal.pages=pages;
+  S.reviewDailyCapacity=+document.getElementById('studyCapacityV134').value;
+  S.reviewWeekMode=document.getElementById('studyWeekV134').value;
+  S.reviewWeaknessMode=document.getElementById('studyFocusV134').value;
+  save();refreshV50();
+ };
+}
 function renderDailyPageQueueV122(){
  const host=document.getElementById('dailyPageQueueV122');if(!host)return;
  const queue=reviewQueueV123(),cap=reviewCapacityV123();
@@ -1880,7 +1902,7 @@ function renderDailyPageQueueV122(){
  if(modeInput)modeInput.onchange=()=>{S.reviewWeaknessMode=modeInput.value;save();refreshV50();};
 }
 function renderTodayV50(){
-  renderSmartReview();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
+  renderSmartReview();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
