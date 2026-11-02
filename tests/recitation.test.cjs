@@ -123,10 +123,10 @@ test('late responses from an old stream cannot update a new recitation session',
   assert.equal(run(c,'recSession.stats.quranChunks'),0);
 });
 
-test('automatic omission tracking continues after the missed word',()=>{
+test('follow-along continues after an omitted word without registering an automatic mistake',()=>{
   const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{});`);
-  assert.equal(run(c,'ERR.length'),1);
-  assert.equal(run(c,`recSession.findings.some(f=>f.type==='automatic_omission')`),true);assert.equal(run(c,'recWordPos'),6);assert.equal(run(c,'recPageState.covered.size'),5);
+  assert.equal(run(c,'ERR.length'),0);
+  assert.equal(run(c,`recSession.findings.some(f=>f.type==='automatic_omission')`),false);assert.equal(run(c,'recWordPos'),6);assert.equal(run(c,'recPageState.covered.size'),5);
 });
 
 test('a recall attempt with an extra-word finding remains unresolved and never completes a face',()=>{
