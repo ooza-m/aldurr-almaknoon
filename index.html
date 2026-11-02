@@ -685,7 +685,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
-       <div id="smartReview"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div>
+       <div id="smartReview"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div>
       <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
@@ -1709,6 +1709,34 @@ function reviewQueueV123(){
  arr.sort((a,b)=>a.rank-b.rank||b.days-a.days||a.p-b.p);
  return {selected:arr.slice(0,reviewCapacityV123()),waiting:arr.slice(reviewCapacityV123())};
 }
+function reviewForecastV124(days=7){
+ const capacity=reviewCapacityV123(),today=todayKey(),daysOut=[];
+ const backlog=reviewQueueV123().selected.concat(reviewQueueV123().waiting);
+ const assigned=new Set(),remaining=backlog.slice();
+ for(let offset=0;offset<days;offset++){
+  const date=addDaysKeyV62(today,offset);
+  if(offset>0){
+   for(let p=1;p<=604;p++){
+    if(assigned.has(p)||remaining.some(x=>x.p===p))continue;
+    const first=firstMemDateV62(p);if(!first)continue;
+    const eng=reviewEngineStateV62(p);
+    if(eng.doneToday||!eng.nextDue||eng.nextDue>date)continue;
+    remaining.push({p,rank:2,days:0,task:faceTaskForV63(p),due:eng.nextDue});
+   }
+  }
+  remaining.sort((a,b)=>a.rank-b.rank||b.days-a.days||a.p-b.p);
+  const picked=remaining.splice(0,capacity);
+  picked.forEach(x=>assigned.add(x.p));
+  daysOut.push({date,pages:picked.map(x=>x.p),carry:remaining.length});
+ }
+ return daysOut;
+}
+function renderReviewForecastV124(){
+ const host=document.getElementById('reviewForecastV124');if(!host)return;
+ const days=reviewForecastV124();
+ host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">المراجعات القادمة · 7 أيام</summary><p class="hint">توزيع مقترح لا يغيّر مواعيد الاستحقاق الأصلية ولا يسجّل أي إنجاز.</p>'+
+ days.map(d=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+esc(d.date)+'</b> · '+d.pages.length+' وجهًا'+(d.carry?' · متبقٍ '+d.carry:'')+'<div style="font-size:.75rem;color:var(--muted)">'+(d.pages.length?d.pages.slice(0,12).join('، '):'لا مراجعات موزعة')+'</div></div>').join('')+'</details>';
+}
 function renderDailyPageQueueV122(){
  const host=document.getElementById('dailyPageQueueV122');if(!host)return;
  const queue=reviewQueueV123(),cap=reviewCapacityV123();
@@ -1721,7 +1749,7 @@ function renderDailyPageQueueV122(){
  if(input)input.onchange=()=>{S.reviewDailyCapacity=+input.value;save();refreshV50();};
 }
 function renderTodayV50(){
-  renderSmartReview();renderDailyPageQueueV122();
+  renderSmartReview();renderDailyPageQueueV122();renderReviewForecastV124();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
