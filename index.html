@@ -2176,6 +2176,31 @@ function changeFocusedVerseV143(vk,action){
  else return;
  save();
 }
+function mergeFocusedMushafActionsV146(){
+ let events=[];try{events=JSON.parse(localStorage.getItem('durr-focused-mushaf-actions-v146')||'[]');}catch(_){}
+ if(!Array.isArray(events)||!events.length)return;
+ S.focusedMushafAppliedV146=Array.isArray(S.focusedMushafAppliedV146)?S.focusedMushafAppliedV146:[];
+ const seen=new Set(S.focusedMushafAppliedV146);let changed=false;
+ for(const event of events){
+  if(!event||typeof event.id!=='string'||seen.has(event.id))continue;
+  const state=S.focusedReviewSessionV145;
+  if(!state||state.startedAt!==event.startedAt||!Array.isArray(state.keys)||!state.keys.includes(event.vk))continue;
+  if(event.action==='done'){
+   const verse=focusedVerseListV143().find(x=>x.vk===event.vk);
+   if(verse){verse.status='done';verse.completedAt=event.at||Date.now();}
+   state.reviewed=Array.isArray(state.reviewed)?state.reviewed:[];
+   if(!state.reviewed.includes(event.vk))state.reviewed.push(event.vk);
+  }else if(event.action==='skip'){
+   state.skipped=Array.isArray(state.skipped)?state.skipped:[];
+   if(!state.skipped.includes(event.vk))state.skipped.push(event.vk);
+  }else if(event.action!=='end')continue;
+  if(event.action==='end')S.focusedReviewSessionV145=null;
+  else state.current=Math.max(+state.current||0,Math.min(state.keys.length,(+event.index||0)+1));
+  seen.add(event.id);changed=true;
+ }
+ if(changed){S.focusedMushafAppliedV146=[...seen].slice(-200);save();}
+ try{localStorage.removeItem('durr-focused-mushaf-actions-v146');}catch(_){}
+}
 function focusedSessionV145(){
  const state=S.focusedReviewSessionV145;
  return state&&Array.isArray(state.keys)?state:null;
@@ -2184,7 +2209,7 @@ function startFocusedSessionV145(){
  const pending=focusedVerseListV143().filter(x=>x.status!=='done').map(x=>x.vk);
  if(!pending.length){showV51Toast('لا توجد آيات معلّقة','أضيفي آيات إلى المراجعة المركّزة أولًا');return;}
  S.focusedReviewSessionV145={keys:pending,current:0,startedAt:Date.now(),reviewed:[],skipped:[]};
- save();renderFocusedVerseReviewsV143();
+ save();window.location.assign('mushaf.html?focused=1&app=1');
 }
 function focusedSessionPositionV145(){
  const state=focusedSessionV145();if(!state)return null;
@@ -2220,7 +2245,7 @@ function focusedSessionPanelV145(){
  '<b>سورة '+esc(sur)+' · الآية '+ayah+'</b>'+
  '<p class="hint">افتحي الآية وراجعيها، ثم عودي لهذه البطاقة لاعتمادها أو تجاوزها. لا تُعتمد المراجعة بمجرد فتح المصحف.</p>'+
  '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
- '<button type="button" class="btn btn-ghost btn-sm" data-focused-open-v143="'+esc(vk)+'">فتح الآية في المصحف</button>'+
+ '<button type="button" class="btn btn-primary btn-sm" data-focused-mushaf-v146="1">استكمال الجلسة داخل المصحف</button>'+
  '<button type="button" class="btn btn-primary btn-sm" data-focused-session-v145="done">راجعتُ الآية · التالية</button>'+
  '<button type="button" class="btn btn-ghost btn-sm" data-focused-session-v145="skip">تجاوز · التالية</button>'+
  '<button type="button" class="btn btn-ghost btn-sm" data-focused-session-v145="end">إنهاء الجلسة</button></div></div>';
@@ -2322,6 +2347,7 @@ function renderDailyPageQueueV122(){
  if(modeInput)modeInput.onchange=()=>{S.reviewWeaknessMode=modeInput.value;save();refreshV50();};
 }
 function renderTodayV50(){
+  mergeFocusedMushafActionsV146();
   renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderDetailedMemorizationV140();renderVerseErrorAnalysisV141();renderFocusedVerseReviewsV143();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
@@ -2374,6 +2400,7 @@ function refreshV50(){try{renderHomeV50();renderTodayV50();const p=document.quer
 
 // تنقّل موحّد للبطاقات الجديدة
 document.addEventListener('click',e=>{
+  const continueFocused=e.target.closest('[data-focused-mushaf-v146]');if(continueFocused){window.location.assign('mushaf.html?focused=1&app=1');return;}
   const focusSession=e.target.closest('[data-focused-session-v145]');
   if(focusSession){const action=focusSession.dataset.focusedSessionV145;if(action==='start')startFocusedSessionV145();else if(action==='end')endFocusedSessionV145();else advanceFocusedSessionV145(action);return;}
   const add=e.target.closest('[data-focused-add-v143]');
