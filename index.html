@@ -3282,6 +3282,8 @@ function jumpMapToPageV96(pg){
     document.querySelectorAll('.mapfilt').forEach(btn=>btn.classList.toggle('on',btn.dataset.filter==='all'));
   }
   const j=juzOfPage(pg)-1;
+  // قفزة الوجه تفتح الجزء المقصود وحده حتى يكون موضعه جاهزًا فورًا.
+  openJuz.clear();
   openJuz.add(j);
   renderMap();
   const target=()=>document.querySelector('#jp-'+j+' .pg[data-page="'+pg+'"]');
