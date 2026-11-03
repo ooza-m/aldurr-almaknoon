@@ -24,7 +24,8 @@ body.reciting .dq-toolbar{display:none}
 @media(min-width:700px){.dq-overlay{align-items:center}.dq-sheet{border-radius:22px}}
 
 `;document.head.appendChild(css);
-const trigger=document.createElement('button');trigger.className='dq-trigger';trigger.type='button';trigger.textContent='إنجاز';trigger.title='تسجيل إنجاز الوجه';trigger.setAttribute('aria-label','تسجيل إنجاز هذا الوجه يدويًا');
+const trigger=document.getElementById('readerSimi')||document.createElement('button');
+if(!trigger.id){trigger.className='reader-action';trigger.type='button';trigger.textContent='إنجاز';trigger.setAttribute('aria-label','تسجيل الإنجاز');}
 const overlay=document.createElement('div');overlay.className='dq-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','تسجيل الإنجاز');
 overlay.innerHTML=`<div class="dq-sheet"><div class="dq-head"><strong id="dqTitle">تسجيل الإنجاز</strong><button type="button" class="dq-close" aria-label="إغلاق">×</button></div>
 <form id="dqForm"><div class="dq-field"><label>نوع الإنجاز</label><div class="dq-options">
@@ -41,11 +42,11 @@ overlay.innerHTML=`<div class="dq-sheet"><div class="dq-head"><strong id="dqTitl
 </div></div>
 <p class="dq-hint">تسجيل وجه كامل أو نطاق أوجه. التسجيل الجزئي بالآيات سيضاف بعد التحقق من ربط الآيات. التسجيل اليدوي لا يُعد نتيجة تسميع آلي ولا ينشئ أخطاء غير موثقة.</p>
 <button class="dq-save" type="submit">حفظ إنجاز الوجه</button></form></div>`;
-const dock=document.getElementById('readerDock');const toolbar=document.createElement('div');toolbar.className='dq-toolbar';toolbar.appendChild(trigger);if(dock)dock.insertBefore(toolbar,dock.firstChild);else document.body.appendChild(toolbar);document.body.appendChild(overlay);
+if(!trigger.isConnected)document.getElementById('readerDock')?.appendChild(trigger);document.body.appendChild(overlay);
 const close=()=>overlay.classList.remove('open');
 const rangeEl=overlay.querySelector('#dqRange');
 overlay.querySelectorAll('input[name="scope"]').forEach(x=>x.addEventListener('change',()=>{rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range'}));
-trigger.addEventListener('click',()=>{overlay.querySelector('#dqTitle').textContent='إنجاز الوجه '+cur;overlay.querySelector('#dqFrom').value=cur;overlay.querySelector('#dqTo').value=cur;rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range';overlay.classList.add('open')});
+trigger.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();overlay.querySelector('#dqTitle').textContent='إنجاز الوجه '+cur;overlay.querySelector('#dqFrom').value=cur;overlay.querySelector('#dqTo').value=cur;rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range';overlay.classList.add('open')},true);
 overlay.querySelector('.dq-close').addEventListener('click',close);
 overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
