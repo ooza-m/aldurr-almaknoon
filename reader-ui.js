@@ -20,27 +20,14 @@
   audio.innerHTML='<header class="ov-top"><button type="button" class="ov-x" id="audioLibraryBack" aria-label="قائمة القراء">‹</button><h2 class="ov-title" id="audioLibraryTitle">القراء والتنزيلات</h2><button type="button" class="ov-x" id="audioLibraryClose" aria-label="إغلاق">'+svg('close')+'</button></header><label class="library-search"><span>بحث</span><input id="audioLibrarySearch" type="search" placeholder="اسم القارئ أو السورة"></label><p id="audioLibraryStorage" class="library-note">التنزيلات على هذا الجهاز؛ قد يحذفها النظام عند نقص المساحة.</p><div class="ov-body" id="audioLibraryBody"></div><p class="library-feedback" id="audioLibraryFeedback" role="status" aria-live="polite"></p>';
   bookmarks.innerHTML='<header class="ov-top"><h2 class="ov-title">فواصل المصحف</h2><button type="button" class="ov-x" id="bookmarksClose" aria-label="إغلاق">'+svg('close')+'</button></header><p class="library-note">فواصل تثبّتينها بنفسك؛ لا يغيّرها البحث أو التصفّح.</p><div class="ov-body" id="bookmarksBody"></div>';
   const feedback=message=>{$('audioLibraryFeedback').textContent=message;},size=bytes=>digits((bytes/1048576).toFixed(bytes>1048576?1:2))+' م.ب';
-  function paintBookmarks(){doc.querySelectorAll('.qw.qend[data-vk]').forEach(el=>{el.classList.toggle('has-bookmark',store.has(el.dataset.vk));});const button=$('ayBookmark');if(button){const marked=store.has(o.getVerse());button.setAttribute('aria-pressed',String(marked));button.querySelector('span').textContent=marked?'إزالة الفاصل':'وضع فاصل عند الآية';}}
+  function paintBookmarks(){
+   doc.querySelectorAll('.qw.qend[data-vk]').forEach(el=>{el.classList.toggle('has-bookmark',store.has(el.dataset.vk));});
+  }
   function renderBookmarks(){const items=store.items.slice().reverse();const safeColor=value=>/^#[0-9a-fA-F]{6}$/.test(String(value||''))?value:'#E3A9B6';$('bookmarksBody').innerHTML=items.length?items.map(b=>{const color=safeColor(o.getSeparator?.(b.vk));return '<article class="bookmark-row" style="--bookmark-color:'+color+'"><button type="button" data-bookmark-go="'+b.vk+'"><span class="bookmark-color-swatch" aria-hidden="true"></span><span class="bookmark-row-copy"><b>'+escape(b.name)+'</b><small>وجه '+digits(b.page)+' · آية '+digits(b.vk.split(':')[1])+'</small></span></button><button type="button" class="library-icon" data-bookmark-remove="'+b.vk+'" aria-label="إزالة الفاصل">'+svg('trash')+'</button></article>';}).join(''):'<div class="empty">اضغطي مطولًا على آية ثم اختاري «وضع فاصل».</div>';}
   function openBookmarks(){o.closeAll();renderBookmarks();bookmarks.classList.add('open');}
   $('bookmarksClose').onclick=()=>bookmarks.classList.remove('open');$('openBookmarks')?.addEventListener('click',openBookmarks);
   bookmarks.addEventListener('click',async e=>{const go=e.target.closest('[data-bookmark-go]'),remove=e.target.closest('[data-bookmark-remove]');if(go){const b=store.items.find(b=>b.vk===go.dataset.bookmarkGo);if(b){bookmarks.classList.remove('open');await o.navigate(b.page,b.vk);}}if(remove){store.remove(remove.dataset.bookmarkRemove);o.setSeparator?.(remove.dataset.bookmarkRemove,'');paintBookmarks();renderBookmarks();}});
-  $('ayBookmark')?.addEventListener('click',()=>{
-   const vk=o.getVerse(),page=o.pageOfVerse(vk);if(!vk||!page)return;
-   try{
-    if(store.has(vk)){o.setSeparator?.(vk,'');store.remove(vk);o.toast('أُزيل الفاصل');}
-    else{
-     const palette=['#E3A9B6','#DDE6D4','#DBDEEF','#F0D8DE','#EAD9B0'];
-     const available=palette.find(c=>!store.items.some(item=>item.vk!==vk&&String(o.getSeparator?.(item.vk)||'').toLowerCase()===c.toLowerCase()));
-     if(!available){o.toast('جميع ألوان الفواصل مستخدمة؛ أزيلي فاصلًا أولًا');return;}
-     const result=o.setSeparator?.(vk,available);
-     if(result===false)return;
-     const [surah,ayah]=vk.split(':');store.put(vk,page,o.surahName(+surah)+' · آية '+digits(ayah));
-     o.toast('حُفظ الفاصل عند الآية');
-    }
-    paintBookmarks();
-   }catch(_){o.toast('تعذّر حفظ الفاصل؛ تحققي من مساحة الجهاز');}
-  });
+  $('ayBookmark')?.addEventListener('click',()=>{o.closeAll();openBookmarks();});
   function downloadButton(id,chapter,saved){const key=id+'/'+chapter,job=jobs.get(key),busy=job&&['queued','downloading'].includes(job.status),pct=Math.round((job?.progress||0)*100);return '<button type="button" class="library-icon'+(busy?' is-downloading':'')+'" data-download="'+chapter+'" data-recording="'+key+'" aria-label="'+(busy?'إلغاء التنزيل':saved?'محفوظ على الجهاز':'تنزيل السورة')+'">'+(busy?'<svg class="download-ring" viewBox="0 0 36 36"><circle class="ring-track" cx="18" cy="18" r="15"/><circle class="ring-value" cx="18" cy="18" r="15" pathLength="100" style="stroke-dashoffset:'+(100-pct)+'"/><path d="M14 14h8v8h-8z"/></svg>':svg(saved?'check':'download'))+'</button>';}
   async function renderLibrary(){const current=++token;catalog=await library.list();if(current!==token)return;
    $('audioLibraryTitle').textContent=view==='readers'?'القراء والتنزيلات':o.reciters.find(r=>r.id===reader)?.name||'';$('audioLibraryBack').hidden=view==='readers';
