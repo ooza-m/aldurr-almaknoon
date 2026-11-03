@@ -2145,7 +2145,7 @@ function focusedQueueActionV146(action,vk,index){
  try{
   const key='durr-focused-mushaf-actions-v146',old=JSON.parse(LS(key,'[]')||'[]'),events=Array.isArray(old)?old:[];
   events.push({id:'focus146_'+Date.now()+'_'+Math.random().toString(36).slice(2),startedAt:state.startedAt,vk,action,index,at:Date.now()});
-  LSet(key,JSON.stringify(events.slice(-300)));
+  localStorage.setItem(key,JSON.stringify(events.slice(-300)));
   return true;
  }catch(e){return false;}
 }
@@ -2188,7 +2188,7 @@ function startFocusedReaderV146(){
  document.head.append(style);document.body.append(box);focusedReviewPanelV146=box;
  box.addEventListener('click',async e=>{
   const action=e.target.closest('[data-focus-v146]')?.dataset.focusV146;if(!action)return;
-  if(action==='exit'){if(focusReaderStateV146()?.vk)focusedQueueActionV146('end',focusReaderStateV146().vk,focusedSessionReaderV146.current);location.assign('index.html?tab=today');return;}
+  if(action==='exit'){const pos=focusReaderStateV146(),last=pos?.vk||focusedSessionReaderV146.keys[focusedSessionReaderV146.keys.length-1];if(last&&!focusedQueueActionV146('end',last,focusedSessionReaderV146.current)){alert('تعذّر حفظ إنهاء الجلسة. أعيدي المحاولة.');return;}location.assign('index.html?tab=today');return;}
   const pos=focusReaderStateV146();if(!pos?.vk||!['done','skip'].includes(action))return;
   if(!focusedQueueActionV146(action,pos.vk,pos.index)){alert('تعذّر حفظ التقدّم. أعيدي المحاولة.');return;}
   if(action==='done'&&!focusedSessionReaderV146.reviewed.includes(pos.vk))focusedSessionReaderV146.reviewed.push(pos.vk);
