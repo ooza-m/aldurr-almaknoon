@@ -742,7 +742,7 @@ main{padding-top:0!important}
 .v102-inner>.hint{font-size:.7rem;line-height:1.7}
 /* v103 · تحليلات الأخطاء في شاشة واحدة ذات أقسام واضحة */
 #tab-errors .v103-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--parch-2);border-radius:14px;padding:4px;margin:6px 0 12px}
-#tab-errors .v103-tabs button{border:0;border-radius:11px;padding:10px 2px;min-width:0;font:600 .75rem inherit;white-space:nowrap;background:transparent;color:var(--muted);cursor:pointer}
+#tab-errors .v103-tabs button{border:0;border-radius:11px;padding:10px 2px;min-width:0;font-family:inherit;font-size:.75rem;font-weight:600;white-space:nowrap;background:transparent;color:var(--muted);cursor:pointer}
 #tab-errors .v103-tabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(40,27,37,.09)}
 #tab-errors .v103-panel[hidden]{display:none!important}
 #tab-errors .v103-panel{min-width:0}
@@ -1165,8 +1165,7 @@ window.FIREBASE_CONFIG = {
     <div class="card">
       <button class="btn btn-ghost btn-sm" id="btnBackToMap" style="margin-bottom:12px">‹ العودة إلى خريطة الطريق</button>
       <div class="section-eyebrow">مواضع تحتاج انتباهًا</div>
-      <h2><span class="em">✦</span> سجلّ الأخطاء</h2>
-      <p class="hint">كلّ خطأ مرتبطٌ بموضعه في المصحف (سورة/صفحة/آية) وبتاريخه. المواضع التي تتكرّر تُبرَز تلقائيًا لتركّزي عليها في المراجعة.</p>
+      <p class="hint v103-intro">الأخطاء المؤكدة وسجلاتها وتحليلها الزمني والموضعي، دون الخلط مع ملاحظات ترتيل المستوردة.</p>
       <button class="btn btn-primary btn-sm" id="btnAddErr2" style="margin-bottom:16px">+ تسجيل خطأ جديد</button>
       <nav class="v103-tabs" aria-label="أقسام سجل الأخطاء">
         <button type="button" class="on" data-error-view-v103="overview" aria-pressed="true">الملخص</button>
@@ -4261,7 +4260,7 @@ function errorTimeBucketsV101(mode='week'){
 function renderErrorTrendsV101(){
  const host=document.getElementById('errorTrendsV101');if(!host)return;
  const selected=host.querySelector('#errorTrendsModeV101')?.value||'week';
- const wasOpen=!!host.querySelector('details')?.open;
+ const wasOpen=!host.querySelector('details')||!!host.querySelector('details').open;
  const view=errorTimeBucketsV101(selected),max=Math.max(1,...view.items.map(x=>x.recorded));
  const total=view.items.reduce((n,x)=>n+x.recorded,0),archived=view.items.reduce((n,x)=>n+x.archived,0);
  const groups=new Map();
@@ -4325,7 +4324,7 @@ function errorLocationsDataV102(){
 }
 function renderErrorLocationsV102(){
  const host=document.getElementById('errorLocationsV102');if(!host)return;
- const wasOpen=!!host.querySelector('details')?.open;
+ const wasOpen=!host.querySelector('details')||!!host.querySelector('details').open;
  const data=errorLocationsDataV102();
  const total=x=>x.active+x.archived;
  const counts=x=>'<small>'+toAr(x.active)+' نشطة · '+toAr(x.archived)+' مؤرشفة</small>';
