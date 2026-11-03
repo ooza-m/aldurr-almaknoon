@@ -25,7 +25,22 @@
   function openBookmarks(){o.closeAll();renderBookmarks();bookmarks.classList.add('open');}
   $('bookmarksClose').onclick=()=>bookmarks.classList.remove('open');$('openBookmarks')?.addEventListener('click',openBookmarks);
   bookmarks.addEventListener('click',async e=>{const go=e.target.closest('[data-bookmark-go]'),remove=e.target.closest('[data-bookmark-remove]');if(go){const b=store.items.find(b=>b.vk===go.dataset.bookmarkGo);if(b){bookmarks.classList.remove('open');await o.navigate(b.page,b.vk);}}if(remove){store.remove(remove.dataset.bookmarkRemove);o.setSeparator?.(remove.dataset.bookmarkRemove,'');paintBookmarks();renderBookmarks();}});
-  $('ayBookmark')?.addEventListener('click',()=>{const vk=o.getVerse(),page=o.pageOfVerse(vk);if(!vk||!page)return;try{if(store.has(vk)){store.remove(vk);o.setSeparator?.(vk,'');o.toast('أُزيل الفاصل');}else{const [s,a]=vk.split(':');store.put(vk,page,o.surahName(+s)+' · آية '+digits(a));o.setSeparator?.(vk,o.getSeparator?.(vk)||'#E3A9B6');o.toast('حُفظ الفاصل عند الآية');}paintBookmarks();}catch(_){o.toast('تعذّر حفظ الفاصل؛ تحققي من مساحة الجهاز');}});
+  $('ayBookmark')?.addEventListener('click',()=>{
+   const vk=o.getVerse(),page=o.pageOfVerse(vk);if(!vk||!page)return;
+   try{
+    if(store.has(vk)){o.setSeparator?.(vk,'');store.remove(vk);o.toast('أُزيل الفاصل');}
+    else{
+     const palette=['#E3A9B6','#DDE6D4','#DBDEEF','#F0D8DE','#EAD9B0'];
+     const available=palette.find(c=>!store.items.some(item=>item.vk!==vk&&String(o.getSeparator?.(item.vk)||'').toLowerCase()===c.toLowerCase()));
+     if(!available){o.toast('جميع ألوان الفواصل مستخدمة؛ أزيلي فاصلًا أولًا');return;}
+     const result=o.setSeparator?.(vk,available);
+     if(result===false)return;
+     const [surah,ayah]=vk.split(':');store.put(vk,page,o.surahName(+surah)+' · آية '+digits(ayah));
+     o.toast('حُفظ الفاصل عند الآية');
+    }
+    paintBookmarks();
+   }catch(_){o.toast('تعذّر حفظ الفاصل؛ تحققي من مساحة الجهاز');}
+  });
   function downloadButton(id,chapter,saved){const key=id+'/'+chapter,job=jobs.get(key),busy=job&&['queued','downloading'].includes(job.status),pct=Math.round((job?.progress||0)*100);return '<button type="button" class="library-icon'+(busy?' is-downloading':'')+'" data-download="'+chapter+'" data-recording="'+key+'" aria-label="'+(busy?'إلغاء التنزيل':saved?'محفوظ على الجهاز':'تنزيل السورة')+'">'+(busy?'<svg class="download-ring" viewBox="0 0 36 36"><circle class="ring-track" cx="18" cy="18" r="15"/><circle class="ring-value" cx="18" cy="18" r="15" pathLength="100" style="stroke-dashoffset:'+(100-pct)+'"/><path d="M14 14h8v8h-8z"/></svg>':svg(saved?'check':'download'))+'</button>';}
   async function renderLibrary(){const current=++token;catalog=await library.list();if(current!==token)return;
    $('audioLibraryTitle').textContent=view==='readers'?'القراء والتنزيلات':o.reciters.find(r=>r.id===reader)?.name||'';$('audioLibraryBack').hidden=view==='readers';
