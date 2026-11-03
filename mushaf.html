@@ -391,13 +391,13 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 <script src="phoneme-aligner.js?v=90"></script>
 <script src="recitation-core.js?v=103"></script>
 <script src="recitation-jobs.js?v=89"></script>
-<script src="reader-ui.js?v=106"></script>
+<script src="reader-ui.js?v=91"></script>
 <script src="reader-study.js?v=89"></script>
 <script src="reader-session.js?v=89"></script>
 <script src="config.js?v=95"></script>
 <link rel="stylesheet" href="app-preferences.css?v=89">
 <script src="app-preferences.js?v=89"></script>
-<link rel="stylesheet" href="reader-tools.css?v=106">
+<link rel="stylesheet" href="reader-tools.css?v=91">
 </head>
 <body class="app-standalone">
 <div class="screen" id="screen">
@@ -801,9 +801,9 @@ function updateChrome(){
   $('mtSurah').textContent=names.length>1?names.join(' · '):'سورة '+(names[0]||'');
   $('chromeTtl').textContent='الجزء '+AR(pg.j)+' · وجه '+AR(cur);
   const foot=$('pagefoot');
-  const hzPages=(DATA.hizbStart||[]).map(Number).filter(p=>p<=cur).sort((a,b)=>a-b);
-  const hzPage=hzPages.length?hzPages[hzPages.length-1]:null;
-  const hzNum=hzPage===null?null:(DATA.hizb?.[String(hzPage)]||hzPages.length);
+  const quarterIndex=(DATA.quarterStart||[]).findIndex(p=>Number(p)===cur);
+  // يظهر الحزب في الوجه الذي يبدأ فيه ربع حزب فقط، ولا يكرر في بقية الأوجه.
+  const hzNum=quarterIndex>=0?Math.floor(quarterIndex/4)+1:null;
   const hzTxt=hzNum?('الحزب '+AR(hzNum)):'';
   const pnEl='<span class="pn">وجه '+AR(cur)+'</span>',hzEl='<span class="hz">'+hzTxt+'</span>';
   foot.innerHTML=(cur%2===0)?(hzEl+pnEl):(pnEl+hzEl);
