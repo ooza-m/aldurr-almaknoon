@@ -628,6 +628,25 @@ main{padding-top:0!important}
 /* v94 · أشرطة التقدّم تنمو من اليمين إلى اليسار، دون عكس دوائر الإنجاز */
 .juz-prog .pbar,.v60-mini-progress{direction:rtl;text-align:right}
 .juz-prog .pbar>i,.v60-mini-progress>i{display:block;margin-right:0;margin-left:auto;transform-origin:right center}
+/* v95 · خريطة الأوجه: ألوان سادة وعلامات صغيرة لا تحجب أرقام الأوجه */
+#tab-map .juz-head{background:#FCFAF7;box-shadow:none}
+#tab-map .juz-block{box-shadow:none;border-color:var(--line)}
+#tab-map .pg{border-radius:9px;box-shadow:inset 0 0 0 1px rgba(70,45,55,.14);transition:opacity .15s ease,transform .12s ease}
+#tab-map .pg.phase-fix{box-shadow:inset 0 0 0 1px #C5A24E}
+#tab-map .pg.phase-near{box-shadow:inset 0 0 0 1px #B99541}
+#tab-map .pg.phase-far{box-shadow:inset 0 -3px 0 #7482A8,inset 0 0 0 1px rgba(82,96,131,.18)}
+#tab-map .pg.fixing{box-shadow:inset 0 0 0 1px #C5A24E}
+#tab-map .pg .phase-mark.fix{top:2px;right:3px;padding:0 2px;min-width:8px;height:10px;font-size:.44rem;line-height:10px;background:#FFF9E9;color:#725619;border-radius:3px}
+#tab-map .pg .phase-mark.near{bottom:3px;right:3px;width:5px;height:5px;background:#8A681E}
+#tab-map .pg .phase-mark.far{bottom:3px;right:3px;width:7px;height:2px;background:#536188}
+#tab-map .pg.has-err::after{top:2px;left:2px;width:7px;height:7px;border:1px solid #fff;box-shadow:none;background:#765A82}
+#tab-map .pg .cover-bar{height:3px;left:0;right:0;bottom:0;background:linear-gradient(to left,#9476A6 0 var(--cover),rgba(148,118,166,.17) var(--cover) 100%)}
+#tab-map .pg .fix-dot{display:none}
+#tab-map .lg-fix{background:#F0DC9F}
+#tab-map .lg-near{background:#E5C87B}
+#tab-map .lg-partial{background:linear-gradient(to left,#9476A6 55%,var(--parch-2) 55%)}
+#tab-map .map-legend-v64 span{background:#FCFAF7;box-shadow:none}
+@media(max-width:430px){#tab-map .pg-row{gap:6px}#tab-map .pg{min-width:36px;height:34px}}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -3163,7 +3182,7 @@ function fillJuzPages(j){
         phase==='far'?'<i class="phase-mark far"></i>':'';
       const cover=m.partial?'<i class="cover-bar" style="--cover:'+cov+'%"></i>':'';
       const title='وجه '+p+(m.label?' · '+m.label:'')+(mastery?' · ضبط: '+MASTERY_LEVELS_V116[mastery.level]:'')+(hasErr?' · خطأ نشط':'');
-      const masteryMark=mastery?'<i aria-hidden="true" style="position:absolute;inset-inline-start:1px;bottom:1px;width:6px;height:6px;border-radius:50%;background:'+(mastery.level==='strong'?'#2F7458':mastery.level==='good'?'#5F9D81':mastery.level==='needs'?'#D38B45':'#AF4E60')+';border:1px solid #fff"></i>':'';
+      const masteryMark=mastery?'<i aria-hidden="true" style="position:absolute;inset-inline-start:3px;bottom:3px;width:5px;height:5px;border-radius:50%;background:'+(mastery.level==='strong'?'#2F7458':mastery.level==='good'?'#5F9D81':mastery.level==='needs'?'#D38B45':'#AF4E60')+';border:1px solid #fff"></i>':'';
       cells+='<button type="button" class="'+cls+'" data-page="'+p+'" data-surah="'+seg.sur[0]+'" title="'+title+'" style="position:relative;'+bg+txt+dim+'"><span>'+toAr(p)+'</span>'+phaseMark+cover+masteryMark+'</button>';
     }
     return '<div class="surah-group"><div class="surah-label">'+seg.sur[1]+'</div><div class="pg-row">'+cells+'</div></div>';
