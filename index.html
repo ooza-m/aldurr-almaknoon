@@ -567,6 +567,35 @@ main{padding-top:0!important}
 
 /* v76 · المراجعة الذكية والاستدعاء النشط */
 .v76-smart{background:linear-gradient(145deg,#F6F0FA,#fff);border:1px solid rgba(140,114,160,.18);border-radius:16px;padding:12px;margin-bottom:12px}.v76-smart-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.v76-smart-head span{display:block;font-size:.55rem;color:#7D668E}.v76-smart-head b{display:block;font-size:.86rem;color:var(--ink);margin-top:1px}.v76-smart-head small{display:block;font-size:.55rem;color:var(--muted);margin-top:2px}.v76-smart-head strong{font-size:.75rem;color:#715980;background:#EEE5F3;border-radius:999px;padding:5px 8px}.v76-smart-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}.v76-smart-row{background:#fff;border:1px solid rgba(140,114,160,.12);border-radius:12px;padding:9px}.v76-smart-copy>div{display:flex;justify-content:space-between;gap:8px;align-items:center}.v76-smart-copy b{font-size:.69rem}.v76-smart-copy span{font-size:.52rem;color:#806C8E}.v76-smart-copy small,.v76-smart-copy em{display:block;font-size:.55rem;color:var(--muted);font-style:normal;margin-top:3px;line-height:1.45}.v76-smart-actions{display:flex;gap:6px;margin-top:8px}.v76-smart-actions button{border:0;border-radius:8px;background:#745B85;color:#fff;font-family:inherit;font-size:.56rem;font-weight:700;padding:6px 8px}.v76-smart-actions button.soft{background:var(--parch-2);color:var(--muted)}
+/* v150 · توحيد النوافذ وحقول الخطة على الهاتف دون تغيير سلوكها */
+.modal-bg{padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));overflow:hidden}
+.modal-bg .modal{width:min(100%,480px);min-width:0;max-width:100%;max-height:min(88dvh,800px);padding:24px clamp(15px,4vw,24px) 25px;background:var(--v50-glass,#fffaf7);border:1px solid rgba(255,255,255,.85);border-radius:22px;box-shadow:0 14px 45px rgba(79,46,60,.17);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
+.modal-bg .modal .row,.modal-bg .modal .field{min-width:0;max-width:100%}
+.modal-bg .modal .row{gap:12px}
+.modal-bg .modal input,.modal-bg .modal select,.modal-bg .modal textarea{width:100%;max-width:100%;min-width:0;min-height:44px;background:rgba(255,255,255,.82);border:1px solid rgba(94,58,77,.15);border-radius:12px;color:var(--ink);font:inherit;padding:9px 12px}
+.modal-bg .modal .modal-actions{gap:9px;flex-wrap:wrap}
+.modal-bg .modal .modal-actions button{min-width:0;min-height:44px}
+.modal-bg .modal .modal-x{background:rgba(94,58,77,.07);color:var(--ink);border-radius:11px}
+#stageModal .modal .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+#stageModal .modal #stReorder>div{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+#stageModal .modal #stReorder button{min-width:0;white-space:normal}
+#studyPlanSettingsV134{min-width:0;max-width:100%;overflow:hidden}
+#studyPlanSettingsV134 details>div{min-width:0}
+#studyPlanSettingsV134 label{min-width:0;max-width:100%;overflow-wrap:anywhere;font-size:.84rem}
+#studyPlanSettingsV134 select,#studyPlanSettingsV134 input{display:block;width:100%!important;max-width:100%!important;min-width:0;min-height:42px;padding:8px 10px;border-radius:12px;border:1px solid rgba(94,58,77,.16);background:rgba(255,255,255,.84);color:var(--ink);font:inherit}
+#studyPlanSettingsV134 input[type=number]{width:min(120px,100%)!important;direction:ltr;text-align:center}
+#studyPlanSettingsV134 .hint{overflow-wrap:anywhere;line-height:1.7}
+.gate{background:linear-gradient(155deg,#f5e6e9 0%,#f9f5ee 55%,#e9ece3 100%);padding:calc(20px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom));color:var(--ink)}
+.gate-inner{width:min(100%,410px);max-width:100%}
+.gate .g-mark{color:var(--ink);font-size:2.1rem}
+.gate .g-ayah{color:var(--accent-2,#874257)}
+.gate .g-sub{color:var(--muted);font-size:.86rem;margin-bottom:20px}
+.gate-card{background:rgba(255,255,255,.83);border:1px solid rgba(255,255,255,.9);border-radius:24px;padding:22px 19px;box-shadow:0 12px 36px rgba(94,58,77,.09)}
+.gate-card .field input{background:#fffdfa;border:1px solid rgba(94,58,77,.16);min-height:46px;border-radius:12px}
+.gate-card #gSubmit{min-height:46px;border-radius:13px}
+.gate .g-skip{color:var(--ink-2)}
+@media(max-width:390px){#stageModal .modal .row{grid-template-columns:minmax(0,1fr)}.modal-bg .modal{max-height:86dvh}#stageModal .modal #stReorder>div{gap:6px!important}}
+
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
