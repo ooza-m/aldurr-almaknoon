@@ -2177,14 +2177,18 @@ function changeFocusedVerseV143(vk,action){
  save();
 }
 function mergeFocusedMushafActionsV146(){
- let events=[];try{events=JSON.parse(localStorage.getItem('durr-focused-mushaf-actions-v146')||'[]');}catch(_){}
+ const key='durr-focused-mushaf-actions-v146';
+ let events=[];try{events=JSON.parse(localStorage.getItem(key)||'[]');}catch(_){}
  if(!Array.isArray(events)||!events.length)return;
- S.focusedMushafAppliedV146=Array.isArray(S.focusedMushafAppliedV146)?S.focusedMushafAppliedV146:[];
- const seen=new Set(S.focusedMushafAppliedV146);let changed=false;
+ const applied=Array.isArray(S.focusedMushafAppliedV146)?S.focusedMushafAppliedV146:[];
+ const seen=new Set(applied),state=S.focusedReviewSessionV145;
+ const remaining=[];let changed=false;
  for(const event of events){
   if(!event||typeof event.id!=='string'||seen.has(event.id))continue;
-  const state=S.focusedReviewSessionV145;
-  if(!state||state.startedAt!==event.startedAt||!Array.isArray(state.keys)||!state.keys.includes(event.vk))continue;
+  if(!state||state.startedAt!==event.startedAt||!Array.isArray(state.keys)||!state.keys.includes(event.vk)){
+   // Retain unmerged actions instead of deleting evidence before a session can be reconciled.
+   remaining.push(event);continue;
+  }
   if(event.action==='done'){
    const verse=focusedVerseListV143().find(x=>x.vk===event.vk);
    if(verse){verse.status='done';verse.completedAt=event.at||Date.now();}
@@ -2198,8 +2202,8 @@ function mergeFocusedMushafActionsV146(){
   else state.current=Math.max(+state.current||0,Math.min(state.keys.length,(+event.index||0)+1));
   seen.add(event.id);changed=true;
  }
- if(changed){S.focusedMushafAppliedV146=[...seen].slice(-200);save();}
- try{localStorage.removeItem('durr-focused-mushaf-actions-v146');}catch(_){}
+ if(changed){S.focusedMushafAppliedV146=[...seen].slice(-300);save();}
+ try{if(remaining.length)localStorage.setItem(key,JSON.stringify(remaining.slice(-300)));else localStorage.removeItem(key);}catch(_){}
 }
 function focusedSessionV145(){
  const state=S.focusedReviewSessionV145;
