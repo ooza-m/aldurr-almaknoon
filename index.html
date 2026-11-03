@@ -752,6 +752,12 @@ main{padding-top:0!important}
 #tab-errors .v103-advanced-v103{border-top:1px solid var(--line);padding-top:8px;margin-top:10px}
 #tab-errors .v103-advanced-v103>details>summary{font-size:.78rem}
 @media(max-width:380px){#tab-errors .v103-tabs button{font-size:.7rem;padding:9px 1px}}
+/* v104 · الآيات ذات الأخطاء المعتمدة تعرض كاقتراحات لا مهام مفروضة */
+.v104-focus-suggestions{margin-top:13px;border-top:1px solid var(--line);padding-top:9px}
+.v104-focus-suggestions>summary{font-size:.78rem;font-weight:700;cursor:pointer}
+.v104-focus-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.76rem}
+.v104-focus-row span{flex:1;min-width:0}
+.v104-focus-row .btn{flex:0 0 auto}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -2508,6 +2514,11 @@ function focusedSessionPanelV145(){
 function renderFocusedVerseReviewsV143(){
  const host=document.getElementById('focusedVerseReviewsV143');if(!host)return;
  const items=focusedVerseListV143(),pending=items.filter(x=>x.status!=='done'),done=items.filter(x=>x.status==='done');
+ const wasOpen=!!host.querySelector('details')?.open;
+ const confirmed=confirmedErrorSummaryV104();
+ // مقترحات من الأخطاء النشطة المؤكدة فقط، لا من الملاحظات الآلية أو المؤرشفة.
+ const suggested=[...confirmed.byVerse.values()].filter(x=>x.count>=2&&!pending.some(v=>v.vk===x.key))
+   .sort((a,b)=>b.count-a.count||a.key.localeCompare(b.key)).slice(0,6);
  const label=x=>{const [sid,ayah]=x.vk.split(':').map(Number);return 'سورة '+((SURAHS.find(s=>s[0]===sid)||[])[1]||sid)+' · الآية '+ayah;};
  const card=x=>'<div style="border-top:1px solid var(--line);padding:10px 0">'+
  '<b>'+esc(label(x))+'</b><div class="hint">'+(x.status==='done'?'اعتُمدت مراجعتها يدويًا'+(x.completedAt?' · '+esc(keyOf(new Date(x.completedAt))):''):'بانتظار مراجعة الآية')+
@@ -2516,10 +2527,15 @@ function renderFocusedVerseReviewsV143(){
  '<button type="button" class="btn btn-ghost btn-sm" data-focused-open-v143="'+esc(x.vk)+'">فتح الآية في المصحف</button>'+
  (x.status==='done'?'<button type="button" class="btn btn-ghost btn-sm" data-focused-action-v143="reopen" data-focused-vk-v143="'+esc(x.vk)+'">إعادة للمراجعة</button>':'<button type="button" class="btn btn-primary btn-sm" data-focused-action-v143="done" data-focused-vk-v143="'+esc(x.vk)+'">اعتماد مراجعة الآية</button>')+
  '<button type="button" class="btn btn-ghost btn-sm" data-focused-action-v143="remove" data-focused-vk-v143="'+esc(x.vk)+'">إزالة</button></div></div>';
- host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">قائمة المراجعة المركّزة · '+pending.length+' معلّقة</summary>'+
+ host.innerHTML='<details '+(wasOpen?'open':'')+'><summary style="cursor:pointer;font-weight:700">قائمة المراجعة المركّزة · '+pending.length+' معلّقة</summary>'+
  '<p class="hint">اختاري الآيات من تحليل الأخطاء؛ يُحدَّد وجه الآية من فهرس مصحف المدينة عند فتحها، حتى لو لم يتضمن السجل المستورد رقم الوجه. لا تُعتمد المراجعة عند الفتح ولا تُحتسب مراجعة وجه كامل.</p>'+
  (focusedSessionV145()?focusedSessionPanelV145():(pending.length?'<button type="button" class="btn btn-primary btn-sm" data-focused-session-v145="start">بدء جلسة مراجعة متتابعة · '+pending.length+' آية</button>':''))+
- (pending.length?pending.map(card).join(''):'<p class="hint">لا توجد آيات معلّقة. أضيفي موضعًا من تحليل الأخطاء.</p>')+
+ (pending.length?pending.map(card).join(''):'<p class="hint">لا توجد آيات معلّقة.</p>')+
+ (suggested.length?'<details class="v104-focus-suggestions"><summary>آيات مقترحة من الأخطاء النشطة · '+toAr(suggested.length)+'</summary>'+
+  '<p class="hint">الإضافة اختيارية. لا يُغيّر الاقتراح خطة الحفظ أو موعد مراجعة الوجه.</p>'+
+  suggested.map(x=>{const parts=x.key.split(':').map(Number),surah=(SURAHS.find(s=>s[0]===parts[0])||[])[1]||'';
+    return '<div class="v104-focus-row"><span>سورة '+esc(surah)+' · الآية '+toAr(parts[1])+' · '+toAr(x.count)+' أخطاء</span>'+
+      '<button type="button" class="btn btn-ghost btn-sm" data-focused-add-v143="'+esc(x.key)+'" data-focused-source-v143="manual" data-focused-page-v143="'+(x.page||'')+'">إضافة</button></div>';}).join('')+'</details>':'')+
  (done.length?'<details style="margin-top:10px"><summary>آيات تمت مراجعتها · '+done.length+'</summary>'+done.slice(-30).reverse().map(card).join('')+'</details>':'')+
  '</details>';
 }
@@ -2958,7 +2974,7 @@ function confirmedErrorSummaryV104(){
   if(!e||e.archived||e.aiDetected===true||e.automatic===true||e.source==='ai-review')continue;
   const page=+e.page,verse=String(e.verseKey||(e.surahId&&e.ayah?e.surahId+':'+e.ayah:''));
   if(Number.isInteger(page)&&page>=1&&page<=604)byPage.set(page,(byPage.get(page)||0)+1);
-  if(/^\\d{1,3}:\\d{1,3}$/.test(verse)) {
+  if(/^\d{1,3}:\d{1,3}$/.test(verse)) {
    const [sid,ayah]=verse.split(':').map(Number);
    if(sid>=1&&sid<=114&&ayah>=1){
     if(!byVerse.has(verse))byVerse.set(verse,{key:verse,page:Number.isInteger(page)&&page>=1&&page<=604?page:null,count:0});
