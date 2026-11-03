@@ -2179,11 +2179,19 @@ async function showFocusedVerseV146(){
  if(page){if(cur!==page)await settle(page);setTimeout(()=>flashVerse(vk),160);}
  else focusedReviewPanelV146.insertAdjacentHTML('beforeend','<small>تعذّر تحديد الآية من فهرس المصحف الحالي.</small>');
 }
-function startFocusedReaderV146(){
- if(REC_QUERY.get('focused')!=='1')return;
+function startFocusedReaderV146(force=false){
  let raw;try{raw=JSON.parse(LS('durr-alfareed-v2','{}')||'{}');}catch(_){raw={};}
  const state=raw.focusedReviewSessionV145;
  if(!state||!Array.isArray(state.keys)||!state.keys.length)return;
+ if(!force&&REC_QUERY.get('focused')!=='1'){
+  const pending=state.keys.some(vk=>!(raw.focusedVerseReviews||[]).find(x=>x.vk===vk&&x.status==='done'));
+  if(!pending)return;
+  const button=document.createElement('button');
+  button.type='button';button.id='focusedResumeV147';button.textContent='استئناف مراجعة الآيات';
+  button.style.cssText='position:fixed;z-index:1100;top:calc(env(safe-area-inset-top) + 58px);left:8px;max-width:55vw;background:var(--surface,#fff);color:var(--ink,#333);border:1px solid var(--line,#ddd);border-radius:24px;padding:9px 13px;font:inherit;font-size:.76rem;box-shadow:0 3px 12px #0002';
+  button.onclick=()=>{button.remove();startFocusedReaderV146(true);};
+  document.body.append(button);return;
+ }
  focusedSessionReaderV146={...state,reviewed:[...(state.reviewed||[])],skipped:[...(state.skipped||[])]};
  try{
   const events=JSON.parse(LS('durr-focused-mushaf-actions-v146','[]')||'[]');
@@ -2191,7 +2199,8 @@ function startFocusedReaderV146(){
    if(event.startedAt!==state.startedAt||!state.keys.includes(event.vk))continue;
    if(event.action==='done'&&!focusedSessionReaderV146.reviewed.includes(event.vk))focusedSessionReaderV146.reviewed.push(event.vk);
    if(event.action==='skip'&&!focusedSessionReaderV146.skipped.includes(event.vk))focusedSessionReaderV146.skipped.push(event.vk);
-   focusedSessionReaderV146.current=Math.max(+focusedSessionReaderV146.current||0,(+event.index||0)+1);
+   if(event.action==='done'||event.action==='skip')focusedSessionReaderV146.current=Math.max(+focusedSessionReaderV146.current||0,(+event.index||0)+1);
+   if(event.action==='end'){location.replace('index.html?tab=today');return;}
   }
  }catch(_){}
  const box=document.createElement('div');box.id='focusedReviewControlsV146';
