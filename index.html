@@ -4200,7 +4200,7 @@ function errorTimeBucketsV101(mode='week'){
     }
     items.push({start,end,label,recorded:0,archived:0,groups:new Map()});
   }
-  const isDate=v=>/^\\d{4}-\\d{2}-\\d{2}$/.test(String(v||''))&&!Number.isNaN(parseKey(v).getTime())&&keyOf(parseKey(v))===v;
+  const isDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))&&!Number.isNaN(parseKey(v).getTime())&&keyOf(parseKey(v))===v;
   let missingDate=0,missingArchiveDate=0;
   for(const e of S.errors||[]){
     if(!e||e.aiDetected===true)continue;
@@ -4218,11 +4218,12 @@ function errorTimeBucketsV101(mode='week'){
 function renderErrorTrendsV101(){
  const host=document.getElementById('errorTrendsV101');if(!host)return;
  const selected=host.querySelector('#errorTrendsModeV101')?.value||'week';
+ const wasOpen=!!host.querySelector('details')?.open;
  const view=errorTimeBucketsV101(selected),max=Math.max(1,...view.items.map(x=>x.recorded));
  const total=view.items.reduce((n,x)=>n+x.recorded,0),archived=view.items.reduce((n,x)=>n+x.archived,0);
  const groups=new Map();
  view.items.forEach(item=>item.groups.forEach((n,key)=>groups.set(key,(groups.get(key)||0)+n)));
- host.innerHTML='<details><summary>تطوّر الأخطاء عبر الزمن</summary>'+
+ host.innerHTML='<details '+(wasOpen?'open':'')+'><summary>تطوّر الأخطاء عبر الزمن</summary>'+
  '<div class="v101-trend-inside"><label for="errorTrendsModeV101">الفترة</label> <select id="errorTrendsModeV101">'+
  '<option value="week" '+(selected==='week'?'selected':'')+'>آخر 8 أسابيع</option>'+
  '<option value="month" '+(selected==='month'?'selected':'')+'>آخر 6 أشهر</option></select>'+
