@@ -2121,6 +2121,17 @@ syncReaderViewport();setTimeout(syncReaderViewport,80);setTimeout(syncReaderView
 
 setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
 
+/* v149 · أشرطة التلاوة والتسميع تحجز موضعًا في تخطيط المصحف ولا تغطي متن الوجه */
+(function reservePlaybackSpaceV149(){
+ const screen=document.getElementById('screen'),foot=document.getElementById('pagefoot');
+ if(!screen||!foot)return;
+ for(const id of ['recBar','faceListenBar']){
+  const bar=document.getElementById(id);if(bar)screen.insertBefore(bar,foot);
+ }
+ const style=document.createElement('style');
+ style.textContent=`body.reciting #recBar{position:relative;left:auto;right:auto;bottom:auto;flex:0 0 auto;z-index:25;padding:8px 12px 10px;background:var(--page);border-top:1px solid var(--line)}body.face-listening #faceListenBar{position:relative;left:auto;right:auto;bottom:auto;flex:0 0 auto;z-index:25;border-radius:15px;margin:3px 8px 6px;padding:8px 10px;box-shadow:none}body .tap-hint{display:none!important}@media(max-width:390px){body.reciting #recBar{padding:6px 8px 8px;gap:6px}body.face-listening #faceListenBar{margin-inline:5px;padding:6px 8px}}`;
+ document.head.appendChild(style);
+})();
 /* v148 · شريط حالة التسميع والإشعارات ضمن تدفق الصفحة، بعيدًا عن الآيات */
 (function reserveMushafStatusSpaceV148(){
  const screen=document.getElementById('screen'),track=document.getElementById('track');
