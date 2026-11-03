@@ -4,7 +4,7 @@
 const KEY='durr-alfareed-v2';
 const css=document.createElement('style');
 css.textContent=`
-.dq-trigger{position:fixed;left:12px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:190;background:var(--ink,#5E3A4D);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:100px;padding:9px 12px;font:600 12px "IBM Plex Sans Arabic",sans-serif;box-shadow:0 6px 25px #0002}
+.mini-top:has(.dq-trigger){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:2px;min-height:0;padding-top:calc(env(safe-area-inset-top) + 4px);padding-bottom:4px}.mini-top:has(.dq-trigger) .dq-trigger{grid-column:1/-1;justify-self:start;position:static;margin:0;z-index:auto;background:var(--ink,#5E3A4D);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:100px;padding:4px 12px;font:600 11px "IBM Plex Sans Arabic",sans-serif;box-shadow:none;min-height:28px;line-height:1.2}.mini-top:has(.dq-trigger) #mtJuz{grid-column:1;grid-row:2}.mini-top:has(.dq-trigger) .s{grid-column:2;grid-row:2}@media(max-width:390px){.mini-top:has(.dq-trigger){padding-inline:13px}.mini-top:has(.dq-trigger) .dq-trigger{padding:3px 9px;font-size:10px}}
 .dq-overlay{position:fixed;inset:0;background:#160c1585;z-index:10000;display:none;align-items:flex-end;justify-content:center}
 .dq-overlay.open{display:flex}
 .dq-sheet{width:min(100%,460px);background:var(--parch,#F4E1D2);color:var(--text,#3E2A35);border-radius:24px 24px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -12px 30px #0002;max-height:85dvh;overflow:auto;font:14px "IBM Plex Sans Arabic",sans-serif}
@@ -18,9 +18,9 @@ css.textContent=`
 .dq-hint{font-size:12px;color:var(--muted,#9A8189);margin:6px 0 14px}
 .dq-range[hidden]{display:none!important}.dq-range{display:flex;gap:8px;align-items:center}.dq-range input{width:90px;min-width:0;border:1px solid var(--line,#dbc5c9);border-radius:10px;padding:9px;font:inherit;background:#fff;text-align:center;direction:ltr}
 .dq-small{font-size:12px;color:var(--muted,#9A8189)}
-body.reciting .dq-trigger{display:none}
+body.reciting .dq-trigger{visibility:hidden;pointer-events:none}
 @media(min-width:700px){.dq-overlay{align-items:center}.dq-sheet{border-radius:22px}}
-@media(max-height:620px){.dq-trigger{bottom:calc(70px + env(safe-area-inset-bottom))}}
+
 `;document.head.appendChild(css);
 const trigger=document.createElement('button');trigger.className='dq-trigger';trigger.type='button';trigger.textContent='✓ إنجاز';trigger.setAttribute('aria-label','تسجيل إنجاز هذا الوجه يدويًا');
 const overlay=document.createElement('div');overlay.className='dq-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','تسجيل الإنجاز');
@@ -39,7 +39,7 @@ overlay.innerHTML=`<div class="dq-sheet"><div class="dq-head"><strong id="dqTitl
 </div></div>
 <p class="dq-hint">تسجيل وجه كامل أو نطاق أوجه. التسجيل الجزئي بالآيات سيضاف بعد التحقق من ربط الآيات. التسجيل اليدوي لا يُعد نتيجة تسميع آلي ولا ينشئ أخطاء غير موثقة.</p>
 <button class="dq-save" type="submit">حفظ إنجاز الوجه</button></form></div>`;
-document.body.append(trigger,overlay);
+const top=document.querySelector('.mini-top');if(top)top.insertBefore(trigger,top.firstChild);else document.body.appendChild(trigger);document.body.appendChild(overlay);
 const close=()=>overlay.classList.remove('open');
 const rangeEl=overlay.querySelector('#dqRange');
 overlay.querySelectorAll('input[name="scope"]').forEach(x=>x.addEventListener('change',()=>{rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range'}));
