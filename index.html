@@ -1271,7 +1271,7 @@ window.FIREBASE_CONFIG = {
 </div></div>
 
 <div class="modal-bg" id="errModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('errModal').classList.remove('open')" aria-label="إغلاق">✕</button>
-  <h3>تسجيل خطأ</h3><p class="msub">اربطي الخطأ بموضعه وتاريخه لتتبّع المواضع المتكرّرة.</p>
+  <h3>تسجيل خطأ</h3><p class="msub" id="erContextV98">حددي موضع الخطأ ونوعه، ويمكن ترك الوصف فارغًا.</p>
   <div class="row">
     <div class="field"><label>السورة</label><select id="erSurah"></select></div>
     <div class="field"><label>الوجه <span style="color:var(--clay)">*</span></label><input type="number" dir="ltr" inputmode="numeric" id="erPage" min="1" max="604" placeholder="يُعبّأ تلقائيًا عند اختيار السورة"></div>
@@ -1281,8 +1281,9 @@ window.FIREBASE_CONFIG = {
     <option>تردّد / نسيان</option><option>خطأ في الحفظ (كلمة)</option><option>خطأ في الآية</option>
     <option>تشابه (التبس بموضع آخر)</option><option>خطأ تجويد</option><option>أخرى</option>
   </select></div>
-  <div class="field"><label>الوصف</label><input type="text" id="erDesc" placeholder="مثال: التبست ﴿ولقد يسّرنا﴾ في القمر"></div>
+  <div class="field"><label>الوصف (اختياري)</label><input type="text" id="erDesc" placeholder="تفصيل مختصر يساعدك على تذكّر الموضع"></div>
   <div class="field"><label>التاريخ</label><input type="date" id="erDate"></div>
+  <p id="erValidationV98" class="hint" role="alert" aria-live="polite" hidden></p>
   <div class="modal-actions"><button class="btn btn-primary" id="erSave" style="flex:1">حفظ الخطأ</button><button class="btn btn-ghost" id="erClose">إلغاء</button></div>
 </div></div>
 
@@ -4054,6 +4055,11 @@ function splitRangeBySurah(from,to,type){
 })();
 function openErr(prefillPage){
   const erSurah=document.getElementById('erSurah');
+  const errContext=document.getElementById('erContextV98'),errValidation=document.getElementById('erValidationV98');
+  if(errContext)errContext.textContent=prefillPage?'تسجيل خطأ في الوجه '+toAr(prefillPage)+' · اختاري الآية أو اتركيها دون تحديد.':'حددي موضع الخطأ ونوعه، ويمكن ترك الوصف فارغًا.';
+  if(errValidation){errValidation.hidden=true;errValidation.textContent='';}
+  document.getElementById('erType').selectedIndex=0;
+  document.getElementById('erDesc').value='';
   fillSurahSelect(erSurah);
   setDateInput('erDate',document.getElementById('in-date').value||todayKey());
   document.getElementById('erPage').value=prefillPage||'';
@@ -4080,22 +4086,35 @@ document.getElementById('btnAddErr').addEventListener('click',()=>openErr());
 document.getElementById('btnAddErr2').addEventListener('click',()=>openErr());
 document.getElementById('erClose').addEventListener('click',()=>document.getElementById('errModal').classList.remove('open'));
 document.getElementById('erSave').addEventListener('click',()=>{
-  const surId=+document.getElementById('erSurah').value;const sur=SURAHS.find(s=>s[0]===surId);
-  const page=+document.getElementById('erPage').value||null;
-  if(!surId){alert('اختاري السورة.');return;}
-  if(!page||page<1||page>604){alert('أدخلي رقم الوجه (١–٦٠٤) — إلزاميّ لربط الخطأ بموضعه.');return;}
-  const ayah=+document.getElementById('erAyah').value||null;
-  const e={surah:sur?sur[1]:'',surahId:surId,page:page,ayah,
-    verseKey:ayah?(surId+':'+ayah):null,source:'manual',
-    type:document.getElementById('erType').value,desc:val('erDesc'),date:document.getElementById('erDate').value||todayKey()};
-  S.errors.push(e);S.errors.sort((a,b)=>b.date.localeCompare(a.date));
-  // إن كان الوجه متقنًا ووُجد فيه خطأ، أنزليه إلى «يحتاج مراجعة»
+  const surId=+document.getElementById('erSurah').value, sur=SURAHS.find(x=>x[0]===surId);
+  const page=+document.getElementById('erPage').value,rawAyah=document.getElementById('erAyah').value.trim();
+  const ayah=rawAyah===''?null:+rawAyah;
+  const validation=document.getElementById('erValidationV98');
+  const error=message=>{if(validation){validation.textContent=message;validation.hidden=false;}else toast(message);};
+  if(!sur){error('اختاري السورة.');return;}
+  if(!Number.isInteger(page)||page<1||page>604){error('أدخلي رقم وجه صحيحًا بين 1 و604.');return;}
+  const pages=pagesOfSurah(surId);
+  if(pages&&(page<pages[0]||page>pages[1])){error('الوجه المحدد لا يقع ضمن نطاق السورة المختارة.');return;}
+  if(rawAyah!==''&&(!Number.isInteger(ayah)||ayah<1||ayah>sur[3])){error('راجعي رقم الآية في السورة المختارة.');return;}
+  const e={surah:sur[1],surahId:surId,page,ayah,verseKey:ayah?surId+':'+ayah:null,
+    source:'manual',type:document.getElementById('erType').value,
+    desc:val('erDesc'),date:document.getElementById('erDate').value||todayKey()};
+  S.errors.push(e);S.errors.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   if(S.pages[e.page]==='solid')S.pages[e.page]='review';
   save();renderErrors();refreshV50();
   if(typeof renderMap==='function')try{renderMap();}catch(_){}
-  if(document.getElementById('pageModal').classList.contains('open')&&typeof curPage!=='undefined')renderPageErrors(curPage);
-  document.getElementById('errModal').classList.remove('open');document.getElementById('erDesc').value='';
-  const b=document.getElementById('btnAddErr');if(b){const o=b.textContent;b.textContent="✓ سُجّل الخطأ";setTimeout(()=>b.textContent=o,1400);}
+  if(curPage===page){
+    renderPageErrors(page);renderPageMasteryV116(page);
+    const errors=(S.errors||[]).filter(x=>x.page===page&&!x.archived&&(curPageSurah==null||x.surahId===curPageSurah||x.surahId==null)).length;
+    const summary=document.getElementById('pmErrorsSummaryV97');
+    if(summary)summary.textContent='الأخطاء المسجلة'+(errors?' · '+toAr(errors)+' نشطة':'');
+    const count=document.querySelector('#pmQuickV97 span:last-child b');if(count)count.textContent=toAr(errors);
+    document.getElementById('pmErrorsDetailsV97').open=true;
+  }
+  document.getElementById('errModal').classList.remove('open');
+  if(curPage===page)document.getElementById('pageModal').classList.add('open');
+  document.getElementById('erDesc').value='';
+  toast('سُجّل الخطأ في الوجه '+toAr(page));
 });
 function smartReviewLabelV76(t){return({possible_omission:'سقوط محتمل',possible_substitution:'استبدال محتمل',possible_repetition:'تكرار محتمل',possible_extra_word:'زيادة محتملة',mutashabih_jump:'انتقال إلى متشابه محتمل'})[t]||'موضع يحتاج تحقق';}
 function openSmartRecallV76(q){if(!q||!q.page||!q.verseKey)return;const url='mushaf.html?v=89&p='+encodeURIComponent(q.page)+'&mode=recall&task=ai-review&ayah='+encodeURIComponent(q.verseKey)+'&rid='+encodeURIComponent(q.id)+'&app=1';window.location.assign(url);}
