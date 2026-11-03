@@ -2031,22 +2031,24 @@ function reviewQueueV123(){
   if(!m.memorized||e.doneToday)continue;
   const late=e.phase!=='fix'&&e.nextDue&&e.nextDue<todayKey();
   const weak=quality==='weak'||quality==='needs';
+  // وجود خطأ نشط لا يجعل الوجه مستحقًا قبل موعده، بل يقدّمه داخل طابور المراجعة القائم.
   if(!late&&!weak&&!e.due)continue;
+  const activeErrors=activeConfirmedErrorsV104(p).length;
   const history=faceMasteryTimelineV131(p);
   // Give repeated recent weakness precedence only within the same due/weakness group.
   const recent=history.events.slice(-4),recentWeak=recent.filter(x=>x.level==='weak'||x.level==='needs').length;
   const recurrence=recentWeak>=2&&recent.some(x=>x.level==='weak'||x.level==='needs')?recentWeak:0;
-  arr.push({p,rank:late?0:weak?1:2,days:late?Math.max(1,daysBetween(e.nextDue,todayKey())):0,recurrence,task:faceTaskForV63(p)});
+  arr.push({p,rank:late?0:weak?1:2,days:late?Math.max(1,daysBetween(e.nextDue,todayKey())):0,recurrence,activeErrors,task:faceTaskForV63(p)});
  }
  const mode=reviewWeaknessModeV133();
  arr.sort((a,b)=>{
   if(a.rank===0||b.rank===0){
    if(a.rank!==b.rank)return a.rank-b.rank;
-   return b.days-a.days||b.recurrence-a.recurrence||a.p-b.p;
+   return b.days-a.days||b.activeErrors-a.activeErrors||b.recurrence-a.recurrence||a.p-b.p;
   }
-  if(mode==='weak-first')return b.recurrence-a.recurrence||a.rank-b.rank||a.p-b.p;
-  if(mode==='due-first')return (a.rank===2?0:1)-(b.rank===2?0:1)||b.recurrence-a.recurrence||a.p-b.p;
-  return a.rank-b.rank||b.recurrence-a.recurrence||a.p-b.p;
+  if(mode==='weak-first')return b.recurrence-a.recurrence||a.rank-b.rank||b.activeErrors-a.activeErrors||a.p-b.p;
+  if(mode==='due-first')return (a.rank===2?0:1)-(b.rank===2?0:1)||b.activeErrors-a.activeErrors||b.recurrence-a.recurrence||a.p-b.p;
+  return a.rank-b.rank||b.activeErrors-a.activeErrors||b.recurrence-a.recurrence||a.p-b.p;
  });
  return {selected:arr.slice(0,reviewCapacityV123()),waiting:arr.slice(reviewCapacityV123())};
 }
@@ -2073,7 +2075,7 @@ function reviewForecastV124(days=7){
     remaining.push({p,rank:2,days:0,task:faceTaskForV63(p),due:eng.nextDue});
    }
   }
-  remaining.sort((a,b)=>a.rank-b.rank||b.days-a.days||a.p-b.p);
+  remaining.sort((a,b)=>a.rank-b.rank||b.days-a.days||(b.activeErrors||0)-(a.activeErrors||0)||a.p-b.p);
   const picked=remaining.splice(0,plan.capacity);
   picked.forEach(x=>assigned.add(x.p));
   daysOut.push({date,kind:plan.kind,capacity:plan.capacity,pages:picked.map(x=>x.p),carry:remaining.length});
@@ -2143,6 +2145,7 @@ function reviewPriorityReasonV132(item){
  if(item.rank===0)reasons.push('متأخر '+item.days+' '+(item.days===1?'يومًا':'أيام'));
  else if(item.rank===1)reasons.push('يحتاج تثبيتًا');
  else reasons.push('موعد المراجعة اليوم');
+ if(item.activeErrors)reasons.push('أخطاء موثّقة نشطة: '+item.activeErrors);
  if(item.recurrence>=2)reasons.push('تكرر ضعفه '+item.recurrence+' مرات في آخر 4 تقييمات');
  return reasons.join(' · ');
 }
@@ -2944,8 +2947,29 @@ function scheduleReview(surahId,success){
   S.reviewSched[surahId]=rec;
 }
 /* أولوية المراجعة دليل إرشادي، وليست حكمًا آليًا على جودة حفظ الوجه. */
+/* v104 · الأخطاء المعتمدة يدويًا فقط؛ لا تُعامل مقترحات المحرك كأخطاء مؤكدة. */
+function activeConfirmedErrorsV104(page){
+ return (S.errors||[]).filter(e=>e&&!e.archived&&e.aiDetected!==true&&
+  (e.source!=='ai-review'&&e.automatic!==true)&&+e.page===+page);
+}
+function confirmedErrorSummaryV104(){
+ const byPage=new Map(),byVerse=new Map();
+ for(const e of S.errors||[]){
+  if(!e||e.archived||e.aiDetected===true||e.automatic===true||e.source==='ai-review')continue;
+  const page=+e.page,verse=String(e.verseKey||(e.surahId&&e.ayah?e.surahId+':'+e.ayah:''));
+  if(Number.isInteger(page)&&page>=1&&page<=604)byPage.set(page,(byPage.get(page)||0)+1);
+  if(/^\\d{1,3}:\\d{1,3}$/.test(verse)) {
+   const [sid,ayah]=verse.split(':').map(Number);
+   if(sid>=1&&sid<=114&&ayah>=1){
+    if(!byVerse.has(verse))byVerse.set(verse,{key:verse,page:Number.isInteger(page)&&page>=1&&page<=604?page:null,count:0});
+    const row=byVerse.get(verse);row.count++;if(!row.page&&page>=1&&page<=604)row.page=page;
+   }
+  }
+ }
+ return{byPage,byVerse};
+}
 function pageReviewEvidenceV115(p){
-  const errors=(S.errors||[]).filter(e=>+e.page===+p&&!e.archived&&e.aiDetected!==true);
+  const errors=activeConfirmedErrorsV104(p);
   const sessions=(S.recitationSessions||[]).filter(rs=>['fix','near','far','new'].includes(rs.task)).flatMap(rs=>
     (rs.pages||[]).filter(pg=>+pg.page===+p&&pg.complete&&pg.coverage>=.95).map(pg=>({rs,pg})));
   const scored=sessions.filter(({rs,pg})=>rs.errorDetectionEnabled===true&&rs.analysisIncomplete!==true&&Number.isFinite(+pg.score));
@@ -3041,7 +3065,7 @@ function autoPromoteFromReview(nearTxt,farTxt){
   return changed;
 }
 /* هل في الوجه أخطاء نشطة (غير مؤرشفة)؟ يمنع الترقية إلى «متقن» */
-function pageHasActiveErrors(p,surahId){return S.errors.some(e=>e.page===p&&!e.archived&&(surahId==null||e.surahId===surahId||e.surahId==null));}
+function pageHasActiveErrors(p,surahId){return activeConfirmedErrorsV104(p).some(e=>surahId==null||e.surahId===surahId||e.surahId==null);}
 /* ترقية وجه واحد: متفلّت→مراجعة، مراجعة→متقن (ما لم يكن فيه أخطاء) */
 function promotePage(p){
   const st=S.pages[p];
