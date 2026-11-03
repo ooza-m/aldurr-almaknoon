@@ -4,10 +4,9 @@
 const KEY='durr-alfareed-v2';
 const css=document.createElement('style');
 css.textContent=`
-.dq-trigger{position:absolute;top:var(--reader-safe-top,env(safe-area-inset-top));left:max(8px,calc((100% - 760px)/2 + 8px));width:44px;height:44px;display:grid;place-items:center;z-index:36;border:0;border-radius:12px;background:transparent;color:var(--ink-2,#5E3A4D);padding:0;font:700 25px "IBM Plex Sans Arabic",sans-serif;box-shadow:none;cursor:pointer;line-height:1}
+.dq-toolbar{order:-3;display:flex;flex:0 0 auto;align-items:center;justify-content:flex-end;min-height:36px;padding:2px 12px 1px;direction:rtl}
+.dq-trigger{position:static;display:inline-flex;align-items:center;justify-content:center;width:auto;height:34px;min-width:65px;z-index:auto;border:1px solid var(--line,rgba(94,58,77,.15));border-radius:12px;background:var(--surface,#fffdfa);color:var(--ink-2,#5E3A4D);padding:5px 12px;font:600 12px "IBM Plex Sans Arabic",sans-serif;box-shadow:none;cursor:pointer;line-height:1.3}
 .dq-trigger:focus-visible{outline:2px solid var(--accent,#A8546B);outline-offset:2px}
-@media(max-width:390px){.dq-trigger{left:7px}}
-
 .dq-overlay{position:fixed;inset:0;background:#160c1585;z-index:10000;display:none;align-items:flex-end;justify-content:center}
 .dq-overlay.open{display:flex}
 .dq-sheet{width:min(100%,460px);background:var(--parch,#F4E1D2);color:var(--text,#3E2A35);border-radius:24px 24px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -12px 30px #0002;max-height:85dvh;overflow:auto;font:14px "IBM Plex Sans Arabic",sans-serif}
@@ -21,11 +20,11 @@ css.textContent=`
 .dq-hint{font-size:12px;color:var(--muted,#9A8189);margin:6px 0 14px}
 .dq-range[hidden]{display:none!important}.dq-range{display:flex;gap:8px;align-items:center}.dq-range input{width:90px;min-width:0;border:1px solid var(--line,#dbc5c9);border-radius:10px;padding:9px;font:inherit;background:#fff;text-align:center;direction:ltr}
 .dq-small{font-size:12px;color:var(--muted,#9A8189)}
-body.reciting .dq-trigger{visibility:hidden;pointer-events:none}
+body.reciting .dq-toolbar{display:none}
 @media(min-width:700px){.dq-overlay{align-items:center}.dq-sheet{border-radius:22px}}
 
 `;document.head.appendChild(css);
-const trigger=document.createElement('button');trigger.className='dq-trigger';trigger.type='button';trigger.textContent='✓';trigger.title='تسجيل إنجاز الوجه';trigger.setAttribute('aria-label','تسجيل إنجاز هذا الوجه يدويًا');
+const trigger=document.createElement('button');trigger.className='dq-trigger';trigger.type='button';trigger.textContent='إنجاز';trigger.title='تسجيل إنجاز الوجه';trigger.setAttribute('aria-label','تسجيل إنجاز هذا الوجه يدويًا');
 const overlay=document.createElement('div');overlay.className='dq-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','تسجيل الإنجاز');
 overlay.innerHTML=`<div class="dq-sheet"><div class="dq-head"><strong id="dqTitle">تسجيل الإنجاز</strong><button type="button" class="dq-close" aria-label="إغلاق">×</button></div>
 <form id="dqForm"><div class="dq-field"><label>نوع الإنجاز</label><div class="dq-options">
@@ -42,7 +41,7 @@ overlay.innerHTML=`<div class="dq-sheet"><div class="dq-head"><strong id="dqTitl
 </div></div>
 <p class="dq-hint">تسجيل وجه كامل أو نطاق أوجه. التسجيل الجزئي بالآيات سيضاف بعد التحقق من ربط الآيات. التسجيل اليدوي لا يُعد نتيجة تسميع آلي ولا ينشئ أخطاء غير موثقة.</p>
 <button class="dq-save" type="submit">حفظ إنجاز الوجه</button></form></div>`;
-const screen=document.getElementById('screen');if(screen)screen.insertBefore(trigger,screen.firstChild);else document.body.appendChild(trigger);document.body.appendChild(overlay);
+const dock=document.getElementById('readerDock');const toolbar=document.createElement('div');toolbar.className='dq-toolbar';toolbar.appendChild(trigger);if(dock)dock.insertBefore(toolbar,dock.firstChild);else document.body.appendChild(toolbar);document.body.appendChild(overlay);
 const close=()=>overlay.classList.remove('open');
 const rangeEl=overlay.querySelector('#dqRange');
 overlay.querySelectorAll('input[name="scope"]').forEach(x=>x.addEventListener('change',()=>{rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range'}));
