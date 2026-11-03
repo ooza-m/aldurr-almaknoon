@@ -685,7 +685,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
-       <div id="smartReview"></div><div id="weeklyAchievementV136" class="v50-glass v50-card" style="margin:12px 0"></div><div id="longTermProgressV139" class="v50-glass v50-card" style="margin:12px 0"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
+       <div id="smartReview"></div><div id="weeklyAchievementV136" class="v50-glass v50-card" style="margin:12px 0"></div><div id="longTermProgressV139" class="v50-glass v50-card" style="margin:12px 0"></div><div id="detailedMemorizationV140" class="v50-glass v50-card" style="margin:12px 0"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
       <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
@@ -1984,6 +1984,46 @@ function renderLongTermProgressV139(){
  '<div style="display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem"><span>تحسّن: <b>'+d.mastery.improved+'</b></span><span>لم يتغيّر: <b>'+d.mastery.unchanged+'</b></span><span>تراجع: <b>'+d.mastery.declined+'</b></span></div>'+
  '<p class="hint">الأوجه المقيمة في المقارنة: '+d.mastery.tracked+'. لا تُستنتج جودة الحفظ من التغطية الصوتية.</p></div></details>';
 }
+function detailedMemorizationAreasV140(kind){
+ const groups=new Map();
+ for(let p=1;p<=604;p++){
+  const sur=surahOfPage(p),id=kind==='juz'?juzOfPage(p):sur[0],label=kind==='juz'?'الجزء '+id:'سورة '+sur[1];
+  if(!groups.has(id))groups.set(id,{id,label,pages:0,memorized:0,rated:0,strong:0,good:0,needs:0,weak:0,due:0,unrated:0,weakPages:[],duePages:[],strongPages:[]});
+  const g=groups.get(id);g.pages++;
+  if(!firstMemDateV62(p))continue;
+  g.memorized++;
+  const mastery=masteryOfPageV116(p),level=mastery?.level;
+  if(level&&MASTERY_LEVELS_V116[level]){g.rated++;g[level]++;}
+  else g.unrated++;
+  const e=reviewEngineStateV62(p);
+  if(e.due){g.due++;g.duePages.push(p);}
+  if(level==='weak'||level==='needs')g.weakPages.push(p);
+  if(level==='strong'||level==='good')g.strongPages.push(p);
+ }
+ return [...groups.values()].filter(x=>x.memorized>0);
+}
+function renderDetailedMemorizationV140(){
+ const host=document.getElementById('detailedMemorizationV140');if(!host)return;
+ const prevKind=host.querySelector('#detailedKindV140')?.value||'juz';
+ const prevSort=host.querySelector('#detailedSortV140')?.value||'attention';
+ const groups=detailedMemorizationAreasV140(prevKind);
+ const options=(items,value)=>items.map(([v,label])=>'<option value="'+v+'" '+(v===value?'selected':'')+'>'+label+'</option>').join('');
+ groups.sort((a,b)=>prevSort==='number'?a.id-b.id:prevSort==='stable'?(b.strong+b.good)/Math.max(1,b.rated)-(a.strong+a.good)/Math.max(1,a.rated)||b.rated-a.rated:((b.weak*2+b.needs+b.due)-(a.weak*2+a.needs+a.due))||a.id-b.id);
+ const faceLinks=(pages,type)=>pages.slice(0,10).map(p=>'<button type="button" class="btn btn-ghost btn-sm" data-open-face-v140="'+p+'" style="padding:5px 8px;margin:2px;border:1px solid var(--line)">وجه '+p+'</button>').join('')+(pages.length>10?'<small>و'+(pages.length-10)+' أوجه أخرى في الخريطة</small>':'');
+ host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">تحليل الحفظ بالسور والأجزاء</summary>'+
+ '<p class="hint">يُحتسب الوجه ضمن السورة التي تبدأ فيه بحسب ترقيم المصحف، مع بيان الأوجه المحفوظة غير المقيّمة منفصلة عن الضعيفة.</p>'+
+ '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0"><label style="font-size:.78rem">التصنيف <select id="detailedKindV140">'+options([['juz','الأجزاء'],['surah','السور']],prevKind)+'</select></label>'+
+ '<label style="font-size:.78rem">الترتيب <select id="detailedSortV140">'+options([['attention','الأكثر حاجة'],['stable','الأكثر ثباتًا بين المقيّم'],['number','ترتيب المصحف']],prevSort)+'</select></label></div>'+
+ (groups.length?groups.map(g=>'<div style="padding:11px 0;border-bottom:1px solid var(--line)">'+
+ '<b>'+esc(g.label)+'</b><div style="font-size:.77rem;color:var(--muted);margin-top:4px">محفوظ '+g.memorized+' من '+g.pages+' · مقيّم '+g.rated+' · بلا تقييم '+g.unrated+'</div>'+
+ '<div style="height:7px;background:var(--parch-2);border-radius:8px;overflow:hidden;margin:7px 0"><div style="width:'+Math.round(100*g.memorized/g.pages)+'%;height:100%;background:var(--green)"></div></div>'+
+ '<div style="font-size:.76rem">ثابت '+g.strong+' · جيد '+g.good+' · يحتاج تثبيتًا '+g.needs+' · متفلّت '+g.weak+' · مستحق '+g.due+'</div>'+
+ (g.weakPages.length?'<div style="margin-top:6px"><small>أوجه تحتاج عناية:</small> '+faceLinks(g.weakPages)+'</div>':'')+
+ (g.duePages.length?'<div style="margin-top:6px"><small>أوجه مستحقة:</small> '+faceLinks(g.duePages)+'</div>':'')+
+ '</div>').join(''):'<p class="hint">لم تُسجل أوجه محفوظة بعد.</p>')+'</details>';
+ host.querySelector('#detailedKindV140').onchange=()=>renderDetailedMemorizationV140();
+ host.querySelector('#detailedSortV140').onchange=()=>renderDetailedMemorizationV140();
+}
 function renderStudyPlanSettingsV134(){
  const host=document.getElementById('studyPlanSettingsV134');if(!host)return;
  const capacity=reviewCapacityV123(),mode=reviewWeekModeV126(),focus=reviewWeaknessModeV133(),goal=Math.max(1,+(S.goal&&S.goal.pages)||1);
@@ -2033,7 +2073,7 @@ function renderDailyPageQueueV122(){
  if(modeInput)modeInput.onchange=()=>{S.reviewWeaknessMode=modeInput.value;save();refreshV50();};
 }
 function renderTodayV50(){
-  renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
+  renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderDetailedMemorizationV140();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
@@ -2085,6 +2125,7 @@ function refreshV50(){try{renderHomeV50();renderTodayV50();const p=document.quer
 
 // تنقّل موحّد للبطاقات الجديدة
 document.addEventListener('click',e=>{
+  const face=e.target.closest('[data-open-face-v140]');if(face){openPage(+face.dataset.openFaceV140);return;}
   const ss=e.target.closest('[data-v60-session]');if(ss){startTaskSessionV60(ss.dataset.v60Session);return;}
   const rt=e.target.closest('[data-v50-route]');if(rt){switchTab(rt.dataset.v50Route);return;}
   const mm=e.target.closest('[data-v50-mushaf]');if(mm){openMushafAtV50(+mm.dataset.v50Mushaf,mm.dataset.mode||'',mm.dataset.task||'',mm.dataset.readingVk||'');return;}
