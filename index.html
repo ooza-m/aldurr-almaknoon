@@ -647,6 +647,28 @@ main{padding-top:0!important}
 #tab-map .lg-partial{background:linear-gradient(to left,#9476A6 55%,var(--parch-2) 55%)}
 #tab-map .map-legend-v64 span{background:#FCFAF7;box-shadow:none}
 @media(max-width:430px){#tab-map .pg-row{gap:6px}#tab-map .pg{min-width:36px;height:34px}}
+/* v96 · الخريطة: الملخص ثم التنقل ثم التصفية ثم الأجزاء */
+#tab-map .map-jump-v96{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,.76fr);gap:8px 12px;align-items:end;margin:15px 0}
+#tab-map .map-jump-v96>label,#tab-map .map-page-jump-v96>label{font-size:.74rem;color:var(--muted);font-weight:600;display:block;margin-bottom:5px}
+#tab-map .map-jump-v96>label{grid-column:1;grid-row:1}
+#tab-map #jumpSurah{grid-column:1;grid-row:2;min-width:0;min-height:43px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:7px 10px;font:inherit;font-size:16px;color:var(--ink)}
+#tab-map .map-page-jump-v96{grid-column:2;grid-row:1/3;min-width:0}
+#tab-map .map-page-jump-v96>div{display:flex;gap:5px;min-width:0}
+#tab-map .map-page-jump-v96 input{width:100%;min-width:0;min-height:43px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font:inherit;font-size:16px;text-align:center;padding:7px 4px;color:var(--ink)}
+#tab-map .map-page-jump-v96 button{flex:0 0 auto;padding-inline:9px;min-height:43px}
+#tab-map .map-jump-msg-v96{grid-column:1/-1;margin:0;font-size:.7rem;color:var(--clay)}
+#tab-map .map-jump-msg-v96:empty{display:none}
+#tab-map .map-filter-title-v96{font-size:.76rem;font-weight:700;margin:0 0 8px;color:var(--ink-2)}
+#tab-map .map-filter-strip-v96{gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:0 0 9px;white-space:nowrap;overscroll-behavior-inline:contain}
+#tab-map .map-filter-strip-v96::-webkit-scrollbar{display:none}
+#tab-map .map-filter-strip-v96 .mapfilt{flex:0 0 auto;min-height:36px;padding:7px 12px;border-radius:12px}
+#tab-map .map-options-v96{border:1px solid var(--line);border-radius:13px;margin:5px 0 16px;background:var(--surface);padding:10px 12px}
+#tab-map .map-options-v96>summary{cursor:pointer;font-size:.76rem;font-weight:600;color:var(--ink-2)}
+#tab-map .map-expand-actions-v96{gap:8px;margin:12px 0}
+#tab-map .map-expand-actions-v96 button{flex:1 1 120px}
+#tab-map .map-options-v96 .map-legend-v64{margin:8px 0 0;padding:2px 0 0;flex-wrap:wrap;overflow:visible}
+#tab-map .map-juz-heading-v96{font-size:.89rem;color:var(--ink);font-weight:700;margin:17px 0 12px}
+@media(max-width:390px){#tab-map .map-jump-v96{grid-template-columns:1fr;gap:5px}#tab-map .map-jump-v96>label,#tab-map #jumpSurah,#tab-map .map-page-jump-v96{grid-column:1;grid-row:auto}#tab-map .map-page-jump-v96{margin-top:8px}#tab-map .map-page-jump-v96 button{padding-inline:18px}}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -903,31 +925,45 @@ window.FIREBASE_CONFIG = {
       <button id="mapInfoBtn" title="شرح ومفتاح الألوان" style="position:absolute;top:16px;left:16px;width:32px;height:32px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--clay);font-weight:800;cursor:pointer;font-size:1rem;z-index:2">ⓘ</button>
       <div class="section-eyebrow">٦٠٤ أوجه · مصحف المدينة</div>
       <h2 style="margin:0"><span class="em">✦</span> خريطة الطريق</h2>
-      <div class="map-controls" style="margin-top:12px">
-        <select id="jumpSurah"><option value="">↦ اقفزي لسورة…</option></select>
-        <button class="btn btn-ghost btn-sm" id="btnExpandAll">فتح الكل</button>
-        <button class="btn btn-ghost btn-sm" id="btnCollapseAll">طيّ الكل</button>
-      </div>
-      <div class="map-controls" style="margin-bottom:10px">
-        <span style="font-size:.78rem;color:var(--muted);align-self:center">تصفية:</span>
-        <button class="btn btn-ghost btn-sm mapfilt on" data-filter="all">الكل</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="fix">تثبيت</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="partial">جزئي</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="near">قريبة</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="far">بعيدة</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="weak">متفلّت</button>
-        <button class="btn btn-ghost btn-sm mapfilt" data-filter="errors">أخطاء</button>
-      </div>
       <div id="mapCount" class="map-summary-v64">…</div>
-      <div class="map-legend-v64" aria-label="مفتاح الخريطة">
-        <span><i class="lg-fix"></i>تثبيت</span>
-        <span><i class="lg-near"></i>قريبة</span>
-        <span><i class="lg-far"></i>بعيدة</span>
-        <span><i class="lg-solid"></i>متقن</span>
-        <span><i class="lg-weak"></i>متفلّت</span>
-        <span><i class="lg-partial"></i>جزئي</span>
-        <span><i class="lg-error"></i>خطأ نشط</span>
+      <div class="map-jump-v96" aria-label="التنقل في الخريطة">
+        <label for="jumpSurah">الانتقال إلى سورة</label>
+        <select id="jumpSurah"><option value="">اختاري السورة…</option></select>
+        <form id="mapPageJumpV96" class="map-page-jump-v96">
+          <label for="mapPageNumberV96">الانتقال إلى وجه</label>
+          <div><input id="mapPageNumberV96" type="number" min="1" max="604" inputmode="numeric" placeholder="1 – 604" aria-label="رقم الوجه المطلوب"><button type="submit" class="btn btn-ghost btn-sm">انتقال</button></div>
+        </form>
+        <p id="mapJumpMsgV96" class="map-jump-msg-v96" role="status" aria-live="polite"></p>
       </div>
+      <div class="map-filter-wrap-v96">
+        <div class="map-filter-title-v96">عرض الأوجه بحسب الحالة</div>
+        <div class="map-controls map-filter-strip-v96" aria-label="تصفية أوجه المصحف">
+          <button class="btn btn-ghost btn-sm mapfilt on" data-filter="all">الكل</button>
+          <button class="btn btn-ghost btn-sm mapfilt" data-filter="fix">تثبيت</button>
+          <button class="btn btn-ghost btn-sm mapfilt" data-filter="partial">جزئي</button>
+          <button class="btn btn-ghost btn-sm mapfilt" data-filter="near">قريبة</button>
+          <button class="btn btn-ghost btn-sm mapfilt" data-filter="far">بعيدة</button>
+          <button class="btn btn-ghost btn-sm mapfilt" data-filter="weak">متفلّت</button>
+          <button class="btn btn-ghost btn-sm mapfilt" data-filter="errors">أخطاء</button>
+        </div>
+      </div>
+      <details class="map-options-v96">
+        <summary>خيارات عرض الخريطة ومفتاح الألوان</summary>
+        <div class="map-controls map-expand-actions-v96">
+          <button class="btn btn-ghost btn-sm" id="btnExpandAll">فتح الأجزاء كلها</button>
+          <button class="btn btn-ghost btn-sm" id="btnCollapseAll">طيّ الأجزاء كلها</button>
+        </div>
+        <div class="map-legend-v64" aria-label="مفتاح الخريطة">
+          <span><i class="lg-fix"></i>تثبيت</span>
+          <span><i class="lg-near"></i>قريبة</span>
+          <span><i class="lg-far"></i>بعيدة</span>
+          <span><i class="lg-solid"></i>متقن</span>
+          <span><i class="lg-weak"></i>متفلّت</span>
+          <span><i class="lg-partial"></i>جزئي</span>
+          <span><i class="lg-error"></i>خطأ نشط</span>
+        </div>
+      </details>
+      <h3 class="map-juz-heading-v96">الأجزاء الثلاثون</h3>
       <div id="juzList"></div>
       <button class="btn btn-ghost btn-sm" id="btnOpenErrors" style="width:100%;margin-top:14px">سجلّ الأخطاء</button>
     </div>
@@ -3233,9 +3269,35 @@ document.querySelectorAll('.mapfilt').forEach(b=>b.addEventListener('click',()=>
   renderMap();
 }));
 document.getElementById('btnCollapseAll').addEventListener('click',()=>{openJuz.clear();renderMap();});
+function jumpMapToPageV96(pg){
+  const status=document.getElementById('mapJumpMsgV96');
+  if(!Number.isInteger(pg)||pg<1||pg>604){
+    if(status)status.textContent='أدخلي رقم وجه صحيحًا بين 1 و604.';
+    return;
+  }
+  if(status)status.textContent='';
+  // أظهري الوجه المختار حتى لو كانت التصفية السابقة تخفيه.
+  if(mapFilter!=='all'){
+    mapFilter='all';
+    document.querySelectorAll('.mapfilt').forEach(btn=>btn.classList.toggle('on',btn.dataset.filter==='all'));
+  }
+  const j=juzOfPage(pg)-1;
+  openJuz.add(j);
+  renderMap();
+  const target=()=>document.querySelector('#jp-'+j+' .pg[data-page="'+pg+'"]');
+  // لا نحدد موضعًا تقريبيًا؛ ننتظر بناء أوجه الجزء بالفعل.
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const el=target();
+    if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.focus({preventScroll:true});}
+    else if(status)status.textContent='تعذّر عرض هذا الوجه في الخريطة.';
+  }));
+}
 document.getElementById('jumpSurah').addEventListener('change',e=>{
-  const pg=+e.target.value;if(!pg)return;const j=juzOfPage(pg)-1;openJuz.add(j);renderMap();
-  setTimeout(()=>{const el=document.querySelector(`#jp-${j} .pg[data-page="${pg}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},100);
+  const pg=Number(e.target.value);if(pg)jumpMapToPageV96(pg);
+});
+document.getElementById('mapPageJumpV96').addEventListener('submit',e=>{
+  e.preventDefault();
+  jumpMapToPageV96(Number(document.getElementById('mapPageNumberV96').value));
 });
 let curPage=null;let curPageSurah=null;
 function pageErrors(p){const s=surahOfPage(p);return S.errors.filter(e=>e.page===p||(e.surahId&&s&&e.surahId===s[0]&&!e.page));}
