@@ -669,6 +669,30 @@ main{padding-top:0!important}
 #tab-map .map-options-v96 .map-legend-v64{margin:8px 0 0;padding:2px 0 0;flex-wrap:wrap;overflow:visible}
 #tab-map .map-juz-heading-v96{font-size:.89rem;color:var(--ink);font-weight:700;margin:17px 0 12px}
 @media(max-width:390px){#tab-map .map-jump-v96{grid-template-columns:1fr;gap:5px}#tab-map .map-jump-v96>label,#tab-map #jumpSurah,#tab-map .map-page-jump-v96{grid-column:1;grid-row:auto}#tab-map .map-page-jump-v96{margin-top:8px}#tab-map .map-page-jump-v96 button{padding-inline:18px}}
+/* v97 · ملف الوجه: قراءة سريعة أولًا، ثم تفاصيل اختيارية */
+#pageModal .pm-layout-v97{padding:25px 17px 19px;max-width:min(100%,480px)}
+#pageModal .pm-layout-v97 h3{margin-bottom:2px}
+#pageModal .pm-layout-v97 .msub{margin-bottom:12px}
+#pageModal .pm-summary-v97{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:12px;margin-bottom:10px}
+#pageModal .pm-summary-v97 #pmStateInfo,#pageModal .pm-summary-v97 #pmReviewInfo{margin:0!important}
+#pageModal .pm-summary-v97 #pmStateInfo{padding:0 0 8px}
+#pageModal .pm-summary-v97 #pmReviewInfo>div{padding:10px 11px!important;border-radius:10px!important;background:var(--parch-2)!important;line-height:1.65}
+#pageModal #pmQuickV97{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+#pageModal #pmQuickV97 span{background:var(--parch-2);border-radius:9px;padding:6px 9px;font-size:.71rem;color:var(--ink-2)}
+#pageModal .pm-actions-primary-v97{margin:11px 0 14px;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+#pageModal .pm-actions-primary-v97 .btn{min-height:44px;white-space:normal}
+#pageModal .pm-details-v97{border:1px solid var(--line);background:var(--surface);border-radius:13px;margin:8px 0;overflow:hidden}
+#pageModal .pm-details-v97>summary{list-style:none;cursor:pointer;padding:13px 14px;font-weight:700;font-size:.82rem;display:flex;align-items:center;justify-content:space-between;min-height:44px}
+#pageModal .pm-details-v97>summary::-webkit-details-marker{display:none}
+#pageModal .pm-details-v97>summary::after{content:'⌄';font-size:1.05rem;color:var(--muted);transform:rotate(0);transition:transform .15s}
+#pageModal .pm-details-v97[open]>summary::after{transform:rotate(180deg)}
+#pageModal .pm-details-v97>div{margin:0 12px 11px!important;min-width:0}
+#pageModal .pm-details-v97 #pmFaceRecord>section{border:0!important;padding:3px!important}
+#pageModal .pm-details-v97 #pmLearningInfo{margin-top:10px!important}
+#pageModal .pm-details-v97 #pmErrors .msub{font-size:.77rem}
+#pageModal .pm-add-error-v97{margin:0 12px 12px;width:calc(100% - 24px);min-height:41px}
+#pageModal .pm-verse-list{max-height:300px;overflow-y:auto}
+@media(max-width:390px){#pageModal .pm-layout-v97{padding:22px 12px 16px}#pageModal .pm-actions-primary-v97 .btn{font-size:.76rem;padding-inline:6px}}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1137,20 +1161,36 @@ window.FIREBASE_CONFIG = {
 </nav>
 
 <!-- نوافذ -->
-<div class="modal-bg" id="pageModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('pageModal').classList.remove('open')" aria-label="إغلاق">✕</button>
+<div class="modal-bg" id="pageModal"><div class="modal pm-layout-v97" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+  <button class="modal-x" onclick="document.getElementById('pageModal').classList.remove('open')" aria-label="إغلاق">✕</button>
   <h3 id="pmTitle">الوجه</h3><p class="msub" id="pmSub"></p>
-  <div id="pmFaceRecord" style="margin-bottom:12px"></div>
-  <div id="pmReviewInfo" style="margin-bottom:12px"></div>
-  <div id="pmStateInfo" style="margin-bottom:12px"></div>
-  <div id="pmMastery" style="margin-bottom:12px"></div>
-  <div id="pmLearningInfo" style="margin-bottom:12px"></div>
-  <div id="pmVerseInfo" style="margin-bottom:12px"></div>
-  <div id="pmErrors" style="margin-top:6px"></div>
-  <div class="pm-actions-v63">
+  <section class="pm-summary-v97" aria-label="حالة الوجه والمراجعة">
+    <div id="pmStateInfo"></div>
+    <div id="pmReviewInfo"></div>
+    <div id="pmQuickV97" aria-live="polite"></div>
+  </section>
+  <div class="pm-actions-v63 pm-actions-primary-v97">
     <button class="btn btn-primary btn-sm" id="pmStartReview">ابدئي المراجعة</button>
     <button class="btn btn-ghost btn-sm" id="pmOpenMushaf">فتح في المصحف</button>
   </div>
-  <button class="btn btn-gold btn-sm" id="pmAddErr" style="width:100%;margin-top:8px">+ تسجيل خطأ في هذا الوجه</button>
+  <details class="pm-details-v97" id="pmMasteryDetailsV97">
+    <summary>تقييم ضبط الوجه</summary>
+    <div id="pmMastery"></div>
+  </details>
+  <details class="pm-details-v97" id="pmErrorsDetailsV97">
+    <summary id="pmErrorsSummaryV97">الأخطاء المسجلة</summary>
+    <div id="pmErrors"></div>
+    <button class="btn btn-ghost btn-sm pm-add-error-v97" id="pmAddErr">تسجيل خطأ في الوجه</button>
+  </details>
+  <details class="pm-details-v97" id="pmVerseDetailsV97">
+    <summary>آيات الوجه</summary>
+    <div id="pmVerseInfo"></div>
+  </details>
+  <details class="pm-details-v97" id="pmHistoryDetailsV97">
+    <summary>سجل الحفظ والمراجعة</summary>
+    <div id="pmFaceRecord"></div>
+    <div id="pmLearningInfo"></div>
+  </details>
 </div></div>
 
 <div class="modal-bg" id="rangeModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('rangeModal').classList.remove('open')" aria-label="إغلاق">✕</button>
@@ -3320,6 +3360,9 @@ function renderPageErrors(p){
     const e=S.errors[+b.dataset.arch];if(!e)return;
     e.archived=true;e.archivedDate=todayKey();save();
     renderPageErrors(p);
+    const remaining=(S.errors||[]).filter(item=>item.page===p&&!item.archived&&(curPageSurah==null||item.surahId===curPageSurah||item.surahId==null)).length;
+    const summary=document.getElementById('pmErrorsSummaryV97');if(summary)summary.textContent='الأخطاء المسجلة'+(remaining?' · '+toAr(remaining)+' نشطة':'');
+    const counter=document.querySelector('#pmQuickV97 span:last-child b');if(counter)counter.textContent=toAr(remaining);
     renderPageMasteryV116(p);
     refreshV50();
     // بعد زوال الأخطاء قد يصبح الوجه مؤهّلًا للترقية عند المراجعة القادمة
@@ -3417,7 +3460,10 @@ function renderPageMasteryV116(page){
     S.pageMastery=S.pageMastery||{};
     if(level==='clear')delete S.pageMastery[page];
     else if(MASTERY_LEVELS_V116[level]){S.pageMastery[page]={level,date:todayKey(),updatedAt:Date.now(),source:'manual'};applyManualMasteryScheduleV117(page,level);}
-    save();renderUnifiedFaceRecordV121(page);renderPageMasteryV116(page);renderMap();refreshV50();
+    save();renderUnifiedFaceRecordV121(page);renderPageMasteryV116(page);
+    const quick=document.getElementById('pmQuickV97');
+    if(quick){const current=masteryOfPageV116(page),tag=quick.querySelector('span:first-child b');if(tag)tag.textContent=current?MASTERY_LEVELS_V116[current.level]:'غير مقيّم';}
+    renderMap();refreshV50();
   }));
 }
 function faceMasteryTimelineV131(page){
@@ -3477,6 +3523,14 @@ function openPage(p,surahId){
   document.getElementById('pmTitle').textContent='الوجه '+toAr(p);
   document.getElementById('pmSub').textContent='سورة '+s[1]+' · الجزء '+toAr(juzOfPage(p));
   const m=mapPageMetaV62(p,surahId),eng=m.engine,ri=document.getElementById('pmReviewInfo');
+  // الملخص ومؤشرات الاستحقاق ثابتة في المقدمة؛ التفاصيل تبقى قابلة للفتح عند الحاجة.
+  const activeErrors=(S.errors||[]).filter(e=>e.page===p&&!e.archived&&(curPageSurah==null||e.surahId===curPageSurah||e.surahId==null)).length;
+  const manualMastery=masteryOfPageV116(p);
+  document.getElementById('pmQuickV97').innerHTML='<span>الضبط: <b>'+esc(manualMastery?MASTERY_LEVELS_V116[manualMastery.level]:'غير مقيّم')+'</b></span>'+
+    '<span>الأخطاء النشطة: <b>'+toAr(activeErrors)+'</b></span>';
+  document.getElementById('pmErrorsSummaryV97').textContent='الأخطاء المسجلة'+(activeErrors?' · '+toAr(activeErrors)+' نشطة':'');
+  document.getElementById('pmErrorsDetailsV97').open=activeErrors>0;
+  for(const id of ['pmMasteryDetailsV97','pmVerseDetailsV97','pmHistoryDetailsV97'])document.getElementById(id).open=false;
   if(!m.memorized){
     ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem;color:var(--muted)">لم يُثبت حفظ هذا الوجه بعد.</div>';
   }else if(eng.phase==='fix'){
