@@ -4,7 +4,10 @@
 const KEY='durr-alfareed-v2';
 const css=document.createElement('style');
 css.textContent=`
-.mini-top:has(.dq-trigger){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:2px;min-height:0;padding-top:calc(env(safe-area-inset-top) + 4px);padding-bottom:4px}.mini-top:has(.dq-trigger) .dq-trigger{grid-column:1/-1;justify-self:start;position:static;margin:0;z-index:auto;background:var(--ink,#5E3A4D);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:100px;padding:4px 12px;font:600 11px "IBM Plex Sans Arabic",sans-serif;box-shadow:none;min-height:28px;line-height:1.2}.mini-top:has(.dq-trigger) #mtJuz{grid-column:1;grid-row:2}.mini-top:has(.dq-trigger) .s{grid-column:2;grid-row:2}@media(max-width:390px){.mini-top:has(.dq-trigger){padding-inline:13px}.mini-top:has(.dq-trigger) .dq-trigger{padding:3px 9px;font-size:10px}}
+.dq-trigger{position:absolute;top:var(--reader-safe-top,env(safe-area-inset-top));left:max(8px,calc((100% - 760px)/2 + 8px));width:44px;height:44px;display:grid;place-items:center;z-index:36;border:0;border-radius:12px;background:transparent;color:var(--ink-2,#5E3A4D);padding:0;font:700 25px "IBM Plex Sans Arabic",sans-serif;box-shadow:none;cursor:pointer;line-height:1}
+.dq-trigger:focus-visible{outline:2px solid var(--accent,#A8546B);outline-offset:2px}
+@media(max-width:390px){.dq-trigger{left:7px}}
+
 .dq-overlay{position:fixed;inset:0;background:#160c1585;z-index:10000;display:none;align-items:flex-end;justify-content:center}
 .dq-overlay.open{display:flex}
 .dq-sheet{width:min(100%,460px);background:var(--parch,#F4E1D2);color:var(--text,#3E2A35);border-radius:24px 24px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -12px 30px #0002;max-height:85dvh;overflow:auto;font:14px "IBM Plex Sans Arabic",sans-serif}
@@ -22,7 +25,7 @@ body.reciting .dq-trigger{visibility:hidden;pointer-events:none}
 @media(min-width:700px){.dq-overlay{align-items:center}.dq-sheet{border-radius:22px}}
 
 `;document.head.appendChild(css);
-const trigger=document.createElement('button');trigger.className='dq-trigger';trigger.type='button';trigger.textContent='✓ إنجاز';trigger.setAttribute('aria-label','تسجيل إنجاز هذا الوجه يدويًا');
+const trigger=document.createElement('button');trigger.className='dq-trigger';trigger.type='button';trigger.textContent='✓';trigger.title='تسجيل إنجاز الوجه';trigger.setAttribute('aria-label','تسجيل إنجاز هذا الوجه يدويًا');
 const overlay=document.createElement('div');overlay.className='dq-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','تسجيل الإنجاز');
 overlay.innerHTML=`<div class="dq-sheet"><div class="dq-head"><strong id="dqTitle">تسجيل الإنجاز</strong><button type="button" class="dq-close" aria-label="إغلاق">×</button></div>
 <form id="dqForm"><div class="dq-field"><label>نوع الإنجاز</label><div class="dq-options">
@@ -39,7 +42,7 @@ overlay.innerHTML=`<div class="dq-sheet"><div class="dq-head"><strong id="dqTitl
 </div></div>
 <p class="dq-hint">تسجيل وجه كامل أو نطاق أوجه. التسجيل الجزئي بالآيات سيضاف بعد التحقق من ربط الآيات. التسجيل اليدوي لا يُعد نتيجة تسميع آلي ولا ينشئ أخطاء غير موثقة.</p>
 <button class="dq-save" type="submit">حفظ إنجاز الوجه</button></form></div>`;
-const top=document.querySelector('.mini-top');if(top)top.insertBefore(trigger,top.firstChild);else document.body.appendChild(trigger);document.body.appendChild(overlay);
+const screen=document.getElementById('screen');if(screen)screen.insertBefore(trigger,screen.firstChild);else document.body.appendChild(trigger);document.body.appendChild(overlay);
 const close=()=>overlay.classList.remove('open');
 const rangeEl=overlay.querySelector('#dqRange');
 overlay.querySelectorAll('input[name="scope"]').forEach(x=>x.addEventListener('change',()=>{rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range'}));
@@ -87,7 +90,7 @@ overlay.querySelector('#dqForm').addEventListener('submit',function(e){
   localStorage.setItem(KEY,JSON.stringify(state));
   localStorage.setItem('durr-quick-pending-sync',event.id);
   close();
-  const old=trigger.textContent;trigger.textContent='✓ سُجّل الإنجاز';
+  const old=trigger.textContent;trigger.textContent='✓';trigger.setAttribute('aria-label','سُجّل إنجاز الوجه');
   setTimeout(()=>trigger.textContent=old,2200);
  }catch(err){alert('تعذّر تسجيل الإنجاز: '+err.message)}
 });
