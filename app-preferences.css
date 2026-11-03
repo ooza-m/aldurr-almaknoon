@@ -50,3 +50,7 @@ body.reciting .reader-scrubber{display:none}
 :root[data-theme=dark] .qw.rec-corrected{color:#bfdba6!important}
 :root[data-theme=dark] .chrome-top,:root[data-theme=dark] .chrome-bot{background:var(--page)!important}
 :root[data-theme=dark] :is(.cal-cell.other,.month-other){opacity:.6}
+
+/* v91 · لون ورق المصحف سادة بدون تدرج وردي؛ بقية شاشات التطبيق تحتفظ بثيمها */
+body.app-standalone{background:var(--page,#FBF6F1)!important;background-image:none!important}
+body.app-standalone .screen,body.app-standalone .track,body.app-standalone .pane{background-color:var(--page,#FBF6F1)!important;background-image:none!important}
