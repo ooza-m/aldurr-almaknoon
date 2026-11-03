@@ -3152,8 +3152,8 @@ function fillJuzPages(j){
       const mastery=masteryOfPageV116(p);
       const cls='pg'+phaseClass+(m.partial?' partial':'')+(hasErr?' has-err':'');
       let bg='background:'+m.color+';';
-      if(phase==='fix')bg='background:linear-gradient(180deg,#F8EDD0,#E7C878);';
-      else if(phase==='near')bg='background:linear-gradient(180deg,#F5E7B8,#D7B45B);';
+      if(phase==='fix')bg='background:#F0DC9F;';
+      else if(phase==='near')bg='background:#E5C87B;';
       else if(m.partial)bg='background:var(--parch-2);';
       const phaseMark=phase==='fix'?'<i class="phase-mark fix">'+toAr(m.engine.day)+'</i>':
         phase==='near'?'<i class="phase-mark near"></i>':
