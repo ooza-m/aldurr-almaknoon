@@ -740,6 +740,18 @@ main{padding-top:0!important}
 .v102-loc-row .btn{flex-shrink:0}
 .v102-comparison{font-size:.68rem;color:var(--muted);line-height:1.7;margin:5px 0 0}
 .v102-inner>.hint{font-size:.7rem;line-height:1.7}
+/* v103 · تحليلات الأخطاء في شاشة واحدة ذات أقسام واضحة */
+#tab-errors .v103-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--parch-2);border-radius:14px;padding:4px;margin:6px 0 12px}
+#tab-errors .v103-tabs button{border:0;border-radius:11px;padding:10px 2px;min-width:0;font:600 .75rem inherit;white-space:nowrap;background:transparent;color:var(--muted);cursor:pointer}
+#tab-errors .v103-tabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(40,27,37,.09)}
+#tab-errors .v103-panel[hidden]{display:none!important}
+#tab-errors .v103-panel{min-width:0}
+#tab-errors .v103-tarteel-tools{margin-top:16px;border:1px solid var(--line);border-radius:13px;background:var(--surface);overflow:hidden}
+#tab-errors .v103-tarteel-tools>summary{padding:12px 13px;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--ink-2)}
+#tab-errors .v103-tarteel-body{padding:0 13px 13px}
+#tab-errors .v103-advanced-v103{border-top:1px solid var(--line);padding-top:8px;margin-top:10px}
+#tab-errors .v103-advanced-v103>details>summary{font-size:.78rem}
+@media(max-width:380px){#tab-errors .v103-tabs button{font-size:.7rem;padding:9px 1px}}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -858,7 +870,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
-       <div id="smartReview"></div><div id="weeklyAchievementV136" class="v50-glass v50-card" style="margin:12px 0"></div><div id="longTermProgressV139" class="v50-glass v50-card" style="margin:12px 0"></div><div id="detailedMemorizationV140" class="v50-glass v50-card" style="margin:12px 0"></div><div id="verseErrorAnalysisV141" class="v50-glass v50-card" style="margin:12px 0"></div><div id="focusedVerseReviewsV143" class="v50-glass v50-card" style="margin:12px 0"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
+       <div id="smartReview"></div><div id="weeklyAchievementV136" class="v50-glass v50-card" style="margin:12px 0"></div><div id="longTermProgressV139" class="v50-glass v50-card" style="margin:12px 0"></div><div id="detailedMemorizationV140" class="v50-glass v50-card" style="margin:12px 0"></div><div class="v50-glass v50-card" style="margin:12px 0;padding:13px"><b>تحليل مواضع الأخطاء</b><p class="hint">التحليل التفصيلي للسور والأوجه والآيات في سجل الأخطاء.</p><button type="button" class="btn btn-ghost btn-sm" data-v50-route="errors">فتح تحليل الأخطاء</button></div><div id="focusedVerseReviewsV143" class="v50-glass v50-card" style="margin:12px 0"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
       <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
@@ -1156,18 +1168,35 @@ window.FIREBASE_CONFIG = {
       <h2><span class="em">✦</span> سجلّ الأخطاء</h2>
       <p class="hint">كلّ خطأ مرتبطٌ بموضعه في المصحف (سورة/صفحة/آية) وبتاريخه. المواضع التي تتكرّر تُبرَز تلقائيًا لتركّزي عليها في المراجعة.</p>
       <button class="btn btn-primary btn-sm" id="btnAddErr2" style="margin-bottom:16px">+ تسجيل خطأ جديد</button>
-      <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px">
-        <b>استيراد أخطاء ترتيل</b>
-        <p class="hint">استخرجي ملف durr_tarteel_import.json من الحزمة ZIP، ثم ارفعيه هنا للمعاينة. لا تُعتمد نتائج ترتيل الآلية كأخطاء مؤكدة.</p>
-        <input type="file" id="tarteelFile" accept=".json,.csv,application/json,text/csv" style="max-width:100%;font-size:.8rem">
-        <div id="tarteelPreview" style="margin-top:10px"></div>
-        <button type="button" class="btn btn-ghost btn-sm" id="tarteelHistoryOpen" style="margin-top:9px">عرض السجل التاريخي المحفوظ</button>
-        <div id="tarteelHistoryPanel" style="margin-top:10px"></div>
-      </div>
-      <div id="errorTrendsV101" class="v101-error-trends"></div>
-      <div id="errorLocationsV102" class="v102-error-locations"></div>
-      <div id="errHot"></div>
-      <div id="errList"></div>
+      <nav class="v103-tabs" aria-label="أقسام سجل الأخطاء">
+        <button type="button" class="on" data-error-view-v103="overview" aria-pressed="true">الملخص</button>
+        <button type="button" data-error-view-v103="records" aria-pressed="false">السجل</button>
+        <button type="button" data-error-view-v103="time" aria-pressed="false">الزمن</button>
+        <button type="button" data-error-view-v103="locations" aria-pressed="false">المواضع</button>
+      </nav>
+      <section class="v103-panel" data-error-panel-v103="overview" aria-label="ملخص الأخطاء">
+        <div id="errHot"></div>
+      </section>
+      <section class="v103-panel" data-error-panel-v103="records" hidden aria-label="سجلات الأخطاء">
+        <div id="errList"></div>
+      </section>
+      <section class="v103-panel" data-error-panel-v103="time" hidden aria-label="التحليل الزمني">
+        <div id="errorTrendsV101" class="v101-error-trends"></div>
+      </section>
+      <section class="v103-panel" data-error-panel-v103="locations" hidden aria-label="تحليل مواضع الأخطاء">
+        <div id="errorLocationsV102" class="v102-error-locations"></div>
+        <div id="verseErrorAnalysisV141" class="v103-advanced-v103"></div>
+      </section>
+      <details class="v103-tarteel-tools">
+        <summary>استيراد بيانات ترتيل وسجله المستقل</summary>
+        <div class="v103-tarteel-body">
+          <p class="hint">استخرجي ملف durr_tarteel_import.json من الحزمة ZIP ثم ارفعيه هنا للمعاينة. نتائج ترتيل الآلية لا تُعتمد أخطاء مؤكدة.</p>
+          <input type="file" id="tarteelFile" accept=".json,.csv,application/json,text/csv" style="max-width:100%;font-size:.8rem">
+          <div id="tarteelPreview" style="margin-top:10px"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="tarteelHistoryOpen" style="margin-top:9px">عرض السجل التاريخي المحفوظ</button>
+          <div id="tarteelHistoryPanel" style="margin-top:10px"></div>
+        </div>
+      </details>
     </div>
   </section>
 
@@ -2572,7 +2601,7 @@ function renderDailyPageQueueV122(){
 }
 function renderTodayV50(){
   mergeFocusedMushafActionsV146();
-  renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderDetailedMemorizationV140();renderVerseErrorAnalysisV141();renderFocusedVerseReviewsV143();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
+  renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderDetailedMemorizationV140();renderFocusedVerseReviewsV143();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
@@ -4326,10 +4355,27 @@ function renderErrorLocationsV102(){
   const page=Number(button.dataset.v102Page);if(Number.isInteger(page)&&page>=1&&page<=604)openPage(page);
  }));
 }
+/* v103: واجهة موحدة لتحليلات سجل الأخطاء دون تغيير مصادر البيانات */
+let activeErrorViewV103='overview';
+function switchErrorViewV103(view){
+ const valid=['overview','records','time','locations'];
+ activeErrorViewV103=valid.includes(view)?view:'overview';
+ document.querySelectorAll('#tab-errors [data-error-view-v103]').forEach(button=>{
+  const active=button.dataset.errorViewV103===activeErrorViewV103;
+  button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));
+ });
+ document.querySelectorAll('#tab-errors [data-error-panel-v103]').forEach(panel=>{
+  panel.hidden=panel.dataset.errorPanelV103!==activeErrorViewV103;
+ });
+}
+document.querySelectorAll('#tab-errors [data-error-view-v103]').forEach(button=>
+ button.addEventListener('click',()=>switchErrorViewV103(button.dataset.errorViewV103)));
 function renderErrors(){
   const hot=document.getElementById('errHot'),list=document.getElementById('errList'),all=S.errors||[],queue=S.aiReviewQueue||[],pending=queue.filter(q=>q&&q.status==='pending');
   renderErrorTrendsV101();
   renderErrorLocationsV102();
+  renderVerseErrorAnalysisV141();
+  switchErrorViewV103(activeErrorViewV103);
   if(!all.length&&!pending.length){hot.innerHTML='';list.innerHTML='<div class="empty"><span class="em">✎</span>لا أخطاء أو مواضع معلّقة للمراجعة.</div>';return;}
   const active=all.filter(e=>!e.archived),archived=all.filter(e=>e.archived);
   const keyOfErr=e=>e.verseKey||(e.surahId&&e.ayah?(e.surahId+':'+e.ayah):e.page?('p:'+e.page+'|'+(e.surahId||'')):('s:'+e.surah));
