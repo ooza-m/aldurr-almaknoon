@@ -708,6 +708,25 @@ main{padding-top:0!important}
 .v100-error-groups{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
 .v100-error-groups>span{font-size:.72rem;color:var(--ink-2);background:var(--parch-2);border:1px solid var(--line);padding:6px 9px;border-radius:999px}
 .v100-error-groups b{color:var(--ink)}
+/* v101 · تحليل زمني مختصر داخل سجل الأخطاء */
+.v101-error-trends{margin:12px 0}
+.v101-error-trends>details{border:1px solid var(--line);border-radius:15px;background:var(--surface);overflow:hidden}
+.v101-error-trends>details>summary{cursor:pointer;padding:13px 15px;font-weight:700;font-size:.84rem}
+.v101-trend-inside{padding:0 13px 13px}
+.v101-trend-inside>label{font-size:.76rem;color:var(--muted);font-weight:600}
+.v101-trend-inside select{padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--parch);color:var(--ink);font:inherit;font-size:.8rem;margin-inline-start:7px}
+.v101-trend-totals{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.v101-trend-totals span{padding:8px 11px;background:var(--parch-2);border-radius:10px;font-size:.75rem}
+.v101-bars{display:flex;align-items:flex-end;gap:5px;min-height:130px;margin:9px 0 14px;direction:rtl}
+.v101-bar-item{flex:1;min-width:0;display:flex;align-items:center;flex-direction:column;gap:4px;font-variant-numeric:tabular-nums}
+.v101-bar-item b{font-size:.7rem}
+.v101-bar-item small{font-size:.63rem;color:var(--muted);white-space:nowrap}
+.v101-bar-track{height:85px;width:min(28px,84%);border-radius:6px;background:var(--parch-2);display:flex;align-items:flex-end;overflow:hidden}
+.v101-bar-track i{width:100%;display:block;min-height:0;background:var(--purple);border-radius:6px 6px 0 0}
+.v101-groups{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.v101-groups span{font-size:.72rem;padding:6px 9px;border-radius:999px;border:1px solid var(--line);background:var(--parch-2)}
+.v101-trend-inside>.hint{font-size:.7rem;line-height:1.75}
+@media(max-width:380px){.v101-bars{gap:3px}.v101-bar-item small{font-size:.55rem}}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1132,6 +1151,7 @@ window.FIREBASE_CONFIG = {
         <button type="button" class="btn btn-ghost btn-sm" id="tarteelHistoryOpen" style="margin-top:9px">عرض السجل التاريخي المحفوظ</button>
         <div id="tarteelHistoryPanel" style="margin-top:10px"></div>
       </div>
+      <div id="errorTrendsV101" class="v101-error-trends"></div>
       <div id="errHot"></div>
       <div id="errList"></div>
     </div>
@@ -4165,8 +4185,62 @@ document.getElementById('erSave').addEventListener('click',()=>{
 });
 function smartReviewLabelV76(t){return({possible_omission:'سقوط محتمل',possible_substitution:'استبدال محتمل',possible_repetition:'تكرار محتمل',possible_extra_word:'زيادة محتملة',mutashabih_jump:'انتقال إلى متشابه محتمل'})[t]||'موضع يحتاج تحقق';}
 function openSmartRecallV76(q){if(!q||!q.page||!q.verseKey)return;const url='mushaf.html?v=89&p='+encodeURIComponent(q.page)+'&mode=recall&task=ai-review&ayah='+encodeURIComponent(q.verseKey)+'&rid='+encodeURIComponent(q.id)+'&app=1';window.location.assign(url);}
+/* v101 · السجل الزمني للأخطاء المسجلة، دون استنتاج جودة الحفظ من الأرشفة */
+function errorTimeBucketsV101(mode='week'){
+  const now=todayKey(),periods=mode==='month'?6:8,items=[];
+  for(let i=periods-1;i>=0;i--){
+    let start,end,label;
+    if(mode==='month'){
+      const d=parseKey(now);d.setDate(1);d.setMonth(d.getMonth()-i);
+      start=keyOf(d);const next=new Date(d);next.setMonth(next.getMonth()+1);end=addDaysKeyV62(keyOf(next),-1);
+      label=start.slice(0,7);
+    }else{
+      const d=parseKey(now);d.setDate(d.getDate()-((d.getDay()+6)%7)-7*i);
+      start=keyOf(d);end=addDaysKeyV62(start,6);label=start.slice(5);
+    }
+    items.push({start,end,label,recorded:0,archived:0,groups:new Map()});
+  }
+  const isDate=v=>/^\\d{4}-\\d{2}-\\d{2}$/.test(String(v||''))&&!Number.isNaN(parseKey(v).getTime())&&keyOf(parseKey(v))===v;
+  let missingDate=0,missingArchiveDate=0;
+  for(const e of S.errors||[]){
+    if(!e||e.aiDetected===true)continue;
+    if(!isDate(e.date)){missingDate++;}else{
+      const bucket=items.find(b=>e.date>=b.start&&e.date<=b.end);
+      if(bucket){bucket.recorded++;const group=errorGroupV100(e);bucket.groups.set(group,(bucket.groups.get(group)||0)+1);}
+    }
+    if(e.archived){
+      if(!isDate(e.archivedDate))missingArchiveDate++;
+      else{const bucket=items.find(b=>e.archivedDate>=b.start&&e.archivedDate<=b.end);if(bucket)bucket.archived++;}
+    }
+  }
+  return{items,missingDate,missingArchiveDate,mode};
+}
+function renderErrorTrendsV101(){
+ const host=document.getElementById('errorTrendsV101');if(!host)return;
+ const selected=host.querySelector('#errorTrendsModeV101')?.value||'week';
+ const view=errorTimeBucketsV101(selected),max=Math.max(1,...view.items.map(x=>x.recorded));
+ const total=view.items.reduce((n,x)=>n+x.recorded,0),archived=view.items.reduce((n,x)=>n+x.archived,0);
+ const groups=new Map();
+ view.items.forEach(item=>item.groups.forEach((n,key)=>groups.set(key,(groups.get(key)||0)+n)));
+ host.innerHTML='<details><summary>تطوّر الأخطاء عبر الزمن</summary>'+
+ '<div class="v101-trend-inside"><label for="errorTrendsModeV101">الفترة</label> <select id="errorTrendsModeV101">'+
+ '<option value="week" '+(selected==='week'?'selected':'')+'>آخر 8 أسابيع</option>'+
+ '<option value="month" '+(selected==='month'?'selected':'')+'>آخر 6 أشهر</option></select>'+
+ '<div class="v101-trend-totals"><span>أخطاء سُجّلت <b>'+toAr(total)+'</b></span><span>أُرشفت في الفترة <b>'+toAr(archived)+'</b></span></div>'+
+ '<div class="v101-bars" aria-label="عدد الأخطاء المسجلة بحسب الفترة">'+view.items.map(x=>
+ '<div class="v101-bar-item" title="'+esc(x.start)+' – '+esc(x.end)+' · '+toAr(x.recorded)+' أخطاء">'+
+ '<b>'+toAr(x.recorded)+'</b><div class="v101-bar-track"><i style="height:'+Math.round(x.recorded/max*100)+'%"></i></div><small>'+esc(x.label)+'</small></div>').join('')+'</div>'+
+ '<div class="v101-groups">'+([...groups].sort((a,b)=>b[1]-a[1]).map(([name,n])=>
+ '<span>'+esc(name)+' · <b>'+toAr(n)+'</b></span>').join('')||'<p class="hint">لا أخطاء مؤرخة ضمن الفترة.</p>')+'</div>'+
+ '<p class="hint">الأعمدة تمثل الأخطاء المسجلة بتاريخها، وليس عدد مرات التسميع. الأرشفة حدث منفصل يُحسب بتاريخ أرشفته، ولا تعني وحدها ثبوت إتقان الوجه. إعادة تنشيط الخطأ لا تُنشئ خطأ جديدًا.</p>'+
+ ((view.missingDate||view.missingArchiveDate)?'<p class="hint">سجلات بلا تاريخ صالح: '+toAr(view.missingDate)+' · أرشفة بلا تاريخ محفوظ: '+toAr(view.missingArchiveDate)+'؛ استُبعدت من العدّ الزمني المناسب.</p>':'')+
+ '</div></details>';
+ const mode=host.querySelector('#errorTrendsModeV101');
+ if(mode)mode.addEventListener('change',()=>{const detail=host.querySelector('details');const open=detail?.open;renderErrorTrendsV101();if(open)host.querySelector('details').open=true;});
+}
 function renderErrors(){
   const hot=document.getElementById('errHot'),list=document.getElementById('errList'),all=S.errors||[],queue=S.aiReviewQueue||[],pending=queue.filter(q=>q&&q.status==='pending');
+  renderErrorTrendsV101();
   if(!all.length&&!pending.length){hot.innerHTML='';list.innerHTML='<div class="empty"><span class="em">✎</span>لا أخطاء أو مواضع معلّقة للمراجعة.</div>';return;}
   const active=all.filter(e=>!e.archived),archived=all.filter(e=>e.archived);
   const keyOfErr=e=>e.verseKey||(e.surahId&&e.ayah?(e.surahId+':'+e.ayah):e.page?('p:'+e.page+'|'+(e.surahId||'')):('s:'+e.surah));
