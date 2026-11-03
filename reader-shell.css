@@ -3,7 +3,7 @@
 html,body{margin:0;min-height:0;height:100%;overscroll-behavior:none}
 body.app-standalone{height:var(--app-vh,100dvh);min-height:0;padding:0;overflow:hidden;background:var(--page)}
 body.app-standalone .screen{position:relative!important;inset:auto!important;display:flex;flex-direction:column;flex:0 0 auto;width:100%;height:var(--app-vh,100dvh)!important;min-height:0;max-height:var(--app-vh,100dvh)!important;padding:calc(var(--reader-safe-top) + 44px) 0 var(--reader-safe-bottom);overflow:hidden}
-.mini-top{display:flex;order:1;flex:0 0 25px;min-height:25px;max-width:760px;width:100%;margin:-29px auto 0;padding:2px 20px 1px;align-items:center;justify-content:space-between;box-sizing:border-box;color:var(--muted)}
+.mini-top{display:flex;order:1;flex:0 0 25px;min-height:25px;max-width:760px;width:100%;margin:-41px auto 0;padding:2px 20px 1px;align-items:center;justify-content:space-between;box-sizing:border-box;color:var(--muted)}
 .reader-home{position:absolute;top:var(--reader-safe-top);inset-inline-start:max(8px,calc((100% - 760px)/2 + 8px));z-index:35;min-height:44px;background:var(--page)}
 .chrome-top{position:absolute;inset:var(--reader-safe-top) 0 auto;order:0;height:44px;min-height:44px;max-width:760px;width:100%;margin:0 auto;padding:0 10px;padding-inline-start:56px;background:var(--page);z-index:30;gap:6px}
 .chrome-top .ttl{font-size:.83rem;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
