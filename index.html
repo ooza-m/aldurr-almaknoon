@@ -685,7 +685,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
-       <div id="smartReview"></div><div id="weeklyAchievementV136" class="v50-glass v50-card" style="margin:12px 0"></div><div id="longTermProgressV139" class="v50-glass v50-card" style="margin:12px 0"></div><div id="detailedMemorizationV140" class="v50-glass v50-card" style="margin:12px 0"></div><div id="verseErrorAnalysisV141" class="v50-glass v50-card" style="margin:12px 0"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
+       <div id="smartReview"></div><div id="weeklyAchievementV136" class="v50-glass v50-card" style="margin:12px 0"></div><div id="longTermProgressV139" class="v50-glass v50-card" style="margin:12px 0"></div><div id="detailedMemorizationV140" class="v50-glass v50-card" style="margin:12px 0"></div><div id="verseErrorAnalysisV141" class="v50-glass v50-card" style="margin:12px 0"></div><div id="focusedVerseReviewsV143" class="v50-glass v50-card" style="margin:12px 0"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
       <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
@@ -2101,10 +2101,55 @@ async function drawTarteelVerseHistoryV142(host){
    (repeated.length?repeated.slice(0,25).map(g=>{
     const [sid,ayah]=g.vk.split(':').map(Number),sur=(SURAHS.find(s=>s[0]===sid)||[])[1]||sid;
     const types=[...g.types].sort((a,b)=>b[1].size-a[1].size).slice(0,3).map(([type,set])=>esc(labels[type]||type)+' ('+set.size+' جلسات)').join(' · ');
-    return '<div style="padding:9px 0;border-top:1px solid var(--line)"><b>سورة '+esc(sur)+' · الآية '+ayah+'</b><div class="hint">'+g.sessionIds.size+' جلسات مختلفة · '+types+(g.last?' · آخر ظهور '+esc(g.last):'')+'</div></div>';
+    return '<div style="padding:9px 0;border-top:1px solid var(--line)"><b>سورة '+esc(sur)+' · الآية '+ayah+'</b><div class="hint">'+g.sessionIds.size+' جلسات مختلفة · '+types+(g.last?' · آخر ظهور '+esc(g.last):'')+'</div><button type="button" class="btn btn-ghost btn-sm" data-focused-add-v143="'+esc(g.vk)+'" data-focused-source-v143="tarteel">إضافة إلى المراجعة المركزة</button></div>';
    }).join(''):'<p class="hint">لا توجد آية ظهرت بها ملاحظات في جلستين مختلفتين ضمن الأرشيف الحالي.</p>')+
    '<p class="hint">لا تُدمج هذه الأعداد مع سجل الأخطاء المؤكدة ولا تُستخدم لتغيير درجة الإتقان أو جدول المراجعة.</p>';
  }catch(e){if(target.isConnected)target.textContent='تعذّرت قراءة سجل ترتيل المحلي: '+(e?.message||'خطأ غير معروف');}
+}
+function focusedVerseListV143(){
+ return Array.isArray(S.focusedVerseReviews)?S.focusedVerseReviews:[];
+}
+function addFocusedVerseV143(vk,source,page){
+ const match=/^(\d{1,3}):(\d{1,3})$/.exec(String(vk||''));
+ if(!match||+match[1]<1||+match[1]>114||+match[2]<1)return false;
+ const key=match[1]+':'+match[2],items=focusedVerseListV143();
+ const existing=items.find(x=>x.vk===key);
+ if(existing){
+  if(existing.status==='done'){existing.status='pending';existing.completedAt=null;}
+  if(!existing.page&&Number.isInteger(+page)&&+page>=1&&+page<=604)existing.page=+page;
+  if(source==='tarteel')existing.hasTarteelSource=true;
+  if(source==='manual')existing.hasManualSource=true;
+ }else{
+  items.push({vk:key,status:'pending',addedAt:Date.now(),completedAt:null,page:Number.isInteger(+page)&&+page>=1&&+page<=604?+page:null,hasTarteelSource:source==='tarteel',hasManualSource:source==='manual'});
+ }
+ S.focusedVerseReviews=items;
+ save();return true;
+}
+function changeFocusedVerseV143(vk,action){
+ const items=focusedVerseListV143(),i=items.findIndex(x=>x.vk===vk);
+ if(i<0)return;
+ if(action==='remove')items.splice(i,1);
+ else if(action==='done'){items[i].status='done';items[i].completedAt=Date.now();}
+ else if(action==='reopen'){items[i].status='pending';items[i].completedAt=null;}
+ else return;
+ save();
+}
+function renderFocusedVerseReviewsV143(){
+ const host=document.getElementById('focusedVerseReviewsV143');if(!host)return;
+ const items=focusedVerseListV143(),pending=items.filter(x=>x.status!=='done'),done=items.filter(x=>x.status==='done');
+ const label=x=>{const [sid,ayah]=x.vk.split(':').map(Number);return 'سورة '+((SURAHS.find(s=>s[0]===sid)||[])[1]||sid)+' · الآية '+ayah;};
+ const card=x=>'<div style="border-top:1px solid var(--line);padding:10px 0">'+
+ '<b>'+esc(label(x))+'</b><div class="hint">'+(x.status==='done'?'اعتُمدت مراجعتها يدويًا'+(x.completedAt?' · '+esc(keyOf(new Date(x.completedAt))):''):'بانتظار مراجعة الآية')+
+ ' · '+(x.hasManualSource?'سجل التطبيق':'')+(x.hasManualSource&&x.hasTarteelSource?'، ':'')+(x.hasTarteelSource?'سجل ترتيل التاريخي':'')+'</div>'+
+ '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">'+
+ (x.page?'<button type="button" class="btn btn-ghost btn-sm" data-focused-open-v143="'+esc(x.vk)+'">فتح الآية في المصحف</button>':'<small class="hint">الوجه غير محدد؛ افتحي موضع الآية من فهرس المصحف.</small>')+
+ (x.status==='done'?'<button type="button" class="btn btn-ghost btn-sm" data-focused-action-v143="reopen" data-focused-vk-v143="'+esc(x.vk)+'">إعادة للمراجعة</button>':'<button type="button" class="btn btn-primary btn-sm" data-focused-action-v143="done" data-focused-vk-v143="'+esc(x.vk)+'">اعتماد مراجعة الآية</button>')+
+ '<button type="button" class="btn btn-ghost btn-sm" data-focused-action-v143="remove" data-focused-vk-v143="'+esc(x.vk)+'">إزالة</button></div></div>';
+ host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">قائمة المراجعة المركّزة · '+pending.length+' معلّقة</summary>'+
+ '<p class="hint">اختاري الآيات من تحليل الأخطاء. لا تعتمد مراجعة الآية تلقائيًا عند فتحها، ولا تُحتسب مراجعة وجه كامل ضمن النصاب اليومي.</p>'+
+ (pending.length?pending.map(card).join(''):'<p class="hint">لا توجد آيات معلّقة. أضيفي موضعًا من تحليل الأخطاء.</p>')+
+ (done.length?'<details style="margin-top:10px"><summary>آيات تمت مراجعتها · '+done.length+'</summary>'+done.slice(-30).reverse().map(card).join('')+'</details>':'')+
+ '</details>';
 }
 function renderVerseErrorAnalysisV141(){
  const host=document.getElementById('verseErrorAnalysisV141');if(!host)return;
@@ -2119,6 +2164,7 @@ function renderVerseErrorAnalysisV141(){
   const kind=[...g.types.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,n])=>esc(k)+' ('+n+')').join(' · ');
   return '<div style="border-top:1px solid var(--line);padding:9px 0"><b>سورة '+esc(name)+' · الآية '+g.ayah+'</b>'+
    '<div class="hint">نشط '+g.active+' · مؤرشف '+g.archived+' · '+kind+'</div>'+
+   '<button type="button" class="btn btn-ghost btn-sm" data-focused-add-v143="'+esc(g.key)+'" data-focused-page-v143="'+(g.page||'')+'" data-focused-source-v143="manual">إضافة إلى المراجعة المركزة</button>'+
    (g.page?'<button type="button" class="btn btn-ghost btn-sm" data-open-face-v140="'+g.page+'">فتح ملف الوجه '+g.page+'</button>':'<small class="hint">لم يُحفظ رقم الوجه مع هذا الخطأ؛ لا يُفترض موضع تقريبي.</small>')+'</div>';
  };
  host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">مواضع الأخطاء المتكررة · الآيات والأوجه</summary>'+
@@ -2184,7 +2230,7 @@ function renderDailyPageQueueV122(){
  if(modeInput)modeInput.onchange=()=>{S.reviewWeaknessMode=modeInput.value;save();refreshV50();};
 }
 function renderTodayV50(){
-  renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderDetailedMemorizationV140();renderVerseErrorAnalysisV141();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
+  renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderDetailedMemorizationV140();renderVerseErrorAnalysisV141();renderFocusedVerseReviewsV143();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
   const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
@@ -2236,6 +2282,12 @@ function refreshV50(){try{renderHomeV50();renderTodayV50();const p=document.quer
 
 // تنقّل موحّد للبطاقات الجديدة
 document.addEventListener('click',e=>{
+  const add=e.target.closest('[data-focused-add-v143]');
+  if(add){addFocusedVerseV143(add.dataset.focusedAddV143,add.dataset.focusedSourceV143,+add.dataset.focusedPageV143);renderFocusedVerseReviewsV143();return;}
+  const change=e.target.closest('[data-focused-action-v143]');
+  if(change){changeFocusedVerseV143(change.dataset.focusedVkV143,change.dataset.focusedActionV143);renderFocusedVerseReviewsV143();return;}
+  const openFocused=e.target.closest('[data-focused-open-v143]');
+  if(openFocused){const item=focusedVerseListV143().find(x=>x.vk===openFocused.dataset.focusedOpenV143);if(item?.page)openMushafAtV50(item.page,'read','',item.vk);return;}
   const face=e.target.closest('[data-open-face-v140]');if(face){openPage(+face.dataset.openFaceV140);return;}
   const ss=e.target.closest('[data-v60-session]');if(ss){startTaskSessionV60(ss.dataset.v60Session);return;}
   const rt=e.target.closest('[data-v50-route]');if(rt){switchTab(rt.dataset.v50Route);return;}
