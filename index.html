@@ -693,6 +693,17 @@ main{padding-top:0!important}
 #pageModal .pm-add-error-v97{margin:0 12px 12px;width:calc(100% - 24px);min-height:41px}
 #pageModal .pm-verse-list{max-height:300px;overflow-y:auto}
 @media(max-width:390px){#pageModal .pm-layout-v97{padding:22px 12px 16px}#pageModal .pm-actions-primary-v97 .btn{font-size:.76rem;padding-inline:6px}}
+/* v99 · تسجيل الأخطاء ومراجعة الأرشيف داخل ملف الوجه */
+#errModal #erValidationV98:not([hidden]){display:block;padding:9px 11px;background:var(--clay-soft);color:var(--clay);border-radius:10px;font-size:.77rem}
+#pageModal .pm-error-row-v99{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.76rem}
+#pageModal .pm-error-row-v99>div{flex:1;min-width:0}
+#pageModal .pm-error-row-v99 b,#pageModal .pm-error-row-v99 span{display:block;overflow-wrap:anywhere}
+#pageModal .pm-error-row-v99 span,#pageModal .pm-error-row-v99 small{color:var(--muted);font-size:.7rem}
+#pageModal .pm-error-row-v99 .btn{flex:0 0 auto;font-size:.7rem;padding:7px 9px;min-height:35px}
+#pageModal .pm-error-row-v99 .pm-error-desc-v99{margin:4px 0;font-size:.74rem}
+#pageModal .pm-error-row-v99.archived{opacity:.77}
+#pageModal .pm-archived-v99{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
+#pageModal .pm-archived-v99>summary{font-size:.75rem;color:var(--muted);font-weight:600;cursor:pointer}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -3344,34 +3355,39 @@ document.getElementById('mapPageJumpV96').addEventListener('submit',e=>{
 });
 let curPage=null;let curPageSurah=null;
 function pageErrors(p){const s=surahOfPage(p);return S.errors.filter(e=>e.page===p||(e.surahId&&s&&e.surahId===s[0]&&!e.page));}
-function renderPageErrors(p){
-  const box=document.getElementById('pmErrors');if(!box)return;
-  // إن فُتح الوجه من سورة محدّدة، اعرضي أخطاء تلك السورة فقط (الوجه قد يحوي عدّة سور)
-  const errs=S.errors.filter(e=>e.page===p&&!e.archived&&(curPageSurah==null||e.surahId===curPageSurah||e.surahId==null));
-  if(!errs.length){box.innerHTML=`<p class="msub" style="margin:0">لا أخطاء نشطة في هذا الوجه.</p>`;return;}
-  box.innerHTML=`<div style="font-weight:700;font-size:.85rem;color:var(--clay);margin-bottom:8px">أخطاؤك في هذا الوجه (${toAr(errs.length)})</div>`+
-    errs.map(e=>{const idx=S.errors.indexOf(e);return `<div style="background:var(--clay-soft);border-radius:10px;padding:8px 11px;margin-bottom:6px;font-size:.82rem">
-      <b>${esc(e.surah||'')}${e.ayah?' · آية '+toAr(e.ayah):''}</b> — ${esc(e.type||'')}${e.desc?'<br><span style="color:var(--muted)">'+esc(e.desc)+'</span>':''}
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px">
-        <span style="font-size:.72rem;color:var(--muted)">${e.date?fmtD(e.date).d+' '+fmtD(e.date).m:''}</span>
-        <button class="btn btn-gold btn-sm" data-arch="${idx}" style="padding:3px 10px;font-size:.72rem">✓ تمّ إتقانه</button>
-      </div>
-    </div>`;}).join('');
-  box.querySelectorAll('[data-arch]').forEach(b=>b.addEventListener('click',()=>{
-    const e=S.errors[+b.dataset.arch];if(!e)return;
-    e.archived=true;e.archivedDate=todayKey();save();
-    renderPageErrors(p);
-    const remaining=(S.errors||[]).filter(item=>item.page===p&&!item.archived&&(curPageSurah==null||item.surahId===curPageSurah||item.surahId==null)).length;
-    const summary=document.getElementById('pmErrorsSummaryV97');if(summary)summary.textContent='الأخطاء المسجلة'+(remaining?' · '+toAr(remaining)+' نشطة':'');
-    const counter=document.querySelector('#pmQuickV97 span:last-child b');if(counter)counter.textContent=toAr(remaining);
-    renderPageMasteryV116(p);
-    refreshV50();
-    // بعد زوال الأخطاء قد يصبح الوجه مؤهّلًا للترقية عند المراجعة القادمة
-    if(typeof renderMap==='function')try{renderMap();}catch(_){}
-    toast('أُرشِف الخطأ. يبقى في سجلّ الأخطاء كمُتقَن.');
-  }));
+function updateFaceErrorSummaryV99(page){
+ const active=(S.errors||[]).filter(e=>+e.page===+page&&!e.archived&&(curPageSurah==null||e.surahId===curPageSurah||e.surahId==null)).length;
+ const summary=document.getElementById('pmErrorsSummaryV97');
+ if(summary)summary.textContent='الأخطاء المسجلة'+(active?' · '+toAr(active)+' نشطة':'');
+ const count=document.querySelector('#pmQuickV97 span:last-child b');
+ if(count)count.textContent=toAr(active);
 }
-
+function renderPageErrors(p){
+ const box=document.getElementById('pmErrors');if(!box)return;
+ const visible=(S.errors||[]).filter(e=>+e.page===+p&&(curPageSurah==null||e.surahId===curPageSurah||e.surahId==null));
+ const active=visible.filter(e=>!e.archived),archived=visible.filter(e=>e.archived);
+ const errorCard=(e,arch)=>{
+  const idx=S.errors.indexOf(e),loc=esc(e.surah||'')+(e.ayah?' · الآية '+toAr(e.ayah):''),
+   desc=e.desc?'<div class="pm-error-desc-v99">'+esc(e.desc)+'</div>':'',
+   date=e.date?'<small>'+esc(e.date)+'</small>':'';
+  return '<div class="pm-error-row-v99'+(arch?' archived':'')+'">'+
+   '<div><b>'+loc+'</b><span>'+esc(e.type||'غير مصنف')+'</span>'+desc+date+'</div>'+
+   '<button type="button" class="btn btn-ghost btn-sm" data-face-error-v99="'+(arch?'restore':'archive')+'" data-face-error-index-v99="'+idx+'">'+(arch?'استعادة':'تم إتقانه')+'</button></div>';
+ };
+ box.innerHTML=(active.length?active.map(e=>errorCard(e,false)).join(''):'<p class="hint">لا أخطاء نشطة في هذا الوجه.</p>')+
+  (archived.length?'<details class="pm-archived-v99"><summary>أخطاء مؤرشفة · '+toAr(archived.length)+'</summary>'+archived.map(e=>errorCard(e,true)).join('')+'</details>':'');
+ box.querySelectorAll('[data-face-error-v99]').forEach(btn=>btn.addEventListener('click',()=>{
+  const e=S.errors[+btn.dataset.faceErrorIndexV99];if(!e||+e.page!==+p)return;
+  if(btn.dataset.faceErrorV99==='restore'){e.archived=false;delete e.archivedDate;}
+  else{e.archived=true;e.archivedDate=todayKey();}
+  save();renderPageErrors(p);updateFaceErrorSummaryV99(p);renderPageMasteryV116(p);
+  const detail=document.getElementById('pmErrorsDetailsV97');
+  if(detail)detail.open=true;
+  if(typeof renderMap==='function')renderMap();
+  refreshV50();
+  toast(e.archived?'أُرشف الخطأ مع الاحتفاظ بسجله.':'عاد الخطأ إلى السجل النشط.');
+ }));
+}
 let MAP_MUSHAF_DATA_V63=null,MAP_MUSHAF_PROMISE_V63=null;
 async function ensureMapMushafDataV63(){
   if(MAP_MUSHAF_DATA_V63)return MAP_MUSHAF_DATA_V63;
