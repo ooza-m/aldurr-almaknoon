@@ -2176,6 +2176,55 @@ function changeFocusedVerseV143(vk,action){
  else return;
  save();
 }
+function focusedSessionV145(){
+ const state=S.focusedReviewSessionV145;
+ return state&&Array.isArray(state.keys)?state:null;
+}
+function startFocusedSessionV145(){
+ const pending=focusedVerseListV143().filter(x=>x.status!=='done').map(x=>x.vk);
+ if(!pending.length){showV51Toast('لا توجد آيات معلّقة','أضيفي آيات إلى المراجعة المركّزة أولًا');return;}
+ S.focusedReviewSessionV145={keys:pending,current:0,startedAt:Date.now(),reviewed:[],skipped:[]};
+ save();renderFocusedVerseReviewsV143();
+}
+function focusedSessionPositionV145(){
+ const state=focusedSessionV145();if(!state)return null;
+ const valid=new Set(focusedVerseListV143().map(x=>x.vk));
+ let i=Math.max(0,Math.min(state.keys.length,+state.current||0));
+ while(i<state.keys.length&&(!valid.has(state.keys[i])||focusedVerseListV143().find(x=>x.vk===state.keys[i])?.status==='done'))i++;
+ return{state,index:i,vk:state.keys[i]||null};
+}
+function advanceFocusedSessionV145(action){
+ const position=focusedSessionPositionV145();if(!position||!position.vk)return;
+ const {state,index,vk}=position;
+ if(action==='done'){
+  changeFocusedVerseV143(vk,'done');
+  state.reviewed=Array.isArray(state.reviewed)?state.reviewed:[];
+  if(!state.reviewed.includes(vk))state.reviewed.push(vk);
+ }else if(action==='skip'){
+  state.skipped=Array.isArray(state.skipped)?state.skipped:[];
+  if(!state.skipped.includes(vk))state.skipped.push(vk);
+ }else return;
+ state.current=index+1;save();renderFocusedVerseReviewsV143();
+}
+function endFocusedSessionV145(){
+ S.focusedReviewSessionV145=null;save();renderFocusedVerseReviewsV143();
+}
+function focusedSessionPanelV145(){
+ const pos=focusedSessionPositionV145();
+ if(!pos)return '';
+ const {state,index,vk}=pos,reviewed=(state.reviewed||[]).length,skipped=(state.skipped||[]).length,total=state.keys.length;
+ if(!vk)return '<div style="margin:10px 0;border:1px solid var(--line);padding:12px;border-radius:12px"><b>انتهى المرور على الآيات المختارة</b><p class="hint">اعتُمدت '+reviewed+' آية · تجاوزتِ '+skipped+' آية دون اعتماد. يمكن بدء جلسة جديدة للآيات التي بقيت معلّقة.</p><button type="button" class="btn btn-primary btn-sm" data-focused-session-v145="end">إغلاق الجلسة</button></div>';
+ const [sid,ayah]=vk.split(':').map(Number),sur=(SURAHS.find(x=>x[0]===sid)||[])[1]||sid;
+ return '<div style="margin:10px 0;border:1px solid var(--line);padding:12px;border-radius:12px">'+
+ '<div class="hint">جلسة مركّزة · الموضع '+(index+1)+' من '+total+' · اعتُمد '+reviewed+'</div>'+
+ '<b>سورة '+esc(sur)+' · الآية '+ayah+'</b>'+
+ '<p class="hint">افتحي الآية وراجعيها، ثم عودي لهذه البطاقة لاعتمادها أو تجاوزها. لا تُعتمد المراجعة بمجرد فتح المصحف.</p>'+
+ '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+ '<button type="button" class="btn btn-ghost btn-sm" data-focused-open-v143="'+esc(vk)+'">فتح الآية في المصحف</button>'+
+ '<button type="button" class="btn btn-primary btn-sm" data-focused-session-v145="done">راجعتُ الآية · التالية</button>'+
+ '<button type="button" class="btn btn-ghost btn-sm" data-focused-session-v145="skip">تجاوز · التالية</button>'+
+ '<button type="button" class="btn btn-ghost btn-sm" data-focused-session-v145="end">إنهاء الجلسة</button></div></div>';
+}
 function renderFocusedVerseReviewsV143(){
  const host=document.getElementById('focusedVerseReviewsV143');if(!host)return;
  const items=focusedVerseListV143(),pending=items.filter(x=>x.status!=='done'),done=items.filter(x=>x.status==='done');
@@ -2189,6 +2238,7 @@ function renderFocusedVerseReviewsV143(){
  '<button type="button" class="btn btn-ghost btn-sm" data-focused-action-v143="remove" data-focused-vk-v143="'+esc(x.vk)+'">إزالة</button></div></div>';
  host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">قائمة المراجعة المركّزة · '+pending.length+' معلّقة</summary>'+
  '<p class="hint">اختاري الآيات من تحليل الأخطاء؛ يُحدَّد وجه الآية من فهرس مصحف المدينة عند فتحها، حتى لو لم يتضمن السجل المستورد رقم الوجه. لا تُعتمد المراجعة عند الفتح ولا تُحتسب مراجعة وجه كامل.</p>'+
+ (focusedSessionV145()?focusedSessionPanelV145():(pending.length?'<button type="button" class="btn btn-primary btn-sm" data-focused-session-v145="start">بدء جلسة مراجعة متتابعة · '+pending.length+' آية</button>':''))+
  (pending.length?pending.map(card).join(''):'<p class="hint">لا توجد آيات معلّقة. أضيفي موضعًا من تحليل الأخطاء.</p>')+
  (done.length?'<details style="margin-top:10px"><summary>آيات تمت مراجعتها · '+done.length+'</summary>'+done.slice(-30).reverse().map(card).join('')+'</details>':'')+
  '</details>';
@@ -2324,6 +2374,8 @@ function refreshV50(){try{renderHomeV50();renderTodayV50();const p=document.quer
 
 // تنقّل موحّد للبطاقات الجديدة
 document.addEventListener('click',e=>{
+  const focusSession=e.target.closest('[data-focused-session-v145]');
+  if(focusSession){const action=focusSession.dataset.focusedSessionV145;if(action==='start')startFocusedSessionV145();else if(action==='end')endFocusedSessionV145();else advanceFocusedSessionV145(action);return;}
   const add=e.target.closest('[data-focused-add-v143]');
   if(add){addFocusedVerseV143(add.dataset.focusedAddV143,add.dataset.focusedSourceV143,+add.dataset.focusedPageV143);renderFocusedVerseReviewsV143();return;}
   const change=e.target.closest('[data-focused-action-v143]');
