@@ -727,6 +727,19 @@ main{padding-top:0!important}
 .v101-groups span{font-size:.72rem;padding:6px 9px;border-radius:999px;border:1px solid var(--line);background:var(--parch-2)}
 .v101-trend-inside>.hint{font-size:.7rem;line-height:1.75}
 @media(max-width:380px){.v101-bars{gap:3px}.v101-bar-item small{font-size:.55rem}}
+/* v102 · مواضع الأخطاء المتكررة؛ ملخص هادئ قابل للطي */
+.v102-error-locations{margin:10px 0 14px}
+.v102-error-locations>details{border:1px solid var(--line);background:var(--surface);border-radius:14px;overflow:hidden}
+.v102-error-locations>details>summary{padding:13px 15px;cursor:pointer;font-size:.83rem;font-weight:700}
+.v102-inner{padding:0 13px 13px}
+.v102-inner h4{font-size:.79rem;color:var(--ink);margin:16px 0 6px}
+.v102-loc-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.76rem}
+.v102-loc-row>div{min-width:0;flex:1}
+.v102-loc-row b{font-weight:700;color:var(--ink)}
+.v102-loc-row small{display:block;font-size:.7rem;color:var(--muted);margin-top:3px}
+.v102-loc-row .btn{flex-shrink:0}
+.v102-comparison{font-size:.68rem;color:var(--muted);line-height:1.7;margin:5px 0 0}
+.v102-inner>.hint{font-size:.7rem;line-height:1.7}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1152,6 +1165,7 @@ window.FIREBASE_CONFIG = {
         <div id="tarteelHistoryPanel" style="margin-top:10px"></div>
       </div>
       <div id="errorTrendsV101" class="v101-error-trends"></div>
+      <div id="errorLocationsV102" class="v102-error-locations"></div>
       <div id="errHot"></div>
       <div id="errList"></div>
     </div>
@@ -4239,9 +4253,83 @@ function renderErrorTrendsV101(){
  const mode=host.querySelector('#errorTrendsModeV101');
  if(mode)mode.addEventListener('change',()=>{const detail=host.querySelector('details');const open=detail?.open;renderErrorTrendsV101();if(open)host.querySelector('details').open=true;});
 }
+/* v102 · تجميع مواضع الأخطاء المسجلة، والمقارنة الوصفية عند وجود مراجعة مؤرخة */
+function errorDateValidV102(value){
+ const v=String(value||'');
+ return /^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(parseKey(v).getTime())&&keyOf(parseKey(v))===v;
+}
+function confirmedReviewDatesV102(page){
+ const dates=new Set();
+ for(const rs of S.recitationSessions||[]){
+  if(!['fix','near','far','new'].includes(rs.task))continue;
+  const stamp=rs.endedAt||rs.startedAt;
+  if(!stamp||!Number.isFinite(new Date(stamp).getTime()))continue;
+  const date=keyOf(new Date(stamp));
+  if(!errorDateValidV102(date))continue;
+  if((rs.pages||[]).some(pg=>+pg.page===page&&pg.manualConfirmed===true&&pg.complete===true))dates.add(date);
+ }
+ for(const test of S.teacherTests||[]){
+  if(!errorDateValidV102(test.date))continue;
+  const result=Array.isArray(test.results)?test.results.find(x=>+x.page===page):(test.pages||[]).some(x=>+x===page)?{level:test.level}:null;
+  if(result&&result.level&&result.level!=='untested')dates.add(test.date);
+ }
+ return [...dates].sort();
+}
+function errorLocationsDataV102(){
+ const surahs=new Map(),pages=new Map(),verses=new Map();
+ for(const e of S.errors||[]){
+  if(!e||e.aiDetected===true)continue;
+  const sid=+e.surahId,p=+e.page,ay=+e.ayah;
+  const insert=(map,key,meta)=>{
+   if(!map.has(key))map.set(key,{...meta,active:0,archived:0,dates:[],items:[]});
+   const x=map.get(key);x[e.archived?'archived':'active']++;
+   x.items.push(e);
+   if(errorDateValidV102(e.date))x.dates.push(e.date);
+  };
+  if(Number.isInteger(sid)&&sid>=1&&sid<=114)insert(surahs,sid,{sid});
+  if(Number.isInteger(p)&&p>=1&&p<=604)insert(pages,p,{page:p});
+  if(Number.isInteger(sid)&&sid>=1&&sid<=114&&Number.isInteger(ay)&&ay>=1)
+   insert(verses,sid+':'+ay,{sid,ayah:ay,page:Number.isInteger(p)&&p>=1&&p<=604?p:null});
+ }
+ const sort=(map)=>[...map.values()].sort((a,b)=>(b.active+b.archived)-(a.active+a.archived)||b.active-a.active);
+ return {surahs:sort(surahs),pages:sort(pages),verses:sort(verses)};
+}
+function renderErrorLocationsV102(){
+ const host=document.getElementById('errorLocationsV102');if(!host)return;
+ const wasOpen=!!host.querySelector('details')?.open;
+ const data=errorLocationsDataV102();
+ const total=x=>x.active+x.archived;
+ const counts=x=>'<small>'+toAr(x.active)+' نشطة · '+toAr(x.archived)+' مؤرشفة</small>';
+ const displaySurah=x=>(SURAHS.find(s=>s[0]===x.sid)||[])[1]||String(x.sid);
+ const surahs=data.surahs.slice(0,6).map(x=>'<div class="v102-loc-row"><b>سورة '+esc(displaySurah(x))+'</b>'+counts(x)+'</div>').join('');
+ const pages=data.pages.slice(0,7).map(x=>{
+   const dates=confirmedReviewDatesV102(x.page);
+   // لا يمكن ترتيب خطأ ومراجعة مؤرختين في اليوم نفسه دون وقت دقيق.
+   const checkpoint=dates.find(d=>x.dates.some(date=>date<d))||null;
+   const before=checkpoint?x.items.filter(e=>errorDateValidV102(e.date)&&e.date<checkpoint).length:0;
+   const after=checkpoint?x.items.filter(e=>errorDateValidV102(e.date)&&e.date>checkpoint).length:0;
+   const during=checkpoint?x.items.filter(e=>e.date===checkpoint).length:0;
+   const stats=checkpoint?'<p class="v102-comparison">مراجعة موثّقة '+esc(checkpoint)+' · سجلات قبلها '+toAr(before)+'، بعدها '+toAr(after)+(during?'، في يومها '+toAr(during):'')+'</p>':
+    '<p class="v102-comparison">لا تتوفر مراجعة موثّقة لاحقة لخطأ مؤرّخ في هذا الوجه.</p>';
+   return '<div class="v102-loc-row"><div><b>الوجه '+toAr(x.page)+'</b>'+counts(x)+stats+'</div><button type="button" class="btn btn-ghost btn-sm" data-v102-page="'+x.page+'">فتح</button></div>';
+ }).join('');
+ const verses=data.verses.filter(x=>total(x)>=2).slice(0,8).map(x=>
+  '<div class="v102-loc-row"><div><b>'+esc(displaySurah(x))+' · الآية '+toAr(x.ayah)+'</b>'+counts(x)+'</div>'+
+  (x.page?'<button type="button" class="btn btn-ghost btn-sm" data-v102-page="'+x.page+'">فتح</button>':'')+'</div>').join('');
+ host.innerHTML='<details '+(wasOpen?'open':'')+'><summary>المواضع الأكثر تكرارًا في سجل الأخطاء</summary>'+
+ '<div class="v102-inner"><p class="hint">ترتيب بحسب عدد السجلات النشطة والمؤرشفة، دون اعتبار الأرشفة دليلًا على التحسّن.</p>'+
+ '<h4>السور</h4>'+(surahs||'<p class="hint">لا توجد سور محددة في السجل.</p>')+
+ '<h4>الأوجه والمراجعات الموثقة</h4>'+(pages||'<p class="hint">لا توجد أوجه محددة في السجل.</p>')+
+ '<h4>الآيات المتكررة</h4>'+(verses||'<p class="hint">لا توجد آيات مسجّلة بخطأين أو أكثر.</p>')+
+ '<p class="hint">المقارنة قبل المراجعة وبعدها تحصي الأخطاء المسجّلة فقط. غياب أخطاء لاحقة لا يُثبت زوال الخطأ، ولا يُساوى بين عدد الأخطاء في جلسات متفاوتة.</p></div></details>';
+ host.querySelectorAll('[data-v102-page]').forEach(button=>button.addEventListener('click',()=>{
+  const page=Number(button.dataset.v102Page);if(Number.isInteger(page)&&page>=1&&page<=604)openPage(page);
+ }));
+}
 function renderErrors(){
   const hot=document.getElementById('errHot'),list=document.getElementById('errList'),all=S.errors||[],queue=S.aiReviewQueue||[],pending=queue.filter(q=>q&&q.status==='pending');
   renderErrorTrendsV101();
+  renderErrorLocationsV102();
   if(!all.length&&!pending.length){hot.innerHTML='';list.innerHTML='<div class="empty"><span class="em">✎</span>لا أخطاء أو مواضع معلّقة للمراجعة.</div>';return;}
   const active=all.filter(e=>!e.archived),archived=all.filter(e=>e.archived);
   const keyOfErr=e=>e.verseKey||(e.surahId&&e.ayah?(e.surahId+':'+e.ayah):e.page?('p:'+e.page+'|'+(e.surahId||'')):('s:'+e.surah));
