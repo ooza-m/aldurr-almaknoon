@@ -2121,6 +2121,83 @@ syncReaderViewport();setTimeout(syncReaderViewport,80);setTimeout(syncReaderView
 
 setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
 
+/* v146 · مراجعة الآيات المركّزة من داخل المصحف؛ الأفعال تُرسل دون استبدال بيانات اللوحة */
+let focusedSessionReaderV146=null,focusedReviewPanelV146=null;
+function focusedPageForVerseV146(vk){
+ const parts=String(vk||'').split(':').map(Number);
+ if(parts.length!==2||!parts.every(Number.isInteger))return null;
+ for(let p=1;p<=604;p++)for(const seg of DATA?.pages?.[String(p)]?.s||[]){
+  if(+seg.id===parts[0]&&parts[1]>=+seg.vs&&parts[1]<=+seg.ve)return p;
+ }
+ return null;
+}
+function focusReaderStateV146(){
+ if(!focusedSessionReaderV146)return null;
+ const state=focusedSessionReaderV146,raw=JSON.parse(LS('durr-alfareed-v2','{}')||'{}');
+ const available=new Map((raw.focusedVerseReviews||[]).map(x=>[x.vk,x]));
+ let i=Math.max(0,+state.current||0);
+ while(i<state.keys.length&&(available.get(state.keys[i])?.status==='done'||(state.reviewed||[]).includes(state.keys[i])||!available.has(state.keys[i])))i++;
+ state.current=i;
+ return{state,vk:state.keys[i]||null,index:i};
+}
+function focusedQueueActionV146(action,vk,index){
+ const state=focusedSessionReaderV146;if(!state)return false;
+ try{
+  const key='durr-focused-mushaf-actions-v146',old=JSON.parse(LS(key,'[]')||'[]'),events=Array.isArray(old)?old:[];
+  events.push({id:'focus146_'+Date.now()+'_'+Math.random().toString(36).slice(2),startedAt:state.startedAt,vk,action,index,at:Date.now()});
+  LSet(key,JSON.stringify(events.slice(-300)));
+  return true;
+ }catch(e){return false;}
+}
+async function showFocusedVerseV146(){
+ const pos=focusReaderStateV146();if(!pos||!focusedReviewPanelV146)return;
+ const {state,vk,index}=pos,total=state.keys.length;
+ if(!vk){
+  focusedReviewPanelV146.innerHTML='<b>انتهى المرور على الآيات</b><p>اعتمدتِ '+(state.reviewed||[]).length+' آية، وتجاوزتِ '+(state.skipped||[]).length+'.</p><button type="button" data-focus-v146="exit">العودة إلى الخطة</button>';
+  return;
+ }
+ const [sid,ayah]=vk.split(':').map(Number),sur=DATA?.surahs?.find?.(x=>+x.id===sid);
+ focusedReviewPanelV146.innerHTML='<div style="font-size:.72rem;opacity:.8">المراجعة المركّزة · '+(index+1)+' من '+total+'</div>'+
+ '<b>السورة '+sid+' · الآية '+ayah+'</b>'+
+ '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'+
+ '<button type="button" data-focus-v146="done">اعتماد · التالية</button>'+
+ '<button type="button" data-focus-v146="skip">تجاوز · التالية</button>'+
+ '<button type="button" data-focus-v146="exit">إنهاء</button></div>';
+ const page=focusedPageForVerseV146(vk);
+ if(page){if(cur!==page)await settle(page);setTimeout(()=>flashVerse(vk),160);}
+ else focusedReviewPanelV146.insertAdjacentHTML('beforeend','<small>تعذّر تحديد الآية من فهرس المصحف الحالي.</small>');
+}
+function startFocusedReaderV146(){
+ if(REC_QUERY.get('focused')!=='1')return;
+ let raw;try{raw=JSON.parse(LS('durr-alfareed-v2','{}')||'{}');}catch(_){raw={};}
+ const state=raw.focusedReviewSessionV145;
+ if(!state||!Array.isArray(state.keys)||!state.keys.length)return;
+ focusedSessionReaderV146={...state,reviewed:[...(state.reviewed||[])],skipped:[...(state.skipped||[])]};
+ try{
+  const events=JSON.parse(LS('durr-focused-mushaf-actions-v146','[]')||'[]');
+  for(const event of Array.isArray(events)?events:[]){
+   if(event.startedAt!==state.startedAt||!state.keys.includes(event.vk))continue;
+   if(event.action==='done'&&!focusedSessionReaderV146.reviewed.includes(event.vk))focusedSessionReaderV146.reviewed.push(event.vk);
+   if(event.action==='skip'&&!focusedSessionReaderV146.skipped.includes(event.vk))focusedSessionReaderV146.skipped.push(event.vk);
+   focusedSessionReaderV146.current=Math.max(+focusedSessionReaderV146.current||0,(+event.index||0)+1);
+  }
+ }catch(_){}
+ const box=document.createElement('div');box.id='focusedReviewControlsV146';
+ box.style.cssText='position:fixed;z-index:1200;bottom:calc(env(safe-area-inset-bottom) + 12px);left:10px;right:10px;max-width:540px;margin:auto;background:var(--surface,#fff);border:1px solid var(--line,#ddd);border-radius:15px;padding:11px 13px;box-shadow:0 5px 28px #0002;color:var(--ink,#333);font-family:inherit;font-size:.86rem;text-align:right';
+ const style=document.createElement('style');style.textContent='#focusedReviewControlsV146 button{background:var(--page,#f8f3f0);border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;color:var(--ink,#333);font:inherit;cursor:pointer}#focusedReviewControlsV146 button:first-child{background:var(--accent,#a8546b);color:white}';
+ document.head.append(style);document.body.append(box);focusedReviewPanelV146=box;
+ box.addEventListener('click',async e=>{
+  const action=e.target.closest('[data-focus-v146]')?.dataset.focusV146;if(!action)return;
+  if(action==='exit'){if(focusReaderStateV146()?.vk)focusedQueueActionV146('end',focusReaderStateV146().vk,focusedSessionReaderV146.current);location.assign('index.html?tab=today');return;}
+  const pos=focusReaderStateV146();if(!pos?.vk||!['done','skip'].includes(action))return;
+  if(!focusedQueueActionV146(action,pos.vk,pos.index)){alert('تعذّر حفظ التقدّم. أعيدي المحاولة.');return;}
+  if(action==='done'&&!focusedSessionReaderV146.reviewed.includes(pos.vk))focusedSessionReaderV146.reviewed.push(pos.vk);
+  if(action==='skip'&&!focusedSessionReaderV146.skipped.includes(pos.vk))focusedSessionReaderV146.skipped.push(pos.vk);
+  focusedSessionReaderV146.current=pos.index+1;
+  await showFocusedVerseV146();
+ });
+ showFocusedVerseV146();
+}
 (async()=>{
   const r=await fetch('data/mushaf-data.json');if(!r.ok)throw Error('mushaf-data');DATA=await r.json();
   try{await document.fonts.load('1rem "HafsQ"');}catch(e){}
@@ -2128,6 +2205,7 @@ setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
   let start=+(REC_QUERY.get('p')||1);
   if(ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.pages&&ACTIVE_TASK_SESSION.pages.length&&!ACTIVE_TASK_SESSION.pages.includes(start))start=+ACTIVE_TASK_SESSION.pages[0];
   await settle(start);
+  startFocusedReaderV146();
   const targetAyah=REC_QUERY.get('ayah')||'',startMode=REC_QUERY.get('mode')||'';
   if(targetAyah&&!startMode)setTimeout(()=>flashVerse(targetAyah),320);
   if(startMode==='tafsir')setTimeout(()=>openFaceTafsir('saadi'),260);
