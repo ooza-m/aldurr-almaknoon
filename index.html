@@ -2051,6 +2051,61 @@ function verseErrorAnalysisV141(){
  }
  return {verses:[...groups.values()],pages:[...pages.values()],counts};
 }
+function tarteelVerseHistoryV142(){
+ return new Promise((resolve,reject)=>{
+  if(typeof indexedDB==='undefined'){resolve(null);return;}
+  const req=indexedDB.open('durr-tarteel-history',1);
+  req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('archives'))req.result.createObjectStore('archives');};
+  req.onerror=()=>reject(req.error||new Error('تعذّر فتح أرشيف ترتيل'));
+  req.onsuccess=()=>{
+   const db=req.result,tx=db.transaction('archives','readonly'),get=tx.objectStore('archives').get('durr-tarteel-history-v1');
+   get.onsuccess=()=>{db.close();resolve(get.result||null);};
+   get.onerror=()=>{db.close();reject(get.error||new Error('تعذّرت قراءة الأرشيف'));};
+  };
+ });
+}
+function analyzeTarteelVerseHistoryV142(archive){
+ const sessions=new Map((archive.sessions||[]).map(s=>[String(s.id),s]));
+ const groups=new Map();let records=0,withoutSession=0;
+ for(const m of archive.mistakes||[]){
+  const sid=String(m.session_id||'');
+  if(!sid){withoutSession++;continue;}
+  const date=String(sessions.get(sid)?.start||sessions.get(sid)?.started_at||sessions.get(sid)?.created_at||sessions.get(sid)?.date||m.created_at||'').slice(0,10);
+  const uniqueVerses=new Set();
+  for(const pos of m.positions||[]){
+   const surah=+pos.surah_number,ayah=+pos.ayah_number;
+   if(!Number.isInteger(surah)||surah<1||surah>114||!Number.isInteger(ayah)||ayah<1)continue;
+   uniqueVerses.add(surah+':'+ayah);
+  }
+  for(const vk of uniqueVerses){
+   records++;
+   if(!groups.has(vk))groups.set(vk,{vk,sessionIds:new Set(),types:new Map(),last:''});
+   const g=groups.get(vk);g.sessionIds.add(sid);
+   const type=String(m.type||'غير مصنف');if(!g.types.has(type))g.types.set(type,new Set());
+   g.types.get(type).add(sid);
+   if(date>g.last)g.last=date;
+  }
+ }
+ return {items:[...groups.values()].sort((a,b)=>b.sessionIds.size-a.sessionIds.size||a.vk.localeCompare(b.vk)),records,withoutSession};
+}
+async function drawTarteelVerseHistoryV142(host){
+ const target=host.querySelector('#tarteelVerseHistoryV142');if(!target)return;
+ target.textContent='جارٍ قراءة أرشيف ترتيل المحلي…';
+ try{
+  const archive=await tarteelVerseHistoryV142();if(!target.isConnected)return;
+  if(!archive){target.innerHTML='<p class="hint">لم يُستورد سجل ترتيل تاريخي على هذا الجهاز.</p>';return;}
+  const result=analyzeTarteelVerseHistoryV142(archive),labels={EXTRA_WORDS:'زيادة',INCORRECT_WORDS:'قراءة غير مطابقة',MISSED_WORDS:'سقط',INCORRECT_TASHKEEL:'تشكيل',PEEKED_WORDS:'استعانة بالمصحف'};
+  const repeated=result.items.filter(x=>x.sessionIds.size>=2);
+  target.innerHTML='<p class="hint">بيانات ترتيل تاريخية غير معتمدة بوصفها أخطاء مؤكدة. يُحتسب ظهور الآية مرة واحدة فقط لكل جلسة، ولو تكررت ملاحظاتها أو كلماتها.</p>'+
+   '<div class="hint">آيات ظهرت في جلستين أو أكثر: '+repeated.length+' · إجمالي آيات ذات ملاحظات: '+result.items.length+'</div>'+
+   (repeated.length?repeated.slice(0,25).map(g=>{
+    const [sid,ayah]=g.vk.split(':').map(Number),sur=(SURAHS.find(s=>s[0]===sid)||[])[1]||sid;
+    const types=[...g.types].sort((a,b)=>b[1].size-a[1].size).slice(0,3).map(([type,set])=>esc(labels[type]||type)+' ('+set.size+' جلسات)').join(' · ');
+    return '<div style="padding:9px 0;border-top:1px solid var(--line)"><b>سورة '+esc(sur)+' · الآية '+ayah+'</b><div class="hint">'+g.sessionIds.size+' جلسات مختلفة · '+types+(g.last?' · آخر ظهور '+esc(g.last):'')+'</div></div>';
+   }).join(''):'<p class="hint">لا توجد آية ظهرت بها ملاحظات في جلستين مختلفتين ضمن الأرشيف الحالي.</p>')+
+   '<p class="hint">لا تُدمج هذه الأعداد مع سجل الأخطاء المؤكدة ولا تُستخدم لتغيير درجة الإتقان أو جدول المراجعة.</p>';
+ }catch(e){if(target.isConnected)target.textContent='تعذّرت قراءة سجل ترتيل المحلي: '+(e?.message||'خطأ غير معروف');}
+}
 function renderVerseErrorAnalysisV141(){
  const host=document.getElementById('verseErrorAnalysisV141');if(!host)return;
  const previous=host.querySelector('#verseErrorScopeV141')?.value||'active';
@@ -2067,15 +2122,18 @@ function renderVerseErrorAnalysisV141(){
    (g.page?'<button type="button" class="btn btn-ghost btn-sm" data-open-face-v140="'+g.page+'">فتح ملف الوجه '+g.page+'</button>':'<small class="hint">لم يُحفظ رقم الوجه مع هذا الخطأ؛ لا يُفترض موضع تقريبي.</small>')+'</div>';
  };
  host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">مواضع الأخطاء المتكررة · الآيات والأوجه</summary>'+
- '<p class="hint">تحليل وصفي للأخطاء المسجلة داخل التطبيق فقط، وليس حكمًا آليًا على صحة التلاوة. سجل ترتيل التاريخي المستورد محفوظ منفصلًا.</p>'+
+ '<p class="hint">الأخطاء المعتمدة في التطبيق مستقلة عن الملاحظات التاريخية المستوردة من ترتيل. يظهر سجل ترتيل في قسم منفصل أدناه.</p>'+
  '<div style="font-size:.8rem;margin:10px 0">أخطاء نشطة: <b>'+data.counts.active+'</b> · مؤرشفة: <b>'+data.counts.archived+'</b> · دون آية محددة: <b>'+data.counts.unlocated+'</b></div>'+
  '<label style="display:block;margin:8px 0">عرض <select id="verseErrorScopeV141"><option value="active" '+(scope==='active'?'selected':'')+'>الأخطاء النشطة</option><option value="all" '+(scope==='all'?'selected':'')+'>النشطة والمؤرشفة</option></select></label>'+
  (pageRank.length?'<b style="font-size:.83rem">أكثر الأوجه التي سُجلت فيها أخطاء</b><div style="display:flex;flex-wrap:wrap;gap:6px;margin:9px 0">'+pageRank.map(p=>'<button type="button" class="btn btn-ghost btn-sm" data-open-face-v140="'+p.page+'" style="border:1px solid var(--line)">وجه '+p.page+' · '+(scope==='all'?p.active+p.archived:p.active)+'</button>').join('')+'</div>':'')+
  '<b style="font-size:.83rem">الآيات ذات الأخطاء المتكررة</b>'+
  (ranked.length?ranked.map(entry).join(''):'<p class="hint">لا توجد أخطاء موثقة بمواضع آيات وفق هذا المرشح.</p>')+
  (data.verses.length>ranked.length?'<p class="hint">تُعرض أول 25 آية فقط لتبقى اللوحة خفيفة على الهاتف.</p>':'')+
+ '<details style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px"><summary>ملاحظات ترتيل المستوردة · تكرار الآية عبر الجلسات</summary><div id="tarteelVerseHistoryV142" style="margin-top:9px"><p class="hint">اضغطي هنا لقراءة الأرشيف المحلي.</p></div></details>'+ 
  '</details>';
  host.querySelector('#verseErrorScopeV141').onchange=()=>renderVerseErrorAnalysisV141();
+ const details=host.querySelector('#tarteelVerseHistoryV142')?.closest('details');
+ if(details)details.addEventListener('toggle',()=>{if(details.open)drawTarteelVerseHistoryV142(host);});
 }
 function renderStudyPlanSettingsV134(){
  const host=document.getElementById('studyPlanSettingsV134');if(!host)return;
