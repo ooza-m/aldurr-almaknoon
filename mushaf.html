@@ -2121,6 +2121,20 @@ syncReaderViewport();setTimeout(syncReaderViewport,80);setTimeout(syncReaderView
 
 setTimeout(()=>{const t=$('tapHint');if(t)t.style.opacity=0;},5000);
 
+/* v148 · شريط حالة التسميع والإشعارات ضمن تدفق الصفحة، بعيدًا عن الآيات */
+(function reserveMushafStatusSpaceV148(){
+ const screen=document.getElementById('screen'),track=document.getElementById('track');
+ if(!screen||!track||document.getElementById('mushafStatusV148'))return;
+ const bar=document.createElement('div');bar.id='mushafStatusV148';bar.setAttribute('aria-label','حالة التسميع والتنبيهات');
+ for(const id of ['recEngine','recSessionChip','recTip']){
+  const element=document.getElementById(id);
+  if(element)bar.appendChild(element);
+ }
+ screen.insertBefore(bar,track);
+ const style=document.createElement('style');
+ style.textContent=`#mushafStatusV148{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;flex:0 0 auto;min-height:0;max-height:22dvh;overflow:auto;padding:0 9px;box-sizing:border-box}#mushafStatusV148:has(.rec-engine[style*="display: flex"]),#mushafStatusV148:has(.rec-tip.show){padding-top:3px;padding-bottom:3px}#mushafStatusV148 .rec-engine,#mushafStatusV148 .rec-session-chip,#mushafStatusV148 .rec-tip{position:static;left:auto;right:auto;top:auto;bottom:auto;transform:none;max-width:min(96vw,540px);margin:0;box-shadow:none;z-index:auto}#mushafStatusV148 .rec-engine{display:none}body.reciting #mushafStatusV148 .rec-engine{display:flex}#mushafStatusV148 .rec-session-chip{display:none}body.reciting #mushafStatusV148 .rec-session-chip.on{display:flex}#mushafStatusV148 .rec-tip{display:none;width:auto;max-width:95%;opacity:1;transition:none;padding:5px 10px;border-radius:12px}#mushafStatusV148 .rec-tip.show{display:block}body.reciting #mushafStatusV148{padding-top:3px;padding-bottom:3px}@media(max-width:390px){#mushafStatusV148 .rec-engine,#mushafStatusV148 .rec-session-chip{font-size:.62rem;padding:5px 8px}}`;
+ document.head.appendChild(style);
+})();
 /* v146 · مراجعة الآيات المركّزة من داخل المصحف؛ الأفعال تُرسل دون استبدال بيانات اللوحة */
 let focusedSessionReaderV146=null,focusedReviewPanelV146=null;
 function focusedReaderCompactV147(){
@@ -2188,9 +2202,9 @@ function startFocusedReaderV146(force=false){
   if(!pending)return;
   const button=document.createElement('button');
   button.type='button';button.id='focusedResumeV147';button.textContent='استئناف مراجعة الآيات';
-  button.style.cssText='position:fixed;z-index:1100;top:calc(env(safe-area-inset-top) + 58px);left:8px;max-width:55vw;background:var(--surface,#fff);color:var(--ink,#333);border:1px solid var(--line,#ddd);border-radius:24px;padding:9px 13px;font:inherit;font-size:.76rem;box-shadow:0 3px 12px #0002';
+  button.style.cssText='position:relative;z-index:25;flex:0 0 auto;align-self:flex-start;margin:4px 8px;max-width:65vw;background:var(--surface,#fff);color:var(--ink,#333);border:1px solid var(--line,#ddd);border-radius:24px;padding:7px 12px;font:inherit;font-size:.76rem;box-shadow:none';
   button.onclick=()=>{button.remove();startFocusedReaderV146(true);};
-  document.body.append(button);return;
+  document.getElementById('screen').insertBefore(button,document.getElementById('track'));return;
  }
  focusedSessionReaderV146={...state,reviewed:[...(state.reviewed||[])],skipped:[...(state.skipped||[])]};
  try{
@@ -2205,9 +2219,9 @@ function startFocusedReaderV146(force=false){
  }catch(_){}
  const box=document.createElement('div');box.id='focusedReviewControlsV146';
  box.setAttribute('role','region');box.setAttribute('aria-label','أدوات جلسة المراجعة المركّزة');
- const style=document.createElement('style');style.textContent=`#focusedReviewControlsV146{position:fixed;z-index:1200;top:calc(env(safe-area-inset-top) + 58px);left:max(8px,env(safe-area-inset-left));width:min(340px,calc(100vw - 16px));max-height:min(34dvh,240px);overflow:auto;background:var(--surface,#fff);border:1px solid var(--line,#ddd);border-radius:16px;padding:10px 12px;box-shadow:0 4px 20px #0002;color:var(--ink,#333);font-family:inherit;font-size:.84rem;text-align:right;box-sizing:border-box}#focusedReviewControlsV146.compact{width:auto;max-width:calc(100vw - 24px);padding:3px 5px;border-radius:30px;box-shadow:0 2px 12px #0002}#focusedReviewControlsV146.compact .focus-body-v147{display:none}#focusedReviewControlsV146 .focus-head-v147 button{background:transparent;border:0;color:var(--ink,#333);padding:7px 10px;border-radius:22px;font:inherit;min-height:35px}#focusedReviewControlsV146 button{background:var(--page,#f8f3f0);border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;min-height:38px;color:var(--ink,#333);font:inherit;cursor:pointer}#focusedReviewControlsV146 .focus-actions-v147{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}#focusedReviewControlsV146 .focus-actions-v147 button:first-child{background:var(--accent,#a8546b);color:white}#focusedReviewControlsV146 .focus-body-v147{padding:2px 2px 3px}#focusedReviewControlsV146 .focus-body-v147 b{display:block;margin:3px 0}@media(max-width:390px){#focusedReviewControlsV146{top:calc(env(safe-area-inset-top) + 50px);font-size:.78rem;width:min(310px,calc(100vw - 16px));max-height:30dvh}#focusedReviewControlsV146 .focus-actions-v147 button{font-size:.76rem;padding:7px 8px}}`;
+ const style=document.createElement('style');style.textContent=`#focusedReviewControlsV146{position:relative;flex:0 0 auto;align-self:flex-start;z-index:25;top:auto;left:auto;width:min(340px,calc(100vw - 16px));max-height:min(28dvh,190px);overflow:auto;margin:4px 8px 2px;background:var(--surface,#fff);border:1px solid var(--line,#ddd);border-radius:16px;padding:10px 12px;box-shadow:0 4px 20px #0002;color:var(--ink,#333);font-family:inherit;font-size:.84rem;text-align:right;box-sizing:border-box}#focusedReviewControlsV146.compact{width:auto;max-width:calc(100vw - 24px);padding:3px 5px;border-radius:30px;box-shadow:0 2px 12px #0002}#focusedReviewControlsV146.compact .focus-body-v147{display:none}#focusedReviewControlsV146 .focus-head-v147 button{background:transparent;border:0;color:var(--ink,#333);padding:7px 10px;border-radius:22px;font:inherit;min-height:35px}#focusedReviewControlsV146 button{background:var(--page,#f8f3f0);border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;min-height:38px;color:var(--ink,#333);font:inherit;cursor:pointer}#focusedReviewControlsV146 .focus-actions-v147{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}#focusedReviewControlsV146 .focus-actions-v147 button:first-child{background:var(--accent,#a8546b);color:white}#focusedReviewControlsV146 .focus-body-v147{padding:2px 2px 3px}#focusedReviewControlsV146 .focus-body-v147 b{display:block;margin:3px 0}@media(max-width:390px){#focusedReviewControlsV146{font-size:.78rem;width:min(310px,calc(100vw - 16px));max-height:25dvh}#focusedReviewControlsV146 .focus-actions-v147 button{font-size:.76rem;padding:7px 8px}}`;
 
- document.head.append(style);document.body.append(box);focusedReviewPanelV146=box;setFocusedReaderCompactV147(focusedReaderCompactV147());
+ document.head.append(style);document.getElementById('screen').insertBefore(box,document.getElementById('track'));focusedReviewPanelV146=box;setFocusedReaderCompactV147(focusedReaderCompactV147());
  box.addEventListener('click',async e=>{
   const action=e.target.closest('[data-focus-v146]')?.dataset.focusV146;if(!action)return;
   if(action==='toggle'){setFocusedReaderCompactV147(!focusedReviewPanelV146.classList.contains('compact'));await showFocusedVerseV146();return;}
