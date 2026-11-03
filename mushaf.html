@@ -201,6 +201,7 @@ body.chrome .chrome-bot{transform:none;opacity:1;pointer-events:auto}
 .ay-hl button{width:42px;height:42px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;display:grid;place-items:center;transition:transform .12s}
 .ay-hl button:active{transform:scale(.9)}
 .ay-hl button.on{box-shadow:0 0 0 2px var(--accent);transform:scale(1.06)}
+.ay-hl button.hl-unavailable:disabled{opacity:.27;filter:saturate(.4);box-shadow:0 0 0 1px var(--line);cursor:not-allowed;transform:none;pointer-events:none}
 .ay-hl button.clear{background:var(--surface)!important}
 .ay-hl button.clear svg{width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:2}
 /* شبكة أفعال آية */
@@ -384,14 +385,14 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 .pane.reciting .qw.rec-suspected-live{opacity:1!important;text-decoration:underline dotted #b88b47;text-decoration-thickness:2px;text-underline-offset:5px}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
-<link rel="stylesheet" href="reader-shell.css?v=91">
+<link rel="stylesheet" href="reader-shell.css?v=92">
 <script src="reader-core.js?v=89"></script>
 <script src="audio-library.js?v=89"></script>
 <script src="reader-audio.js?v=89"></script>
 <script src="phoneme-aligner.js?v=90"></script>
 <script src="recitation-core.js?v=103"></script>
 <script src="recitation-jobs.js?v=89"></script>
-<script src="reader-ui.js?v=91"></script>
+<script src="reader-ui.js?v=92"></script>
 <script src="reader-study.js?v=89"></script>
 <script src="reader-session.js?v=89"></script>
 <script src="config.js?v=95"></script>
@@ -2271,7 +2272,7 @@ function startFocusedReaderV146(force=false){
 <script>
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=102').then(r=>r.update()).catch(()=>{}));}
 </script>
-<script src="quick-face-completion.js?v=2"></script>
+<script src="quick-face-completion.js?v=92"></script>
 <script src="recitation-diagnostics.js?v=1"></script>
 <script src="recitation-feedback.js?v=1"></script>
 <script src="recitation-feedback-ui.js?v=1"></script>
