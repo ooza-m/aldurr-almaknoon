@@ -1407,7 +1407,7 @@ function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(
   if(v1){const d=JSON.parse(v1);const m=Object.assign({},JSON.parse(JSON.stringify(DEF)),d);return m;}
 }catch(e){}return JSON.parse(JSON.stringify(DEF));}
 let flashT;
-function save(){try{S.updatedAt=Date.now();if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));const f=document.getElementById('saveFlash');f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
+function save(){try{archiveWeeklyGoalV138(S.weeklyMemGoal==null?3:S.weeklyMemGoal);S.updatedAt=Date.now();if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));const f=document.getElementById('saveFlash');f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
 
 /* ============ أدوات ============ */
 const AR_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
@@ -1614,6 +1614,25 @@ function priorityV50(){
   const p=lastActivityPageV50();return{page:p,title:'اكتملت مهام الحفظ والمراجعة',sub:'يمكنك متابعة التلاوة أو التفسير من بقية مهام اليوم.',kind:'مكتمل',taskId:'free',complete:true};
 }
 function recitedPagesTodayV51(task){const set=new Set(),day=todayKey();(S.recitationSessions||[]).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||0));if(d!==day)return;if(task&&rs.task!==task)return;(rs.pages||[]).forEach(pg=>{if(!['ai-review','practice'].includes(rs.task)&&pg.complete&&pg.coverage>=.95)set.add(+pg.page);});});return set;}
+function weeklyStartV138(date=todayKey()){
+ const day=new Date(date+'T12:00:00').getDay();
+ return addDaysKeyV62(date,-((day+6)%7));
+}
+function archiveWeeklyGoalV138(goal,changed=false){
+ const week=weeklyStartV138(),value=Math.max(0,Math.min(80,Math.floor(+goal||0)));
+ S.weeklyGoalHistory=S.weeklyGoalHistory||{};
+ const old=S.weeklyGoalHistory[week];
+ if(!old){
+  S.weeklyGoalHistory[week]={goal:value,firstRecordedAt:Date.now(),lastUpdatedAt:Date.now(),revisions:[{goal:value,at:Date.now()}]};
+ }else if(changed&&old.goal!==value){
+  old.goal=value;old.lastUpdatedAt=Date.now();old.revisions=Array.isArray(old.revisions)?old.revisions:[];
+  old.revisions.push({goal:value,at:Date.now()});
+ }
+}
+function archivedWeeklyGoalV138(start){
+ const x=S.weeklyGoalHistory?.[start];
+ return x&&Number.isInteger(+x.goal)&&+x.goal>=0?+x.goal:null;
+}
 function weeklyMemorizationV135(date=todayKey()){
  const configured=Number(S.weeklyMemGoal);
  const goal=Math.max(0,Math.min(80,Number.isFinite(configured)?Math.floor(configured):3));
@@ -1904,7 +1923,7 @@ function weeklyAchievementV136(offset=0){
   const grades=Array.isArray(test.results)?test.results:(test.pages||[]).map(page=>({page,level:test.level}));
   grades.forEach(x=>{if(!MASTERY_LEVELS_V116[x.level])return;tests.add(+x.page);if(['weak','needs'].includes(x.level))catchup.add(+x.page);});
  });
- const goal=offset===0?current.goal:null;
+ const goal=archivedWeeklyGoalV138(start);
  return{start,end,goal,completed:categories.new.size,fix:categories.fix.size,near:categories.near.size,far:categories.far.size,tested:tests.size,needsCatchup:catchup.size,shortfall:goal===null?null:Math.max(0,goal-categories.new.size)};
 }
 function renderWeeklyAchievementV136(offset){
@@ -1917,9 +1936,9 @@ function renderWeeklyAchievementV136(offset){
  '<label style="display:block;margin:10px 0;font-size:.8rem">الأسبوع <select id="weeklyHistorySelectV137">'+Array.from({length:12},(_,i)=>'<option value="'+i+'" '+(i===selected?'selected':'')+'>'+(i===0?'الحالي':i===1?'السابق':'قبل '+i+' أسابيع')+'</option>').join('')+'</select></label>'+
  '<p class="hint">تُحتسب الأوجه المميزة من السجلات المعتمدة فقط. لا نحسب عدد مرات التسميع إنجازات إضافية.</p>'+
  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'+tiles.map(t=>'<div style="padding:10px;background:var(--parch-2);border-radius:10px"><small style="display:block;color:var(--muted)">'+t[0]+'</small><b>'+t[1]+'</b></div>').join('')+'</div>'+
- (x.shortfall===null?'<p class="hint">لم تكن أهداف الأسابيع السابقة مؤرشفة؛ لذلك لا يمكن الجزم بعدد الأوجه المتأخرة عن خطتها الأصلية.</p>':
+ (x.shortfall===null?'<p class="hint">لا يوجد هدف أسبوعي مؤرشف لهذا الأسبوع؛ تُعرض الإنجازات وحدها دون افتراض هدف سابق.</p>':
  x.shortfall?'<p class="hint">المتبقي من هدف هذا الأسبوع: '+x.shortfall+' وجهًا. لا توجد قائمة مواضع محفوظة لهذا المتبقي، فلا تُنسب أوجه بعينها إليه.</p>':'<p class="hint">اكتمل هدف الحفظ الجديد للأسبوع بحسب السجل.</p>')+
- '<p class="hint">يمكن معرفة حجم عدم الإنجاز من الهدف المحفوظ حاليًا، لكن سبب التعثر غير مسجل؛ لذلك لا يُفترض سبب محدد.</p></details>';
+ '<p class="hint">تُحفظ أهداف الأسابيع من تاريخ بدء الأرشفة فقط؛ وتحتفظ الخطة بتعديلات هدف الأسبوع عند حدوثها، ولا تُنشئ أهدافًا افتراضية للماضي.</p></details>';
  host.querySelector('#weeklyHistorySelectV137').onchange=e=>renderWeeklyAchievementV136(+e.target.value);
 }
 function renderStudyPlanSettingsV134(){
@@ -1940,6 +1959,7 @@ function renderStudyPlanSettingsV134(){
   if(!Number.isInteger(pages)||pages<1||pages>20){document.getElementById('studyPlanMsgV134').textContent='حددي نصاب حفظ بين 1 و20 وجهًا';return;}
   const weekly=Number(document.getElementById('studyWeeklyGoalV135').value);
   if(!Number.isInteger(weekly)||weekly<0||weekly>80){document.getElementById('studyPlanMsgV134').textContent='حددي هدفًا أسبوعيًا بين 0 و80 وجهًا';return;}
+  archiveWeeklyGoalV138(weekly,true);
   S.weeklyMemGoal=weekly;
   S.goal=S.goal||{};S.goal.pages=pages;
   S.reviewDailyCapacity=+document.getElementById('studyCapacityV134').value;
