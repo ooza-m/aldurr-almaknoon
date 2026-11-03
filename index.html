@@ -596,6 +596,35 @@ main{padding-top:0!important}
 .gate .g-skip{color:var(--ink-2)}
 @media(max-width:390px){#stageModal .modal .row{grid-template-columns:minmax(0,1fr)}.modal-bg .modal{max-height:86dvh}#stageModal .modal #stReorder>div{gap:6px!important}}
 
+
+/* v90 · توحيد النوافذ والحقول على الهاتف دون تعديل منطق الحسابات */
+:root{--dialog-radius:22px}
+.modal-bg{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);overscroll-behavior:contain}
+.modal-bg.open{overflow-y:auto}
+.modal-bg .modal{box-sizing:border-box;min-width:0;max-width:min(100%,480px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);margin:auto;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;border-radius:var(--dialog-radius);padding:27px 19px 22px;box-shadow:0 16px 50px rgba(40,27,37,.13);background:var(--parch,#fcfaf6)}
+.modal-bg .modal,.modal-bg .modal *{box-sizing:border-box}
+.modal-bg .modal h3{padding-inline-start:44px;margin:0 0 7px;line-height:1.55;font-weight:700}
+.modal-bg .modal .msub{line-height:1.75;margin:0 0 18px;overflow-wrap:anywhere}
+.modal-bg .modal .field{min-width:0;margin-bottom:15px}
+.modal-bg .modal .field label{display:block;max-width:100%;margin-bottom:7px;font-weight:600;font-size:.87rem}
+.modal-bg .modal input:not([type=checkbox]):not([type=radio]),.modal-bg .modal select,.modal-bg .modal textarea{box-sizing:border-box;display:block;width:100%;max-width:100%;min-width:0;min-height:45px;border:1px solid rgba(94,58,77,.17);border-radius:13px;padding:10px 12px;background:#fffcf9;color:var(--ink);font:inherit;font-size:16px;text-align:start;direction:rtl}
+.modal-bg .modal input[type=date],.modal-bg .modal input[type=number]{font-variant-numeric:tabular-nums}
+.modal-bg .modal button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.modal-bg .modal .modal-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:17px}
+.modal-bg .modal .modal-actions .btn{flex:1 1 125px;min-width:0}
+.modal-bg .modal .modal-x{top:15px;left:14px;width:36px;height:36px}
+#stageModal .modal #stReorder{min-width:0}
+#stageModal .modal #stReorder>div{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}
+#stageModal .modal #stReorder button{width:100%;min-height:43px;line-height:1.5;padding:8px}
+#stageModal .modal #stDeleteWrap button{width:100%;min-height:44px;border-radius:12px}
+.gate .gate-card{box-sizing:border-box;width:100%;max-width:100%;overflow-x:hidden}
+.gate .gate-card .field,.gate .gate-card input{min-width:0;max-width:100%;box-sizing:border-box}
+.gate .gate-card input{width:100%;font-size:16px;text-align:start}
+.gate .gate-card button{min-height:44px}
+#studyPlanSettingsV134 details{min-width:0}
+#studyPlanSettingsV134 select{white-space:normal;text-overflow:ellipsis}
+@media(max-width:390px){.modal-bg .modal{padding:24px 15px 18px}.modal-bg .modal h3{font-size:1.05rem}#stageModal .modal #stReorder>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
