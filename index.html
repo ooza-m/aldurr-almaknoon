@@ -2106,6 +2106,48 @@ async function drawTarteelVerseHistoryV142(host){
    '<p class="hint">لا تُدمج هذه الأعداد مع سجل الأخطاء المؤكدة ولا تُستخدم لتغيير درجة الإتقان أو جدول المراجعة.</p>';
  }catch(e){if(target.isConnected)target.textContent='تعذّرت قراءة سجل ترتيل المحلي: '+(e?.message||'خطأ غير معروف');}
 }
+let focusedVersePageIndexPromiseV144=null;
+function focusedVersePageIndexV144(){
+ if(focusedVersePageIndexPromiseV144)return focusedVersePageIndexPromiseV144;
+ focusedVersePageIndexPromiseV144=fetch('data/mushaf-data.json').then(response=>{
+  if(!response.ok)throw Error('تعذّر تحميل فهرس صفحات المصحف');
+  return response.json();
+ }).then(data=>{
+  const index=new Map();
+  for(let page=1;page<=604;page++){
+   const segments=data.pages?.[String(page)]?.s;
+   if(!Array.isArray(segments))continue;
+   for(const seg of segments){
+    const sid=+seg.id,from=+seg.vs,to=+seg.ve;
+    if(!Number.isInteger(sid)||sid<1||sid>114||!Number.isInteger(from)||!Number.isInteger(to)||to<from)continue;
+    for(let ayah=from;ayah<=to;ayah++){
+     const vk=sid+':'+ayah,found=index.get(vk)||[];
+     if(!found.includes(page))found.push(page);
+     index.set(vk,found);
+    }
+   }
+  }
+  if(index.size<6000)throw Error('فهرس الآيات غير مكتمل');
+  return index;
+ }).catch(error=>{focusedVersePageIndexPromiseV144=null;throw error;});
+ return focusedVersePageIndexPromiseV144;
+}
+async function locateFocusedVerseV144(vk){
+ const pages=(await focusedVersePageIndexV144()).get(vk)||[];
+ if(!pages.length)throw Error('هذه الآية غير موجودة في فهرس المصحف المتاح');
+ const item=focusedVerseListV143().find(x=>x.vk===vk);
+ const page=item&&pages.includes(+item.page)?+item.page:pages[0];
+ if(item&&+item.page!==page){item.page=page;save();}
+ return page;
+}
+async function openFocusedVerseV144(vk,button){
+ if(button){button.disabled=true;button.textContent='جارٍ تحديد موضع الآية…';}
+ try{const page=await locateFocusedVerseV144(vk);openMushafAtV50(page,'','',vk);}
+ catch(error){
+  if(button){button.disabled=false;button.textContent='إعادة فتح الآية';}
+  showV51Toast('تعذّر تحديد موضع الآية',error?.message||'راجعي اتصال الإنترنت');
+ }
+}
 function focusedVerseListV143(){
  return Array.isArray(S.focusedVerseReviews)?S.focusedVerseReviews:[];
 }
@@ -2142,11 +2184,11 @@ function renderFocusedVerseReviewsV143(){
  '<b>'+esc(label(x))+'</b><div class="hint">'+(x.status==='done'?'اعتُمدت مراجعتها يدويًا'+(x.completedAt?' · '+esc(keyOf(new Date(x.completedAt))):''):'بانتظار مراجعة الآية')+
  ' · '+(x.hasManualSource?'سجل التطبيق':'')+(x.hasManualSource&&x.hasTarteelSource?'، ':'')+(x.hasTarteelSource?'سجل ترتيل التاريخي':'')+'</div>'+
  '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">'+
- (x.page?'<button type="button" class="btn btn-ghost btn-sm" data-focused-open-v143="'+esc(x.vk)+'">فتح الآية في المصحف</button>':'<small class="hint">الوجه غير محدد؛ افتحي موضع الآية من فهرس المصحف.</small>')+
+ '<button type="button" class="btn btn-ghost btn-sm" data-focused-open-v143="'+esc(x.vk)+'">فتح الآية في المصحف</button>'+
  (x.status==='done'?'<button type="button" class="btn btn-ghost btn-sm" data-focused-action-v143="reopen" data-focused-vk-v143="'+esc(x.vk)+'">إعادة للمراجعة</button>':'<button type="button" class="btn btn-primary btn-sm" data-focused-action-v143="done" data-focused-vk-v143="'+esc(x.vk)+'">اعتماد مراجعة الآية</button>')+
  '<button type="button" class="btn btn-ghost btn-sm" data-focused-action-v143="remove" data-focused-vk-v143="'+esc(x.vk)+'">إزالة</button></div></div>';
  host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">قائمة المراجعة المركّزة · '+pending.length+' معلّقة</summary>'+
- '<p class="hint">اختاري الآيات من تحليل الأخطاء. لا تعتمد مراجعة الآية تلقائيًا عند فتحها، ولا تُحتسب مراجعة وجه كامل ضمن النصاب اليومي.</p>'+
+ '<p class="hint">اختاري الآيات من تحليل الأخطاء؛ يُحدَّد وجه الآية من فهرس مصحف المدينة عند فتحها، حتى لو لم يتضمن السجل المستورد رقم الوجه. لا تُعتمد المراجعة عند الفتح ولا تُحتسب مراجعة وجه كامل.</p>'+
  (pending.length?pending.map(card).join(''):'<p class="hint">لا توجد آيات معلّقة. أضيفي موضعًا من تحليل الأخطاء.</p>')+
  (done.length?'<details style="margin-top:10px"><summary>آيات تمت مراجعتها · '+done.length+'</summary>'+done.slice(-30).reverse().map(card).join('')+'</details>':'')+
  '</details>';
@@ -2287,7 +2329,7 @@ document.addEventListener('click',e=>{
   const change=e.target.closest('[data-focused-action-v143]');
   if(change){changeFocusedVerseV143(change.dataset.focusedVkV143,change.dataset.focusedActionV143);renderFocusedVerseReviewsV143();return;}
   const openFocused=e.target.closest('[data-focused-open-v143]');
-  if(openFocused){const item=focusedVerseListV143().find(x=>x.vk===openFocused.dataset.focusedOpenV143);if(item?.page)openMushafAtV50(item.page,'read','',item.vk);return;}
+  if(openFocused){openFocusedVerseV144(openFocused.dataset.focusedOpenV143,openFocused);return;}
   const face=e.target.closest('[data-open-face-v140]');if(face){openPage(+face.dataset.openFaceV140);return;}
   const ss=e.target.closest('[data-v60-session]');if(ss){startTaskSessionV60(ss.dataset.v60Session);return;}
   const rt=e.target.closest('[data-v50-route]');if(rt){switchTab(rt.dataset.v50Route);return;}
