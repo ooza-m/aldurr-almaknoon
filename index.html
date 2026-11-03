@@ -1288,9 +1288,23 @@ window.FIREBASE_CONFIG = {
     <div class="field"><label>الوجه <span style="color:var(--clay)">*</span></label><input type="number" dir="ltr" inputmode="numeric" id="erPage" min="1" max="604" placeholder="يُعبّأ تلقائيًا عند اختيار السورة"></div>
   </div>
   <div class="field"><label>رقم الآية (اختياري)</label><input type="number" dir="ltr" inputmode="numeric" id="erAyah" min="1" placeholder="مثال: 12"></div>
-  <div class="field"><label>نوع الخطأ</label><select id="erType">
-    <option>تردّد / نسيان</option><option>خطأ في الحفظ (كلمة)</option><option>خطأ في الآية</option>
-    <option>تشابه (التبس بموضع آخر)</option><option>خطأ تجويد</option><option>أخرى</option>
+  <div class="field"><label for="erType">نوع الخطأ</label><select id="erType">
+    <optgroup label="الحفظ والاستحضار">
+      <option value="نسيان">نسيان</option>
+      <option value="تردّد">تردّد</option>
+      <option value="سقط كلمة أو عبارة">سقط كلمة أو عبارة</option>
+      <option value="سقط آية">سقط آية</option>
+      <option value="زيادة">زيادة</option>
+      <option value="استبدال كلمة">استبدال كلمة</option>
+      <option value="تقديم أو تأخير">تقديم أو تأخير</option>
+      <option value="تشابه المواضع">تشابه المواضع</option>
+    </optgroup>
+    <optgroup label="ضبط التلاوة">
+      <option value="تشكيل أو حركة">تشكيل أو حركة</option>
+      <option value="تجويد">تجويد</option>
+      <option value="وقف أو ابتداء">وقف أو ابتداء</option>
+    </optgroup>
+    <optgroup label="أخرى"><option value="أخرى">أخرى</option></optgroup>
   </select></div>
   <div class="field"><label>الوصف (اختياري)</label><input type="text" id="erDesc" placeholder="تفصيل مختصر يساعدك على تذكّر الموضع"></div>
   <div class="field"><label>التاريخ</label><input type="date" id="erDate"></div>
@@ -2208,7 +2222,7 @@ function verseErrorAnalysisV141(){
   const g=groups.get(key),page=+e.page;
   if(!g.page&&Number.isInteger(page)&&page>=1&&page<=604)g.page=page;
   if(e.archived)g.archived++;else g.active++;
-  const type=String(e.type||'غير مصنف');
+  const type=errorGroupV100(e)+' · '+String(e.type||'غير مصنف');
   g.types.set(type,(g.types.get(type)||0)+1);
   // Count distinct recorded findings, not duplicate renders of the same session/word.
   g.instances.add(e.sessionId&&e.wordIndex!=null?String(e.sessionId)+'|'+String(e.wordIndex)+'|'+type:String(e.date||'')+'|'+String(e.desc||'')+'|'+type+'|'+String(g.instances.size));
@@ -3362,6 +3376,19 @@ function updateFaceErrorSummaryV99(page){
  const count=document.querySelector('#pmQuickV97 span:last-child b');
  if(count)count.textContent=toAr(active);
 }
+/* v100 · التصنيفات الجديدة للعرض والتحليل، دون تغيير نص السجل القديم */
+const ERROR_GROUPS_V100={
+ 'نسيان':'الحفظ والاستحضار','تردّد':'الحفظ والاستحضار','سقط كلمة أو عبارة':'الحفظ والاستحضار','سقط آية':'الحفظ والاستحضار',
+ 'زيادة':'الحفظ والاستحضار','استبدال كلمة':'الحفظ والاستحضار','تقديم أو تأخير':'الحفظ والاستحضار','تشابه المواضع':'الحفظ والاستحضار',
+ 'تشكيل أو حركة':'ضبط التلاوة','تجويد':'ضبط التلاوة','وقف أو ابتداء':'ضبط التلاوة',
+ 'تردّد / نسيان':'الحفظ والاستحضار','خطأ في الحفظ (كلمة)':'الحفظ والاستحضار',
+ 'خطأ في الآية':'الحفظ والاستحضار','تشابه (التبس بموضع آخر)':'الحفظ والاستحضار','خطأ تجويد':'ضبط التلاوة',
+ 'أخرى':'أخرى'
+};
+function errorGroupV100(e){
+ const type=String(e?.type||'').trim();
+ return ERROR_GROUPS_V100[type]||'غير مصنّف';
+}
 function renderPageErrors(p){
  const box=document.getElementById('pmErrors');if(!box)return;
  const visible=(S.errors||[]).filter(e=>+e.page===+p&&(curPageSurah==null||e.surahId===curPageSurah||e.surahId==null));
@@ -3371,7 +3398,7 @@ function renderPageErrors(p){
    desc=e.desc?'<div class="pm-error-desc-v99">'+esc(e.desc)+'</div>':'',
    date=e.date?'<small>'+esc(e.date)+'</small>':'';
   return '<div class="pm-error-row-v99'+(arch?' archived':'')+'">'+
-   '<div><b>'+loc+'</b><span>'+esc(e.type||'غير مصنف')+'</span>'+desc+date+'</div>'+
+   '<div><b>'+loc+'</b><span>'+esc(errorGroupV100(e))+' · '+esc(e.type||'غير مصنف')+'</span>'+desc+date+'</div>'+
    '<button type="button" class="btn btn-ghost btn-sm" data-face-error-v99="'+(arch?'restore':'archive')+'" data-face-error-index-v99="'+idx+'">'+(arch?'استعادة':'تم إتقانه')+'</button></div>';
  };
  box.innerHTML=(active.length?active.map(e=>errorCard(e,false)).join(''):'<p class="hint">لا أخطاء نشطة في هذا الوجه.</p>')+
@@ -4113,7 +4140,7 @@ document.getElementById('erSave').addEventListener('click',()=>{
   if(pages&&(page<pages[0]||page>pages[1])){error('الوجه المحدد لا يقع ضمن نطاق السورة المختارة.');return;}
   if(rawAyah!==''&&(!Number.isInteger(ayah)||ayah<1)){error('أدخلي رقم آية صحيحًا أو اتركي الحقل فارغًا.');return;}
   const e={surah:sur[1],surahId:surId,page,ayah,verseKey:ayah?surId+':'+ayah:null,
-    source:'manual',type:document.getElementById('erType').value,
+    source:'manual',type:document.getElementById('erType').value,errorGroup:errorGroupV100({type:document.getElementById('erType').value}),
     desc:val('erDesc'),date:document.getElementById('erDate').value||todayKey()};
   S.errors.push(e);S.errors.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   if(S.pages[e.page]==='solid')S.pages[e.page]='review';
