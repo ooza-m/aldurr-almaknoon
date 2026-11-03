@@ -4095,7 +4095,7 @@ document.getElementById('erSave').addEventListener('click',()=>{
   if(!Number.isInteger(page)||page<1||page>604){error('أدخلي رقم وجه صحيحًا بين 1 و604.');return;}
   const pages=pagesOfSurah(surId);
   if(pages&&(page<pages[0]||page>pages[1])){error('الوجه المحدد لا يقع ضمن نطاق السورة المختارة.');return;}
-  if(rawAyah!==''&&(!Number.isInteger(ayah)||ayah<1||ayah>sur[3])){error('راجعي رقم الآية في السورة المختارة.');return;}
+  if(rawAyah!==''&&(!Number.isInteger(ayah)||ayah<1)){error('أدخلي رقم آية صحيحًا أو اتركي الحقل فارغًا.');return;}
   const e={surah:sur[1],surahId:surId,page,ayah,verseKey:ayah?surId+':'+ayah:null,
     source:'manual',type:document.getElementById('erType').value,
     desc:val('erDesc'),date:document.getElementById('erDate').value||todayKey()};
