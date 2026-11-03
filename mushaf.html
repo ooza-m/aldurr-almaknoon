@@ -1020,11 +1020,12 @@ async function doSearch(q){
 const HLC=['#E3A9B6','#DDE6D4','#DBDEEF','#F0D8DE','#EAD9B0'];
 let ayCur='';
 function buildHlRow(){
-  const r=$('hlRow');
-  const cur=hlMap.get(ayCur)||'';
-  r.innerHTML=HLC.map(c=>`<button class="${cur===c?'on':''}" style="background:${c}" data-c="${c}" aria-label="وضع فاصل ملون"></button>`).join('')
-    +`<button class="clear${cur?'':' on'}" data-c="" aria-label="إزالة الفاصل"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M6.5 6.5l11 11"/></svg></button>`;
-  r.querySelectorAll('button').forEach(b=>b.onclick=()=>toggleHl(ayCur,b.dataset.c));
+ const r=$('hlRow'),cur=hlMap.get(ayCur)||'';
+ r.innerHTML=HLC.map(c=>{
+  const taken=[...hlMap].some(([vk,color])=>vk!==ayCur&&String(color).toLowerCase()===c.toLowerCase());
+  return `<button class="${cur===c?'on':''}${taken?' hl-unavailable':''}" style="background:${c}" data-c="${c}" ${taken?'disabled aria-disabled="true"':''} aria-label="${taken?'اللون مشغول بفاصل آخر':cur===c?'لون الفاصل الحالي':'اختيار لون الفاصل'}" title="${taken?'اللون مستخدم؛ أزيلي فاصلَه السابق أولًا':'اختيار لون الفاصل'}"></button>`;
+ }).join('')+`<button class="clear${cur?'':' on'}" data-c="" aria-label="إزالة الفاصل"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M6.5 6.5l11 11"/></svg></button>`;
+ r.querySelectorAll('button').forEach(b=>b.onclick=()=>toggleHl(ayCur,b.dataset.c));
 }
 async function openAyah(vk){
   closeSheets();ayCur=vk;const[si,ai]=vk.split(':');window.getSelection()?.removeAllRanges();
@@ -1453,7 +1454,7 @@ function payloadForContextV86(ctx){
  const pages=s.pages||[],findings=s.findings||[];s.summary={pages:pages.length,completedPages:pages.filter(p=>p.complete).length,wordsTotal:pages.reduce((n,p)=>n+p.wordsTotal,0),wordsCovered:pages.reduce((n,p)=>n+p.wordsCovered,0),errors:pages.reduce((n,p)=>n+p.errorCount,0),uncertain:findings.filter(f=>!f.automatic&&f.userConfirmed!==true).length,mutashabih:findings.filter(f=>f.type==='mutashabih_jump').length,recallSuccess:s.recall?pages.some(p=>p.recallSuccess):null,score:pages.length?Math.round(pages.reduce((n,p)=>n+p.score,0)/pages.length):0};return JSON.parse(JSON.stringify(s));
 }
 function renderRecJobsV86(entries){
- const button=$('recJobStatus');if(!button)return;const processing=entries.filter(j=>j.status==='processing').length,latest=entries.at(-1);button.hidden=!latest;button.textContent=processing?'جارٍ تحليل '+ARA(processing)+' جلسة في الخلفية · يمكنك متابعة المصحف':latest?.status==='complete'?'اكتمل تحليل التسميع · عرض النتيجة':'حُفظت الجلسة بتحليل غير مكتمل · عرض التفاصيل';
+ const button=$('recJobStatus');if(!button)return;const processing=entries.filter(j=>j.status==='processing').length,latest=entries.at(-1);button.hidden=processing===0;button.textContent=processing?'جارٍ تحليل '+ARA(processing)+' جلسة':'';
 }
 const recJobsV86=new DurrRecitationJobs.Jobs({storage:localStorage,onChange:renderRecJobsV86,timeout:45000});
 $('recJobStatus')?.addEventListener('click',()=>{const job=recJobsV86.latest();if(job?.status==='processing')recTip('التحليل يعمل في الخلفية؛ يمكنك متابعة القراءة والتنقّل.');else if(job)showRecSummary(job.payload);});
@@ -2070,6 +2071,7 @@ $('ayPlayTo').onclick=()=>openAudioOptions(ayCur,'custom');
 $('ayLib').onclick=()=>{const key=ayCur;openFaceTafsir(tfTab,key,versePage(key));};
 
 function toggleHl(vk,c){
+  if(c&&[...hlMap].some(([other,color])=>other!==vk&&String(color).toLowerCase()===String(c).toLowerCase())){recTip('اللون مستخدم لفاصل آخر؛ أزيلي السابق أولًا.');buildHlRow();return false;}
   if(c)hlMap.set(vk,c);else hlMap.delete(vk);saveHl();
   if(readerToolsV86?.store){const bookmarks=readerToolsV86.store;const entry=bookmarks.items.find(b=>b.vk===vk);if(c){if(!entry){const [sid,ayah]=vk.split(':').map(Number);bookmarks.put(vk,versePage(vk),surahName(sid)+' · آية '+ARA(ayah));}}else if(entry)bookmarks.remove(vk);readerToolsV86.paintBookmarks();}
   [paneCur,panePrev,paneNext].forEach(pn=>pn.querySelectorAll('.qw[data-vk="'+vk+'"]').forEach(w=>{w.classList.remove('lp');w.classList.toggle('hl',!!c);w.style.backgroundColor=c||'';w.style.borderRadius='';}));
