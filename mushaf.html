@@ -191,6 +191,17 @@ body.chrome .chrome-bot{transform:none;opacity:1;pointer-events:auto}
 .ay-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .ay-card{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:15px 12px;cursor:pointer;font-family:inherit;color:var(--ink);font-weight:600;font-size:.94rem;transition:transform .12s}
 .ay-card:active{transform:scale(.96)}
+/* v93 · أدوات الآية متوازنة، والأيقونة لا تزاحم النص العربي */
+#ayahWrap .ay-3col{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#ayahWrap .ay-3col .ay-card{min-width:0;min-height:74px;padding:9px 4px;display:flex;flex-direction:column;gap:5px;font-size:.76rem;line-height:1.3;white-space:normal;text-align:center}
+#ayahWrap .ay-3col .ay-card svg{width:21px;height:21px;flex:none}
+#ayahWrap .ay-2col .ay-card{min-width:0;min-height:49px;padding:9px 7px;font-size:.8rem;line-height:1.35}
+#ayahWrap .ay-card.ay-wide{min-width:0;min-height:48px;padding:11px 13px;font-size:.83rem}
+#ayahWrap .ay-sec{margin-block:19px 10px}
+#ayahWrap .ay-hl{gap:6px;align-items:center;justify-content:space-between}
+#ayahWrap .ay-hl button{width:clamp(32px,11vw,42px);height:clamp(32px,11vw,42px);flex:0 1 auto;min-width:0}
+#ayahWrap #ayNote{display:none!important}
+
 .ay-card svg{width:20px;height:20px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .ay-card.ay-wide{width:100%;justify-content:flex-start}
 .ay-card.ay-wide .chev{margin-inline-start:auto;color:var(--muted-2);stroke:var(--muted-2)}
@@ -530,8 +541,8 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
       <div class="ay-sec">المشاركة</div>
       <div class="ay-3col">
         <button class="ay-card" id="ayShare"><svg viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg><span>مشاركة</span></button>
-        <button class="ay-card" id="ayDl"><svg viewBox="0 0 24 24"><path d="M12 4v12M8 12l4 4 4-4"/><path d="M5 20h14"/></svg></button>
-        <button class="ay-card" id="ayCopy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
+        <button class="ay-card" id="ayDl" aria-label="تنزيل نص الآية"><svg viewBox="0 0 24 24"><path d="M12 4v12M8 12l4 4 4-4"/><path d="M5 20h14"/></svg><span>تنزيل</span></button>
+        <button class="ay-card" id="ayCopy" aria-label="نسخ نص الآية"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>نسخ</span></button>
       </div>
 
       <button type="button" class="ay-card ay-wide" id="ayBookmark" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>وضع فاصل عند الآية</span></button>
