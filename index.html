@@ -625,6 +625,9 @@ main{padding-top:0!important}
 #studyPlanSettingsV134 select{white-space:normal;text-overflow:ellipsis}
 @media(max-width:390px){.modal-bg .modal{padding:24px 15px 18px}.modal-bg .modal h3{font-size:1.05rem}#stageModal .modal #stReorder>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+/* v94 · أشرطة التقدّم تنمو من اليمين إلى اليسار، دون عكس دوائر الإنجاز */
+.juz-prog .pbar,.v60-mini-progress{direction:rtl;text-align:right}
+.juz-prog .pbar>i,.v60-mini-progress>i{display:block;margin-right:0;margin-left:auto;transform-origin:right center}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
