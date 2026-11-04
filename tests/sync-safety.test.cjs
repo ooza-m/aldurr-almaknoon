@@ -126,3 +126,25 @@ test('manual-only recitation results never receive a fabricated numeric score',(
  assert.match(html,/const ratedPages=donePages\.filter\(p=>Number\.isFinite\(\+p\.score\)&&p\.manualConfirmed!==true\)/);
  assert.match(html,/لا يوجد تقييم رقمي؛ الاعتماد يدوي/);
 });
+
+test('daily task launch resumes a matching unfinished plan and respects completed faces',()=>{
+ assert.match(html,/const resumable=previous&&previous\.task===taskId&&previous\.date===todayKey\(\)/);
+ assert.match(html,/const lastPage=resumable\?\+previous\.pages\[\+previous\.pos\]:0/);
+ assert.match(html,/pages\.findIndex\(p=>p>=lastPage\)/);
+ assert.match(html,/resume\?'استئناف الجلسة'/);
+});
+test('mushaf preserves incomplete session position without auto-crediting faces',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const mushaf=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(mushaf,/if\(planCompleted===true\)\{ACTIVE_TASK_SESSION=null/);
+ assert.match(mushaf,/if\(!ACTIVE_TASK_SESSION\|\|!recMode\)\{chip\.classList\.remove\('on'\);return;\}/);
+ assert.match(mushaf,/p\.complete=false;p\.manualConfirmed=false/);
+ assert.match(mushaf,/saveReviewDraftV119\(payload\)/);
+});
+test('task page transition does not mark position advanced until next page opens',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const mushaf=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(mushaf,/settle\(next\)\.then\(\(\)=>\{if\(recMode&&cur===next\)/);
+ assert.match(mushaf,/ACTIVE_TASK_SESSION\.pos=i\+1/);
+ assert.match(mushaf,/وصلتِ إلى آخر وجه · اعتمدي الأوجه التي أتممتِها/);
+});
