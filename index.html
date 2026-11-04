@@ -1902,6 +1902,7 @@ function uniqueRecitationSessionsV163(sessions){
   const prev=map.get(session.id);
   if(!prev){map.set(session.id,session);continue;}
   if(prev.userReviewed!==true&&session.userReviewed===true){map.set(session.id,session);continue;}
+  if(prev.userReviewed!==true&&session.localDraftV163===true&&prev.localDraftV163!==true){map.set(session.id,session);continue;}
   // مراجعتان مختلفتان بالمعرّف نفسه لا تُجمعان ولا تُحتسبان مرتين.
  }
  return [...map.values(),...unidentified];
@@ -1914,16 +1915,25 @@ function recitationSessionStatusV163(session){
  if(['new','fix','near','far'].includes(session?.task))return{key:'draft',label:'غير معتمدة',confirmed:0,total:pages.length};
  return{key:'follow',label:'متابعة فقط',confirmed:0,total:pages.length};
 }
+function localReviewDraftsV163(){
+ try{
+  const raw=JSON.parse(localStorage.getItem('durr-review-draft-v119')||'[]');
+  return (Array.isArray(raw)?raw:[raw]).filter(x=>x&&typeof x.id==='string'&&x.id&&x.userReviewed!==true)
+   .map(x=>({...x,localDraftV163:true}));
+ }catch(_){return[];}
+}
 function renderRecitationLedgerV163(){
  const target=document.getElementById('recitationLedgerV163');if(!target)return;
- const all=uniqueRecitationSessionsV163(S.recitationSessions||[]).sort((a,b)=>(b.endedAt||b.startedAt||0)-(a.endedAt||a.startedAt||0));
+ const drafts=localReviewDraftsV163();
+ const all=uniqueRecitationSessionsV163([...(S.recitationSessions||[]),...drafts])
+  .sort((a,b)=>(b.endedAt||b.startedAt||0)-(a.endedAt||a.startedAt||0));
  const statusLabel={approved:'معتمدة',partial:'اعتماد جزئي',draft:'غير معتمدة',follow:'متابعة فقط'};
  const groups={approved:0,partial:0,draft:0,follow:0};
  for(const session of all)groups[recitationSessionStatusV163(session).key]++;
  const status=target.dataset.statusV163||'all',show=all.filter(s=>status==='all'||recitationSessionStatusV163(s).key===status).slice(0,40);
  const options=[['all','الكل'],['approved','معتمدة'],['partial','جزئية'],['draft','مسودات'],['follow','متابعة فقط']];
  target.innerHTML='<div class="v67-card-title"><div><span>سجل الجلسات</span><b>التسميع والمتابعة</b></div><strong>'+toAr(all.length)+'</strong></div>'+
-  '<p class="hint" style="margin:5px 0 10px">المتابعة الصوتية لا تُعادل اعتماد الحفظ. تعرض القائمة أحدث 40 جلسة من التصنيف المحدد؛ ولا تُحتسب الجلسة مرتين إذا تكرر معرّفها.</p>'+
+  '<p class="hint" style="margin:5px 0 10px">المتابعة الصوتية لا تُعادل اعتماد الحفظ. تعرض القائمة أحدث 40 جلسة من التصنيف المحدد؛ ولا تُحتسب الجلسة مرتين إذا تكرر معرّفها. مسودات الاعتماد المحلية محفوظة على هذا الجهاز فقط.</p>'+
   '<div role="group" aria-label="تصفية جلسات التسميع" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">'+
   options.map(([id,label])=>'<button type="button" data-recitation-status-v163="'+id+'" aria-pressed="'+(status===id)+'" class="btn btn-ghost btn-sm" style="font-size:.72rem;'+(status===id?'border-color:var(--accent);':'')+'">'+label+(id==='all'?'':(' '+toAr(groups[id])))+'</button>').join('')+'</div>'+
   (show.length?show.map(s=>{
@@ -1934,7 +1944,7 @@ function renderRecitationLedgerV163(){
    const faces=(s.pages||[]).map(p=>+p.page).filter(p=>Number.isInteger(p)&&p>=1&&p<=604);
    return '<div style="padding:9px 0;border-top:1px solid var(--line);display:grid;gap:4px">'+
     '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b style="font-size:.8rem">'+esc(task)+'</b><span class="hint">'+esc(result.label)+'</span></div>'+
-    '<div class="hint">'+esc(when)+' · '+toAr(result.confirmed)+' من '+toAr(result.total)+' وجه معتمد'+(faces.length?' · الأوجه: '+faces.map(toAr).join('، '):'')+'</div></div>';
+    '<div class="hint">'+esc(when)+(s.localDraftV163?' · مسودة على هذا الجهاز':'')+' · '+toAr(result.confirmed)+' من '+toAr(result.total)+' وجه معتمد'+(faces.length?' · الأوجه: '+faces.map(toAr).join('، '):'')+'</div></div>';
   }).join(''):'<p class="hint">لا توجد جلسات في هذا التصنيف.</p>');
 }
 document.getElementById('statsV67')?.addEventListener('click',event=>{
