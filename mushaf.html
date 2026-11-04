@@ -1389,6 +1389,7 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
    }
  }
  if(active){
+   if(!DURR_FOLLOW_ONLY_V1){
    ctx.session.suspectedFindings=ctx.session.suspectedFindings||[];
    for(const [key,c] of sec.tracker.pendingErrors){
      if(Date.now()-c.at>5000)continue;
@@ -1396,6 +1397,7 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
      const item={key,page,expected:c.expected,heard:c.heard,type:c.type,unverified:true};
      if(at>=0)ctx.session.suspectedFindings[at]=item;
      else if(ctx.session.suspectedFindings.length<80)ctx.session.suspectedFindings.push(item);
+   }
    }
  }
  // Keep type-specific visual styling on a revealed error immediately.
@@ -1846,26 +1848,10 @@ function previewSpeechV84(txt){
  clearSpeechPreview();if(!recOn||!recMode)return;const ctx=ensureRecContextV86(),sec=ctx?.sections.get(cur);if(!sec)return;
  if(ctx.session.freeSearch&&!ctx.session.freeLocated){voiceLocatorV89=voiceLocatorV89||new DurrRecitation.Locator(SEARCH);const match=voiceLocatorV89?.locate(txt,{page:cur});if(match){setEngine('live','موضع صوتي محتمل · ننتظر تأكيد الكلمات');}return;}
  const result=sec.tracker.preview(txt);if(!result)return;
- // Interim speech is suitable for navigation hints, never for grading errors.
- // Only advance when the existing tracker is already at the final few words
- // and the interim alignment independently reaches the page's last word.
- if(!recAdvancing&&!recFinishing&&!sec.gateWaiting&&recWords.length>5&&
-    result.end>=recWords.length&&result.strong>=4&&
-    result.ops.filter(o=>o.type==='match'&&o.index>=recWords.length-5).length>=3){
-   clearSpeechPreview();autoAdvance();return;
- }
+ // v159: interim recognition is only a transient position hint. No automatic jump or suspected error.
+ // Quranic repetitions may resemble the ending of another verse until final transcription.
  if(!sec.tracker.located)sec.words.slice(0,result.start).forEach(w=>{w.el.classList.add('rec-preview');recPreviewWords.push(w.el);});
- // Show provisional omissions from interim text as a dotted amber hint.
- // These are never saved, sounded, or used in completion grading.
- for(let i=0;i<result.ops.length;i++){
-   const op=result.ops[i];
-   if(op.type!=='omit'||!op.word?.el)continue;
-   const anchors=result.ops.slice(i+1).filter(x=>x.type==='match'&&x.similarity>=.99).length;
-   if(anchors<2)continue;
-   op.word.el.classList.add('rec-preview-suspected');
-   recPreviewWords.push(op.word.el);
- }
- const stop=Math.min(Infinity,...result.ops.filter(o=>o.type==='omit').map(o=>o.index),...(sec.gateWaiting?[...sec.gate.deadlines.keys()].map(key=>sec.tracker.errors.get(key)?.index??Infinity):[]));
+ const stop=Math.min(Infinity,...result.ops.filter(o=>o.type==='omit').map(o=>o.index));
  for(const op of result.ops)if(op.word&&op.type==='match'&&op.index<stop){const el=sec.seq[op.word.seqIndex]?.el;if(el){el.classList.add('rec-preview');recPreviewWords.push(el);}}
 }
 function processSpeech(txt){clearSpeechPreview();processTranscriptV73(txt,'browser-speech',{});}
@@ -1938,6 +1924,8 @@ function stopRec(){
   if(recOn&&recT0)recElapsedMsV158+=Math.max(0,Date.now()-recT0);
   recOn=false;recT0=0;syncRecMicV89();document.body.classList.remove('rec-on');clearInterval(recTimerH);tickTimer();
   const speechPending=stopSpeech();
+  // A word fragment before a pause is not evidence about what follows the pause.
+  for(const ctx of recContexts.values())for(const sec of ctx.sections.values())if(sec.tracker)sec.tracker.pending='';
   recStream&&recStream.getTracks().forEach(t=>t.stop());recStream=null;
   return Promise.all([speechPending]);
 }
