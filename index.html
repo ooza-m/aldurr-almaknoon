@@ -1779,7 +1779,8 @@ function todayLogV50(){return S.logs.find(l=>l.date===todayKey())||{};}
 function rangeSetV50(items,filter){const set=new Set();(items||[]).filter(x=>!filter||filter(x)).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)set.add(p);});return set;}
 /* v149 · اعتماد الوجه مستقل عن تغطية التتبّع الصوتي. */
 function approvedRecitationFaceV149(rs,pg){
- return !!(rs&&pg&&['new','fix','near','far'].includes(rs.task)&&pg.complete===true&&pg.manualConfirmed===true);
+ return !!(rs&&pg&&['new','fix','near','far'].includes(rs.task)&&pg.complete===true&&pg.manualConfirmed===true&&
+   (+rs.version<86||rs.userReviewed===true));
 }
 function firstMemDateMapV50(){const out={};[...S.logs].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(l=>{(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)if(!out[p])out[p]=l.date;});});(S.recitationSessions||[]).filter(x=>x&&x.task==='new').sort((a,b)=>(a.endedAt||0)-(b.endedAt||0)).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now()));(rs.pages||[]).filter(pg=>approvedRecitationFaceV149(rs,pg)).forEach(pg=>{if(!out[pg.page])out[pg.page]=d;});});return out;}
 const NEAR_INTERVALS_V62=[3,7,14],FAR_INTERVALS_V62=[30,60,90,120];
@@ -3425,7 +3426,10 @@ function latestPageResultV62(p,sid){
       if(verses.length)verses.forEach(v=>{total+=+v.totalWords||0;cov+=+v.coveredWords||0;errs+=+v.errorWords||0;assist+=+v.assistedWords||0;});
       else{total=+pg.wordsTotal||0;cov=+pg.wordsCovered||0;errs=+pg.errorCount||0;assist=Math.round((+pg.assistRate||0)*total);}
       if(!total)return;
-      best={date:keyOf(new Date(ts)),ts,coverage:cov/total,score:+pg.score||0,errorCount:errs,assistRate:assist/total,task:rs.task||'free',complete:(cov/total)>=.95&&assist/total<=.35};bestTs=ts;
+      best={date:keyOf(new Date(ts)),ts,coverage:cov/total,spokenCoverage:Math.max(0,cov-assist)/total,
+        score:rs.engine==='follow-along'?null:(+pg.score||0),errorCount:errs,assistRate:assist/total,
+        task:rs.task||'free',complete:approvedRecitationFaceV149(rs,pg),manualConfirmed:approvedRecitationFaceV149(rs,pg),
+        followedOnly:rs.engine==='follow-along'};bestTs=ts;
     });
   });
   return best;
@@ -3437,7 +3441,7 @@ function mapPageMetaV62(p,sid){
   if(first&&eng.phase==='fix'){state='fix';color='var(--gold)';label='تثبيت '+eng.day+'/30';}
   else if(first&&eng.phase==='near'){state='due';color=base.state==='weak'?base.color:'#C89B3C';label='مراجعة قريبة';}
   else if(first&&eng.phase==='far'){state=base.state==='weak'?'weak':'fresh';color=base.color;label='مراجعة بعيدة';}
-  if(partial)label='مراجعة جزئية '+Math.round(res.coverage*100)+'٪';
+  if(partial)label=(res.followedOnly?'متابعة صوتية جزئية ':'مراجعة جزئية ')+Math.round(res.coverage*100)+'٪';
   return{...base,state,color,label,partial,coverage:res?res.coverage:null,result:res,engine:eng,memorized:!!first};
 }
 // لون الجزء حسب متوسّط حالة أوجهه المحفوظة
