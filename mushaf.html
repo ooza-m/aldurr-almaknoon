@@ -1476,6 +1476,18 @@ const recJobsV86=new DurrRecitationJobs.Jobs({storage:localStorage,onChange:rend
 $('recJobStatus')?.addEventListener('click',()=>{const job=recJobsV86.latest();if(job?.status==='processing')recTip('التحليل يعمل في الخلفية؛ يمكنك متابعة القراءة والتنقّل.');else if(job)showRecSummary(job.payload);});
 for(const job of recJobsV86.entries.values())if(job.status==='interrupted')sendSession(job.payload);
 window.addEventListener('pagehide',()=>{
+ // pagehide may terminate async analysis; persist an unapproved recovery draft synchronously.
+ if(recMode&&DURR_FOLLOW_ONLY_V1&&['new','fix','near','far'].includes(REC_RUNTIME_TASK||recSession?.task)){
+  try{
+   const active=ensureRecContextV86();
+   if(active&&!active.finalized){
+    const draft=payloadForContextV86(active);
+    (draft.pages||[]).forEach(pg=>{pg.complete=false;pg.manualConfirmed=false;});
+    draft.userReviewed=false;
+    saveReviewDraftV119(draft);
+   }
+  }catch(e){console.warn('تعذّر حفظ مسودة الإغلاق',e);}
+ }
  if(recMode)finishReciteSession(false);
  for(const ctx of recContexts.values()){
   if(ctx.finalized||recJobsV86.get(ctx.session.id)?.status!=='processing')continue;
@@ -1913,6 +1925,9 @@ function sendSession(payload){
   const key='durr-pending-recitations-v86',pending=JSON.parse(LS(key,'[]'));
   if(!Array.isArray(pending))throw Error('قائمة معلّقة غير صحيحة');
   const index=pending.findIndex(p=>p?.id===payload.id);
+  const old=index>=0?pending[index]:null;
+  // لا تُستبدل النسخة المعتمدة بنسخة أولية متأخرة من الجلسة نفسها.
+  if(old?.userReviewed===true&&payload.userReviewed!==true)return true;
   if(index<0)pending.push(payload);else pending[index]=payload;
   localStorage.setItem(key,JSON.stringify(pending));
   stored=JSON.parse(localStorage.getItem(key)||'[]').some(p=>p?.id===payload.id&&(!payload.userReviewed||p.userReviewed===true));
