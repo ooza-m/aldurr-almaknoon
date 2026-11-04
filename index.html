@@ -1782,14 +1782,14 @@ function approvedRecitationFaceV149(rs,pg){
  return !!(rs&&pg&&['new','fix','near','far'].includes(rs.task)&&pg.complete===true&&pg.manualConfirmed===true&&
    (+rs.version<86||rs.userReviewed===true));
 }
-function firstMemDateMapV50(){const out={};[...S.logs].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(l=>{(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)if(!out[p])out[p]=l.date;});});(S.recitationSessions||[]).filter(x=>x&&x.task==='new').sort((a,b)=>(a.endedAt||0)-(b.endedAt||0)).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now()));(rs.pages||[]).filter(pg=>approvedRecitationFaceV149(rs,pg)).forEach(pg=>{if(!out[pg.page])out[pg.page]=d;});});return out;}
+function firstMemDateMapV50(){const out={};[...S.logs].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(l=>{(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)if(!out[p])out[p]=l.date;});});uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(x=>x&&x.task==='new').sort((a,b)=>(a.endedAt||0)-(b.endedAt||0)).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now()));(rs.pages||[]).filter(pg=>approvedRecitationFaceV149(rs,pg)).forEach(pg=>{if(!out[pg.page])out[pg.page]=d;});});return out;}
 const NEAR_INTERVALS_V62=[3,7,14],FAR_INTERVALS_V62=[30,60,90,120];
 function addDaysKeyV62(k,n){const d=parseKey(k);d.setDate(d.getDate()+n);return keyOf(d);}
 function completeReviewTodayV62(p,day=todayKey()){
   // A completed, explicitly scheduled review may come from the mushaf or manual log.
   // Free recitation alone does not silently complete a scheduled review.
   const valid=new Set(['fix','near','far']);
-  const completedInMushaf=(S.recitationSessions||[]).some(rs=>{
+  const completedInMushaf=uniqueRecitationSessionsV163(S.recitationSessions||[]).some(rs=>{
     if(!valid.has(rs.task))return false;
     const stamp=rs.endedAt||rs.startedAt;
     if(!stamp||keyOf(new Date(stamp))!==day)return false;
@@ -1954,7 +1954,7 @@ document.getElementById('statsV67')?.addEventListener('click',event=>{
  ledger.dataset.statusV163=btn.dataset.recitationStatusV163;
  renderRecitationLedgerV163();
 });
-function recitedPagesTodayV51(task){const set=new Set(),day=todayKey();(S.recitationSessions||[]).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||0));if(d!==day)return;if(task&&rs.task!==task)return;(rs.pages||[]).forEach(pg=>{if(!['ai-review','practice'].includes(rs.task)&&approvedRecitationFaceV149(rs,pg))set.add(+pg.page);});});return set;}
+function recitedPagesTodayV51(task){const set=new Set(),day=todayKey();uniqueRecitationSessionsV163(S.recitationSessions||[]).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||0));if(d!==day)return;if(task&&rs.task!==task)return;(rs.pages||[]).forEach(pg=>{if(!['ai-review','practice'].includes(rs.task)&&approvedRecitationFaceV149(rs,pg))set.add(+pg.page);});});return set;}
 function weeklyStartV138(date=todayKey()){
  const day=new Date(date+'T12:00:00').getDay();
  return addDaysKeyV62(date,-((day+6)%7));
@@ -1985,7 +1985,7 @@ function weeklyMemorizationV135(date=todayKey()){
   const range=x.from!=null&&x.to!=null?[+x.from,+x.to]:pagesOfSurah(+x.surahId);
   if(range)for(let p=Math.max(1,Math.min(...range));p<=Math.min(604,Math.max(...range));p++)addPage(p,log.date);
  }));
- (S.recitationSessions||[]).filter(x=>x.task==='new'&&x.endedAt).forEach(rs=>{
+ uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(x=>x.task==='new'&&x.endedAt).forEach(rs=>{
   const day=keyOf(new Date(rs.endedAt));if(day<start||day>end)return;
   (rs.pages||[]).forEach(pg=>{if(approvedRecitationFaceV149(rs,pg))addPage(pg.page,day);});
  });
@@ -2779,7 +2779,7 @@ function renderTafsirSummaryV67(){
 }
 function newMemPagesSinceV69(days){
   const cut=new Date();cut.setDate(cut.getDate()-days+1);const ck=keyOf(cut),set=new Set();
-  (S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&keyOf(new Date(r.endedAt||r.startedAt||0))>=ck).forEach(r=>(r.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(r,p))set.add(+p.page);}));
+  uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&keyOf(new Date(r.endedAt||r.startedAt||0))>=ck).forEach(r=>(r.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(r,p))set.add(+p.page);}));
   (S.logs||[]).filter(l=>l.date>=ck).forEach(l=>(l.memList||[]).forEach(it=>{const rg=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);if(rg)for(let p=rg[0];p<=rg[1];p++)set.add(p);}));
   return set;
 }
