@@ -33,6 +33,12 @@
    }
    if(!best||best.score<.48)return null;
    if(!located&&candidates.some(c=>Math.abs(c.start-best.start)>2&&c.strong>=best.strong&&c.score>=best.score-.005))return null;
+   // v159: repeated Quranic phrases require a clear positional winner.
+   // Otherwise keep the current cursor until more distinctive words arrive.
+   if(located&&best.start>cursor+8&&best.strong<4)return null;
+   if(located&&candidates.some(c=>Math.abs(c.start-best.start)>8&&
+      c.strong>=best.strong&&c.score>=best.score-.02&&
+      c.rank>=best.rank-.025))return null;
    if(best.strong<2){const exact=best.ops.find(o=>o.type==='match'&&o.similarity>=.99),unique=exact&&source.length===1&&source[0].length>=5&&words.filter(w=>(w.norm||normalize(w.expected))===source[0]).length===1,nearCursor=best.start<=cursor||(m>=2&&best.start===cursor+1);if(!unique&&!(located&&nearCursor&&best.end>=cursor&&best.strong>=1))return null;}
    return best;
  }
@@ -89,7 +95,9 @@
        const key=word.vk+'#'+word.wi;if(this.dismissed.has(key))return;const previous=this.errors.get(key),event={vk:word.vk,wi:word.wi,index:word.index,type:op.type==='omit'?'omission':op.type==='sub'?'substitution':'extra',expected:word.expected,heard:op.heard||'',source,active:true,automatic:true,confidence:Math.min(.97,Math.max(.5,result.score)),confidenceKind:'alignment-not-acoustic',ts:Date.now()};
        if(!previous||!previous.active||previous.type!==event.type||previous.heard!==event.heard){this.errors.set(key,event);this.events.push(event);updates.push(event);}
      });
-     this.cursor=result.end;this.lastResult={...result,ops,initial,oldCursor,updates};return this.lastResult;
+     // Pausing and repeating a previously spoken phrase must not rewind the reading position.
+     this.cursor=initial?result.end:Math.max(oldCursor,result.end);
+     this.lastResult={...result,ops,initial,oldCursor,updates};return this.lastResult;
    }
    reviewWindow(key,{radius=3}={}){
      const candidate=this.pendingErrors.get(key);
