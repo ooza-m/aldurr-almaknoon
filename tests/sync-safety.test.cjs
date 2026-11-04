@@ -107,3 +107,22 @@ test('automatic backup scheduling coalesces repeated saves',()=>{
  assert.match(html,/if\(!hasData\(S\)\|\|backupScheduledV155\)return/);
  assert.match(html,/backupScheduledV155=false;\s*backupCreateV154\('automatic'\)/);
 });
+
+test('Today places its actions ahead of optional analysis without removing the tools',()=>{
+ assert.match(html,/function organizeTodayV156\(\)/);
+ assert.match(html,/priority\.after\(heading\)/);
+ assert.match(html,/heading\.after\(tasks\)/);
+ assert.match(html,/const focus=document\.getElementById\('focusedVerseReviewsV143'\),review=document\.getElementById\('dailyPageQueueV122'\)/);
+ assert.match(html,/details\.id='todayFurtherV156'/);
+ assert.match(html,/body\.appendChild\(el\)/);
+});
+test('legacy memorization analytics use explicit approved face completion',()=>{
+ assert.ok(!html.includes('if(p.complete&&p.coverage>=.95)set.add(+p.page);'));
+ assert.ok(!html.includes('if(p.complete&&p.coverage>=.95)n++;'));
+ assert.ok(!html.includes('if(p.complete&&p.coverage>=.95)donePages.push'));
+ assert.match(html,/if\(approvedRecitationFaceV149\(r,p\)\)set\.add\(\+p\.page\)/);
+});
+test('manual-only recitation results never receive a fabricated numeric score',()=>{
+ assert.match(html,/const ratedPages=donePages\.filter\(p=>Number\.isFinite\(\+p\.score\)&&p\.manualConfirmed!==true\)/);
+ assert.match(html,/لا يوجد تقييم رقمي؛ الاعتماد يدوي/);
+});
