@@ -2803,8 +2803,62 @@ function ingestRecitationSessionV51(raw){if(!raw||!raw.id)return;if(!S.recitatio
 }
 S.activityEvents.push({id:rs.id+':'+p,type:'recitation',date,ts:rs.endedAt||Date.now(),page:p,task,coverage:+(pg.coverage||0),score:pg.manualConfirmed===true?null:(+pg.score||0),complete:approvedRecitationFaceV149(rs,pg)});});save();mirrorFaceLearningV61();refreshV50();showV51Toast('سُجّلت جلسة التسميع تلقائيًا',full+(full===1?' وجه مكتمل':' أوجه مكتملة')+(partial?' · '+partial+' جزئي':'')+(errAdded?' · '+errAdded+' خطأ':'') );}
 window.addEventListener('message',e=>{if(e.origin!==location.origin)return;const d=e.data||{};if(d.type==='durr:recitation-complete')ingestRecitationSessionV51(d.payload);});
-window.addEventListener('storage',event=>{if(event.key==='durr-pending-recitations-v86')consumePendingRecitationV55();if(event.key===DurrReaderUI.BOOKMARK_KEY)refreshV50();});
-function consumePendingRecitationV55(){try{applyErrorDismissalsV86();const all=JSON.parse(localStorage.getItem('durr-pending-recitations-v86')||'[]'),old=localStorage.getItem('durr-pending-recitation');if(old)all.push(JSON.parse(old));for(const payload of all)if(payload?.id)ingestRecitationSessionV51(payload);localStorage.removeItem('durr-pending-recitations-v86');localStorage.removeItem('durr-pending-recitation');}catch(e){console.warn('pending recitation',e);}}
+/* v150 · تسليم آمن لجلسات المصحف: لا تُمسح قائمة الانتظار قبل التحقق من حفظها في السجل. */
+let consumingRecitationsV150=false;
+function persistedRecitationV150(payload){
+ if(!payload?.id)return false;
+ try{
+  const saved=JSON.parse(localStorage.getItem(KEY)||'{}');
+  const row=(saved.recitationSessions||[]).find(x=>x?.id===payload.id);
+  if(!row)return false;
+  // لا تكفي نسخة قديمة غير معتمدة لتأكيد وصول نسخة مُعتمدة.
+  if(payload.userReviewed===true&&row.userReviewed!==true)return false;
+  return true;
+ }catch(_){return false;}
+}
+function consumePendingRecitationV55(){
+ if(consumingRecitationsV150)return;
+ consumingRecitationsV150=true;
+ try{
+  applyErrorDismissalsV86();
+  const queueKey='durr-pending-recitations-v86',legacyKey='durr-pending-recitation';
+  const items=JSON.parse(localStorage.getItem(queueKey)||'[]');
+  if(!Array.isArray(items))throw Error('صيغة قائمة الجلسات المعلّقة غير صحيحة');
+  const legacy=localStorage.getItem(legacyKey);
+  if(legacy){try{items.push(JSON.parse(legacy));}catch(e){console.warn('legacy recitation',e);}}
+  const pending=new Map();
+  for(const item of items){
+   if(!item?.id)continue;
+   const previous=pending.get(item.id);
+   if(!previous||item.userReviewed===true||((item.endedAt||0)>(previous.endedAt||0)))pending.set(item.id,item);
+  }
+  let success=0,failed=0;
+  for(const payload of pending.values()){
+   try{
+    if(!persistedRecitationV150(payload))ingestRecitationSessionV51(payload);
+    if(!persistedRecitationV150(payload)){failed++;continue;}
+    // حذف عنصر واحد بعد التأكد من الحفظ. أعد قراءة القائمة لتجنّب إسقاط جلسة أضافتها صفحة المصحف أثناء التنفيذ.
+    const current=JSON.parse(localStorage.getItem(queueKey)||'[]');
+    if(Array.isArray(current)){
+     const remaining=current.filter(item=>item?.id!==payload.id);
+     if(remaining.length)localStorage.setItem(queueKey,JSON.stringify(remaining));
+     else localStorage.removeItem(queueKey);
+    }
+    if(legacy){const old=JSON.parse(legacy);if(old?.id===payload.id)localStorage.removeItem(legacyKey);}
+    success++;
+   }catch(e){failed++;console.warn('تعذّر دمج الجلسة المعلّقة',payload.id,e);}
+  }
+  if(failed)console.warn('جلسات تسميع تنتظر إعادة المحاولة:',failed);
+ }catch(e){console.warn('pending recitation',e);}
+ finally{consumingRecitationsV150=false;}
+}
+window.addEventListener('storage',event=>{
+ if(event.key==='durr-pending-recitations-v86'||event.key==='durr-pending-recitation')consumePendingRecitationV55();
+ if(event.key===DurrReaderUI.BOOKMARK_KEY)refreshV50();
+});
+window.addEventListener('pageshow',()=>consumePendingRecitationV55());
+window.addEventListener('online',()=>consumePendingRecitationV55());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)consumePendingRecitationV55();});
 
 /* ============ اليوم ============ */
 const TIPS=[
