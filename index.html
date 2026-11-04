@@ -1992,9 +1992,15 @@ function startTaskSessionV60(taskId){
   if(!t)return;
   const pages=(t.pages||[]).filter(p=>p>=1&&p<=604);
   if(!pages.length){showV51Toast('لا يوجد مطلوب متبقٍ',t.label+' مكتمل لليوم');return;}
-  const plan={id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),version:60};
+  // v157: حافظي على موضع الجلسة غير المنتهية عند العودة من المصحف.
+  let previous=null;
+  try{previous=JSON.parse(localStorage.getItem('durr-active-task-session')||'null');}catch(_){}
+  const resumable=previous&&previous.task===taskId&&previous.date===todayKey()&&Array.isArray(previous.pages)&&
+    previous.pages.length&&previous.pages.every(p=>pages.includes(+p))&&Number.isInteger(+previous.pos)&&+previous.pos>=0&&+previous.pos<previous.pages.length;
+  const plan=resumable?{...previous,pages:pages.slice(),pos:Math.min(+previous.pos,pages.length-1)}:
+    {id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),pos:0,version:157};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=89&p='+pages[0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=89&p='+pages[plan.pos||0]+'&mode=recite&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
