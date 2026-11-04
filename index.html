@@ -1893,6 +1893,57 @@ function priorityV50(){
   if(fresh.length){const p=fresh[0],s=surahOfPage(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:'الحفظ الجديد المقرر لليوم',kind:'حفظ',taskId:'new'};}
   const p=lastActivityPageV50();return{page:p,title:'اكتملت مهام الحفظ والمراجعة',sub:'يمكنك متابعة التلاوة أو التفسير من بقية مهام اليوم.',kind:'مكتمل',taskId:'free',complete:true};
 }
+/* v163 · العرض فقط: لا ندمج سجلين بمعرّف واحد ولا نعيد تشغيل آثارهما أثناء الاستعادة. */
+function uniqueRecitationSessionsV163(sessions){
+ const map=new Map(),unidentified=[];
+ for(const session of Array.isArray(sessions)?sessions:[]){
+  if(!session||typeof session!=='object')continue;
+  if(typeof session.id!=='string'||!session.id.trim()){unidentified.push(session);continue;}
+  const prev=map.get(session.id);
+  if(!prev){map.set(session.id,session);continue;}
+  if(prev.userReviewed!==true&&session.userReviewed===true){map.set(session.id,session);continue;}
+  // مراجعتان مختلفتان بالمعرّف نفسه لا تُجمعان ولا تُحتسبان مرتين.
+ }
+ return [...map.values(),...unidentified];
+}
+function recitationSessionStatusV163(session){
+ const pages=Array.isArray(session?.pages)?session.pages:[];
+ const confirmed=pages.filter(p=>approvedRecitationFaceV149(session,p)).length;
+ if(confirmed&&confirmed===pages.length)return{key:'approved',label:'إنجاز معتمد',confirmed,total:pages.length};
+ if(confirmed)return{key:'partial',label:'اعتماد جزئي',confirmed,total:pages.length};
+ if(['new','fix','near','far'].includes(session?.task))return{key:'draft',label:'غير معتمدة',confirmed:0,total:pages.length};
+ return{key:'follow',label:'متابعة فقط',confirmed:0,total:pages.length};
+}
+function renderRecitationLedgerV163(){
+ const target=document.getElementById('recitationLedgerV163');if(!target)return;
+ const all=uniqueRecitationSessionsV163(S.recitationSessions||[]).sort((a,b)=>(b.endedAt||b.startedAt||0)-(a.endedAt||a.startedAt||0));
+ const statusLabel={approved:'معتمدة',partial:'اعتماد جزئي',draft:'غير معتمدة',follow:'متابعة فقط'};
+ const groups={approved:0,partial:0,draft:0,follow:0};
+ for(const session of all)groups[recitationSessionStatusV163(session).key]++;
+ const status=target.dataset.statusV163||'all',show=all.filter(s=>status==='all'||recitationSessionStatusV163(s).key===status).slice(0,40);
+ const options=[['all','الكل'],['approved','معتمدة'],['partial','جزئية'],['draft','مسودات'],['follow','متابعة فقط']];
+ target.innerHTML='<div class="v67-card-title"><div><span>سجل الجلسات</span><b>التسميع والمتابعة</b></div><strong>'+toAr(all.length)+'</strong></div>'+
+  '<p class="hint" style="margin:5px 0 10px">المتابعة الصوتية لا تُعادل اعتماد الحفظ. تعرض القائمة أحدث 40 جلسة من التصنيف المحدد؛ ولا تُحتسب الجلسة مرتين إذا تكرر معرّفها.</p>'+
+  '<div role="group" aria-label="تصفية جلسات التسميع" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">'+
+  options.map(([id,label])=>'<button type="button" data-recitation-status-v163="'+id+'" aria-pressed="'+(status===id)+'" class="btn btn-ghost btn-sm" style="font-size:.72rem;'+(status===id?'border-color:var(--accent);':'')+'">'+label+(id==='all'?'':(' '+toAr(groups[id])))+'</button>').join('')+'</div>'+
+  (show.length?show.map(s=>{
+   const result=recitationSessionStatusV163(s);
+   const task={new:'حفظ جديد',fix:'تثبيت',near:'مراجعة قريبة',far:'مراجعة بعيدة',free:'تسميع حر','ai-review':'استدعاء',practice:'تدريب'}[s.task]||'تسميع';
+   const stamp=s.endedAt||s.startedAt||0;
+   const when=stamp?new Date(stamp).toLocaleString('ar-AE'):'وقت غير محدد';
+   const faces=(s.pages||[]).map(p=>+p.page).filter(p=>Number.isInteger(p)&&p>=1&&p<=604);
+   return '<div style="padding:9px 0;border-top:1px solid var(--line);display:grid;gap:4px">'+
+    '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b style="font-size:.8rem">'+esc(task)+'</b><span class="hint">'+esc(result.label)+'</span></div>'+
+    '<div class="hint">'+esc(when)+' · '+toAr(result.confirmed)+' من '+toAr(result.total)+' وجه معتمد'+(faces.length?' · الأوجه: '+faces.map(toAr).join('، '):'')+'</div></div>';
+  }).join(''):'<p class="hint">لا توجد جلسات في هذا التصنيف.</p>');
+}
+document.getElementById('statsV67')?.addEventListener('click',event=>{
+ const btn=event.target.closest('[data-recitation-status-v163]');
+ if(!btn)return;
+ const ledger=document.getElementById('recitationLedgerV163');if(!ledger)return;
+ ledger.dataset.statusV163=btn.dataset.recitationStatusV163;
+ renderRecitationLedgerV163();
+});
 function recitedPagesTodayV51(task){const set=new Set(),day=todayKey();(S.recitationSessions||[]).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||0));if(d!==day)return;if(task&&rs.task!==task)return;(rs.pages||[]).forEach(pg=>{if(!['ai-review','practice'].includes(rs.task)&&approvedRecitationFaceV149(rs,pg))set.add(+pg.page);});});return set;}
 function weeklyStartV138(date=todayKey()){
  const day=new Date(date+'T12:00:00').getDay();
@@ -1926,7 +1977,7 @@ function weeklyMemorizationV135(date=todayKey()){
  }));
  (S.recitationSessions||[]).filter(x=>x.task==='new'&&x.endedAt).forEach(rs=>{
   const day=keyOf(new Date(rs.endedAt));if(day<start||day>end)return;
-  (rs.pages||[]).forEach(pg=>{if(pg.complete&&pg.manualConfirmed===true)addPage(pg.page,day);});
+  (rs.pages||[]).forEach(pg=>{if(approvedRecitationFaceV149(rs,pg))addPage(pg.page,day);});
  });
  const remaining=Math.max(0,goal-completed.size),daysLeft=active.filter(d=>d>=weekday).length;
  const todayDone=todayPages.size;
@@ -2736,18 +2787,21 @@ function renderStatsV67(){
   const box=document.getElementById('statsV67');if(!box)return;
   let mem=0,fix=0,near=0,far=0,weak=0,due=0,partial=0;
   for(let p=1;p<=604;p++){const m=mapPageMetaV62(p,null),ph=m.engine&&m.memorized?m.engine.phase:'unseen';if(m.memorized)mem++;if(ph==='fix')fix++;else if(ph==='near')near++;else if(ph==='far')far++;if(m.state==='weak')weak++;if(m.engine&&m.engine.due)due++;if(m.partial)partial++;}
-  const now=Date.now(),cut=now-30*86400000,rs=(S.recitationSessions||[]).filter(x=>(x.endedAt||x.startedAt||0)>=cut),donePages=[];
-  rs.forEach(x=>(x.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(x,p))donePages.push(Object.assign({},p,{task:x.task}));}));
-  const ratedPages=donePages.filter(p=>Number.isFinite(+p.score)&&p.manualConfirmed!==true);
+  const now=Date.now(),cut=now-30*86400000,rs=uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(x=>(x.endedAt||x.startedAt||0)>=cut),donePages=[];
+  const countedPages=new Set();
+  rs.forEach(x=>(x.pages||[]).forEach(p=>{const key=x.task+'|'+p.page;if(approvedRecitationFaceV149(x,p)&&!countedPages.has(key)){countedPages.add(key);donePages.push(Object.assign({},p,{task:x.task}));}}));
+  const ratedPages=donePages.filter(p=>p.manualConfirmed!==true&&p.score!=null&&Number.isFinite(+p.score));
   const avg=ratedPages.length?Math.round(ratedPages.reduce((a,p)=>a+(+p.score||0),0)/ratedPages.length):null,errors=(S.errors||[]).filter(e=>!e.archived);
   const autoErr=errors.filter(e=>e.aiDetected===true).length,months=[],d=new Date();
-  for(let i=5;i>=0;i--){const bucket=DurrPreferences.month(DurrPreferences.shiftMonth(d,-i)),k=keyOf(bucket.start),end=keyOf(bucket.next);let n=0;(S.recitationSessions||[]).filter(r=>{const date=keyOf(new Date(r.endedAt||r.startedAt||0));return r.task==='new'&&date>=k&&date<end;}).forEach(r=>(r.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(r,p))n++;}));months.push({k,n});}
+  for(let i=5;i>=0;i--){const bucket=DurrPreferences.month(DurrPreferences.shiftMonth(d,-i)),k=keyOf(bucket.start),end=keyOf(bucket.next);let n=0;uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(r=>{const date=keyOf(new Date(r.endedAt||r.startedAt||0));return r.task==='new'&&date>=k&&date<end;}).forEach(r=>(r.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(r,p))n++;}));months.push({k,n});}
   const maxM=Math.max(1,...months.map(x=>x.n)),listen=(S.activityEvents||[]).filter(e=>e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e.type==='tafsir').length,task=t=>donePages.filter(p=>p.task===t).length;
   box.innerHTML='<div class="v67-stat-grid"><div><span>المحفوظ</span><b>'+toAr(mem)+'</b><small>من 604 وجه</small></div><div><span>متوسط تقييم التسميع</span><b>'+(avg==null?'—':toAr(avg)+'٪')+'</b><small>'+(avg==null?'لا يوجد تقييم رقمي؛ الاعتماد يدوي':'آخر 30 يومًا · تقييمات مسجلة')+'</small></div><div><span>مستحق الآن</span><b>'+toAr(due)+'</b><small>وجهًا</small></div><div><span>أخطاء نشطة</span><b>'+toAr(errors.length)+'</b><small>'+toAr(autoErr)+' آلي</small></div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>توزيع المحفوظ</span><b>حالة المراجعة الحالية</b></div></div><div class="v67-bars">'+[['تثبيت',fix,'#C89B3C'],['قريبة',near,'#D7B45B'],['بعيدة',far,'#7482A8'],['متفلّت',weak,'#C77486'],['جزئي',partial,'#A68BB7']].map(x=>'<div><span>'+x[0]+'</span><i><em style="width:'+Math.min(100,mem?Math.round(x[1]/mem*100):0)+'%;background:'+x[2]+'"></em></i><b>'+toAr(x[1])+'</b></div>').join('')+'</div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>6 أشهر</span><b>الحفظ الجديد</b></div></div><div class="v67-month-chart">'+months.map(x=>{const dt=parseKey(x.k);return '<div><i><em style="height:'+Math.round(x.n/maxM*100)+'%"></em></i><b>'+toAr(x.n)+'</b><span>'+DurrPreferences.month(dt).name+'</span></div>';}).join('')+'</div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>آخر 30 يومًا</span><b>جلسات التسميع المكتملة</b></div><strong>'+toAr(donePages.length)+'</strong></div><div class="v67-inline-stats"><span>حفظ <b>'+toAr(task('new'))+'</b></span><span>تثبيت <b>'+toAr(task('fix'))+'</b></span><span>قريبة <b>'+toAr(task('near'))+'</b></span><span>بعيدة <b>'+toAr(task('far'))+'</b></span></div></div>'+
-  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>أنشطة مساندة</span><b>السماع والتفسير</b></div></div><div class="v67-inline-stats"><span>سماع مكتمل <b>'+toAr(listen)+'</b></span><span>تفسير مقروء <b>'+toAr(tf)+'</b></span></div></div>';
+  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>أنشطة مساندة</span><b>السماع والتفسير</b></div></div><div class="v67-inline-stats"><span>سماع مكتمل <b>'+toAr(listen)+'</b></span><span>تفسير مقروء <b>'+toAr(tf)+'</b></span></div></div>'+
+  '<section class="card v67-stats-card" id="recitationLedgerV163" aria-label="سجل جلسات التسميع"></section>';
+  renderRecitationLedgerV163();
 }
 
 function refreshV50(){try{renderHomeV50();renderTodayV50();const p=document.querySelector('.tab-panel.active');if(p&&p.id==='tab-stats')renderStatsV67();if(p&&p.id==='tab-tafsir'){renderTafsir();renderTafsirSummaryV67();}if(p&&p.id==='tab-khatma')renderKhatma();if(p&&p.id==='tab-planning')renderPlanningV67();}catch(e){console.warn('v50 render',e);}}
@@ -3913,18 +3967,18 @@ function expandItemsToPagesV71(items){
 function dayFactsV71(k){
   const log=(S.logs||[]).find(x=>x.date===k)||null;
   const events=(S.activityEvents||[]).filter(e=>e&&e.date===k);
-  const sessions=(S.recitationSessions||[]).filter(r=>keyOf(new Date(r.endedAt||r.startedAt||0))===k);
+  const sessions=uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(r=>keyOf(new Date(r.endedAt||r.startedAt||0))===k);
   const groups={new:expandItemsToPagesV71(log&&log.memList),fix:new Set(),near:new Set(),far:new Set()};
   const manualRev=(log&&log.revList)||[];
   manualRev.forEach(it=>{const target=it.type==='far'?groups.far:groups.near;expandItemsToPagesV71([it]).forEach(p=>target.add(p));});
   const sessionPages=[];
   sessions.forEach(r=>(r.pages||[]).forEach(pg=>{
-    if(!(pg.complete&&(pg.manualConfirmed===true||(r.errorDetectionEnabled===true&&+pg.coverage>=.95))))return;
+    if(!approvedRecitationFaceV149(r,pg))return;
     const p=+pg.page;if(!p)return;
     const task=['new','fix','near','far'].includes(r.task)?r.task:null;
     if(!task) return; // free/practice/AI follow-along is not an assigned review quota
     groups[task].add(p);
-    sessionPages.push({page:p,task,score:+pg.score||0,coverage:+pg.coverage||0,errorCount:+pg.errorCount||0,ts:r.endedAt||r.startedAt||0});
+    sessionPages.push({page:p,task,score:pg.manualConfirmed===true?null:(Number.isFinite(+pg.score)?+pg.score:null),coverage:+pg.coverage||0,errorCount:+pg.errorCount||0,ts:r.endedAt||r.startedAt||0});
   }));
   const errors=(S.errors||[]).filter(e=>e.date===k);
   const listenEvents=events.filter(e=>e.type==='listen'),tafsirEvents=events.filter(e=>e.type==='tafsir');
@@ -4093,7 +4147,7 @@ function openDay(k){
   if(facts.sessionPages.length){
     const uniq={};facts.sessionPages.forEach(x=>{const k2=x.page+'|'+x.task;if(!uniq[k2]||x.ts>uniq[k2].ts)uniq[k2]=x;});
     html+='<div class="v71-day-section"><div class="v71-day-title"><b>جلسات التسميع المكتملة</b><span>'+toAr(Object.keys(uniq).length)+'</span></div>'+
-      Object.values(uniq).sort((a,b)=>a.page-b.page).map(x=>'<button class="v71-session-row" data-open-session="'+x.page+'"><span><b>الوجه '+toAr(x.page)+'</b><small>'+({new:'حفظ',fix:'تثبيت',near:'قريبة',far:'بعيدة'}[x.task]||'تسميع')+'</small></span><em>'+toAr(Math.round(x.score))+'٪'+(x.errorCount?' · '+toAr(x.errorCount)+' خطأ':'')+'</em></button>').join('')+'</div>';
+      Object.values(uniq).sort((a,b)=>a.page-b.page).map(x=>'<button class="v71-session-row" data-open-session="'+x.page+'"><span><b>الوجه '+toAr(x.page)+'</b><small>'+({new:'حفظ',fix:'تثبيت',near:'قريبة',far:'بعيدة'}[x.task]||'تسميع')+'</small></span><em>'+(x.score==null?'إنجاز معتمد':toAr(Math.round(x.score))+'٪')+(x.errorCount?' · '+toAr(x.errorCount)+' خطأ':'')+'</em></button>').join('')+'</div>';
   }
   if(facts.errors.length){
     html+='<div class="v71-day-section"><div class="v71-day-title"><b>الأخطاء</b><span>'+toAr(facts.errors.length)+'</span></div>'+
