@@ -2203,22 +2203,38 @@ function focusedQueueActionV146(action,vk,index){
   return true;
  }catch(e){return false;}
 }
+let focusedReaderBusyV148=false;
 async function showFocusedVerseV146(){
  const pos=focusReaderStateV146();if(!pos||!focusedReviewPanelV146)return;
  const {state,vk,index}=pos,total=state.keys.length;
+ focusedReviewPanelV146.dataset.readyVerse='';
  if(!vk){
-  focusedReviewPanelV146.innerHTML=focusedReaderHeadingV147(total-1,total,'<b>اكتملت الجلسة</b><p>اعتُمدت '+(state.reviewed||[]).length+' آية · تم تجاوز '+(state.skipped||[]).length+'</p><button type="button" data-focus-v146="exit">العودة إلى الخطة</button></div>');
+  focusedReviewPanelV146.innerHTML=focusedReaderHeadingV147(total-1,total,'<b>اكتملت خطوات الجلسة</b><p>اعتُمدت '+(state.reviewed||[]).length+' آية · تم تجاوز '+(state.skipped||[]).length+' دون اعتماد</p><button type="button" data-focus-v146="exit">العودة إلى الخطة</button></div>');
   return;
  }
- const [sid,ayah]=vk.split(':').map(Number),sur=DATA?.surahs?.find?.(x=>+x.id===sid);
+ const [sid,ayah]=vk.split(':').map(Number);
  focusedReviewPanelV146.innerHTML=focusedReaderHeadingV147(index,total,'<b>السورة '+sid+' · الآية '+ayah+'</b>'+
+ '<p class="focus-review-hint-v148">الانتقال للآية لا يُسجّل مراجعة. اعتمدي فقط بعد مراجعتها.</p>'+
  '<div class="focus-actions-v147">'+
- '<button type="button" data-focus-v146="done">اعتماد · التالية</button>'+
- '<button type="button" data-focus-v146="skip">تجاوز · التالية</button>'+
+ '<button type="button" data-focus-v146="done" disabled>اعتماد المراجعة · التالية</button>'+
+ '<button type="button" data-focus-v146="skip">تجاوز دون اعتماد</button>'+
  '<button type="button" data-focus-v146="exit">إنهاء</button></div></div>');
  const page=focusedPageForVerseV146(vk);
- if(page){if(cur!==page)await settle(page);setTimeout(()=>flashVerse(vk),160);}
- else focusedReviewPanelV146.insertAdjacentHTML('beforeend','<small>تعذّر تحديد الآية من فهرس المصحف الحالي.</small>');
+ if(!page){
+  focusedReviewPanelV146.querySelector('.focus-review-hint-v148').textContent='تعذّر تحديد موضع الآية؛ لا يمكن اعتماد المراجعة قبل عرضها.';
+  return;
+ }
+ try{
+  if(cur!==page)await settle(page);
+  // لا نسمح باعتماد آية لم نستطع عرض وجهها فعلًا.
+  if(focusReaderStateV146()?.vk!==vk)return;
+  focusedReviewPanelV146.dataset.readyVerse=vk;
+  const done=focusedReviewPanelV146.querySelector('[data-focus-v146="done"]');
+  if(done)done.disabled=false;
+  setTimeout(()=>{if(focusReaderStateV146()?.vk===vk)flashVerse(vk);},160);
+ }catch(_){
+  focusedReviewPanelV146.querySelector('.focus-review-hint-v148').textContent='تعذّر عرض الوجه؛ اختاري تجاوز دون اعتماد أو أعيدي فتح الجلسة.';
+ }
 }
 function startFocusedReaderV146(force=false){
  let raw;try{raw=JSON.parse(LS('durr-alfareed-v2','{}')||'{}');}catch(_){raw={};}
@@ -2246,19 +2262,25 @@ function startFocusedReaderV146(force=false){
  }catch(_){}
  const box=document.createElement('div');box.id='focusedReviewControlsV146';
  box.setAttribute('role','region');box.setAttribute('aria-label','أدوات جلسة المراجعة المركّزة');
- const style=document.createElement('style');style.textContent=`#focusedReviewControlsV146{position:relative;flex:0 0 auto;align-self:flex-start;z-index:25;top:auto;left:auto;width:min(340px,calc(100vw - 16px));max-height:min(28dvh,190px);overflow:auto;margin:4px 8px 2px;background:var(--surface,#fff);border:1px solid var(--line,#ddd);border-radius:16px;padding:10px 12px;box-shadow:0 4px 20px #0002;color:var(--ink,#333);font-family:inherit;font-size:.84rem;text-align:right;box-sizing:border-box}#focusedReviewControlsV146.compact{width:auto;max-width:calc(100vw - 24px);padding:3px 5px;border-radius:30px;box-shadow:0 2px 12px #0002}#focusedReviewControlsV146.compact .focus-body-v147{display:none}#focusedReviewControlsV146 .focus-head-v147 button{background:transparent;border:0;color:var(--ink,#333);padding:7px 10px;border-radius:22px;font:inherit;min-height:35px}#focusedReviewControlsV146 button{background:var(--page,#f8f3f0);border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;min-height:38px;color:var(--ink,#333);font:inherit;cursor:pointer}#focusedReviewControlsV146 .focus-actions-v147{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}#focusedReviewControlsV146 .focus-actions-v147 button:first-child{background:var(--accent,#a8546b);color:white}#focusedReviewControlsV146 .focus-body-v147{padding:2px 2px 3px}#focusedReviewControlsV146 .focus-body-v147 b{display:block;margin:3px 0}@media(max-width:390px){#focusedReviewControlsV146{font-size:.78rem;width:min(310px,calc(100vw - 16px));max-height:25dvh}#focusedReviewControlsV146 .focus-actions-v147 button{font-size:.76rem;padding:7px 8px}}`;
+ const style=document.createElement('style');style.textContent=`#focusedReviewControlsV146{position:relative;flex:0 0 auto;align-self:flex-start;z-index:25;top:auto;left:auto;width:min(340px,calc(100vw - 16px));max-height:min(28dvh,190px);overflow:auto;margin:4px 8px 2px;background:var(--surface,#fff);border:1px solid var(--line,#ddd);border-radius:16px;padding:10px 12px;box-shadow:0 4px 20px #0002;color:var(--ink,#333);font-family:inherit;font-size:.84rem;text-align:right;box-sizing:border-box}#focusedReviewControlsV146.compact{width:auto;max-width:calc(100vw - 24px);padding:3px 5px;border-radius:30px;box-shadow:0 2px 12px #0002}#focusedReviewControlsV146.compact .focus-body-v147{display:none}#focusedReviewControlsV146 .focus-head-v147 button{background:transparent;border:0;color:var(--ink,#333);padding:7px 10px;border-radius:22px;font:inherit;min-height:35px}#focusedReviewControlsV146 button{background:var(--page,#f8f3f0);border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;min-height:38px;color:var(--ink,#333);font:inherit;cursor:pointer}#focusedReviewControlsV146 .focus-actions-v147{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}#focusedReviewControlsV146 .focus-actions-v147 button:first-child{background:var(--accent,#a8546b);color:white}#focusedReviewControlsV146 .focus-body-v147{padding:2px 2px 3px}#focusedReviewControlsV146 .focus-body-v147 b{display:block;margin:3px 0}#focusedReviewControlsV146 button:disabled{opacity:.44;cursor:not-allowed}#focusedReviewControlsV146 .focus-review-hint-v148{font-size:.73rem;line-height:1.55;margin:5px 0;color:var(--muted,#766)}@media(max-width:390px){#focusedReviewControlsV146{font-size:.78rem;width:min(310px,calc(100vw - 16px));max-height:25dvh}#focusedReviewControlsV146 .focus-actions-v147 button{font-size:.76rem;padding:7px 8px}}`;
 
  document.head.append(style);document.getElementById('screen').insertBefore(box,document.getElementById('track'));focusedReviewPanelV146=box;setFocusedReaderCompactV147(focusedReaderCompactV147());
  box.addEventListener('click',async e=>{
-  const action=e.target.closest('[data-focus-v146]')?.dataset.focusV146;if(!action)return;
+  const clicked=e.target.closest('[data-focus-v146]');
+  if(!clicked||clicked.disabled||focusedReaderBusyV148)return;
+  const action=clicked.dataset.focusV146;
   if(action==='toggle'){setFocusedReaderCompactV147(!focusedReviewPanelV146.classList.contains('compact'));await showFocusedVerseV146();return;}
   if(action==='exit'){const pos=focusReaderStateV146(),last=pos?.vk||focusedSessionReaderV146.keys[focusedSessionReaderV146.keys.length-1];if(last&&!focusedQueueActionV146('end',last,focusedSessionReaderV146.current)){alert('تعذّر حفظ إنهاء الجلسة. أعيدي المحاولة.');return;}location.assign('index.html?tab=today');return;}
   const pos=focusReaderStateV146();if(!pos?.vk||!['done','skip'].includes(action))return;
-  if(!focusedQueueActionV146(action,pos.vk,pos.index)){alert('تعذّر حفظ التقدّم. أعيدي المحاولة.');return;}
-  if(action==='done'&&!focusedSessionReaderV146.reviewed.includes(pos.vk))focusedSessionReaderV146.reviewed.push(pos.vk);
-  if(action==='skip'&&!focusedSessionReaderV146.skipped.includes(pos.vk))focusedSessionReaderV146.skipped.push(pos.vk);
-  focusedSessionReaderV146.current=pos.index+1;
-  await showFocusedVerseV146();
+  if(action==='done'&&focusedReviewPanelV146.dataset.readyVerse!==pos.vk)return;
+  focusedReaderBusyV148=true;
+  try{
+   if(!focusedQueueActionV146(action,pos.vk,pos.index)){alert('تعذّر حفظ التقدّم. أعيدي المحاولة.');return;}
+   if(action==='done'&&!focusedSessionReaderV146.reviewed.includes(pos.vk))focusedSessionReaderV146.reviewed.push(pos.vk);
+   if(action==='skip'&&!focusedSessionReaderV146.skipped.includes(pos.vk))focusedSessionReaderV146.skipped.push(pos.vk);
+   focusedSessionReaderV146.current=pos.index+1;
+   await showFocusedVerseV146();
+  }finally{focusedReaderBusyV148=false;}
  });
  showFocusedVerseV146();
 }
