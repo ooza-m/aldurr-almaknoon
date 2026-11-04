@@ -2770,7 +2770,12 @@ function findFreeRecitationPlanLinksV105(rs,log){
  check((log.revList||[]).filter(x=>x.type==='far'),'far');
  return links;
 }
-function ingestRecitationSessionV51(raw){if(!raw||!raw.id)return;if(!S.recitationSessions)S.recitationSessions=[];const previous=S.recitationSessions.find(x=>x&&x.id===raw.id);if(previous&&(previous.userReviewed===true||!(raw.version>=86&&['interrupted','incomplete'].includes(previous.analysisStatus)&&raw.analysisStatus==='complete')))return;const updating=!!previous;if(updating){S.recitationSessions=S.recitationSessions.filter(x=>x.id!==raw.id);S.activityEvents=(S.activityEvents||[]).filter(e=>!String(e.id||'').startsWith(raw.id+':'));}const rs=JSON.parse(JSON.stringify(raw));S.recitationSessions.push(rs);if(S.recitationSessions.length>500)S.recitationSessions=S.recitationSessions.slice(-500);S.verseReview=S.verseReview||{};S.activityEvents=S.activityEvents||[];S.aiReviewQueue=S.aiReviewQueue||[];const date=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now())),log=ensureLogForDateV51(date);let full=0,partial=0,errAdded=0;const task=rs.task||'free';
+function ingestRecitationSessionV51(raw){if(!raw||!raw.id)return;if(!S.recitationSessions)S.recitationSessions=[];const previous=S.recitationSessions.find(x=>x&&x.id===raw.id);if(previous){
+  if(previous.userReviewed===true)return;
+  const isApprovalUpgrade=raw.userReviewed===true&&previous.userReviewed!==true;
+  const isAnalysisUpgrade=raw.version>=86&&['interrupted','incomplete'].includes(previous.analysisStatus)&&raw.analysisStatus==='complete';
+  if(!isApprovalUpgrade&&!isAnalysisUpgrade)return;
+ }const updating=!!previous;if(updating){S.recitationSessions=S.recitationSessions.filter(x=>x.id!==raw.id);S.activityEvents=(S.activityEvents||[]).filter(e=>!String(e.id||'').startsWith(raw.id+':'));}const rs=JSON.parse(JSON.stringify(raw));S.recitationSessions.push(rs);if(S.recitationSessions.length>500)S.recitationSessions=S.recitationSessions.slice(-500);S.verseReview=S.verseReview||{};S.activityEvents=S.activityEvents||[];S.aiReviewQueue=S.aiReviewQueue||[];const date=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now())),log=ensureLogForDateV51(date);let full=0,partial=0,errAdded=0;const task=rs.task||'free';
   rs.suggestedPlanLinks=findFreeRecitationPlanLinksV105(rs,log);
   rs.planLinkStatus=rs.suggestedPlanLinks.length?'suggested-review':'unmatched';
   // Browser follow-along tracks position, not errors. Do not import automatic findings from it.
@@ -2835,7 +2840,11 @@ function consumePendingRecitationV55(){
   let success=0,failed=0;
   for(const payload of pending.values()){
    try{
-    if(!persistedRecitationV150(payload))ingestRecitationSessionV51(payload);
+    if(!persistedRecitationV150(payload)){
+     // قد يكون الإدخال أُنجز في الذاكرة وتعذّر حفظه سابقًا؛ أعيدي حفظه أولًا.
+     if((S.recitationSessions||[]).some(x=>x?.id===payload.id&&(!payload.userReviewed||x.userReviewed===true)))save();
+     if(!persistedRecitationV150(payload))ingestRecitationSessionV51(payload);
+    }
     if(!persistedRecitationV150(payload)){failed++;continue;}
     // حذف عنصر واحد بعد التأكد من الحفظ. أعد قراءة القائمة لتجنّب إسقاط جلسة أضافتها صفحة المصحف أثناء التنفيذ.
     const current=JSON.parse(localStorage.getItem(queueKey)||'[]');
