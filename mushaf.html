@@ -1412,7 +1412,22 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
  if(audibleHint){const st=ctx.session.stats;st.errorAlertCount=(st.errorAlertCount||0)+1;st.lastErrorAlertAt=Date.now();playRecErrorToneV91(audibleHint.type);}
  if(result.updates.some(e=>e.active))navigator.vibrate?.(25);
  const recallEnd=ctx.session.recall&&sec.words.findLastIndex(w=>w.vk===ctx.session.recall.vk)+1;
- if((recWordPos>=recWords.length||recallEnd&&recWordPos>=recallEnd)&&!sec.gateWaiting&&recOn&&!recFinishing){snapshotPage(true);clearTimeout(recAdvanceTimer);recAdvanceTimer=setTimeout(()=>recSession?.recall?finishReciteSession(false):autoAdvance(),420);}
+ // v158: ASR is positional only. Require evidence for the final spoken words before auto-navigation.
+ const lastWords=sec.words.slice(-3);
+ const reachedByVoice=lastWords.length>0&&lastWords.every(w=>{
+   const key=w.vk+'#'+w.wi;
+   return sec.state.covered.has(key)&&!sec.state.assisted.has(key);
+ });
+ const spokenCoverage=(sec.state.covered.size-sec.state.assisted.size)/Math.max(1,sec.state.wordsTotal);
+ if((recWordPos>=recWords.length||recallEnd&&recWordPos>=recallEnd)&&!sec.gateWaiting&&recOn&&!recFinishing){
+   if(!reachedByVoice||spokenCoverage<.8){
+     recTip('الانتقال التلقائي ينتظر متابعة آخر كلمات الوجه · يمكنك استخدام زر الوجه التالي');
+   }else{
+     snapshotPage(true);clearTimeout(recAdvanceTimer);
+     const owner=ctx.session.id,face=page;
+     recAdvanceTimer=setTimeout(()=>{if(!recOn||!recMode||recSession?.id!==owner||cur!==face)return;recSession?.recall?finishReciteSession(false):autoAdvance();},420);
+   }
+ }
 }
 function renderRecitationV89(ctx,sec,ops=[]){
  clearTimeout(sec.gateTimer);const gate=sec.gate||(sec.gate=new DurrRecitation.RevealGate(sec.words)),state=gate.update(ops,sec.tracker.errors);sec.gateWaiting=state.waiting;
@@ -1858,7 +1873,7 @@ function initSpeech(){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return null;
  const r=new SR(),ctx=ensureRecContextV86();r.lang='ar-SA';r.continuous=true;r.interimResults=true;r.maxAlternatives=1;const finalized=new Set();
  r.onstart=()=>{finalized.clear();if(r===speechRec)clearSpeechPreview();};
- r.onresult=e=>{if(!ctx||ctx.finalized||r._stopped||r._stopping||!recOn||r!==speechRec||recSession?.id!==ctx.session.id)return;let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const result=e.results[i],text=result[0].transcript||'';if(result.isFinal){if(!finalized.has(i)){finalized.add(i);if(recSession?.id===ctx.session.id&&recMode)ensureRecContextV86();dispatchRecitationV89(ctx,recSession?.id===ctx.session.id?cur:ctx.page,text,'browser-speech');}}else interim+=' '+text;}if(r===speechRec&&interim.trim())previewSpeechV84(interim);};
+ r.onresult=e=>{if(!ctx||ctx.finalized||r._stopped||(!recOn&&!r._stopping)||r!==speechRec||recSession?.id!==ctx.session.id)return;let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const result=e.results[i],text=result[0].transcript||'';if(result.isFinal){if(!finalized.has(i)){finalized.add(i);if(recSession?.id===ctx.session.id&&recMode)ensureRecContextV86();dispatchRecitationV89(ctx,recSession?.id===ctx.session.id?cur:ctx.page,text,'browser-speech');}}else interim+=' '+text;}if(r===speechRec&&interim.trim())previewSpeechV84(interim);};
  r.onerror=e=>{
    const error=e?.error||'';
    if(['not-allowed','service-not-allowed','audio-capture','language-not-supported'].includes(error))r._noRestart=true;
