@@ -2023,7 +2023,6 @@ $('recSummarySave').onclick=()=>{
     pg.manualConfirmed=!!document.querySelector('[data-approve-page="'+pg.page+'"]')?.checked;
     pg.complete=pg.manualConfirmed;
     pg.manualMasteryLevel=pg.manualConfirmed?(document.querySelector('[data-quality-page="'+pg.page+'"]')?.value||''):'';
-    if(pg.complete){updateLocalLearning('recite',pg.page,{task:payload.task,manualConfirmed:true});if(payload.task==='new')updateLocalLearning('hifz',pg.page,{});}
   }
   if(payload.userReviewed===true)return;
   payload.userReviewed=true;payload.confirmedAt=Date.now();
@@ -2032,6 +2031,11 @@ $('recSummarySave').onclick=()=>{
     payload.userReviewed=false;
     recTip('تعذّر حفظ الاعتماد على الجهاز. أبقي النافذة مفتوحة وأعيدي المحاولة.');
     return;
+  }
+  for(const pg of payload.pages||[]){
+    if(!pg.manualConfirmed)continue;
+    updateLocalLearning('recite',pg.page,{task:payload.task,manualConfirmed:true});
+    if(payload.task==='new')updateLocalLearning('hifz',pg.page,{});
   }
   pendingReviewApprovalV118=null;clearReviewDraftV119(payload.id);
   $('recSummaryWrap').classList.remove('open');
