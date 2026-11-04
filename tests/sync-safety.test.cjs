@@ -181,3 +181,28 @@ test('pause, finish and manual next face are separate controls',()=>{
  assert.match(mushaf,/id="recExit" aria-label="إنهاء الجلسة وعرض الاعتماد"/);
  assert.match(mushaf,/aria-pressed',String\(recOn\)/);
 });
+
+test('only user-reviewed modern follow-along pages can complete daily tasks',()=>{
+ const anchor='function approvedRecitationFaceV149(';
+ const start=html.indexOf(anchor),end=html.indexOf('\nfunction firstMemDateMapV50(',start);
+ assert.ok(start>=0&&end>start);
+ const approved=new Function(html.slice(start,end)+';return approvedRecitationFaceV149;')();
+ const page={page:25,complete:true,manualConfirmed:true};
+ assert.equal(approved({task:'new',version:86,userReviewed:false},page),false);
+ assert.equal(approved({task:'new',version:86,userReviewed:true},page),true);
+ assert.equal(approved({task:'free',version:86,userReviewed:true},page),false);
+ assert.equal(approved({task:'new',version:86,userReviewed:true},{...page,manualConfirmed:false}),false);
+});
+test('map read-through is not represented as an approved completed face',()=>{
+ assert.match(html,/complete:approvedRecitationFaceV149\(rs,pg\)/);
+ assert.match(html,/manualConfirmed:approvedRecitationFaceV149\(rs,pg\)/);
+ assert.match(html,/followedOnly:rs\.engine==='follow-along'/);
+ assert.match(html,/res\.followedOnly\?'متابعة صوتية جزئية '/);
+});
+test('recitation summary separates audio tracking from assisted reveal and user approval',()=>{
+ const mushaf=require('node:fs').readFileSync(require('node:path').join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(mushaf,/متابعة صوتية تقريبية:/);
+ assert.match(mushaf,/مساعدة في إظهار النص:/);
+ assert.match(mushaf,/pg\.manualConfirmed=!!document\.querySelector/);
+ assert.match(mushaf,/payload\.summary\.completedPages=\(payload\.pages\|\|\[\]\)\.filter\(pg=>pg\.manualConfirmed===true\)\.length/);
+});
