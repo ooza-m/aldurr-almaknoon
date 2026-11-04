@@ -123,7 +123,7 @@ test('legacy memorization analytics use explicit approved face completion',()=>{
  assert.match(html,/if\(approvedRecitationFaceV149\(r,p\)\)set\.add\(\+p\.page\)/);
 });
 test('manual-only recitation results never receive a fabricated numeric score',()=>{
- assert.match(html,/const ratedPages=donePages\.filter\(p=>Number\.isFinite\(\+p\.score\)&&p\.manualConfirmed!==true\)/);
+ assert.match(html,/const ratedPages=donePages\.filter\(p=>p\.manualConfirmed!==true&&p\.score!=null&&Number\.isFinite\(\+p\.score\)\)/);
  assert.match(html,/لا يوجد تقييم رقمي؛ الاعتماد يدوي/);
 });
 
@@ -197,7 +197,7 @@ test('map read-through is not represented as an approved completed face',()=>{
  assert.match(html,/complete:approvedRecitationFaceV149\(rs,pg\)/);
  assert.match(html,/manualConfirmed:approvedRecitationFaceV149\(rs,pg\)/);
  assert.match(html,/followedOnly:rs\.engine==='follow-along'/);
- assert.match(html,/res\.followedOnly\?'متابعة صوتية جزئية '/);
+ assert.match(html,/res\.followedOnly\?'متابعة صوتية غير معتمدة '/);
 });
 test('recitation summary separates audio tracking from assisted reveal and user approval',()=>{
  const mushaf=require('node:fs').readFileSync(require('node:path').join(__dirname,'..','mushaf.html'),'utf8');
