@@ -206,3 +206,45 @@ test('recitation summary separates audio tracking from assisted reveal and user 
  assert.match(mushaf,/pg\.manualConfirmed=!!document\.querySelector/);
  assert.match(mushaf,/payload\.summary\.completedPages=\(payload\.pages\|\|\[\]\)\.filter\(pg=>pg\.manualConfirmed===true\)\.length/);
 });
+
+test('session ledger separates approved, partially approved, draft and follow-along sessions',()=>{
+ const start=html.indexOf('function uniqueRecitationSessionsV163('),end=html.indexOf('function localReviewDraftsV163(',start);
+ assert.ok(start>=0&&end>start);
+ const approved=(rs,p)=>!!(rs&&p&&['new','fix','near','far'].includes(rs.task)&&p.complete===true&&p.manualConfirmed===true&&(+rs.version<86||rs.userReviewed===true));
+ const api=new Function('approvedRecitationFaceV149',html.slice(start,end)+';return {uniqueRecitationSessionsV163,recitationSessionStatusV163};')(approved);
+ const base={task:'new',version:86,pages:[{page:25,complete:true,manualConfirmed:true},{page:26,complete:false,manualConfirmed:false}]};
+ assert.equal(api.recitationSessionStatusV163({...base,userReviewed:true}).key,'partial');
+ assert.equal(api.recitationSessionStatusV163({...base,userReviewed:false}).key,'draft');
+ assert.equal(api.recitationSessionStatusV163({...base,task:'free',userReviewed:false}).key,'follow');
+ assert.equal(api.recitationSessionStatusV163({...base,userReviewed:true,pages:[base.pages[0]]}).key,'approved');
+});
+test('duplicate session IDs are presented once and approved version wins',()=>{
+ const start=html.indexOf('function uniqueRecitationSessionsV163('),end=html.indexOf('function recitationSessionStatusV163(',start);
+ const uniq=new Function(html.slice(start,end)+';return uniqueRecitationSessionsV163;')();
+ const rows=[{id:'x',userReviewed:false},{id:'x',userReviewed:true},{id:'y',userReviewed:false},{id:'y',userReviewed:false,localDraftV163:true}];
+ const output=uniq(rows);
+ assert.equal(output.length,2);
+ assert.equal(output[0].userReviewed,true);
+ assert.equal(output[1].localDraftV163,true);
+});
+test('calendar and weekly goals never count ASR coverage as completion',()=>{
+ assert.match(html,/if\(!approvedRecitationFaceV149\(r,pg\)\)return;/);
+ assert.match(html,/if\(approvedRecitationFaceV149\(rs,pg\)\)addPage\(pg\.page,day\)/);
+ assert.doesNotMatch(html,/pg\.manualConfirmed===true\|\|\(r\.errorDetectionEnabled===true/);
+});
+test('session replay does not generate automatic errors or repeated review suggestions',()=>{
+ const p=html.slice(html.indexOf('function ingestRecitationSessionV51('),html.indexOf("window.addEventListener('message',",html.indexOf('function ingestRecitationSessionV51(')));
+ assert.doesNotMatch(p,/errAdded\+=ingestAutomaticErrorsV86\(rs,date\)/);
+ assert.match(p,/if\(old\.sessionId!==rs\.id\)old\.count=/);
+ assert.match(p,/if\(previous\.userReviewed===true\)return/);
+});
+test('unapproved 100 percent audio coverage still appears unapproved on the map',()=>{
+ assert.match(html,/const partial=!!\(res&&res\.coverage>0&&!res\.complete\)/);
+ assert.match(html,/متابعة صوتية غير معتمدة /);
+});
+test('device drafts are visible in session history but not synced as achievements',()=>{
+ assert.match(html,/function localReviewDraftsV163\(\)/);
+ assert.match(html,/localStorage\.getItem\('durr-review-draft-v119'\)/);
+ assert.match(html,/localDraftV163:true/);
+ assert.match(html,/مسودات الاعتماد المحلية محفوظة على هذا الجهاز فقط/);
+});
