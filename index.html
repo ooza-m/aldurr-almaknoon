@@ -2670,6 +2670,9 @@ function organizeTodayV156(){
  for(const id of ['smartReview','weeklyAchievementV136','longTermProgressV139','detailedMemorizationV140','studyPlanSettingsV134','reviewForecastV124','teacherTestV127','teacherCatchupV129']){
   const el=document.getElementById(id);if(el){el.style.margin='0';body.appendChild(el);}
  }
+ // رابط تحليل الأخطاء خيار إضافي، ولا ينبغي أن يقطع ترتيب مهام اليوم.
+ const errorsLink=main.querySelector('.v50-glass.v50-card button[data-v50-route="errors"]')?.closest('.v50-glass.v50-card');
+ if(errorsLink)body.appendChild(errorsLink);
  const priority=document.getElementById('todayPriorityV50');
  if(priority&&heading.parentNode===main)priority.after(heading);
  if(heading.parentNode===main)heading.after(tasks);
