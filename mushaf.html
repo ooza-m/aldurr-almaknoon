@@ -1298,14 +1298,18 @@ let ACTIVE_TASK_SESSION=null;
 try{
   if(REC_QUERY.get('session')==='1'){
     const x=JSON.parse(LS('durr-active-task-session','null'));
-    if(x&&Array.isArray(x.pages)&&x.pages.length)ACTIVE_TASK_SESSION=x;
+    const datestr=new Date(),today=datestr.getFullYear()+'-'+String(datestr.getMonth()+1).padStart(2,'0')+'-'+String(datestr.getDate()).padStart(2,'0');
+    if(x&&x.date===today&&x.task===REC_TASK&&Array.isArray(x.pages)&&x.pages.length&&x.pages.every(p=>Number.isInteger(+p)&&+p>=1&&+p<=604)){
+      x.pos=Math.max(0,Math.min(x.pages.length-1,+x.pos||0));ACTIVE_TASK_SESSION=x;
+    }
   }
 }catch(e){ACTIVE_TASK_SESSION=null;}
 function taskSessionLabel(id){return({new:'حفظ جديد',fix:'تثبيت 30 يومًا',near:'مراجعة قريبة',far:'مراجعة بعيدة','ai-review':'استدعاء نشط'})[id]||'جلسة مراجعة';}
 function syncTaskSessionChip(){
   const chip=$('recSessionChip');if(!chip)return;
   if(!ACTIVE_TASK_SESSION){chip.classList.remove('on');return;}
-  const pages=ACTIVE_TASK_SESSION.pages||[],i=Math.max(0,pages.indexOf(cur));
+  const pages=ACTIVE_TASK_SESSION.pages||[],located=pages.indexOf(cur);
+  const i=located>=0?located:Math.max(0,Math.min(pages.length-1,+ACTIVE_TASK_SESSION.pos||0));
   $('recSessionLabel').textContent=ACTIVE_TASK_SESSION.label||taskSessionLabel(ACTIVE_TASK_SESSION.task);
   $('recSessionProgress').textContent=ARA(i+1)+' من '+ARA(pages.length);
   chip.classList.add('on');
@@ -1968,7 +1972,9 @@ function showRecSummary(payload){
   $('recSummarySave').hidden=!eligible;
   $('recSummaryErrors').hidden=eligible;
   if(eligible){
-    $('recSummarySub').textContent='اعتماد الإنجاز وتقييم ضبط الأوجه';
+    $('recSummarySub').textContent=payload.planId?'اعتماد ما أُنجز من الأوجه · يمكن استئناف البقية من مهام اليوم':'اعتماد الإنجاز وتقييم ضبط الأوجه';
+    $('recSummaryClose').textContent=payload.planId?'العودة إلى مهام اليوم':'العودة للمصحف';
+    lastFinishedTaskPlan=!!payload.planId;
     $('recSummaryBody').innerHTML='<p class="audio-note">المتابعة الصوتية لا تُقيّم جودة الحفظ. اعتمدي فقط الأوجه التي أتممتِ تسميعها كاملةً، حتى لو لم يتتبعها الصوت بدقة. لا تعتمدي الوجه عند التوقف المبكر؛ ويمكنك تقييم ضبطه اختياريًا. تُحفظ اختياراتك كمسودة حتى تضغطي اعتماد الإنجاز.</p>'+
       (payload.pages||[]).map(pg=>'<div class="setrow" style="display:block;padding:10px 0">'+
       '<label><input type="checkbox" data-approve-page="'+pg.page+'" '+(pg.draftApproved?'checked':'')+' style="margin-left:8px">أُقرّ أنني أتممتُ تسميع الوجه '+ARA(pg.page)+' كاملًا</label>'+
@@ -1998,8 +2004,10 @@ function finishReciteSession(planCompleted=false){
  ctx.session.endedAt=Date.now();ctx.session.planCompleted=planCompleted===true;
  const drain=Promise.all([stopRec(),ctx.voiceQueue||Promise.resolve()]),initial=payloadForContextV86(ctx);if(ctx.session.task==='practice')REC_RUNTIME_TASK=REC_TASK||'free';initial.analysisStatus='processing';
  // Restore the reader immediately. Network tails only touch their owning context.
- rawExitRecite();recSession=null;recFinishing=false;recStarting=false;recStartGenerationV86++;$('recMic').disabled=false;recAdvancing=false;ACTIVE_TASK_SESSION=null;syncTaskSessionChip();
- try{localStorage.removeItem('durr-active-task-session');}catch(_){}
+ rawExitRecite();recSession=null;recFinishing=false;recStarting=false;recStartGenerationV86++;$('recMic').disabled=false;recAdvancing=false;
+ // الخروج المبكر لا يحذف موضع الاستئناف؛ إنهاء آخر وجه فقط يغلق خطة الجلسة.
+ if(planCompleted===true){ACTIVE_TASK_SESSION=null;try{localStorage.removeItem('durr-active-task-session');}catch(_){}}
+ syncTaskSessionChip();
  return recJobsV86.run({id:ctx.session.id,initial,work:Promise.allSettled([drain]),onTimeout:()=>{ctx.session.analysisIncomplete=true;ctx.runs.forEach(id=>qasrRunsV86.get(id)?.controller?.abort());},finish:async status=>{
    if(status!=='complete')ctx.session.analysisIncomplete=true;ctx.session.analysisStatus=ctx.session.analysisIncomplete?'incomplete':status;const payload=payloadForContextV86(ctx);ctx.finalized=true;
    // Do not persist the achievement until the user confirms individual pages.
@@ -2331,7 +2339,10 @@ function startFocusedReaderV146(force=false){
   try{await document.fonts.load('1rem "HafsQ"');}catch(e){}
   applyBases();
   let start=+(REC_QUERY.get('p')||1);
-  if(ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.pages&&ACTIVE_TASK_SESSION.pages.length&&!ACTIVE_TASK_SESSION.pages.includes(start))start=+ACTIVE_TASK_SESSION.pages[0];
+  if(ACTIVE_TASK_SESSION&&ACTIVE_TASK_SESSION.pages&&ACTIVE_TASK_SESSION.pages.length){
+    const index=ACTIVE_TASK_SESSION.pages.indexOf(start);
+    if(index<0)start=+ACTIVE_TASK_SESSION.pages[ACTIVE_TASK_SESSION.pos||0];
+  }
   await settle(start);
   startFocusedReaderV146();
   const targetAyah=REC_QUERY.get('ayah')||'',startMode=REC_QUERY.get('mode')||'';
