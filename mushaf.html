@@ -2053,19 +2053,25 @@ function showRecSummary(payload){
     $('recSummarySub').textContent=payload.planId?'اعتماد ما أُنجز من الأوجه · يمكن استئناف البقية من مهام اليوم':'اعتماد الإنجاز وتقييم ضبط الأوجه';
     $('recSummaryClose').textContent=payload.planId?'العودة إلى مهام اليوم':'العودة للمصحف';
     lastFinishedTaskPlan=!!payload.planId;
-    $('recSummaryBody').innerHTML='<p class="audio-note">المتابعة الصوتية لا تُقيّم جودة الحفظ. اعتمدي فقط الأوجه التي أتممتِ تسميعها كاملةً، حتى لو لم يتتبعها الصوت بدقة. لا تعتمدي الوجه عند التوقف المبكر؛ ويمكنك تقييم ضبطه اختياريًا. تُحفظ اختياراتك كمسودة حتى تضغطي اعتماد الإنجاز.</p>'+
+    $('recSummaryBody').innerHTML='<p class="audio-note">المتابعة الصوتية تعرّف موضع القراءة فقط، ولا تحكم على صحة الحفظ. يظهر أدناه ما تابعته الخدمة وما كُشف بمساعدة الأدوات كلٌّ على حدة. اعتمدي فقط الأوجه التي أتممتِ تسميعها كاملةً؛ يبقى غير المعتمد مسودة دون تسجيل إنجاز.</p>'+
       (payload.pages||[]).map(pg=>'<div class="setrow" style="display:block;padding:10px 0">'+
       '<label><input type="checkbox" data-approve-page="'+pg.page+'" '+(pg.draftApproved?'checked':'')+' style="margin-left:8px">أُقرّ أنني أتممتُ تسميع الوجه '+ARA(pg.page)+' كاملًا</label>'+
       '<div class="audio-note" style="margin:5px 0 0;font-size:.73rem">'+
-       ((pg.coverage||0)>0?'تغطية المتابعة التقريبية: '+ARA(Math.round((pg.coverage||0)*100))+'٪. ':'لم يرصد المتتبّع كلمات كافية لهذا الوجه. ')+
-       'لا يُعدّ المرور على الآية أو التنقل بين الأوجه دليلًا على الإنجاز؛ اتركي المربع غير محدد إن توقفتِ قبل إكمال الوجه.</div>'+
+       'متابعة صوتية تقريبية: '+ARA(Math.round(Math.max(0,(+pg.wordsCovered||0)-Math.round((+pg.assistRate||0)*(+pg.wordsTotal||0)))/Math.max(1,+pg.wordsTotal||0)*100))+'٪ · مساعدة في إظهار النص: '+ARA(Math.round(Math.max(0,+pg.assistRate||0)*100))+'٪. '+
+       'هذه المؤشرات ليست تقييمًا للحفظ، ولا تثبت إتمام الوجه.</div>'+
       '<select data-quality-page="'+pg.page+'" style="display:block;margin-top:8px;width:100%;padding:9px;border-radius:10px;border:1px solid var(--line)">'+[['','دون تقييم'],['weak','متفلّت'],['needs','يحتاج تثبيتًا'],['good','جيد'],['strong','ثابت']].map(([value,label])=>'<option value="'+value+'" '+(pg.draftQuality===value?'selected':'')+'>'+label+'</option>').join('')+'</select></div>').join('');
+    const updateApprovalCountV162=()=>{
+      const checked=(payload.pages||[]).filter(pg=>document.querySelector('[data-approve-page="'+pg.page+'"]')?.checked).length;
+      $('recSummarySave').textContent=checked?'اعتماد '+ARA(checked)+' من '+ARA((payload.pages||[]).length)+' أوجه':'حفظ الجلسة دون اعتماد أوجه';
+      $('recSummarySave').setAttribute('aria-label',checked?'اعتماد الأوجه المحددة يدويًا':'حفظ الجلسة دون تسجيل أوجه مكتملة');
+    };
+    updateApprovalCountV162();
     $('recSummaryBody').onchange=()=>{
       for(const pg of payload.pages||[]){
         pg.draftApproved=!!document.querySelector('[data-approve-page="'+pg.page+'"]')?.checked;
         pg.draftQuality=document.querySelector('[data-quality-page="'+pg.page+'"]')?.value||'';
       }
-      saveReviewDraftV119(payload);
+      saveReviewDraftV119(payload);updateApprovalCountV162();
     };
     $('recSummaryWrap').classList.add('open');return;
   }
@@ -2132,6 +2138,8 @@ $('recSummarySave').onclick=()=>{
   }
   if(payload.userReviewed===true)return;
   payload.userReviewed=true;payload.confirmedAt=Date.now();
+  payload.summary=payload.summary||{};
+  payload.summary.completedPages=(payload.pages||[]).filter(pg=>pg.manualConfirmed===true).length;
   // عدم التمكن من حفظ جلسة معتمدة لا يجيز حذف مسودتها أو إغلاق نافذتها.
   if(!sendSession(payload)){
     payload.userReviewed=false;
