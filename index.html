@@ -2654,7 +2654,36 @@ function renderDailyPageQueueV122(){
  const modeInput=document.getElementById('reviewWeaknessModeV133');
  if(modeInput)modeInput.onchange=()=>{S.reviewWeaknessMode=modeInput.value;save();refreshV50();};
 }
+/* v156 · التركيز على إنجاز اليوم أولًا، وإتاحة التفاصيل عند الطلب. */
+function organizeTodayV156(){
+ const root=document.getElementById('tab-today');
+ if(!root||root.dataset.organizedV156==='1')return;
+ const main=root.querySelector('.today-v50'),tasks=document.getElementById('todayTasksV50');
+ if(!main||!tasks)return;
+ const heading=tasks.previousElementSibling,secondary=tasks.nextElementSibling;
+ const focus=document.getElementById('focusedVerseReviewsV143'),review=document.getElementById('dailyPageQueueV122');
+ const details=document.createElement('details');
+ details.id='todayFurtherV156';details.className='v50-glass v50-card';
+ details.style.cssText='margin:12px 0;padding:14px';
+ details.innerHTML='<summary style="cursor:pointer;font-weight:700">التفاصيل والتخطيط <small style="font-weight:400;color:var(--muted)">· تحليلات، توقعات، اختبارات وإعدادات</small></summary><div id="todayFurtherBodyV156" style="display:grid;gap:12px;margin-top:12px"></div>';
+ const body=details.querySelector('#todayFurtherBodyV156');
+ for(const id of ['smartReview','weeklyAchievementV136','longTermProgressV139','detailedMemorizationV140','studyPlanSettingsV134','reviewForecastV124','teacherTestV127','teacherCatchupV129']){
+  const el=document.getElementById(id);if(el){el.style.margin='0';body.appendChild(el);}
+ }
+ const priority=document.getElementById('todayPriorityV50');
+ if(priority&&heading.parentNode===main)priority.after(heading);
+ if(heading.parentNode===main)heading.after(tasks);
+ if(tasks.parentNode===main){
+  if(secondary&&secondary.parentNode===main)tasks.after(secondary);
+  const tail=secondary&&secondary.parentNode===main?secondary:tasks;
+  if(focus)tail.after(focus);
+  if(review&&focus)focus.after(review);else if(review)tail.after(review);
+  (review||focus||tail).after(details);
+ }
+ root.dataset.organizedV156='1';
+}
 function renderTodayV50(){
+  organizeTodayV156();
   mergeFocusedMushafActionsV146();
   renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderDetailedMemorizationV140();renderFocusedVerseReviewsV143();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
@@ -2673,7 +2702,7 @@ function renderTafsirSummaryV67(){
 }
 function newMemPagesSinceV69(days){
   const cut=new Date();cut.setDate(cut.getDate()-days+1);const ck=keyOf(cut),set=new Set();
-  (S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&keyOf(new Date(r.endedAt||r.startedAt||0))>=ck).forEach(r=>(r.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)set.add(+p.page);}));
+  (S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&keyOf(new Date(r.endedAt||r.startedAt||0))>=ck).forEach(r=>(r.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(r,p))set.add(+p.page);}));
   (S.logs||[]).filter(l=>l.date>=ck).forEach(l=>(l.memList||[]).forEach(it=>{const rg=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);if(rg)for(let p=rg[0];p<=rg[1];p++)set.add(p);}));
   return set;
 }
@@ -2692,12 +2721,13 @@ function renderStatsV67(){
   let mem=0,fix=0,near=0,far=0,weak=0,due=0,partial=0;
   for(let p=1;p<=604;p++){const m=mapPageMetaV62(p,null),ph=m.engine&&m.memorized?m.engine.phase:'unseen';if(m.memorized)mem++;if(ph==='fix')fix++;else if(ph==='near')near++;else if(ph==='far')far++;if(m.state==='weak')weak++;if(m.engine&&m.engine.due)due++;if(m.partial)partial++;}
   const now=Date.now(),cut=now-30*86400000,rs=(S.recitationSessions||[]).filter(x=>(x.endedAt||x.startedAt||0)>=cut),donePages=[];
-  rs.forEach(x=>(x.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)donePages.push(Object.assign({},p,{task:x.task}));}));
-  const avg=donePages.length?Math.round(donePages.reduce((a,p)=>a+(+p.score||0),0)/donePages.length):0,errors=(S.errors||[]).filter(e=>!e.archived);
+  rs.forEach(x=>(x.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(x,p))donePages.push(Object.assign({},p,{task:x.task}));}));
+  const ratedPages=donePages.filter(p=>Number.isFinite(+p.score)&&p.manualConfirmed!==true);
+  const avg=ratedPages.length?Math.round(ratedPages.reduce((a,p)=>a+(+p.score||0),0)/ratedPages.length):null,errors=(S.errors||[]).filter(e=>!e.archived);
   const autoErr=errors.filter(e=>e.aiDetected===true).length,months=[],d=new Date();
-  for(let i=5;i>=0;i--){const bucket=DurrPreferences.month(DurrPreferences.shiftMonth(d,-i)),k=keyOf(bucket.start),end=keyOf(bucket.next);let n=0;(S.recitationSessions||[]).filter(r=>{const date=keyOf(new Date(r.endedAt||r.startedAt||0));return r.task==='new'&&date>=k&&date<end;}).forEach(r=>(r.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)n++;}));months.push({k,n});}
+  for(let i=5;i>=0;i--){const bucket=DurrPreferences.month(DurrPreferences.shiftMonth(d,-i)),k=keyOf(bucket.start),end=keyOf(bucket.next);let n=0;(S.recitationSessions||[]).filter(r=>{const date=keyOf(new Date(r.endedAt||r.startedAt||0));return r.task==='new'&&date>=k&&date<end;}).forEach(r=>(r.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(r,p))n++;}));months.push({k,n});}
   const maxM=Math.max(1,...months.map(x=>x.n)),listen=(S.activityEvents||[]).filter(e=>e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e.type==='tafsir').length,task=t=>donePages.filter(p=>p.task===t).length;
-  box.innerHTML='<div class="v67-stat-grid"><div><span>المحفوظ</span><b>'+toAr(mem)+'</b><small>من 604 وجه</small></div><div><span>متوسط التسميع</span><b>'+toAr(avg)+'٪</b><small>آخر 30 يومًا</small></div><div><span>مستحق الآن</span><b>'+toAr(due)+'</b><small>وجهًا</small></div><div><span>أخطاء نشطة</span><b>'+toAr(errors.length)+'</b><small>'+toAr(autoErr)+' آلي</small></div></div>'+
+  box.innerHTML='<div class="v67-stat-grid"><div><span>المحفوظ</span><b>'+toAr(mem)+'</b><small>من 604 وجه</small></div><div><span>متوسط تقييم التسميع</span><b>'+(avg==null?'—':toAr(avg)+'٪')+'</b><small>'+(avg==null?'لا يوجد تقييم رقمي؛ الاعتماد يدوي':'آخر 30 يومًا · تقييمات مسجلة')+'</small></div><div><span>مستحق الآن</span><b>'+toAr(due)+'</b><small>وجهًا</small></div><div><span>أخطاء نشطة</span><b>'+toAr(errors.length)+'</b><small>'+toAr(autoErr)+' آلي</small></div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>توزيع المحفوظ</span><b>حالة المراجعة الحالية</b></div></div><div class="v67-bars">'+[['تثبيت',fix,'#C89B3C'],['قريبة',near,'#D7B45B'],['بعيدة',far,'#7482A8'],['متفلّت',weak,'#C77486'],['جزئي',partial,'#A68BB7']].map(x=>'<div><span>'+x[0]+'</span><i><em style="width:'+Math.min(100,mem?Math.round(x[1]/mem*100):0)+'%;background:'+x[2]+'"></em></i><b>'+toAr(x[1])+'</b></div>').join('')+'</div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>6 أشهر</span><b>الحفظ الجديد</b></div></div><div class="v67-month-chart">'+months.map(x=>{const dt=parseKey(x.k);return '<div><i><em style="height:'+Math.round(x.n/maxM*100)+'%"></em></i><b>'+toAr(x.n)+'</b><span>'+DurrPreferences.month(dt).name+'</span></div>';}).join('')+'</div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>آخر 30 يومًا</span><b>جلسات التسميع المكتملة</b></div><strong>'+toAr(donePages.length)+'</strong></div><div class="v67-inline-stats"><span>حفظ <b>'+toAr(task('new'))+'</b></span><span>تثبيت <b>'+toAr(task('fix'))+'</b></span><span>قريبة <b>'+toAr(task('near'))+'</b></span><span>بعيدة <b>'+toAr(task('far'))+'</b></span></div></div>'+
@@ -3148,7 +3178,7 @@ function renderSmartReview(){
 function pagesMemorizedInMonth(){
   const bucket=DurrPreferences.month(new Date()),start=keyOf(bucket.start),end=keyOf(bucket.next),set=new Set(),inMonth=k=>k&&k>=start&&k<end;
   (S.logs||[]).filter(l=>inMonth(l.date)).forEach(l=>(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1];p++)set.add(+p);}));
-  (S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&inMonth(keyOf(new Date(r.endedAt||r.startedAt||0)))).forEach(r=>(r.pages||[]).forEach(p=>{if(p.complete&&p.coverage>=.95)set.add(+p.page);}));
+  (S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&inMonth(keyOf(new Date(r.endedAt||r.startedAt||0)))).forEach(r=>(r.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(r,p))set.add(+p.page);}));
   return set.size;
 }
 function longestStreak(){
