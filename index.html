@@ -5690,6 +5690,7 @@ document.getElementById('cloudMergeSafeV152')?.addEventListener('click',async()=
   }
   // نسخة احتياطية قبل استبدال البيانات المحلية.
   backupLocalBeforeCloudReplaceV125('before-manual-cloud-merge-v153');
+  void backupAuditV154('تسوية تعارض معتمدة');
   cloudRememberV151({payload:proposed});
   if(JSON.stringify(S)===snapshot.localPayload){
    S=Object.assign({},JSON.parse(JSON.stringify(DEF)),result.merged);
@@ -5795,6 +5796,7 @@ function cloudPull(silent,done){
       if(cloudS&&(cloudHas&&!localHas || (cloudHas&&cloudUpdated>localUpdated))){
         backupLocalBeforeCloudReplaceV125('cloud-pull');
         S=Object.assign({},JSON.parse(JSON.stringify(DEF)),cloudS);
+        void backupAuditV154('استعادة بيانات سحابية');
         cloudDirtyV151=false;
         localStorage.setItem(KEY,JSON.stringify(S));
         updateAcctChip();renderToday();loadPlan();
@@ -5853,6 +5855,7 @@ function cloudListen(){
           if(!hasData(cloudS)&&hasData(S))return;
           backupLocalBeforeCloudReplaceV125('cloud-listener');
           S=Object.assign({},JSON.parse(JSON.stringify(DEF)),cloudS);
+          void backupAuditV154('تحديث من جهاز آخر');
           cloudDirtyV151=false;
           localStorage.setItem(KEY,JSON.stringify(S));
           reRenderAll();
