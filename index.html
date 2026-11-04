@@ -2835,7 +2835,8 @@ function consumePendingRecitationV55(){
   for(const item of items){
    if(!item?.id)continue;
    const previous=pending.get(item.id);
-   if(!previous||item.userReviewed===true||((item.endedAt||0)>(previous.endedAt||0)))pending.set(item.id,item);
+   if(!previous||(item.userReviewed===true&&previous.userReviewed!==true)||
+      (item.userReviewed===previous.userReviewed&&(item.confirmedAt||item.endedAt||0)>(previous.confirmedAt||previous.endedAt||0)))pending.set(item.id,item);
   }
   let success=0,failed=0;
   for(const payload of pending.values()){
@@ -2849,7 +2850,8 @@ function consumePendingRecitationV55(){
     // حذف عنصر واحد بعد التأكد من الحفظ. أعد قراءة القائمة لتجنّب إسقاط جلسة أضافتها صفحة المصحف أثناء التنفيذ.
     const current=JSON.parse(localStorage.getItem(queueKey)||'[]');
     if(Array.isArray(current)){
-     const remaining=current.filter(item=>item?.id!==payload.id);
+     // أزيلي فقط النسخة التي ثَبُت تخزينها؛ لا تحذفي اعتمادًا أحدث وصل أثناء الدمج.
+     const remaining=current.filter(item=>item?.id!==payload.id||JSON.stringify(item)!==JSON.stringify(payload));
      if(remaining.length)localStorage.setItem(queueKey,JSON.stringify(remaining));
      else localStorage.removeItem(queueKey);
     }
