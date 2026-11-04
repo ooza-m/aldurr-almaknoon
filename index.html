@@ -5438,7 +5438,8 @@ function cloudPlanMergeV152(base,local,remote){
   if(cloudEqualV152(a,b)){if(a!==undefined)merged[key]=a;continue;}
   if(base&&cloudEqualV152(a,prior)){if(b!==undefined)merged[key]=b;continue;}
   if(base&&cloudEqualV152(b,prior)){if(a!==undefined)merged[key]=a;continue;}
-  if(CLOUD_RECORD_LISTS_V152.has(key)){
+  // لا نفترض أن أي حذف كان إضافة قبل امتلاك نسخة أساس مشتركة.
+  if(base&&CLOUD_RECORD_LISTS_V152.has(key)){
    const list=cloudMergeListV152(base?.[key],a,b);
    if(list){merged[key]=list;continue;}
   }
