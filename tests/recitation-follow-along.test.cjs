@@ -82,3 +82,31 @@ test('paused highlighting stays visible, with reduced-motion alternative',()=>{
  assert.match(html,/\.pane\.reciting \.qw\.rec-cur\.rvl/);
  assert.doesNotMatch(html,/body\.rec-on \.qw\.rec-cur\.rvl/);
 });
+
+test('eye button shows the face without advancing word cursor or coverage',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ const eye=html.slice(html.indexOf('function toggleEye(){'),html.indexOf('function autoAdvance(',html.indexOf('function toggleEye(){')));
+ assert.match(eye,/paneCur\.classList\.toggle\('rec-face-revealed',eyeShown\)/);
+ assert.doesNotMatch(eye,/markCoverage\(|recWordPos\s*=|recPos\s*=|covered\.add\(/);
+ assert.match(eye,/syncRecCurrentV160\(section\)/);
+});
+test('verse-end symbol appears only when all words of that verse have been followed or manually revealed',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ const marker=html.slice(html.indexOf('function revealVerseEndV161('),html.indexOf('function syncRecCurrentV160('));
+ assert.match(marker,/classList\.contains\('qend'\)/);
+ assert.match(marker,/verse\.every\(w=>/);
+ assert.match(marker,/section\.state\.covered\.has\(key\)\|\|section\.state\.assisted\.has\(key\)/);
+ assert.match(marker,/item\.el\.classList\.toggle\('rvl',reached\)/);
+});
+test('turning off the eye and switching faces restores the last followed word',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(html,/paneCur\.classList\.remove\('rec-face-revealed'\);buildRecSeq\(\);setEye\(\)/);
+ assert.match(html,/if\(section\)syncRecCurrentV160\(section\)/);
+ assert.match(html,/aria-pressed',String\(eyeShown\)/);
+});
+test('small-screen recitation controls remain accessible',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(html,/@media\(max-width:390px\)\{\s*body\.reciting #recBar/);
+ assert.match(html,/body\.reciting #recBar \.rec-i\{width:32px;height:36px\}/);
+ assert.match(html,/body\.reciting #recBar \.rec-mic\{width:46px;height:46px\}/);
+});
