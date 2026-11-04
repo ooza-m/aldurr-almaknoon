@@ -5308,6 +5308,8 @@ function applyImportV86(bundle){
   if(bundle.notes)localStorage.setItem(DurrStudy.NOTES_KEY,JSON.stringify(bundle.notes));
   if(preferences){localStorage.setItem(DurrPreferences.KEY,JSON.stringify(preferences));localStorage.setItem('durr-num',preferences.digits);}
  }catch(error){for(const [key,value] of previous)try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch(_){}throw Error('تعذّر حفظ النسخة الجديدة. نسخة الاسترجاع محفوظة قبل الاستيراد. '+error.message);}
+ // الاستعادة المحلية لا تملك حق استبدال سحابة أحدث تلقائيًا.
+ cloudBaselineV151=null;
  S=state;if(preferences)DurrPreferences.set(preferences);save();renderAll();
 }
 document.getElementById('btnBackup').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(currentBackupV86(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='الدر-المكنون-'+todayKey()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);});
@@ -5601,6 +5603,7 @@ function cloudConflictV151(){
  const m=document.getElementById('cloudMini');
  if(m){m.textContent='⚠ تعارض مزامنة: البيانات المحلية محفوظة؛ لم تُكتب فوق السحابة';m.style.color='var(--clay)';}
 }
+window.addEventListener('online',()=>{if(cloudDirtyV151&&fbUser)cloudPush();});
 function cloudPush(){
  if(!cloudReady||!fbUser)return;
  clearTimeout(pushTimer);
@@ -5687,8 +5690,13 @@ function cloudPull(silent,done){
         if(typeof renderMap==='function')try{renderMap();}catch(e){}
         if(typeof renderCal==='function')try{renderCal();}catch(e){}
         if(!silent)alert('تم جلب أحدث نسخة من السحابة.');
-      }else if(localHas&&(!cloudHas||localUpdated>cloudUpdated)){
-        // المحلّي أحدث أو فيه بيانات والسحابة فارغة → ارفعيه (بلا مسح)
+      }else if(localHas&&cloudHas&&localUpdated>cloudUpdated&&!cloudEqualV152(S,cloudS)){
+        // التاريخ وحده لا يضمن تفوق نسخة على أخرى؛ يلزم مقارنة ثلاثية صريحة.
+        backupLocalBeforeCloudReplaceV125('local-newer-cloud-diff');
+        cloudDirtyV151=true;cloudBaselineV151=null;
+        cloudConflictV151();cloudShowConflictV152(d.payload);
+      }else if(localHas&&!cloudHas){
+        // لا توجد بيانات سحابية ذات معنى. لا تستبدلي حالة موجودة دون معاملة.
         pullingNow=false;cloudPush();
       }
     }else{
