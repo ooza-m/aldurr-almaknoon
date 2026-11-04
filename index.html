@@ -831,7 +831,19 @@ window.FIREBASE_CONFIG = {
     <span class="save-flash" id="saveFlash">✓ حُفِظ</span>
     <span class="spacer"></span>
     <span id="cloudMini" style="font-size:.78rem;color:var(--muted)"></span>
+    <button type="button" id="cloudResolveOpenV152" style="display:none;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);padding:6px 10px;font:inherit;font-size:.74rem">مراجعة التعارض</button>
   </div>
+  <section id="cloudResolveV152" hidden aria-label="تسوية تعارض بيانات الأجهزة" style="border:1px solid var(--line);background:var(--surface);border-radius:13px;padding:14px;margin:10px 0">
+    <b>مراجعة اختلاف البيانات بين الأجهزة</b>
+    <p class="hint">لن يُستبدل أي تقييم أو خطة أو سجل متعارض دون قرارك. يمكنك تصدير النسختين احتياطيًا.</p>
+    <div id="cloudResolveInfoV152" style="font-size:.78rem;line-height:1.8"></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:9px">
+      <button type="button" class="btn btn-ghost btn-sm" id="cloudExportLocalV152">تصدير نسخة الجهاز</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="cloudExportRemoteV152">تصدير النسخة السحابية</button>
+      <button type="button" class="btn btn-primary btn-sm" id="cloudMergeSafeV152" disabled>اعتماد الدمج الآمن</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="cloudResolveCloseV152">إغلاق</button>
+    </div>
+  </section>
   <input type="file" id="fileRestore" accept="application/json" style="display:none">
   <button id="btnBackup" style="display:none"></button>
   <button id="btnRestore" style="display:none"></button>
@@ -5386,6 +5398,103 @@ let cloudBaselineV151=null,cloudDirtyV151=false;
 function cloudRememberV151(doc){
  cloudBaselineV151=doc&&typeof doc.payload==='string'?doc.payload:null;
 }
+/* v152 · معاينة دمج ثلاثي تحفظ التعارضات دون حسم تلقائي.
+   Only safely identified append-only records can be unioned; edits/deletions require review. */
+let cloudConflictSnapshotV152=null;
+const CLOUD_RECORD_LISTS_V152=new Set(['recitationSessions','errors','activityEvents','quickCompletions']);
+function cloudEqualV152(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+function cloudListIndexV152(arr){
+ if(!Array.isArray(arr))return null;
+ const map=new Map();
+ for(const item of arr){
+  const id=item&&typeof item.id==='string'&&item.id.trim()?item.id:null;
+  if(!id||map.has(id))return null;
+  map.set(id,item);
+ }
+ return map;
+}
+function cloudMergeListV152(base,local,remote){
+ const b=cloudListIndexV152(base||[]),l=cloudListIndexV152(local),r=cloudListIndexV152(remote);
+ if(!b||!l||!r)return null;
+ const output=[],ids=new Set([...b.keys(),...l.keys(),...r.keys()]);
+ for(const id of ids){
+  const old=b.get(id),a=l.get(id),c=r.get(id);
+  if(old!==undefined&&(a===undefined||c===undefined))return null; // deletion/restore ambiguous
+  if(a===undefined){if(old!==undefined)return null;output.push(c);continue;}
+  if(c===undefined){if(old!==undefined)return null;output.push(a);continue;}
+  if(cloudEqualV152(a,c)){output.push(a);continue;}
+  if(old!==undefined&&cloudEqualV152(a,old)){output.push(c);continue;}
+  if(old!==undefined&&cloudEqualV152(c,old)){output.push(a);continue;}
+  return null; // same id independently changed
+ }
+ return output;
+}
+function cloudPlanMergeV152(base,local,remote){
+ if(!local||!remote||typeof local!=='object'||typeof remote!=='object')return{merged:null,conflicts:['صيغة غير صالحة']};
+ const merged={},conflicts=[],keyset=new Set([...Object.keys(base||{}),...Object.keys(local),...Object.keys(remote)]);
+ keyset.delete('updatedAt');
+ for(const key of keyset){
+  const prior=base?.[key],a=local[key],b=remote[key];
+  if(cloudEqualV152(a,b)){if(a!==undefined)merged[key]=a;continue;}
+  if(base&&cloudEqualV152(a,prior)){if(b!==undefined)merged[key]=b;continue;}
+  if(base&&cloudEqualV152(b,prior)){if(a!==undefined)merged[key]=a;continue;}
+  if(CLOUD_RECORD_LISTS_V152.has(key)){
+   const list=cloudMergeListV152(base?.[key],a,b);
+   if(list){merged[key]=list;continue;}
+  }
+  conflicts.push(key);
+ }
+ merged.updatedAt=Math.max(+local.updatedAt||0,+remote.updatedAt||0,Date.now());
+ return{merged,conflicts};
+}
+function cloudShowConflictV152(payload){
+ if(typeof payload!=='string')return;
+ let remote=null,base=null;
+ try{remote=JSON.parse(payload);base=cloudBaselineV151?JSON.parse(cloudBaselineV151):null;}catch(_){return;}
+ cloudConflictSnapshotV152={payload,localPayload:JSON.stringify(S),userId:fbUser?.uid||'',remote};
+ const plan=cloudPlanMergeV152(base,S,remote);cloudConflictSnapshotV152.plan=plan;
+ const button=document.getElementById('cloudResolveOpenV152');
+ const info=document.getElementById('cloudResolveInfoV152'),merge=document.getElementById('cloudMergeSafeV152');
+ if(button)button.style.display='';
+ if(info)info.textContent=plan.conflicts.length?
+  'توجد تغييرات تحتاج مراجعة في: '+plan.conflicts.join('، ')+'؛ الدمج متوقف لحماية البيانات.':
+  'يمكن دمج السجلات المستقلة دون فقدان تعديلات أخرى. راجعي النسختين قبل الاعتماد.';
+ if(merge)merge.disabled=plan.conflicts.length>0;
+}
+function cloudExportV152(data,name){
+ if(!data)return;
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+document.getElementById('cloudResolveOpenV152')?.addEventListener('click',()=>{document.getElementById('cloudResolveV152').hidden=false;});
+document.getElementById('cloudResolveCloseV152')?.addEventListener('click',()=>{document.getElementById('cloudResolveV152').hidden=true;});
+document.getElementById('cloudExportLocalV152')?.addEventListener('click',()=>cloudExportV152(S,'aldurr-local-backup.json'));
+document.getElementById('cloudExportRemoteV152')?.addEventListener('click',()=>cloudExportV152(cloudConflictSnapshotV152?.remote,'aldurr-cloud-backup.json'));
+document.getElementById('cloudMergeSafeV152')?.addEventListener('click',async()=>{
+ const snapshot=cloudConflictSnapshotV152;
+ if(!snapshot||snapshot.plan?.conflicts.length||!fbUser||fbUser.uid!==snapshot.userId)return;
+ const button=document.getElementById('cloudMergeSafeV152');button.disabled=true;
+ try{
+  const latest=await docRef().get();
+  if(!latest.exists||latest.data().payload!==snapshot.payload||JSON.stringify(S)!==snapshot.localPayload){
+   if(latest.exists)cloudShowConflictV152(latest.data().payload);
+   alert('تغيرت إحدى النسختين. أعيدي مراجعة المقارنة قبل اعتماد الدمج.');return;
+  }
+  backupLocalBeforeCloudReplaceV125('before-reviewed-cloud-merge');
+  const proposed=cloudPlanMergeV152(cloudBaselineV151?JSON.parse(cloudBaselineV151):null,S,snapshot.remote);
+  if(proposed.conflicts.length){alert('ما زالت هناك تغييرات تحتاج مراجعة.');return;}
+  cloudRememberV151({payload:snapshot.payload});
+  S=Object.assign({},JSON.parse(JSON.stringify(DEF)),proposed.merged);
+  cloudDirtyV151=true;
+  localStorage.setItem(KEY,JSON.stringify(S));
+  cloudConflictSnapshotV152=null;
+  document.getElementById('cloudResolveV152').hidden=true;
+  document.getElementById('cloudResolveOpenV152').style.display='none';
+  reRenderAll();cloudPush();
+ }catch(e){console.warn('تعذّر اعتماد الدمج',e);alert('تعذّر التحقق من النسخة السحابية. لم يُعتمد الدمج.');}
+ finally{button.disabled=!!cloudConflictSnapshotV152?.plan?.conflicts.length;}
+});
 function cloudConflictV151(){
  const m=document.getElementById('cloudMini');
  if(m){m.textContent='⚠ تعارض مزامنة: البيانات المحلية محفوظة؛ لم تُكتب فوق السحابة';m.style.color='var(--clay)';}
@@ -5413,7 +5522,7 @@ function cloudPush(){
     tx.set(ref,{payload:localPayload,updatedAt:localTimestamp});
     return{status:'saved',payload:localPayload};
    });
-   if(outcome.status==='conflict'){cloudDirtyV151=true;cloudConflictV151();return;}
+   if(outcome.status==='conflict'){cloudDirtyV151=true;cloudConflictV151();try{const snap=await docRef().get();if(snap.exists)cloudShowConflictV152(snap.data().payload);}catch(_){}return;}
    cloudRememberV151({payload:outcome.payload});
    // إذا تغيّر S أثناء انتظار الشبكة، لا تعتبري التغييرات الجديدة متزامنة.
    cloudDirtyV151=JSON.stringify(S)!==localPayload;
@@ -5458,7 +5567,7 @@ function cloudPull(silent,done){
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
       if(cloudDirtyV151&&cloudBaselineV151!==d.payload){
        backupLocalBeforeCloudReplaceV125('cloud-pull-conflict');
-       cloudConflictV151();pullingNow=false;if(done)done();return;
+       cloudConflictV151();cloudShowConflictV152(d.payload);pullingNow=false;if(done)done();return;
       }
       cloudRememberV151(d);
       let cloudS=null;try{cloudS=JSON.parse(d.payload);}catch(e){}
@@ -5513,7 +5622,7 @@ function cloudListen(){
       if(!snap.exists)return;
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
       if(cloudDirtyV151&&cloudBaselineV151!==d.payload){
-       backupLocalBeforeCloudReplaceV125('cloud-listener-conflict');cloudConflictV151();return;
+       backupLocalBeforeCloudReplaceV125('cloud-listener-conflict');cloudConflictV151();cloudShowConflictV152(d.payload);return;
       }
       cloudRememberV151(d);
       // طبّقي فقط إن كانت السحابة أحدث (تعديل من جهاز آخر)
