@@ -84,7 +84,7 @@ test('restore requires a checkpoint and explicitly invalidates cloud baseline',(
 });
 test('backup errors do not stop the primary local save path',()=>{
  assert.match(html,/localStorage\.setItem\(KEY,JSON\.stringify\(S\)\);cloudDirtyV151=true;backupScheduleV154\(\)/);
- assert.match(html,/backupCreateV154\('automatic'\)\.catch\(e=>console\.warn/);
+ assert.match(html,/backupCreateV154\('automatic'\)\.catch\(e=>\{/);
 });
 
 test('backup snapshots and audit remain scoped to the active account',()=>{
