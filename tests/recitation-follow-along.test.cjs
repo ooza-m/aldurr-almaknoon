@@ -49,3 +49,36 @@ test('pausing drops incomplete speech fragments but preserves reading cursor',()
  assert.match(src,/sec\.tracker\.pending=''/);
  assert.doesNotMatch(src,/tracker\.cursor=0/);
 });
+
+test('read words remain Quran-colored while current word has a restrained underline',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(html,/\.pane\.reciting \.qw\.rvl\{color:var\(--quran\)!important\}/);
+ assert.match(html,/\.pane\.reciting \.qw\.rec-cur\.rvl\{color:var\(--quran\)!important;/);
+ assert.match(html,/text-decoration-color:var\(--accent\)/);
+ assert.match(html,/text-decoration-thickness:2px/);
+});
+test('the current highlight references covered words, not the end of a repeated transcript',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(html,/function syncRecCurrentV160\(section\)/);
+ assert.match(html,/section\.state\.covered\.has\(key\)\|\|section\.state\.assisted\.has\(key\)/);
+ assert.match(html,/recWordPos=sec\.tracker\.cursor;recPos=[^;]+;syncRecCurrentV160\(sec\)/);
+ assert.doesNotMatch(html,/setCurrent\(sec\.words\[Math\.max\(0,result\.end-1\)\]\?\.el\)/);
+});
+test('locating the initial voice position never unmasks preceding unspoken words',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ const body=html.slice(html.indexOf('function applyContextTranscriptV86('),html.indexOf('function renderRecitationV89('));
+ assert.doesNotMatch(body,/index<startSeq\)item\.el\.classList\.add\('rvl','rec-context'\)/);
+});
+test('follow-only reveal never treats hypothesized omissions as recited words',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ const body=html.slice(html.indexOf('function renderRecitationV89('),html.indexOf('let voiceLocatorV89=null'));
+ assert.match(body,/if\(DURR_FOLLOW_ONLY_V1\)\{/);
+ assert.match(body,/sec\.state\.covered\.has\(key\)\|\|sec\.state\.assisted\.has\(key\)/);
+ assert.match(body,/else for\(const item of state\.visible\)/);
+});
+test('paused highlighting stays visible, with reduced-motion alternative',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(html,/@media\(prefers-reduced-motion:reduce\)/);
+ assert.match(html,/\.pane\.reciting \.qw\.rec-cur\.rvl/);
+ assert.doesNotMatch(html,/body\.rec-on \.qw\.rec-cur\.rvl/);
+});
