@@ -5353,7 +5353,12 @@ async function backupAuditV154(type){
  }catch(e){console.warn('تعذّر تحديث سجل المزامنة المحلي',e);}
 }
 async function backupCreateV154(reason='manual',force=false){
- if(backupJobV154)return backupJobV154;
+ if(backupJobV154){
+  if(!force)return backupJobV154;
+  // طلب النسخة اليدوية لا يُعتبر منجزًا باكتمال نسخة تلقائية أخرى.
+  try{await backupJobV154;}catch(_){}
+  if(backupJobV154)return backupCreateV154(reason,force);
+ }
  backupJobV154=(async()=>{
   const now=Date.now(),owner=backupOwnerV155();
   const list=(await backupReadStoreV154('snapshots')).filter(backupOwnedV155);
@@ -5404,8 +5409,8 @@ async function backupRenderV154(){
 }
 document.getElementById('backupHistoryV154')?.addEventListener('toggle',event=>{if(event.target.open)void backupRenderV154();});
 document.getElementById('backupCreateNowV154')?.addEventListener('click',async()=>{
- try{await backupCreateV154('manual',true);await backupRenderV154();}
- catch(e){alert('تعذّر إنشاء نسخة محلية: '+e.message);}
+ try{await backupCreateV154('manual',true);await backupRenderV154();backupStatusV155('أُنشئت نسخة محلية جديدة. يُنصح أيضًا بتصدير نسخة JSON إلى ملفات الجهاز.');}
+ catch(e){backupStatusV155('تعذّر إنشاء نسخة محلية؛ استخدمي تصدير JSON.');alert('تعذّر إنشاء نسخة محلية: '+e.message);}
 });
 document.getElementById('backupHistoryListV154')?.addEventListener('click',async event=>{
  const id=event.target.closest('[data-restore-snapshot-v154]')?.dataset.restoreSnapshotV154;
