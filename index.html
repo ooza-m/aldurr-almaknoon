@@ -5451,6 +5451,7 @@ function cloudPlanMergeV152(base,local,remote){
 }
 /* v153 · تسوية اختيارية للخانات المتعارضة داخل خرائط التقييم والخطط. */
 const CLOUD_FIELDS_V153=new Set(['pageMastery','pageReviewSched','reviewSched','faceLearning','plan']);
+const CLOUD_LABELS_V153={pageMastery:'تقييم الوجه',pageReviewSched:'جدولة الوجه',reviewSched:'جدولة المراجعة',faceLearning:'تقدم الوجه',plan:'خطة الحفظ'};
 let cloudChoicesV153={};
 function cloudObjectV153(v){return v!==null&&typeof v==='object'&&!Array.isArray(v);}
 function cloudManualPlanV153(base,local,remote,choices={}){
@@ -5503,7 +5504,7 @@ function cloudRenderChoicesV153(){
  box.innerHTML=result.rows.map(item=>{
   const selected=cloudChoicesV153[item.id]||'';
   return '<div style="border:1px solid var(--line);padding:9px;border-radius:10px">'+
-  '<div style="font-weight:700;font-size:.76rem;margin-bottom:7px">'+esc(item.label)+'</div>'+
+  '<div style="font-weight:700;font-size:.76rem;margin-bottom:7px">'+esc([CLOUD_LABELS_V153[item.path[0]]||item.path[0],...item.path.slice(1)].join(' / '))+'</div>'+
   '<div style="font-size:.7rem;line-height:1.6;overflow-wrap:anywhere">الجهاز: '+esc(cloudChoiceLabelV153(item.local))+'</div>'+
   '<div style="font-size:.7rem;line-height:1.6;overflow-wrap:anywhere">السحابة: '+esc(cloudChoiceLabelV153(item.remote))+'</div>'+
   '<label style="display:block;margin-top:7px;font-size:.75rem">القيمة المعتمدة <select data-cloud-choice-v153="'+esc(item.id)+'" style="max-width:100%;padding:6px;border:1px solid var(--line);border-radius:8px">'+
@@ -5582,9 +5583,13 @@ document.getElementById('cloudMergeSafeV152')?.addEventListener('click',async()=
    localStorage.setItem(KEY,JSON.stringify(S));
    cloudDirtyV151=false;reRenderAll();
   }else{
-   // تغيّرت البيانات أثناء الشبكة؛ اتركيها دون استبدال لإعادة المقارنة.
+   // تغيّرت البيانات أثناء الشبكة: لا تسمحي لرفع لاحق أن يستبدل نتيجة الدمج.
    cloudDirtyV151=true;
+   cloudBaselineV151=null;
+   cloudShowConflictV152(proposed);
    cloudConflictV151();
+   document.getElementById('cloudResolveV152').hidden=false;
+   return;
   }
   cloudConflictSnapshotV152=null;cloudChoicesV153={};
   document.getElementById('cloudResolveV152').hidden=true;
