@@ -1906,8 +1906,22 @@ function syncRecMicV89(){const icon=$('recMicIcon');if(!icon)return;icon.innerHT
 function tickTimer(){const s=Math.floor((Date.now()-recT0)/1000),m=Math.floor(s/60),ss=s%60;$('recTimer').textContent=ARA(m)+':'+ARA(String(ss).padStart(2,'0'));}
 function sessionPayload(){const ctx=ensureRecContextV86();return ctx?payloadForContextV86(ctx):recSession;}
 function sendSession(payload){
- try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'durr:recitation-complete',payload},location.origin);}catch(_){}
- try{const pending=JSON.parse(LS('durr-pending-recitations-v86','[]')),index=pending.findIndex(p=>p.id===payload.id);if(index<0)pending.push(payload);else pending[index]=payload;LSet('durr-pending-recitations-v86',JSON.stringify(pending));LSet('durr-last-recitation',JSON.stringify(payload));}catch(_){}
+ if(!payload?.id)return false;
+ // خزّني نسخة احتياطية أولًا، قبل إبلاغ صفحة التطبيق؛ لا تفقدي اعتمادًا إذا أُغلقت الصفحة.
+ let stored=false;
+ try{
+  const key='durr-pending-recitations-v86',pending=JSON.parse(LS(key,'[]'));
+  if(!Array.isArray(pending))throw Error('قائمة معلّقة غير صحيحة');
+  const index=pending.findIndex(p=>p?.id===payload.id);
+  if(index<0)pending.push(payload);else pending[index]=payload;
+  localStorage.setItem(key,JSON.stringify(pending));
+  stored=JSON.parse(localStorage.getItem(key)||'[]').some(p=>p?.id===payload.id&&(!payload.userReviewed||p.userReviewed===true));
+  if(stored)try{localStorage.setItem('durr-last-recitation',JSON.stringify(payload));}catch(_){}
+ }catch(e){console.warn('تعذّر حفظ جلسة التسميع المعلّقة',e);}
+ if(stored){
+  try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'durr:recitation-complete',payload},location.origin);}catch(_){}
+ }
+ return stored;
 }
 const REVIEW_DRAFT_KEY_V119='durr-review-draft-v119';
 function listReviewDraftsV120(){
@@ -2013,7 +2027,13 @@ $('recSummarySave').onclick=()=>{
   }
   if(payload.userReviewed===true)return;
   payload.userReviewed=true;payload.confirmedAt=Date.now();
-  pendingReviewApprovalV118=null;sendSession(payload);clearReviewDraftV119(payload.id);
+  // عدم التمكن من حفظ جلسة معتمدة لا يجيز حذف مسودتها أو إغلاق نافذتها.
+  if(!sendSession(payload)){
+    payload.userReviewed=false;
+    recTip('تعذّر حفظ الاعتماد على الجهاز. أبقي النافذة مفتوحة وأعيدي المحاولة.');
+    return;
+  }
+  pendingReviewApprovalV118=null;clearReviewDraftV119(payload.id);
   $('recSummaryWrap').classList.remove('open');
   const next=loadReviewDraftV119();
   if(next){showRecSummary(next);return;}
