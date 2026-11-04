@@ -86,3 +86,24 @@ test('backup errors do not stop the primary local save path',()=>{
  assert.match(html,/localStorage\.setItem\(KEY,JSON\.stringify\(S\)\);cloudDirtyV151=true;backupScheduleV154\(\)/);
  assert.match(html,/backupCreateV154\('automatic'\)\.catch\(e=>console\.warn/);
 });
+
+test('backup snapshots and audit remain scoped to the active account',()=>{
+ assert.match(html,/function backupOwnerV155\(\)\{return fbUser\?\.uid\|\|'local-only';\}/);
+ assert.match(html,/function backupOwnedV155\(row\)/);
+ assert.match(html,/const list=\(await backupReadStoreV154\('snapshots'\)\)\.filter\(backupOwnedV155\)/);
+ assert.match(html,/const snapshots=data\.filter\(backupOwnedV155\)/);
+ assert.match(html,/const ownAudit=audit\.filter\(backupOwnedV155\)/);
+});
+test('IndexedDB reads resolve only after transaction completion',()=>{
+ assert.match(html,/tx\.oncomplete=\(\)=>\{db\.close\(\);resolve\(rows\);\}/);
+ assert.match(html,/req\.onblocked=\(\)=>reject/);
+});
+test('restore confirmation previews history before overwriting local state',()=>{
+ assert.match(html,/const summary='نسخة بتاريخ '/);
+ assert.match(html,/bundle\.state\?\.recitationSessions\?\.length/);
+ assert.match(html,/await backupCreateV154\('before-restore',true\)/);
+});
+test('automatic backup scheduling coalesces repeated saves',()=>{
+ assert.match(html,/if\(!hasData\(S\)\|\|backupScheduledV155\)return/);
+ assert.match(html,/backupScheduledV155=false;\s*backupCreateV154\('automatic'\)/);
+});
