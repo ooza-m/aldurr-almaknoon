@@ -1661,7 +1661,7 @@ function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(
   if(v1){const d=JSON.parse(v1);const m=Object.assign({},JSON.parse(JSON.stringify(DEF)),d);return m;}
 }catch(e){}return JSON.parse(JSON.stringify(DEF));}
 let flashT;
-function save(){try{archiveWeeklyGoalV138(S.weeklyMemGoal==null?3:S.weeklyMemGoal);S.updatedAt=Date.now();if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));const f=document.getElementById('saveFlash');f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
+function save(){try{archiveWeeklyGoalV138(S.weeklyMemGoal==null?3:S.weeklyMemGoal);S.updatedAt=Date.now();if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));cloudDirtyV151=true;const f=document.getElementById('saveFlash');f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
 
 /* ============ أدوات ============ */
 const AR_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
@@ -5380,24 +5380,52 @@ function setGateMode(m){
 function gMsg(t){const el=document.getElementById('gMsg');if(el)el.textContent=t||'';}
 /* ---- Firestore ---- */
 function docRef(){return fbDb.collection('users').doc(fbUser.uid).collection('data').doc('dashboard');}
+/* v151 · optimistic concurrency: لا تكتبي فوق مستند تغيّر في جهاز آخر. */
+let cloudBaselineV151=null,cloudDirtyV151=false;
+function cloudRememberV151(doc){
+ cloudBaselineV151=doc&&typeof doc.payload==='string'?doc.payload:null;
+}
+function cloudConflictV151(){
+ const m=document.getElementById('cloudMini');
+ if(m){m.textContent='⚠ تعارض مزامنة: البيانات المحلية محفوظة؛ لم تُكتب فوق السحابة';m.style.color='var(--clay)';}
+}
 function cloudPush(){
-  if(!cloudReady||!fbUser)return;
-  clearTimeout(pushTimer);
-  pushTimer=setTimeout(()=>{
-    if(pullingNow)return;
-    // حماية: لا ترفعي حالة فارغة فوق سحابة فيها بيانات (تمنع مسح البيانات)
-    if(!hasData(S)){
-      docRef().get().then(snap=>{
-        if(snap.exists){let cs=null;try{cs=JSON.parse(snap.data().payload);}catch(e){}
-          if(hasData(cs)){/* السحابة فيها بيانات والمحلّي فارغ → لا ترفعي، بل اجلبي */cloudPull(true);return;}}
-        docRef().set({payload:JSON.stringify(S),updatedAt:S.updatedAt||Date.now()});
-      }).catch(()=>{});
-      return;
+ if(!cloudReady||!fbUser)return;
+ clearTimeout(pushTimer);
+ pushTimer=setTimeout(async()=>{
+  if(pullingNow)return;
+  const localPayload=JSON.stringify(S),localTimestamp=S.updatedAt||Date.now();
+  try{
+   const ref=docRef();
+   // Read and compare within a Firestore transaction, not as two independent requests.
+   const outcome=await fbDb.runTransaction(async tx=>{
+    const snap=await tx.get(ref);
+    const remote=snap.exists?snap.data():null;
+    if(remote&&typeof remote.payload==='string'){
+     if(remote.payload===localPayload)return {status:'equal',payload:remote.payload};
+     if(cloudBaselineV151!==remote.payload)return {status:'conflict'};
     }
-    docRef().set({payload:JSON.stringify(S),updatedAt:S.updatedAt||Date.now()}).then(()=>{
-      const m=document.getElementById('cloudMini');if(m){m.textContent='✓ مُزامَن '+new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});m.style.color='var(--green)';}
-    }).catch(e=>{const m=document.getElementById('cloudMini');if(m){m.textContent='⚠ سيُعاد المزامنة';m.style.color='var(--clay)';}});
-  },1200);
+    if(!hasData(S)&&remote?.payload){
+     let parsed=null;try{parsed=JSON.parse(remote.payload);}catch(_){}
+     if(hasData(parsed))return{status:'conflict'};
+    }
+    tx.set(ref,{payload:localPayload,updatedAt:localTimestamp});
+    return{status:'saved',payload:localPayload};
+   });
+   if(outcome.status==='conflict'){cloudDirtyV151=true;cloudConflictV151();return;}
+   cloudRememberV151({payload:outcome.payload});
+   // إذا تغيّر S أثناء انتظار الشبكة، لا تعتبري التغييرات الجديدة متزامنة.
+   cloudDirtyV151=JSON.stringify(S)!==localPayload;
+   const m=document.getElementById('cloudMini');
+   if(m){m.textContent=cloudDirtyV151?'↻ تغييرات محلية تنتظر المزامنة':'✓ مُزامَن '+new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});m.style.color=cloudDirtyV151?'var(--clay)':'var(--green)';}
+   if(cloudDirtyV151)cloudPush();
+  }catch(e){
+   cloudDirtyV151=true;
+   const m=document.getElementById('cloudMini');
+   if(m){m.textContent='⚠ سيُعاد رفع التغييرات عند الاتصال';m.style.color='var(--clay)';}
+   console.warn('تعذّر رفع بيانات التطبيق دون تعارض',e);
+  }
+ },1200);
 }
 function hasData(s){return s&&((s.quickCompletions&&s.quickCompletions.length)||(s.logs&&s.logs.length)||(s.errors&&s.errors.length)||(s.tafsir&&s.tafsir.length)||(s.stages&&s.stages.length)||(s.pages&&Object.keys(s.pages).length)||(s.recitationSessions&&s.recitationSessions.length)||(s.khatma));}
 /* Refresh local state when returning from the standalone mushaf, before cloud comparison. */
@@ -5427,6 +5455,11 @@ function cloudPull(silent,done){
   docRef().get().then(snap=>{
     if(snap.exists){
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
+      if(cloudDirtyV151&&cloudBaselineV151!==d.payload){
+       backupLocalBeforeCloudReplaceV125('cloud-pull-conflict');
+       cloudConflictV151();pullingNow=false;if(done)done();return;
+      }
+      cloudRememberV151(d);
       let cloudS=null;try{cloudS=JSON.parse(d.payload);}catch(e){}
       const cloudHas=hasData(cloudS),localHas=hasData(S);
       // القاعدة الذهبية: لا تدمُر بيانات موجودة أبدًا.
@@ -5477,6 +5510,10 @@ function cloudListen(){
       if(snap.metadata.hasPendingWrites)return;
       if(!snap.exists)return;
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
+      if(cloudDirtyV151&&cloudBaselineV151!==d.payload){
+       backupLocalBeforeCloudReplaceV125('cloud-listener-conflict');cloudConflictV151();return;
+      }
+      cloudRememberV151(d);
       // طبّقي فقط إن كانت السحابة أحدث (تعديل من جهاز آخر)
       if(cloudUpdated>localUpdated){
         try{
