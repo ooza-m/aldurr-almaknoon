@@ -67,3 +67,22 @@ test('restoring a JSON backup invalidates stale cloud baseline',()=>{
 test('offline local changes cannot overwrite differing cloud data by timestamp alone',()=>{
  assert.match(html,/localHas&&cloudHas&&localUpdated>cloudUpdated&&!cloudEqualV152\(S,cloudS\)/);
 });
+
+test('daily backups use separate IndexedDB stores for snapshots and audit',()=>{
+ assert.match(html,/const BACKUP_DB_V154='aldurr-safety-v154'/);
+ assert.match(html,/createObjectStore\('snapshots',\{keyPath:'id'\}\)/);
+ assert.match(html,/createObjectStore\('audit',\{keyPath:'id'\}\)/);
+});
+test('automatic backups are daily and rotate at five snapshots',()=>{
+ assert.match(html,/item\.at>now-24\*3600\*1000/);
+ assert.match(html,/for\(const old of ordered\.slice\(5\)\)store\.delete\(old\.id\)/);
+});
+test('restore requires a checkpoint and explicitly invalidates cloud baseline',()=>{
+ assert.match(html,/await backupCreateV154\('before-restore',true\)/);
+ assert.match(html,/DurrData\.checkpoint\(localStorage,currentBackupV86\(\)\)/);
+ assert.match(html,/cloudBaselineV151=null;\s*S=state/);
+});
+test('backup errors do not stop the primary local save path',()=>{
+ assert.match(html,/localStorage\.setItem\(KEY,JSON\.stringify\(S\)\);cloudDirtyV151=true;backupScheduleV154\(\)/);
+ assert.match(html,/backupCreateV154\('automatic'\)\.catch\(e=>console\.warn/);
+});
