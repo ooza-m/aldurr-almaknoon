@@ -1828,7 +1828,7 @@ function buildRecSeq(){
   const section=recContexts.get(recSession?.id)?.sections.get(cur);
   if(section){revealVerseEndV161(section);syncRecCurrentV160(section);}
 }}
-function reMaskFace(){for(const run of qasrRunsV86.values())run.audioLedger?.clear();paneCur.classList.add('reciting');paneCur.classList.remove('rec-face-revealed');buildRecSeq();eyeShown=false;setEye();}
+function reMaskFace(){for(const run of qasrRunsV86.values())run.audioLedger?.clear();eyeShown=false;paneCur.classList.add('reciting');paneCur.classList.remove('rec-face-revealed');buildRecSeq();setEye();}
 function setEye(){const b=$('recEye');if(!b)return;b.classList.toggle('off',!eyeShown);b.setAttribute('aria-pressed',String(eyeShown));b.setAttribute('aria-label',eyeShown?'إخفاء الوجه والعودة إلى موضع التسميع':'إظهار الوجه للمساعدة دون احتساب تسميع');b.title=eyeShown?'إخفاء الوجه':'إظهار الوجه للمساعدة';$('recEyeIcon').innerHTML=eyeShown?'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>':'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>';}
 function setCurrent(el){recSeq.forEach(s=>s.el.classList.remove('rec-cur'));if(!eyeShown&&el&&el.classList.contains('rvl'))el.classList.add('rec-cur');}
 /* علامة نهاية الآية عنصر بصري؛ لا تُضاف إلى كلمات التسميع ولا إلى احتساب التغطية. */
