@@ -5310,6 +5310,10 @@ function currentBackupV86(){return DurrData.backup(S,DurrPreferences.get(),new D
 /* v154 · IndexedDB rolling backups and non-sensitive sync audit, per browser only. */
 const BACKUP_DB_V154='aldurr-safety-v154';
 let backupJobV154=null;
+let backupScheduledV155=false;
+function backupOwnerV155(){return fbUser?.uid||'local-only';}
+function backupOwnedV155(row){return row&&row.owner===backupOwnerV155();}
+function backupStatusV155(message){const node=document.getElementById('backupHistoryStatusV154');if(node)node.textContent=message;}
 function backupDBV154(){
  return new Promise((resolve,reject)=>{
   if(!('indexedDB'in window)){reject(Error('IndexedDB unavailable'));return;}
@@ -5319,15 +5323,20 @@ function backupDBV154(){
    if(!db.objectStoreNames.contains('snapshots'))db.createObjectStore('snapshots',{keyPath:'id'});
    if(!db.objectStoreNames.contains('audit'))db.createObjectStore('audit',{keyPath:'id'});
   };
-  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||Error('تعذّر فتح النسخ المحلية'));
+  req.onsuccess=()=>resolve(req.result);
+  req.onerror=()=>reject(req.error||Error('تعذّر فتح النسخ المحلية'));
+  req.onblocked=()=>reject(Error('تعذّر فتح التخزين: أغلقي النسخ الأخرى من التطبيق ثم أعيدي المحاولة'));
  });
 }
 async function backupReadStoreV154(storeName){
  const db=await backupDBV154();
  return new Promise((resolve,reject)=>{
   const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).getAll();
-  req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error);
-  tx.oncomplete=()=>db.close();tx.onabort=()=>db.close();
+  let rows=[];
+  req.onsuccess=()=>{rows=req.result||[];};
+  tx.oncomplete=()=>{db.close();resolve(rows);};
+  tx.onerror=()=>{db.close();reject(tx.error||Error('تعذّرت قراءة النسخ'));};
+  tx.onabort=()=>{db.close();reject(tx.error||Error('أُلغيت القراءة'));};
  });
 }
 async function backupAuditV154(type){
@@ -5345,7 +5354,8 @@ async function backupAuditV154(type){
 async function backupCreateV154(reason='manual',force=false){
  if(backupJobV154)return backupJobV154;
  backupJobV154=(async()=>{
-  const now=Date.now(),list=await backupReadStoreV154('snapshots');
+  const now=Date.now(),owner=backupOwnerV155();
+  const list=(await backupReadStoreV154('snapshots')).filter(backupOwnedV155);
   if(!force&&list.some(item=>item.at>now-24*3600*1000))return false;
   const bundle=currentBackupV86();
   DurrData.validate(bundle);
@@ -5354,7 +5364,7 @@ async function backupCreateV154(reason='manual',force=false){
    await new Promise((resolve,reject)=>{
     const tx=db.transaction('snapshots','readwrite'),store=tx.objectStore('snapshots');
     const id=now+'-'+Math.random().toString(36).slice(2,7);
-    store.put({id,at:now,reason,bundle});
+    store.put({id,at:now,owner,reason,bundle});
     const ordered=[...list.map(x=>({id:x.id,at:x.at})),{id,at:now}].sort((a,b)=>b.at-a.at);
     for(const old of ordered.slice(5))store.delete(old.id);
     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
@@ -5366,9 +5376,12 @@ async function backupCreateV154(reason='manual',force=false){
  try{return await backupJobV154;}finally{backupJobV154=null;}
 }
 function backupScheduleV154(){
- if(!hasData(S))return;
- // يعمل بعد الحفظ لا بدلًا منه؛ لا تُنشأ نسخة لكل تعديل.
- const invoke=()=>backupCreateV154('automatic').catch(e=>console.warn('النسخ التلقائية غير متاحة',e));
+ if(!hasData(S)||backupScheduledV155)return;
+ backupScheduledV155=true;
+ const invoke=()=>{
+  backupScheduledV155=false;
+  backupCreateV154('automatic').catch(e=>{console.warn('النسخ التلقائية غير متاحة',e);backupStatusV155('النسخ المحلية غير متاحة؛ يُرجى تصدير نسخة JSON من الإعدادات.');});
+ };
  if(typeof requestIdleCallback==='function')requestIdleCallback(invoke,{timeout:5000});
  else setTimeout(invoke,1300);
 }
@@ -5377,15 +5390,15 @@ async function backupRenderV154(){
  if(!host)return;
  try{
   const [data,audit]=await Promise.all([backupReadStoreV154('snapshots'),backupReadStoreV154('audit')]);
-  const snapshots=data.sort((a,b)=>b.at-a.at);
+  const snapshots=data.filter(backupOwnedV155).sort((a,b)=>b.at-a.at);
   host.innerHTML=snapshots.length?snapshots.map(item=>
    '<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)">'+
    '<span style="font-size:.76rem">'+esc(new Date(item.at).toLocaleString('ar-AE'))+' · '+esc(item.reason==='automatic'?'تلقائية':'يدوية')+'</span>'+
    '<button type="button" class="btn btn-ghost btn-sm" data-restore-snapshot-v154="'+esc(item.id)+'">استعادة</button></div>').join(''):'<p class="hint">لا توجد نسخ محلية محفوظة بعد.</p>';
-  document.getElementById('backupHistoryStatusV154').textContent='المحفوظ: '+snapshots.length+' من 5 نسخ محلية';
+  document.getElementById('backupHistoryStatusV154').textContent='على هذا الجهاز: '+snapshots.length+' من 5 · آخر نسخة: '+(snapshots[0]?new Date(snapshots[0].at).toLocaleString('ar-AE'):'لا توجد')+'.';
   document.getElementById('backupAuditV154').innerHTML='<b style="font-size:.75rem">آخر العمليات</b>'+
    (audit.length?audit.sort((a,b)=>b.at-a.at).slice(0,8).map(x=>'<div class="hint">'+esc(new Date(x.at).toLocaleString('ar-AE'))+' · '+esc(x.type)+'</div>').join(''):'<p class="hint">لا توجد عمليات مسجلة.</p>');
- }catch(e){document.getElementById('backupHistoryStatusV154').textContent='النسخ المحلية غير متاحة في هذا المتصفح.';}
+ }catch(e){backupStatusV155('تعذّر الوصول للنسخ المحلية. يمكن تصدير ملف JSON من الزر أعلاه.');}
 }
 document.getElementById('backupHistoryV154')?.addEventListener('toggle',event=>{if(event.target.open)void backupRenderV154();});
 document.getElementById('backupCreateNowV154')?.addEventListener('click',async()=>{
@@ -5396,10 +5409,14 @@ document.getElementById('backupHistoryListV154')?.addEventListener('click',async
  const id=event.target.closest('[data-restore-snapshot-v154]')?.dataset.restoreSnapshotV154;
  if(!id)return;
  try{
-  const item=(await backupReadStoreV154('snapshots')).find(x=>x.id===id);
+  const item=(await backupReadStoreV154('snapshots')).find(x=>x.id===id&&backupOwnedV155(x));
   if(!item)throw Error('لم تعد النسخة متاحة');
   const bundle=DurrData.validate(item.bundle);
-  if(!confirm('استعادة هذه النسخة ستستبدل بيانات الجهاز الحالية، ولن تستبدل السحابة مباشرة. هل تريدين المتابعة؟'))return;
+  const summary='نسخة بتاريخ '+new Date(item.at).toLocaleString('ar-AE')+
+   '\nجلسات التسميع: '+(bundle.state?.recitationSessions?.length||0)+
+   '\nالأخطاء: '+(bundle.state?.errors?.length||0)+
+   '\nسجلات الأيام: '+(bundle.state?.logs?.length||0);
+  if(!confirm(summary+'\n\nستُستبدل بيانات الجهاز، ولن يُستبدل Firebase تلقائيًا. سيُنشأ احتياط للحالة الحالية أولًا. هل تعتمدين الاستعادة؟'))return;
   // احفظي الوضع الحالي قبل الاستعادة، أو أوقفي العملية عند تعذّر حمايته.
   await backupCreateV154('before-restore',true);
   DurrData.checkpoint(localStorage,currentBackupV86());
