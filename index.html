@@ -5344,9 +5344,10 @@ async function backupAuditV154(type){
   const db=await backupDBV154(),timestamp=Date.now();
   await new Promise((resolve,reject)=>{
    const tx=db.transaction('audit','readwrite'),st=tx.objectStore('audit');
-   st.put({id:String(timestamp)+'-'+Math.random().toString(36).slice(2,7),at:timestamp,type});
+   const owner=backupOwnerV155();
+   st.put({id:String(timestamp)+'-'+Math.random().toString(36).slice(2,7),at:timestamp,owner,type});
    const req=st.getAll();
-   req.onsuccess=()=>{const sorted=(req.result||[]).sort((a,b)=>b.at-a.at);for(const old of sorted.slice(30))st.delete(old.id);};
+   req.onsuccess=()=>{const sorted=(req.result||[]).filter(x=>x.owner===owner).sort((a,b)=>b.at-a.at);for(const old of sorted.slice(30))st.delete(old.id);};
    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
   });db.close();
  }catch(e){console.warn('تعذّر تحديث سجل المزامنة المحلي',e);}
@@ -5396,8 +5397,9 @@ async function backupRenderV154(){
    '<span style="font-size:.76rem">'+esc(new Date(item.at).toLocaleString('ar-AE'))+' · '+esc(item.reason==='automatic'?'تلقائية':'يدوية')+'</span>'+
    '<button type="button" class="btn btn-ghost btn-sm" data-restore-snapshot-v154="'+esc(item.id)+'">استعادة</button></div>').join(''):'<p class="hint">لا توجد نسخ محلية محفوظة بعد.</p>';
   document.getElementById('backupHistoryStatusV154').textContent='على هذا الجهاز: '+snapshots.length+' من 5 · آخر نسخة: '+(snapshots[0]?new Date(snapshots[0].at).toLocaleString('ar-AE'):'لا توجد')+'.';
+  const ownAudit=audit.filter(backupOwnedV155);
   document.getElementById('backupAuditV154').innerHTML='<b style="font-size:.75rem">آخر العمليات</b>'+
-   (audit.length?audit.sort((a,b)=>b.at-a.at).slice(0,8).map(x=>'<div class="hint">'+esc(new Date(x.at).toLocaleString('ar-AE'))+' · '+esc(x.type)+'</div>').join(''):'<p class="hint">لا توجد عمليات مسجلة.</p>');
+   (ownAudit.length?ownAudit.sort((a,b)=>b.at-a.at).slice(0,8).map(x=>'<div class="hint">'+esc(new Date(x.at).toLocaleString('ar-AE'))+' · '+esc(x.type)+'</div>').join(''):'<p class="hint">لا توجد عمليات مسجلة.</p>');
  }catch(e){backupStatusV155('تعذّر الوصول للنسخ المحلية. يمكن تصدير ملف JSON من الزر أعلاه.');}
 }
 document.getElementById('backupHistoryV154')?.addEventListener('toggle',event=>{if(event.target.open)void backupRenderV154();});
