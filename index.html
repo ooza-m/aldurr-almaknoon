@@ -837,6 +837,7 @@ window.FIREBASE_CONFIG = {
     <b>مراجعة اختلاف البيانات بين الأجهزة</b>
     <p class="hint">لن يُستبدل أي تقييم أو خطة أو سجل متعارض دون قرارك. يمكنك تصدير النسختين احتياطيًا.</p>
     <div id="cloudResolveInfoV152" style="font-size:.78rem;line-height:1.8"></div>
+    <div id="cloudChoicesV153" style="margin:10px 0;display:grid;gap:8px"></div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:9px">
       <button type="button" class="btn btn-ghost btn-sm" id="cloudExportLocalV152">تصدير نسخة الجهاز</button>
       <button type="button" class="btn btn-ghost btn-sm" id="cloudExportRemoteV152">تصدير النسخة السحابية</button>
@@ -5448,11 +5449,87 @@ function cloudPlanMergeV152(base,local,remote){
  merged.updatedAt=Math.max(+local.updatedAt||0,+remote.updatedAt||0,Date.now());
  return{merged,conflicts};
 }
+/* v153 · تسوية اختيارية للخانات المتعارضة داخل خرائط التقييم والخطط. */
+const CLOUD_FIELDS_V153=new Set(['pageMastery','pageReviewSched','reviewSched','faceLearning','plan']);
+let cloudChoicesV153={};
+function cloudObjectV153(v){return v!==null&&typeof v==='object'&&!Array.isArray(v);}
+function cloudManualPlanV153(base,local,remote,choices={}){
+ const automatic=cloudPlanMergeV152(base,local,remote);
+ const merged={...automatic.merged},unresolved=[],rows=[];
+ for(const key of automatic.conflicts){
+  if(!CLOUD_FIELDS_V153.has(key)||!cloudObjectV153(local[key])||!cloudObjectV153(remote[key])){
+   unresolved.push(key);continue;
+  }
+  const source=base&&cloudObjectV153(base[key])?base[key]:{};
+  const output={};
+  const walk=(prior,a,b,path,level)=>{
+   if(cloudEqualV152(a,b))return a;
+   if(prior!==undefined&&cloudEqualV152(a,prior))return b;
+   if(prior!==undefined&&cloudEqualV152(b,prior))return a;
+   if(level<3&&cloudObjectV153(a)&&cloudObjectV153(b)){
+    const next={};for(const name of new Set([...Object.keys(prior||{}),...Object.keys(a),...Object.keys(b)])){
+     const value=walk(cloudObjectV153(prior)?prior[name]:undefined,a[name],b[name],path.concat(name),level+1);
+     if(value!==undefined)next[name]=value;
+    }
+    return next;
+   }
+   const id=JSON.stringify(path);
+   rows.push({id,path,label:path.join(' / '),local:a,remote:b});
+   const choice=choices[id];
+   if(choice!=='local'&&choice!=='remote'){unresolved.push(path.join(' / '));return undefined;}
+   return choice==='local'?a:b;
+  };
+  for(const name of new Set([...Object.keys(source),...Object.keys(local[key]),...Object.keys(remote[key])])){
+   const value=walk(source[name],local[key][name],remote[key][name],[key,name],1);
+   if(value!==undefined)output[name]=value;
+  }
+  merged[key]=output;
+ }
+ merged.updatedAt=Math.max(Date.now(),+local.updatedAt||0,+remote.updatedAt||0);
+ return {merged,unresolved,rows};
+}
+function cloudChoiceLabelV153(value){
+ if(value===undefined)return 'غير موجود / محذوف';
+ const text=JSON.stringify(value);
+ return text?.length>280?text.slice(0,280)+'…':text;
+}
+function cloudRenderChoicesV153(){
+ const box=document.getElementById('cloudChoicesV153'),btn=document.getElementById('cloudMergeSafeV152');
+ const snapshot=cloudConflictSnapshotV152;
+ if(!box||!snapshot){if(box)box.innerHTML='';return;}
+ let baseline=null;try{baseline=snapshot.basePayload?JSON.parse(snapshot.basePayload):null;}catch(_){}
+ const result=cloudManualPlanV153(baseline,JSON.parse(snapshot.localPayload),snapshot.remote,cloudChoicesV153);
+ snapshot.resolution=result;
+ box.innerHTML=result.rows.map(item=>{
+  const selected=cloudChoicesV153[item.id]||'';
+  return '<div style="border:1px solid var(--line);padding:9px;border-radius:10px">'+
+  '<div style="font-weight:700;font-size:.76rem;margin-bottom:7px">'+esc(item.label)+'</div>'+
+  '<div style="font-size:.7rem;line-height:1.6;overflow-wrap:anywhere">الجهاز: '+esc(cloudChoiceLabelV153(item.local))+'</div>'+
+  '<div style="font-size:.7rem;line-height:1.6;overflow-wrap:anywhere">السحابة: '+esc(cloudChoiceLabelV153(item.remote))+'</div>'+
+  '<label style="display:block;margin-top:7px;font-size:.75rem">القيمة المعتمدة <select data-cloud-choice-v153="'+esc(item.id)+'" style="max-width:100%;padding:6px;border:1px solid var(--line);border-radius:8px">'+
+  '<option value="">اختاري...</option><option value="local" '+(selected==='local'?'selected':'')+'>نسخة الجهاز</option>'+
+  '<option value="remote" '+(selected==='remote'?'selected':'')+'>النسخة السحابية</option></select></label></div>';
+ }).join('');
+ const information=document.getElementById('cloudResolveInfoV152');
+ if(information){
+  information.textContent=result.unresolved.length?
+   'عناصر معلّقة: '+result.unresolved.length+'. '+(result.unresolved.filter(x=>!result.rows.some(r=>r.label===x)).length?'توجد حقول لا يمكن حسمها من هذه الواجهة؛ صدّري النسختين للاحتفاظ بهما.':'اختاري مصدر كل قيمة متعارضة.') :
+   'اكتملت الاختيارات؛ سيُعاد فحص البيانات قبل حفظ الدمج.';
+ }
+ if(btn)btn.disabled=result.unresolved.length>0;
+}
+document.getElementById('cloudChoicesV153')?.addEventListener('change',event=>{
+ const el=event.target.closest('[data-cloud-choice-v153]');if(!el)return;
+ if(['local','remote'].includes(el.value))cloudChoicesV153[el.dataset.cloudChoiceV153]=el.value;
+ else delete cloudChoicesV153[el.dataset.cloudChoiceV153];
+ cloudRenderChoicesV153();
+});
 function cloudShowConflictV152(payload){
  if(typeof payload!=='string')return;
  let remote=null,base=null;
  try{remote=JSON.parse(payload);base=cloudBaselineV151?JSON.parse(cloudBaselineV151):null;}catch(_){return;}
- cloudConflictSnapshotV152={payload,localPayload:JSON.stringify(S),userId:fbUser?.uid||'',remote};
+ cloudConflictSnapshotV152={payload,localPayload:JSON.stringify(S),basePayload:cloudBaselineV151,userId:fbUser?.uid||'',remote};
+ cloudChoicesV153={};
  const plan=cloudPlanMergeV152(base,S,remote);cloudConflictSnapshotV152.plan=plan;
  const button=document.getElementById('cloudResolveOpenV152');
  const info=document.getElementById('cloudResolveInfoV152'),merge=document.getElementById('cloudMergeSafeV152');
@@ -5461,6 +5538,7 @@ function cloudShowConflictV152(payload){
   'توجد تغييرات تحتاج مراجعة في: '+plan.conflicts.join('، ')+'؛ الدمج متوقف لحماية البيانات.':
   'يمكن دمج السجلات المستقلة دون فقدان تعديلات أخرى. راجعي النسختين قبل الاعتماد.';
  if(merge)merge.disabled=plan.conflicts.length>0;
+ cloudRenderChoicesV153();
 }
 function cloudExportV152(data,name){
  if(!data)return;
@@ -5474,27 +5552,45 @@ document.getElementById('cloudExportLocalV152')?.addEventListener('click',()=>cl
 document.getElementById('cloudExportRemoteV152')?.addEventListener('click',()=>cloudExportV152(cloudConflictSnapshotV152?.remote,'aldurr-cloud-backup.json'));
 document.getElementById('cloudMergeSafeV152')?.addEventListener('click',async()=>{
  const snapshot=cloudConflictSnapshotV152;
- if(!snapshot||snapshot.plan?.conflicts.length||!fbUser||fbUser.uid!==snapshot.userId)return;
+ if(!snapshot||!fbUser||fbUser.uid!==snapshot.userId||snapshot.resolution?.unresolved.length)return;
  const button=document.getElementById('cloudMergeSafeV152');button.disabled=true;
  try{
-  const latest=await docRef().get();
-  if(!latest.exists||latest.data().payload!==snapshot.payload||JSON.stringify(S)!==snapshot.localPayload){
-   if(latest.exists)cloudShowConflictV152(latest.data().payload);
-   alert('تغيرت إحدى النسختين. أعيدي مراجعة المقارنة قبل اعتماد الدمج.');return;
+  if(JSON.stringify(S)!==snapshot.localPayload){
+   cloudShowConflictV152(snapshot.payload);alert('تغيّرت بيانات الجهاز؛ راجعي الفروق مجددًا.');return;
   }
-  backupLocalBeforeCloudReplaceV125('before-reviewed-cloud-merge');
-  const proposed=cloudPlanMergeV152(cloudBaselineV151?JSON.parse(cloudBaselineV151):null,S,snapshot.remote);
-  if(proposed.conflicts.length){alert('ما زالت هناك تغييرات تحتاج مراجعة.');return;}
-  cloudRememberV151({payload:snapshot.payload});
-  S=Object.assign({},JSON.parse(JSON.stringify(DEF)),proposed.merged);
-  cloudDirtyV151=true;
-  localStorage.setItem(KEY,JSON.stringify(S));
-  cloudConflictSnapshotV152=null;
+  let baseline=null;try{baseline=snapshot.basePayload?JSON.parse(snapshot.basePayload):null;}catch(_){}
+  const result=cloudManualPlanV153(baseline,JSON.parse(snapshot.localPayload),snapshot.remote,cloudChoicesV153);
+  if(result.unresolved.length){cloudRenderChoicesV153();return;}
+  const proposed=JSON.stringify(result.merged);
+  // تقارن المعاملة النسخة السحابية قبل الكتابة؛ لا نعتمد قراءة منفصلة قابلة للسباق.
+  const outcome=await fbDb.runTransaction(async transaction=>{
+   const snap=await transaction.get(docRef());
+   if(!snap.exists||snap.data().payload!==snapshot.payload)return 'changed';
+   transaction.set(docRef(),{payload:proposed,updatedAt:result.merged.updatedAt});
+   return 'saved';
+  });
+  if(outcome!=='saved'){
+   const refreshed=await docRef().get();
+   if(refreshed.exists)cloudShowConflictV152(refreshed.data().payload);
+   alert('تغيرت النسخة السحابية؛ أعيدي مراجعة الفروق.');return;
+  }
+  // نسخة احتياطية قبل استبدال البيانات المحلية.
+  backupLocalBeforeCloudReplaceV125('before-manual-cloud-merge-v153');
+  cloudRememberV151({payload:proposed});
+  if(JSON.stringify(S)===snapshot.localPayload){
+   S=Object.assign({},JSON.parse(JSON.stringify(DEF)),result.merged);
+   localStorage.setItem(KEY,JSON.stringify(S));
+   cloudDirtyV151=false;reRenderAll();
+  }else{
+   // تغيّرت البيانات أثناء الشبكة؛ اتركيها دون استبدال لإعادة المقارنة.
+   cloudDirtyV151=true;
+   cloudConflictV151();
+  }
+  cloudConflictSnapshotV152=null;cloudChoicesV153={};
   document.getElementById('cloudResolveV152').hidden=true;
   document.getElementById('cloudResolveOpenV152').style.display='none';
-  reRenderAll();cloudPush();
- }catch(e){console.warn('تعذّر اعتماد الدمج',e);alert('تعذّر التحقق من النسخة السحابية. لم يُعتمد الدمج.');}
- finally{button.disabled=!!cloudConflictSnapshotV152?.plan?.conflicts.length;}
+ }catch(e){console.warn('تعذّر اعتماد التسوية اليدوية',e);alert('تعذّر إتمام الدمج. احتُفظ بالبيانات المحلية دون تغيير.');}
+ finally{button.disabled=!!cloudConflictSnapshotV152?.resolution?.unresolved.length;}
 });
 function cloudConflictV151(){
  const m=document.getElementById('cloudMini');
