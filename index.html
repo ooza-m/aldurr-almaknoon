@@ -5345,6 +5345,7 @@ function initCloud(){
     // «تذكّرني» يُضبط عند الدخول. الافتراضي محلّي (يبقى مسجّلًا).
     fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
     fbAuth.onAuthStateChanged(u=>{
+      if((fbUser?.uid||null)!==(u?.uid||null)){cloudBaselineV151=null;cloudDirtyV151=false;}
       fbUser=u;
       if(u){
         updateAcctChip();hideGate();
@@ -5469,6 +5470,7 @@ function cloudPull(silent,done){
       if(cloudS&&(cloudHas&&!localHas || (cloudHas&&cloudUpdated>localUpdated))){
         backupLocalBeforeCloudReplaceV125('cloud-pull');
         S=Object.assign({},JSON.parse(JSON.stringify(DEF)),cloudS);
+        cloudDirtyV151=false;
         localStorage.setItem(KEY,JSON.stringify(S));
         updateAcctChip();renderToday();loadPlan();
         if(typeof renderMap==='function')try{renderMap();}catch(e){}
@@ -5521,6 +5523,7 @@ function cloudListen(){
           if(!hasData(cloudS)&&hasData(S))return;
           backupLocalBeforeCloudReplaceV125('cloud-listener');
           S=Object.assign({},JSON.parse(JSON.stringify(DEF)),cloudS);
+          cloudDirtyV151=false;
           localStorage.setItem(KEY,JSON.stringify(S));
           reRenderAll();
           const m=document.getElementById('cloudMini');
