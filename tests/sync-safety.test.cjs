@@ -148,3 +148,36 @@ test('task page transition does not mark position advanced until next page opens
  assert.match(mushaf,/ACTIVE_TASK_SESSION\.pos=i\+1/);
  assert.match(mushaf,/وصلتِ إلى آخر وجه · اعتمدي الأوجه التي أتممتِها/);
 });
+
+test('microphone pause and resume preserve cumulative active recording time',()=>{
+ const mushaf=require('node:fs').readFileSync(require('node:path').join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(mushaf,/recElapsedMsV158\+=Math\.max\(0,Date\.now\(\)-recT0\)/);
+ assert.match(mushaf,/recElapsedMsV158\+\(recOn&&recT0\?/);
+ assert.match(mushaf,/recElapsedMsV158=0;recT0=0;tickTimer\(\)/);
+});
+test('manual word hints never trigger page navigation',()=>{
+ const mushaf=require('node:fs').readFileSync(require('node:path').join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(mushaf,/function revealNextWord\(\).*?return;/);
+ assert.match(mushaf,/وصلتِ إلى نهاية كلمات الوجه · للانتقال استخدمي زر الوجه التالي/);
+ assert.match(mushaf,/function autoAdvance\(manual=false\)/);
+ assert.match(mushaf,/if\(!manual&&!recOn\)return/);
+});
+test('automatic page advance requires sufficient unassisted spoken words',()=>{
+ const mushaf=require('node:fs').readFileSync(require('node:path').join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(mushaf,/lastWords\.every\(w=>/);
+ assert.match(mushaf,/!sec\.state\.assisted\.has\(key\)/);
+ assert.match(mushaf,/spokenCoverage<\.8/);
+ assert.match(mushaf,/if\(!recOn\|\|!recMode\|\|recSession\?\.id!==owner\|\|cur!==face\)return/);
+});
+test('speech callbacks cannot mutate an unrelated or stopped session',()=>{
+ const mushaf=require('node:fs').readFileSync(require('node:path').join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(mushaf,/r\._stopped\|\|\(!recOn&&!r\._stopping\)\|\|r!==speechRec\|\|recSession\?\.id!==ctx\.session\.id/);
+ assert.match(mushaf,/void stopRec\(\); \/\/ لا تبقي زر الميكروفون/);
+});
+test('pause, finish and manual next face are separate controls',()=>{
+ const mushaf=require('node:fs').readFileSync(require('node:path').join(__dirname,'..','mushaf.html'),'utf8');
+ assert.match(mushaf,/id="recNextFaceV158"/);
+ assert.match(mushaf,/autoAdvance\(true\)/);
+ assert.match(mushaf,/id="recExit" aria-label="إنهاء الجلسة وعرض الاعتماد"/);
+ assert.match(mushaf,/aria-pressed',String\(recOn\)/);
+});
