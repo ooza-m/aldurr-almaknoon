@@ -2439,24 +2439,36 @@ function mergeFocusedMushafActionsV146(){
  if(!Array.isArray(events)||!events.length)return;
  const applied=Array.isArray(S.focusedMushafAppliedV146)?S.focusedMushafAppliedV146:[];
  const seen=new Set(applied),state=S.focusedReviewSessionV145;
- const remaining=[];let changed=false;
+ const remaining=[];let changed=false,ended=false;
  for(const event of events){
   if(!event||typeof event.id!=='string'||seen.has(event.id))continue;
-  if(!state||state.startedAt!==event.startedAt||!Array.isArray(state.keys)||!state.keys.includes(event.vk)){
-   // Retain unmerged actions instead of deleting evidence before a session can be reconciled.
-   remaining.push(event);continue;
+  if(!state||event.startedAt!==state.startedAt||!Array.isArray(state.keys)||!state.keys.includes(event.vk)){
+   // لا نطبّق أفعال جلسة قديمة على الجلسة الحالية.
+   seen.add(event.id);changed=true;continue;
   }
-  if(event.action==='done'){
-   const verse=focusedVerseListV143().find(x=>x.vk===event.vk);
-   if(verse){verse.status='done';verse.completedAt=event.at||Date.now();}
+  if(ended){seen.add(event.id);changed=true;continue;}
+  if(event.action==='end'){
+   S.focusedReviewSessionV145=null;ended=true;
+   seen.add(event.id);changed=true;continue;
+  }
+  if(!['done','skip'].includes(event.action)){seen.add(event.id);changed=true;continue;}
+  const index=Number(event.index),current=Math.max(0,+state.current||0);
+  if(!Number.isInteger(index)||index<0||index>=state.keys.length||state.keys[index]!==event.vk){
+   seen.add(event.id);changed=true;continue;
+  }
+  // أحداث الانتقال يجب أن تتبع ترتيب الجلسة؛ لا يمكن اعتماد آية لاحقة بطلب قديم.
+  if(index<current){seen.add(event.id);changed=true;continue;}
+  if(index>current){remaining.push(event);continue;}
+  const verse=focusedVerseListV143().find(x=>x.vk===event.vk);
+  if(event.action==='done'&&verse){
+   verse.status='done';verse.completedAt=Number.isFinite(+event.at)?+event.at:Date.now();
    state.reviewed=Array.isArray(state.reviewed)?state.reviewed:[];
    if(!state.reviewed.includes(event.vk))state.reviewed.push(event.vk);
   }else if(event.action==='skip'){
    state.skipped=Array.isArray(state.skipped)?state.skipped:[];
    if(!state.skipped.includes(event.vk))state.skipped.push(event.vk);
-  }else if(event.action!=='end')continue;
-  if(event.action==='end')S.focusedReviewSessionV145=null;
-  else state.current=Math.max(+state.current||0,Math.min(state.keys.length,(+event.index||0)+1));
+  }
+  state.current=index+1;
   seen.add(event.id);changed=true;
  }
  if(changed){S.focusedMushafAppliedV146=[...seen].slice(-300);save();}
