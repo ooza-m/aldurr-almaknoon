@@ -1940,9 +1940,12 @@ function showRecSummary(payload){
   $('recSummaryErrors').hidden=eligible;
   if(eligible){
     $('recSummarySub').textContent='اعتماد الإنجاز وتقييم ضبط الأوجه';
-    $('recSummaryBody').innerHTML='<p class="audio-note">المتابعة الصوتية لا تُقيّم جودة الحفظ. اختاري الأوجه التي أنجزتِها ثم قيّمي ضبط كل وجه اختياريًا. تُحفظ اختياراتك كمسودة حتى تضغطي اعتماد الإنجاز.</p>'+
+    $('recSummaryBody').innerHTML='<p class="audio-note">المتابعة الصوتية لا تُقيّم جودة الحفظ. اعتمدي فقط الأوجه التي أتممتِ تسميعها كاملةً، حتى لو لم يتتبعها الصوت بدقة. لا تعتمدي الوجه عند التوقف المبكر؛ ويمكنك تقييم ضبطه اختياريًا. تُحفظ اختياراتك كمسودة حتى تضغطي اعتماد الإنجاز.</p>'+
       (payload.pages||[]).map(pg=>'<div class="setrow" style="display:block;padding:10px 0">'+
-      '<label><input type="checkbox" data-approve-page="'+pg.page+'" '+(pg.draftApproved?'checked':'')+' style="margin-left:8px">أتممتُ الوجه '+ARA(pg.page)+'</label>'+
+      '<label><input type="checkbox" data-approve-page="'+pg.page+'" '+(pg.draftApproved?'checked':'')+' style="margin-left:8px">أُقرّ أنني أتممتُ تسميع الوجه '+ARA(pg.page)+' كاملًا</label>'+
+      '<div class="audio-note" style="margin:5px 0 0;font-size:.73rem">'+
+       ((pg.coverage||0)>0?'تغطية المتابعة التقريبية: '+ARA(Math.round((pg.coverage||0)*100))+'٪. ':'لم يرصد المتتبّع كلمات كافية لهذا الوجه. ')+
+       'لا يُعدّ المرور على الآية أو التنقل بين الأوجه دليلًا على الإنجاز؛ اتركي المربع غير محدد إن توقفتِ قبل إكمال الوجه.</div>'+
       '<select data-quality-page="'+pg.page+'" style="display:block;margin-top:8px;width:100%;padding:9px;border-radius:10px;border:1px solid var(--line)">'+[['','دون تقييم'],['weak','متفلّت'],['needs','يحتاج تثبيتًا'],['good','جيد'],['strong','ثابت']].map(([value,label])=>'<option value="'+value+'" '+(pg.draftQuality===value?'selected':'')+'>'+label+'</option>').join('')+'</select></div>').join('');
     $('recSummaryBody').onchange=()=>{
       for(const pg of payload.pages||[]){
