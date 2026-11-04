@@ -287,7 +287,13 @@ body.chrome .chrome-bot{transform:none;opacity:1;pointer-events:auto}
 .pane.reciting .qw{color:transparent!important;background:transparent!important;transition:color .18s}
 .pane.reciting .qw.rvl{color:var(--quran)!important}
 .pane.reciting .qw.qend.rvl{color:var(--accent)!important}
-.pane.reciting .qw.rec-cur.rvl{color:var(--quran)!important}
+.pane.reciting .qw.rec-cur.rvl{color:var(--quran)!important;
+  text-decoration:underline;text-decoration-color:var(--accent);
+  text-decoration-thickness:2px;text-underline-offset:5px;
+  text-decoration-skip-ink:none;border-radius:2px}
+.pane.reciting .qw.rec-context.rvl{color:var(--quran)!important;opacity:.68}
+.pane.reciting .qw.rec-preview:not(.rvl){color:var(--quran)!important;opacity:.48;text-decoration:underline dotted var(--muted);text-underline-offset:5px}
+@media(prefers-reduced-motion:reduce){.pane.reciting .qw{transition:none!important}}
 .pane.reciting .qw.rec-omission.rvl{color:#a26814!important}
 .pane.reciting .qw.rec-extra.rvl{color:#8558ba!important}
 .pane.reciting .qw.rec-skipped.rvl{opacity:.45}
@@ -1376,10 +1382,11 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
  if(result.updates.length&&!DURR_FOLLOW_ONLY_V1)saveErr();
  snapshotStateV86(ctx.session,sec.state);
  if(!active)return;
- if(result.initial){const startSeq=sec.words[result.start]?.seqIndex||0;sec.seq.forEach((item,index)=>{if(index<startSeq)item.el.classList.add('rvl','rec-context');});setEngine('live','تم تحديد موضعك · التتبّع مستمر');}
+ if(result.initial){setEngine('live','تم تحديد موضعك · التتبّع مستمر');}
+ // تحديد الموضع لا يعني أن الكلمات السابقة قد قُرئت، لذلك لا نكشفها تلقائيًا.
  renderRecitationV89(ctx,sec,result.ops);
  for(const [key,event] of sec.tracker.errors){const w=sec.words.find(w=>w.vk+'#'+w.wi===key);if(w){w.el.classList.toggle('rec-err',event.active);w.el.classList.toggle('rec-corrected',!event.active);w.el.classList.toggle('rec-omission',event.active&&event.type==='omission');w.el.classList.toggle('rec-extra',event.active&&event.type==='extra');w.el.dataset.err=event.active?'1':'';}}
- recWordPos=sec.tracker.cursor;recPos=recWordPos<recWords.length?recWords[recWordPos].seqIndex:recSeq.length;setCurrent(sec.words[Math.max(0,result.end-1)]?.el);updateErrCount();
+ recWordPos=sec.tracker.cursor;recPos=recWordPos<recWords.length?recWords[recWordPos].seqIndex:recSeq.length;syncRecCurrentV160(sec);updateErrCount();
  if(active&&!DURR_FOLLOW_ONLY_V1){
    for(const w of sec.words)w.el?.classList.remove('rec-suspected-live');
    for(const [key,candidate] of sec.tracker.pendingErrors){
@@ -1433,7 +1440,13 @@ function applyContextTranscriptV86(ctx,page,text,source,meta={}){
 }
 function renderRecitationV89(ctx,sec,ops=[]){
  clearTimeout(sec.gateTimer);const gate=sec.gate||(sec.gate=new DurrRecitation.RevealGate(sec.words)),state=gate.update(ops,sec.tracker.errors);sec.gateWaiting=state.waiting;
- for(const item of state.visible){item.word.el?.classList.add('rvl');item.word.el?.classList.remove('rec-skipped');}
+ if(DURR_FOLLOW_ONLY_V1){
+  // لا تُظهري كلمات حذفها التخمين أو قفز فوقها المؤشر؛ أظهري ما تمت متابعته أو كشفه يدويًا فقط.
+  for(const word of sec.words){
+   const key=word.vk+'#'+word.wi;
+   if(sec.state.covered.has(key)||sec.state.assisted.has(key))word.el?.classList.add('rvl');
+  }
+ }else for(const item of state.visible){item.word.el?.classList.add('rvl');item.word.el?.classList.remove('rec-skipped');}
  if(state.waiting&&!DURR_FOLLOW_ONLY_V1){setEngine('live','يوجد سقط قبل موضعك · يمكنك العودة لتصحيحه');sec.gateTimer=setTimeout(()=>{if(ctx.finalized||!recMode||recSession?.id!==ctx.session.id||cur!==sec.page)return;renderRecitationV89(ctx,sec);if(!sec.gateWaiting&&recOn&&!recFinishing){const end=ctx.session.recall?sec.words.findLastIndex(w=>w.vk===ctx.session.recall.vk)+1:recWords.length;if(recWordPos>=end)ctx.session.recall?finishReciteSession(false):autoAdvance();}},Math.max(1,state.remaining+5));}
 }
 let voiceLocatorV89=null;
@@ -1796,10 +1809,26 @@ function buildRecSeq(){
   }
   const completed=recWords.reduce((last,w,i)=>recPageState.covered.has(w.vk+'#'+w.wi)||recPageState.assisted.has(w.vk+'#'+w.wi)?i+1:last,0);
   recWordPos=completed;recPos=completed<recWords.length?recWords[completed].seqIndex:recSeq.length;
+  const section=recContexts.get(recSession?.id)?.sections.get(cur);
+  if(section)syncRecCurrentV160(section);
 }}
 function reMaskFace(){for(const run of qasrRunsV86.values())run.audioLedger?.clear();paneCur.classList.add('reciting');buildRecSeq();eyeShown=false;setEye();}
 function setEye(){const b=$('recEye');if(!b)return;b.classList.toggle('off',!eyeShown);$('recEyeIcon').innerHTML=eyeShown?'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>':'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>';}
-function setCurrent(el){recSeq.forEach(s=>s.el.classList.remove('rec-cur'));if(el)el.classList.add('rec-cur');}
+function setCurrent(el){recSeq.forEach(s=>s.el.classList.remove('rec-cur'));if(el&&el.classList.contains('rvl'))el.classList.add('rec-cur');}
+/* v160: أبرزي آخر كلمة ثبتت متابعتها، لا كلمة متوقعة أو كلمة من عبارة مُعادة. */
+function syncRecCurrentV160(section){
+ if(!section||!recWords.length)return;
+ const cursor=Math.max(0,Math.min(recWords.length,+section.tracker.cursor||0));
+ let index=cursor-1;
+ while(index>=0){
+  const word=recWords[index],key=word.vk+'#'+word.wi;
+  if(section.state.covered.has(key)||section.state.assisted.has(key)){
+   setCurrent(word.el);return;
+  }
+  index--;
+ }
+ setCurrent(null);
+}
 function recTip(msg){const t=$('recTip');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1800);}
 function revealItem(s,source){if(!s)return;s.el.classList.add('rvl');markErrVisual(s.el);setCurrent(s.el);markCoverage(s,source);if(s.wi!==null){const wp=recWords.findIndex(x=>x.el===s.el);if(wp>=0)recWordPos=Math.max(recWordPos,wp+1);}const qi=recSeq.indexOf(s);if(qi>=0)recPos=Math.max(recPos,qi+1);}
 function revealNextWord(){if(!recMode||recFinishing)return;if(recPos>=recSeq.length){recTip('وصلتِ إلى نهاية كلمات الوجه · للانتقال استخدمي زر الوجه التالي');return;}const s=recSeq[recPos];revealItem(s,'hint-word');if(s.wi!==null&&recSession)recSession.stats.wordHints++;else recPos++;}
