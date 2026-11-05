@@ -248,3 +248,21 @@ test('device drafts are visible in session history but not synced as achievement
  assert.match(html,/localDraftV163:true/);
  assert.match(html,/مسودات الاعتماد المحلية محفوظة على هذا الجهاز فقط/);
 });
+
+test('cloud pull and live listener must not replace divergent offline history by timestamp alone',()=>{
+ const start=html.indexOf('function cloudRemoteAdoptionV164('),end=html.indexOf('function cloudPull(',start);
+ assert.ok(start>=0&&end>start);
+ const canAdopt=new Function('hasData','cloudEqualV152',html.slice(start,end)+';return cloudRemoteAdoptionV164;')(
+   v=>!!(v&&v.recitationSessions?.length),
+   (a,b)=>JSON.stringify(a)===JSON.stringify(b)
+ );
+ const baseline={recitationSessions:[{id:'a',userReviewed:true}]};
+ const local={recitationSessions:[...baseline.recitationSessions,{id:'b',userReviewed:true}]};
+ const remote={recitationSessions:[...baseline.recitationSessions,{id:'c',userReviewed:true}]};
+ assert.equal(canAdopt(local,remote,JSON.stringify(baseline)),false);
+ assert.equal(canAdopt(baseline,remote,JSON.stringify(baseline)),true);
+ assert.equal(canAdopt({recitationSessions:[]},remote,null),true);
+ assert.equal(canAdopt(local,remote,null),false);
+ assert.match(html,/different&&!cloudRemoteAdoptionV164\(S,cloudS,cloudBaselineV151\)/);
+ assert.match(html,/differs&&!cloudRemoteAdoptionV164\(S,remoteState,cloudBaselineV151\)/);
+});
