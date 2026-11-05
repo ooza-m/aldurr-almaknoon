@@ -5913,19 +5913,31 @@ function backupLocalBeforeCloudReplaceV125(reason){
  list.push({savedAt:Date.now(),reason,payload});
  localStorage.setItem(key,JSON.stringify(list.slice(-3)));
 }
+/* v164: لا تسمحي للاستماع أو السحب بتجاوز تغييرات الجهاز اعتمادًا على الوقت وحده. */
+function cloudRemoteAdoptionV164(local,remote,baseline){
+ if(!remote||typeof remote!=='object')return false;
+ if(!hasData(local))return true;
+ if(cloudEqualV152(local,remote))return true;
+ if(typeof baseline!=='string')return false;
+ try{return cloudEqualV152(local,JSON.parse(baseline));}catch(_){return false;}
+}
 function cloudPull(silent,done){
   if(!cloudReady||!fbUser){if(done)done();return;}
   pullingNow=true;
   docRef().get().then(snap=>{
     if(snap.exists){
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
-      if(cloudDirtyV151&&cloudBaselineV151!==d.payload){
-       backupLocalBeforeCloudReplaceV125('cloud-pull-conflict');
-       cloudConflictV151();cloudShowConflictV152(d.payload);pullingNow=false;if(done)done();return;
-      }
-      cloudRememberV151(d);
       let cloudS=null;try{cloudS=JSON.parse(d.payload);}catch(e){}
       const cloudHas=hasData(cloudS),localHas=hasData(S);
+      const different=cloudHas&&localHas&&!cloudEqualV152(S,cloudS);
+      if((cloudDirtyV151&&cloudBaselineV151!==d.payload)||
+         (different&&!cloudRemoteAdoptionV164(S,cloudS,cloudBaselineV151))){
+       backupLocalBeforeCloudReplaceV125('cloud-pull-conflict');
+       cloudDirtyV151=true;
+       cloudConflictV151();cloudShowConflictV152(d.payload);pullingNow=false;if(done)done();return;
+      }
+      // لا تعيدي ضبط خط الأساس قبل التحقق من أمان تبنّي النسخة البعيدة.
+      cloudRememberV151(d);
       // القاعدة الذهبية: لا تدمُر بيانات موجودة أبدًا.
       // ١) السحابة فيها بيانات والمحلّي فارغ → اجلبي السحابة دائمًا (أهمّ حالة: جهاز جديد)
       // ٢) كلاهما فيه بيانات → خذي الأحدث
@@ -5981,8 +5993,12 @@ function cloudListen(){
       if(snap.metadata.hasPendingWrites)return;
       if(!snap.exists)return;
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
-      if(cloudDirtyV151&&cloudBaselineV151!==d.payload){
-       backupLocalBeforeCloudReplaceV125('cloud-listener-conflict');cloudConflictV151();cloudShowConflictV152(d.payload);return;
+      let remoteState=null;try{remoteState=JSON.parse(d.payload);}catch(_){}
+      const differs=hasData(S)&&hasData(remoteState)&&!cloudEqualV152(S,remoteState);
+      if((cloudDirtyV151&&cloudBaselineV151!==d.payload)||
+         (differs&&!cloudRemoteAdoptionV164(S,remoteState,cloudBaselineV151))){
+       backupLocalBeforeCloudReplaceV125('cloud-listener-conflict');
+       cloudDirtyV151=true;cloudConflictV151();cloudShowConflictV152(d.payload);return;
       }
       cloudRememberV151(d);
       // طبّقي فقط إن كانت السحابة أحدث (تعديل من جهاز آخر)
