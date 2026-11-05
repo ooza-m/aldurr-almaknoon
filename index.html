@@ -5955,7 +5955,7 @@ function cloudPull(silent,done){
       }else if(localHas&&cloudHas&&localUpdated>cloudUpdated&&!cloudEqualV152(S,cloudS)){
         // التاريخ وحده لا يضمن تفوق نسخة على أخرى؛ يلزم مقارنة ثلاثية صريحة.
         backupLocalBeforeCloudReplaceV125('local-newer-cloud-diff');
-        cloudDirtyV151=true;cloudBaselineV151=null;
+        cloudDirtyV151=true;
         cloudConflictV151();cloudShowConflictV152(d.payload);
       }else if(localHas&&!cloudHas){
         // لا توجد بيانات سحابية ذات معنى. لا تستبدلي حالة موجودة دون معاملة.
