@@ -150,7 +150,7 @@
       }
       this.emit();this.schedule(token);
     }
-    async toggle(){if(this.status==='waiting'){this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());clearTimeout(this.gapTimer);this.gapTimer=null;this.status='wait-paused';this.emit();return;}if(this.status==='wait-paused'){this.waitForRepeat(this.gapRemaining,this.gapTarget,this.gapKeepAyah);return;}if(this.status==='error')return this.start({verses:this.queue,scope:this.scope,page:this.page});await super.toggle();if(this.plan&&this.status==='playing')this.schedule(this.generation);}
+    async toggle(){if(this.status==='waiting'){this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());clearTimeout(this.gapTimer);this.gapTimer=null;this.status='wait-paused';this.emit();return;}if(this.status==='wait-paused'){this.waitForRepeat(this.gapRemaining,this.gapTarget,this.gapKeepAyah);return;}if(this.status==='error')return this.start({verses:this.queue,scope:this.scope,page:this.page,startIndex:this.index});await super.toggle();if(this.plan&&this.status==='playing')this.schedule(this.generation);}
     setRate(value){super.setRate(value);if(this.plan)this.schedule(this.generation);}
     async setReciter(id){if(!core.RECITERS.some(r=>r.id===id)||id===this.reciter)return;const playing=this.status==='playing',queue=this.queue.slice(),scope=this.scope,page=this.page,startIndex=this.index;this.reciter=id;if(!queue.length){this.emit();return;}await this.start({verses:queue,scope,page,autoplay:playing,startIndex});}
     setAyahRepeat(count){if([1,2,3,5,10,0].includes(+count)){this.ayahRepeat=+count;this.ayahCycle=1;this.emit();}}
