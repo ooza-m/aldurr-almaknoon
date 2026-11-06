@@ -78,3 +78,39 @@ test('unavailable chapter MP3 falls back to per-ayah audio for the chosen recite
  assert.equal(calls.filter(u=>u.includes('/Alafasy_128kbps/')).length,2);
  d.clear();
 });
+
+
+test('multi-surah failure leaves no falsely complete plan and a retry recovers from cached first surah',async()=>{
+ const cs=caches(),calls=[],created=[],revoked=[];let networkUp=false,sequence=0;
+ const firstTimes=[{verse_key:'103:1',timestamp_from:0,timestamp_to:1500}];
+ const secondTimes=[{verse_key:'104:1',timestamp_from:0,timestamp_to:1500}];
+ const d=new AudioDownloads({library:new Library({cacheStorage:cs}),
+  createUrl:()=>{const u='blob:multi-'+(++sequence);created.push(u);return u;},revokeUrl:u=>revoked.push(u),
+  fetcher:async url=>{
+   calls.push(url);
+   if(url.includes('chapter_recitations')){
+    const chapter=Number(url.match(/chapter_recitations\/\d+\/(\d+)/)[1]);
+    const name=chapter===103?'103':'104';
+    return {ok:true,json:async()=>({audio_file:{chapter_id:chapter,
+      audio_url:'https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/'+name+'.mp3',
+      timestamps:chapter===103?firstTimes:secondTimes}})};
+   }
+   if(url.includes('/104.mp3')&&!networkUp)return {ok:false,status:503};
+   if(url.includes('/Alafasy_128kbps/104001.mp3')&&!networkUp)return {ok:false,status:503};
+   return {ok:true,arrayBuffer:async()=>new ArrayBuffer(32)};
+  }});
+ await assert.rejects(d.prepare(['103:1','104:1'],'alafasy'));
+ assert.equal(d.plan,null,'a partially loaded range must never appear ready');
+ assert.equal(d.key,'','failed multi-surah preparation must not be reusable as complete');
+ assert.ok(created.length>0&&created.every(u=>revoked.includes(u)),'failed attempt releases every temporary playback URL');
+ const saved=await d.library.get('alafasy',103);
+ assert.ok(saved&&saved.blob.size>0,'completed first surah may be retained safely');
+ assert.equal(await d.library.get('alafasy',104),null,'failed surah never appears downloaded');
+ networkUp=true;
+ const priorFirstDownloads=calls.filter(u=>u.includes('/103.mp3')).length;
+ const plan=await d.prepare(['103:1','104:1'],'alafasy');
+ assert.equal(plan.size,2);
+ assert.equal(calls.filter(u=>u.includes('/103.mp3')).length,priorFirstDownloads,'cached first surah is not downloaded twice');
+ assert.equal(plan.get('104:1').chapter,true);
+ d.clear();
+});
