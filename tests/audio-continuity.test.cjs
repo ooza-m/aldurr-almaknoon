@@ -168,3 +168,29 @@ test('a late play promise cannot revive playback after a media error',async()=>{
  assert.equal(player.completed.size,0);
  player.stop();
 });
+
+
+test('network loss while playing second surah retries the interrupted ayah, not the start of the range',async()=>{
+ let preparations=0;const seen=[],errors=[];
+ const audio={src:'',duration:1,currentTime:0,readyState:1,paused:true,playbackRate:1,error:null,
+  async play(){this.paused=false;this.onplaying?.();},pause(){this.paused=true;this.onpause?.();}};
+ const player=new BufferedPlayer({audioFactory:()=>audio,onVerse:key=>seen.push(key),onError:msg=>errors.push(msg),
+  downloads:{async prepare(){preparations++;return new Map([
+   ['103:3',{src:'blob:103',from:0,to:1,chapter:true}],
+   ['104:1',{src:'blob:104',from:0,to:1,chapter:true}]
+  ]);},clear(){}}});
+ await player.start({verses:['103:3','104:1'],scope:'range'});
+ audio.currentTime=1;audio.onended();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(player.snapshot().key,'104:1');
+ audio.error={code:2};audio.onerror();
+ assert.equal(player.status,'error');
+ assert.equal(player.completed.size,0,'connection error must not earn a completed listen');
+ await player.toggle();
+ assert.equal(preparations,2,'manual retry prepares the range again');
+ assert.equal(player.snapshot().key,'104:1','retry stays on interrupted ayah');
+ assert.equal(audio.src,'blob:104');
+ assert.deepEqual(seen,['103:3','104:1','104:1']);
+ assert.equal(errors.length,1);
+ player.stop();
+});
