@@ -124,3 +124,40 @@ test('import validation leaves state untouched and undo restores the checkpoint'
  const imported=w.DurrData.validate(w.DurrData.backup({logs:[],profile:{name:'اسم مستورد',pathChosen:true,pathDir:'up'}},{palette:'navy',digits:'en',calendar:'hijri'},[{vk:'1:4',page:1,name:'فاصل'}]));w.applyImportV86(imported);assert.equal(JSON.parse(w.localStorage.getItem('durr-alfareed-v2')).profile.name,'اسم مستورد');assert.equal(w.DurrPreferences.get().palette,'navy');
  $('settingsUndoRestore').click();assert.equal(JSON.parse(w.localStorage.getItem('durr-alfareed-v2')).profile.name,before.state.profile.name);assert.equal(w.DurrPreferences.get().palette,before.displayPreferences.palette);assert.equal(JSON.parse(w.localStorage.getItem('durr-verse-bookmarks-v86')).length,before.bookmarks.length);
 });
+
+
+test('approved Mushaf memorization appears once in the calendar and 604-face map',async t=>{
+ const {dom,w}=await boot();t.after(()=>dom.window.close());
+ const day=w.todayKey(),page=10,stamp=Date.now();
+ const draft={id:'v1-day-new-10',version:149,task:'new',userReviewed:false,endedAt:stamp,
+  pages:[{page,complete:true,manualConfirmed:false,coverage:1,surahIds:[2],verses:[]}]};
+ w.ingestRecitationSessionV51(draft);
+ assert.equal(w.dayFactsV71(day).groups.new.has(page),false,'voice completion must not fill calendar');
+ assert.equal(w.mapPageMetaV62(page,null).memorized,false,'voice completion must not fill face map');
+ const approved={...draft,userReviewed:true,pages:[{...draft.pages[0],manualConfirmed:true}]};
+ w.ingestRecitationSessionV51(approved);
+ w.ingestRecitationSessionV51(approved);
+ assert.equal(w.dayFactsV71(day).groups.new.has(page),true,'manually approved face appears in calendar');
+ assert.equal(w.dayFactsV71(day).groups.new.size,1,'one face is not credited twice');
+ assert.equal(w.mapPageMetaV62(page,null).memorized,true,'same approved face appears in map');
+ const state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));
+ assert.equal(state.recitationSessions.filter(s=>s.id===draft.id).length,1);
+ assert.equal(state.activityEvents.filter(e=>e.id===draft.id+':'+page).length,1);
+});
+test('approved review clears due face without writing a new memorization',async t=>{
+ const {dom,w}=await boot();t.after(()=>dom.window.close());
+ const day=w.todayKey(),first=w.addDaysKeyV62(day,-55),page=10;
+ w.eval("S.logs.push({date:"+JSON.stringify(first)+",memList:[{surahId:2,from:10,to:10}],revList:[]});save();");
+ assert.equal(w.reviewEngineStateV62(page).due,true,'old memorized page begins due for review');
+ const draft={id:'v1-day-near-10',version:149,task:'near',userReviewed:false,endedAt:Date.now(),
+  pages:[{page,complete:true,manualConfirmed:false,coverage:1,surahIds:[2],verses:[]}]};
+ w.ingestRecitationSessionV51(draft);
+ assert.equal(w.reviewEngineStateV62(page).doneToday,false,'follow-along cannot clear due review');
+ assert.equal(w.dayFactsV71(day).groups.near.has(page),false);
+ w.ingestRecitationSessionV51({...draft,userReviewed:true,pages:[{...draft.pages[0],manualConfirmed:true,manualMasteryLevel:'good'}]});
+ assert.equal(w.reviewEngineStateV62(page).doneToday,true);
+ assert.equal(w.reviewEngineStateV62(page).due,false);
+ assert.equal(w.dayFactsV71(day).groups.near.has(page),true,'review appears in calendar');
+ assert.equal(w.mapPageMetaV62(page,null).memorized,true,'review keeps same memorized face');
+ assert.equal(w.dayFactsV71(day).groups.new.has(page),false,'review is not counted as newly memorized');
+});
