@@ -85,3 +85,22 @@ test('cross-surah boundary opens the next recording once and preserves verse ord
  assert.deepEqual(seen,['103:3','104:1']);
  player.stop();
 });
+
+
+test('failed preparation remains retryable and cannot credit listening before audio starts',async()=>{
+ let attempts=0;
+ const audio={src:'',duration:2,currentTime:0,readyState:1,paused:true,playbackRate:1,
+  async play(){this.paused=false;this.onplaying?.();},pause(){this.paused=true;this.onpause?.();}};
+ const errors=[],player=new BufferedPlayer({audioFactory:()=>audio,onError:e=>errors.push(e),
+  downloads:{async prepare(){attempts++;if(attempts===1)throw Error('network offline');return new Map([['103:1',{src:'blob:retry',from:0,to:2,chapter:true}]]);},clear(){}}});
+ await player.start({verses:['103:1'],scope:'verse'});
+ assert.equal(player.status,'error');
+ assert.equal(player.completed.size,0);
+ assert.equal(errors.length,1);
+ await player.toggle();
+ assert.equal(attempts,2);
+ assert.equal(player.status,'playing');
+ assert.equal(audio.src,'blob:retry');
+ assert.equal(player.completed.size,0,'a recovered download is not a completed listen');
+ player.stop();
+});
