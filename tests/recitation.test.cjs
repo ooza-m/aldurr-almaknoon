@@ -35,13 +35,13 @@ test('interim speech reveals a reversible preview without committing coverage or
   run(c,'clearSpeechPreview()');assert.equal(run(c,`recSeq[0].el.classList.contains('rec-preview')`),false);
 });
 
-test('browser final results commit once, and a recognizer restart resets result indices',()=>{
+test('browser final results commit once and stale callbacks after shutdown are ignored',()=>{
   const c=context();let r;c.window.SpeechRecognition=class{constructor(){r=this;}start(){this.onstart?.();}};
   run(c,'startSpeech()');assert.equal(r.interimResults,true);
   const result=[{transcript:'الحمد لله'}];result.isFinal=false;r.onresult({resultIndex:0,results:[result]});assert.equal(run(c,'recPageState.covered.size'),0);
   result.isFinal=true;r.onresult({resultIndex:0,results:[result]});assert.equal(run(c,'recPageState.covered.size'),2);
   const count=run(c,'recSession.stats.browserChunks');r.onresult({resultIndex:0,results:[result]});assert.equal(run(c,'recSession.stats.browserChunks'),count);
-  r.onend();const next=[{transcript:'رب العالمين'}];next.isFinal=true;run(c,'recOn=false');r.onresult({resultIndex:0,results:[next]});assert.equal(run(c,'recPageState.covered.size'),4);
+  r.onend();const next=[{transcript:'رب العالمين'}];next.isFinal=true;run(c,'recOn=false');r.onresult({resultIndex:0,results:[next]});assert.equal(run(c,'recPageState.covered.size'),2,'late results after microphone shutdown must not increase coverage');
 });
 
 test('follow-along does not save automatic errors for omissions in a transcript',()=>{
