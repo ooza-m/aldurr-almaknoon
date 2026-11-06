@@ -57,7 +57,7 @@ test('manual and Mushaf completion overlap without duplicating a genuinely due f
  assert.equal(ctx.taskPagesV60('near').length,0);
  assert.equal(ctx.completeReviewTodayV62(10),true);
 });
-test('manual completion clears today's due state in review engine',()=>{
+test("manual completion clears today's due state in review engine",()=>{
  const {ctx,S,day}=setup();
  S.logs.push({date:day,revList:[{surahId:2,from:10,to:10,type:'near'}]});
  const state=ctx.reviewEngineStateV62(10);
