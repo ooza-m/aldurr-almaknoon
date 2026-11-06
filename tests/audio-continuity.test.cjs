@@ -104,3 +104,21 @@ test('failed preparation remains retryable and cannot credit listening before au
  assert.equal(player.completed.size,0,'a recovered download is not a completed listen');
  player.stop();
 });
+
+
+test('a twice-repeated range spanning two surahs preserves order and ends after second cycle',async()=>{
+ const {player,audio,seen}=playerFixture();
+ player.downloads.prepare=async()=>new Map([
+  ['103:3',{src:'blob:surah103',from:0,to:1,chapter:true}],
+  ['104:1',{src:'blob:surah104',from:0,to:1,chapter:true}]]);
+ player.setRepeat(2);
+ await player.start({verses:['103:3','104:1'],scope:'range'});
+ for(let step=0;step<4;step++){
+  audio.currentTime=1;audio.onended();
+  await new Promise(resolve=>setImmediate(resolve));
+ }
+ assert.deepEqual(seen,['103:3','104:1','103:3','104:1']);
+ assert.equal(player.status,'ended','range ends only after its configured second cycle');
+ assert.equal(player.cycle,2);
+ player.stop();
+});
