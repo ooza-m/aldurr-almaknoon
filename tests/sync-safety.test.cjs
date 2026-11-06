@@ -129,8 +129,8 @@ test('manual-only recitation results never receive a fabricated numeric score',(
 
 test('daily task launch resumes a matching unfinished plan and respects completed faces',()=>{
  assert.match(html,/const resumable=previous&&previous\.task===taskId&&previous\.date===todayKey\(\)/);
- assert.match(html,/const lastPage=resumable\?\+previous\.pages\[\+previous\.pos\]:0/);
- assert.match(html,/pages\.findIndex\(p=>p>=lastPage\)/);
+ assert.match(html,/previous\.pages\.slice\(\+previous\.pos\)\.find\(p=>pages\.includes\(\+p\)\)/);
+ assert.match(html,/pages\.indexOf\(\+nextDue\)/);
  assert.match(html,/resume\?'استئناف الجلسة'/);
 });
 test('mushaf preserves incomplete session position without auto-crediting faces',()=>{
