@@ -136,7 +136,8 @@ test('daily task launch resumes a matching unfinished plan and respects complete
 test('mushaf preserves incomplete session position without auto-crediting faces',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const mushaf=fs.readFileSync(path.join(__dirname,'..','mushaf.html'),'utf8');
- assert.match(mushaf,/if\(planCompleted===true\)\{ACTIVE_TASK_SESSION=null/);
+ assert.match(mushaf,/if\(payload\.planCompleted===true&&payload\.planId&&ACTIVE_TASK_SESSION\?\.id===payload\.planId\)/);
+ assert.match(mushaf,/expected\.every\(p=>approved\.has\(\+p\)\)/);
  assert.match(mushaf,/if\(!ACTIVE_TASK_SESSION\|\|!recMode\)\{chip\.classList\.remove\('on'\);return;\}/);
  assert.match(mushaf,/p\.complete=false;p\.manualConfirmed=false/);
  assert.match(mushaf,/saveReviewDraftV119\(payload\)/);
