@@ -2059,9 +2059,10 @@ function startTaskSessionV60(taskId){
   try{previous=JSON.parse(localStorage.getItem('durr-active-task-session')||'null');}catch(_){}
   const resumable=previous&&previous.task===taskId&&previous.date===todayKey()&&Array.isArray(previous.pages)&&
     previous.pages.length&&Number.isInteger(+previous.pos)&&+previous.pos>=0&&+previous.pos<previous.pages.length;
-  const lastPage=resumable?+previous.pages[+previous.pos]:0;
-  const nextIndex=pages.indexOf(lastPage)>=0?pages.indexOf(lastPage):
-    pages.findIndex(p=>p>=lastPage);
+  // Resume in the original task order, not numerical page order: paths may run backwards.
+  // If the paused face was completed elsewhere, advance to the next still-due face.
+  const nextDue=resumable?previous.pages.slice(+previous.pos).find(p=>pages.includes(+p)):null;
+  const nextIndex=nextDue==null?-1:pages.indexOf(+nextDue);
   const plan=resumable?{...previous,pages:pages.slice(),pos:nextIndex>=0?nextIndex:0}:
     {id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),pos:0,version:157};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
