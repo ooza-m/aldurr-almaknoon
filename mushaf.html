@@ -2091,7 +2091,7 @@ function finishReciteSession(planCompleted=false){
  // Restore the reader immediately. Network tails only touch their owning context.
  rawExitRecite();recSession=null;recFinishing=false;recStarting=false;recStartGenerationV86++;$('recMic').disabled=false;recAdvancing=false;
  // الخروج المبكر لا يحذف موضع الاستئناف؛ إنهاء آخر وجه فقط يغلق خطة الجلسة.
- if(planCompleted===true){ACTIVE_TASK_SESSION=null;try{localStorage.removeItem('durr-active-task-session');}catch(_){}}
+ // Keep unapproved faces resumable: reaching the last face is not user approval.
  syncTaskSessionChip();
  return recJobsV86.run({id:ctx.session.id,initial,work:Promise.allSettled([drain]),onTimeout:()=>{ctx.session.analysisIncomplete=true;ctx.runs.forEach(id=>qasrRunsV86.get(id)?.controller?.abort());},finish:async status=>{
    if(status!=='complete')ctx.session.analysisIncomplete=true;ctx.session.analysisStatus=ctx.session.analysisIncomplete?'incomplete':status;const payload=payloadForContextV86(ctx);ctx.finalized=true;
@@ -2151,6 +2151,16 @@ $('recSummarySave').onclick=()=>{
     if(!pg.manualConfirmed)continue;
     updateLocalLearning('recite',pg.page,{task:payload.task,manualConfirmed:true});
     if(payload.task==='new')updateLocalLearning('hifz',pg.page,{});
+  }
+  // Clear the saved task only when every originally planned face was approved.
+  // Partial approval keeps the same task identity and remaining face position.
+  if(payload.planCompleted===true&&payload.planId&&ACTIVE_TASK_SESSION?.id===payload.planId){
+    const approved=new Set((payload.pages||[]).filter(pg=>pg.manualConfirmed===true).map(pg=>+pg.page));
+    const expected=ACTIVE_TASK_SESSION.pages||[];
+    if(expected.length&&expected.every(p=>approved.has(+p))){
+      ACTIVE_TASK_SESSION=null;
+      try{localStorage.removeItem('durr-active-task-session');}catch(_){}
+    }
   }
   pendingReviewApprovalV118=null;clearReviewDraftV119(payload.id);
   $('recSummaryWrap').classList.remove('open');
