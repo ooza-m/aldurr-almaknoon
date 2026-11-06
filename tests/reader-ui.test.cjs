@@ -115,8 +115,8 @@ test('page scrubber is under the face before actions and jumps without opening t
  $('btnSettings').click();w.DurrPreferences.mount(w.document.querySelector('[data-app-preferences]'));w.document.querySelector('[data-palette=navy]').click();w.document.querySelector('[data-digits=ar]').click();
  assert.equal(w.document.documentElement.dataset.palette,'navy');assert.equal(w.localStorage.getItem('durr-num'),'ar');assert.match($('pagefoot').textContent,/٥٠/);
 });
-test('ayah bookmarks persist independently of browsing and jump back to their exact ayah',async t=>{
- const {dom,w,$}=await boot();t.after(()=>dom.window.close());await w.openAyah('1:3');$('ayBookmark').click();assert.equal($('ayBookmark').getAttribute('aria-pressed'),'true');
+test('colored ayah separators persist independently of browsing and jump back to their exact ayah',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());await w.openAyah('1:3');const swatch=$('hlRow').querySelector('[data-c]:not([data-c=""])');assert.ok(swatch);swatch.click();assert.ok($('hlRow').querySelector('.on[data-c]:not([data-c=""])'));
  const saved=JSON.parse(w.localStorage.getItem('durr-verse-bookmarks-v86'));assert.equal(saved[0].vk,'1:3');await w.readerTest.settle(50);assert.equal(JSON.parse(w.localStorage.getItem('durr-verse-bookmarks-v86'))[0].vk,'1:3');
  $('btnIndex').click();$('openBookmarks').click();assert.ok($('bookmarksOv').classList.contains('open'));w.document.querySelector('[data-bookmark-go="1:3"]').click();await tick();await tick();assert.equal(w.readerTest.page,1);assert.ok(w.document.querySelector('.qend.has-bookmark[data-vk="1:3"]'));
 });
@@ -167,11 +167,10 @@ test('listen settings, speed, persistent highlighting and next-page following ar
   await w.readerTest.player.start({verses:['2:5','2:6'],scope:'custom'});assert.equal(w.readerTest.page,2);audio[0].onended();await tick();await tick();assert.equal(w.readerTest.page,3);assert.equal(w.readerTest.verse,'2:6');
   $('faceListenClose').click();assert.equal(w.document.querySelectorAll('.qw.playing').length,0);assert.ok(!w.document.body.classList.contains('face-listening'));
 });
-test('ayah action buttons copy, share and download actual text',async t=>{
+test('ayah actions copy and share actual text and open the audio range',async t=>{
   const {dom,w,$,clipboard,shares,downloads}=await boot();t.after(()=>dom.window.close());await w.openAyah('1:2');
   $('ayCopy').click();await tick();assert.match(clipboard[0].replace(/[ً-ْ]/g,''),/الحمد/);
   $('ayShare').click();await tick();assert.match(shares[0].text.replace(/[ً-ْ]/g,''),/الحمد/);
-  $('ayDl').click();await tick();assert.equal(downloads[0],'ayah-1-2.txt');
   $('ayPlayTo').click();assert.equal($('audioScope').value,'custom');assert.equal($('audioEndAyah').max,'7');assert.ok($('audioOptionsWrap').classList.contains('open'));
 });
 test('native text selection is suppressed and keyboard does not page behind a dialog',async t=>{
@@ -209,6 +208,6 @@ test('reader controls and recitation UI overlay the large fixed reading area',as
   assert.equal(w.getComputedStyle($('btnBack')).visibility,'visible');assert.equal($('btnBack').closest('[inert]'),null);
   $('track').click();assert.equal(w.getComputedStyle($('readerTopTools')).visibility,'visible');assert.equal(w.getComputedStyle($('readerDock')).pointerEvents,'auto');
   w.document.body.classList.add('face-listening');assert.equal(w.getComputedStyle($('faceListenBar')).position,'relative');assert.equal(w.getComputedStyle($('faceListenBar')).display,'flex');
-  assert.equal($('faceListenBar').closest('#readerDock').id,'readerDock');
+  assert.equal($('faceListenBar').parentElement.id,'screen');
   await w.readerTest.enterRecite();assert.equal($('recBar').parentElement.id,'screen');assert.equal($('recEngine').parentElement.id,'mushafStatusV148');assert.equal($('recSessionChip').parentElement.id,'mushafStatusV148');
 });
