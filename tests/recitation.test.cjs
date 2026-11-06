@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const source = readFileSync(require('node:path').join(__dirname, '../mushaf.html'), 'utf8');
 const recitation = source.slice(source.indexOf('const REC_QUERY='), source.indexOf('/* ===== ربط أزرار المتشابهات/التسميع ===== */'));
 const normalize = source.match(/^const norm=.*$/m)[0];
-function context(fetchImpl = async()=>({ok:true,json:async()=>({seq:0,transcript_delta:''})})) {
+function context(fetchImpl = async()=>({ok:true,json:async()=>({seq:0,transcript_delta:''})}),{enableQuranService=false}={}) {
   const elements = new Map();
   const element = () => {const names=new Set();return {classList:{add:k=>names.add(k),remove:k=>names.delete(k),toggle(k,v){if(v===undefined)v=!names.has(k);if(v)names.add(k);else names.delete(k);return v;},contains:k=>names.has(k)},dataset:{},style:{},addEventListener(){},setAttribute(){},removeAttribute(){}};};
   const c = vm.createContext({URLSearchParams,location:{search:'',origin:'https://app.test'},
@@ -18,7 +18,7 @@ function context(fetchImpl = async()=>({ok:true,json:async()=>({seq:0,transcript
     recMode:true,cur:1,norm:null,btoa:s=>Buffer.from(s,'binary').toString('base64'),
     ensureMuta:async()=>{},MUTA:null,updateLocalLearning(){},syncTaskSessionChip(){},
   });
-  vm.runInContext(normalize+'\n'+recitation,c);
+  vm.runInContext(normalize+'\n'+(enableQuranService?recitation.replace("const QASR_URL='';","const QASR_URL='https://asr.test';"):recitation),c);
   vm.runInContext(`recSession=newRecSession();
     recSeq=['الحمد','لله','رب','العالمين'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){},contains(){return false;}},dataset:{}}}));
     recWords=recSeq;recPageState=makePageState();recOn=true;
@@ -88,7 +88,7 @@ test('finish waits for the final response before saving and does not send a seco
     const item=JSON.parse(opts.body);requests.push(item);
     await new Promise(r=>respond=r);
     return {ok:true,json:async()=>({seq:item.seq,streaming:true,transcript_delta:'الحمد لله رب العالمين'})};
-  });
+  },{enableQuranService:true});
   run(c,`qasrRunId='stream_1';qasrActive=true;showRecSummary=()=>{};sendSession=p=>{globalThis.saved=p;};`);
   const finish=run(c,'finishReciteSession(false)');
   assert.equal(c.saved,undefined);
@@ -105,7 +105,7 @@ test('network failure retries identical sequence, then blocks a complete result'
   const c=context(async(url,opts)=>{
     if(opts.method==='DELETE')return {ok:true};
     calls.push(JSON.parse(opts.body));throw new Error('offline');
-  });
+  },{enableQuranService:true});
   run(c,`qasrRunId='stream_1';qasrActive=true;recOn=false;`);
   await run(c,'queueQasrChunkV73(new Float32Array(16000),16000)');
   assert.equal(calls.length,2);assert.deepEqual(calls[0],calls[1]);
@@ -115,7 +115,7 @@ test('network failure retries identical sequence, then blocks a complete result'
 
 test('late responses from an old stream cannot update a new recitation session',async()=>{
   let respond;
-  const c=context(async()=>{await new Promise(r=>respond=r);return {ok:true,json:async()=>({seq:0,transcript_delta:'الحمد لله رب العالمين'})};});
+  const c=context(async()=>{await new Promise(r=>respond=r);return {ok:true,json:async()=>({seq:0,transcript_delta:'الحمد لله رب العالمين'})};},{enableQuranService:true});
   const pending=run(c,`qasrRunId='old_stream';queueQasrChunkV73(new Float32Array(16000),16000);`);
   run(c,`recSession=newRecSession();recSession.id='new_session';qasrRunId='new_stream';`);
   respond();await pending;
