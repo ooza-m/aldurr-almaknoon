@@ -139,11 +139,17 @@ test('finishing speech immediately restores navigation while the final result be
  const {dom,w,$}=await boot({SpeechRecognition:SR});t.after(()=>dom.window.close());await w.readerTest.enterRecite('free');await w.readerTest.toggleRec();const owner=w.readerTest.session.id,old=recognizers[0],finished=w.readerTest.finishReciteSession();
  assert.equal(w.readerTest.recMode,false);assert.equal(w.document.body.classList.contains('reciting'),false);assert.equal($('recSummaryWrap').classList.contains('open'),false);$('btnIndex').click();assert.ok($('indexOv').classList.contains('open'));
  await w.readerTest.enterRecite('free');const fresh=w.readerTest.session.id;assert.notEqual(fresh,owner);const result=[{transcript:'الحمد لله رب العالمين'}];result.isFinal=true;old.onresult({resultIndex:0,results:[result]});old.onend();await finished;
- assert.equal(w.readerTest.session.id,fresh);assert.equal(w.readerTest.pageState.covered.size,0);assert.equal(w.readerTest.jobs.get(owner).payload.summary.wordsCovered,4);assert.equal($('recSummaryWrap').classList.contains('open'),false);assert.match($('recJobStatus').textContent,/اكتمل/);
+ assert.equal(w.readerTest.session.id,fresh);assert.equal(w.readerTest.pageState.covered.size,0);assert.equal(w.readerTest.jobs.get(owner).payload.summary.wordsCovered,0,'late browser callbacks from a closed session must not create coverage');assert.equal($('recSummaryWrap').classList.contains('open'),false);assert.match($('recJobStatus').textContent,/اكتمل/);
  await w.readerTest.finishReciteSession();
 });
-test('automatic error rows are removable without waiting for the similar-verses data',async t=>{
- const {dom,w,$}=await boot();t.after(()=>dom.window.close());await w.readerTest.enterRecite('free');w.readerTest.processTranscriptV73('الحمد لله غريب العالمين الرحمن الرحيم','browser-speech',{});await w.readerTest.openErrLog();assert.ok($('errBody').querySelector('[data-error-remove]'));$('errBody').querySelector('[data-error-remove]').click();await tick();assert.equal(JSON.parse(w.localStorage.getItem('durr-errors')).length,0);assert.equal(JSON.parse(w.localStorage.getItem('durr-error-dismissals-v86')).length,1);await w.readerTest.finishReciteSession();
+test('browser follow-along cannot invent removable automatic error rows',async t=>{
+ const {dom,w,$}=await boot();t.after(()=>dom.window.close());
+ await w.readerTest.enterRecite('free');
+ w.readerTest.processTranscriptV73('الحمد لله غريب العالمين الرحمن الرحيم','browser-speech',{});
+ await w.readerTest.openErrLog();
+ assert.equal($('errBody').querySelectorAll('[data-error-remove]').length,0);
+ assert.equal(JSON.parse(w.localStorage.getItem('durr-errors')||'[]').length,0);
+ await w.readerTest.finishReciteSession();
 });
 test('face tafsir source buttons really change content and agree with the ayah sheet',async t=>{
   const {dom,w,$,requests}=await boot();t.after(()=>dom.window.close());
