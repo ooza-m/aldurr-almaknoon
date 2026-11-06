@@ -90,13 +90,15 @@
     }
   }
   class BufferedPlayer extends core.AudioPlayer{
-    constructor(options={}){super(options);this.repeat=1;this.cycle=1;this.ayahRepeat=1;this.ayahCycle=1;this.gap=0;this.gapTimer=null;this.gapDeadline=0;this.gapRemaining=0;this.downloads=options.downloads||new AudioDownloads();this.plan=null;this.boundary=null;this.download=null;this.coverage=new Map();this.coverageRanges=new Map();this.lastClock=null;}
+    constructor(options={}){super(options);this.repeat=1;this.cycle=1;this.ayahRepeat=1;this.ayahCycle=1;this.gap=0;this.gapTimer=null;this.gapDeadline=0;this.gapRemaining=0;this.downloads=options.downloads||new AudioDownloads();this.plan=null;this.boundary=null;this.download=null;this.coverage=new Map();this.coverageRanges=new Map();this.lastClock=null;this.mediaRecovery=null;}
     snapshot(){const state=super.snapshot(),s=this.plan?.get(state.key);if(s&&s.to!=null){state.current=Math.max(0,state.current-s.from);state.duration=s.to-s.from;state.progress=(state.index+Math.min(1,state.current/state.duration))/state.queue.length;}return {...state,download:this.download,preloaded:!!this.plan,repeat:this.repeat,cycle:this.cycle,ayahRepeat:this.ayahRepeat,ayahCycle:this.ayahCycle,gap:this.gap,gapRemaining:this.status==='waiting'?Math.max(0,(this.gapDeadline-Date.now())/1000):this.gapRemaining/1000};}
     async start({verses,scope='verse',page=0,autoplay=true,startIndex=0}={}){
       if(!Array.isArray(verses)||!verses.length||!verses.every(core.validVerse))throw Error('Invalid audio range');
       this.halt();const token=++this.generation;this.queue=[...new Set(verses)];this.scope=scope;this.page=page;this.completed.clear();this.coverage.clear();this.coverageRanges.clear();this.cycle=1;this.index=0;this.plan=null;
       this.status='loading';this.download={label:'التلاوة',files:0,bytes:0,loaded:0,total:0};this.emit();
       try{
+        // A browser decoder failure invalidates the corrupt cached chapter before retrying.
+        if(this.mediaRecovery){await this.mediaRecovery;if(token!==this.generation)return;this.mediaRecovery=null;}
         const plan=await this.downloads.prepare(this.queue,this.reciter,d=>{if(token===this.generation){this.download=d;this.emit();}});
         if(token!==this.generation)return;this.plan=plan;this.download=null;return this.playIndex(Math.min(startIndex,this.queue.length-1),{autoplay});
       }catch(error){if(token!==this.generation)return;this.status='error';this.download=null;console.warn('Audio preparation failed',error);this.emit();this.onError('لم يكتمل تنزيل التلاوة. تحققي من الاتصال واضغطي تشغيل للمحاولة مجددًا.');}
@@ -114,11 +116,18 @@
         a.onloadedmetadata=seek;if(a.readyState>=1||typeof a.readyState!=='number')seek();a.playbackRate=this.rate;a.preservesPitch=true;if('webkitPreservesPitch' in a)a.webkitPreservesPitch=true;
         a.onplaying=()=>{if(token===this.generation){this.status='playing';this.lastClock={at:Date.now(),time:a.currentTime};this.emit();this.schedule(token);}};
         a.onpause=()=>{if(token===this.generation&&this.status==='playing'){clearTimeout(this.boundary);this.status='paused';this.lastClock=null;this.emit();}};
-        a.onerror=()=>{if(token===this.generation){this.halt();this.status='error';this.emit();this.onError('تعذّر تشغيل الملف المحمّل. حاولي مجددًا.');}};
+        a.onerror=()=>{if(token===this.generation){
+          const code=a.error?.code,chapter=+String(this.queue[this.index]||'').split(':')[0],reciter=this.reciter;
+          this.halt();this.status='error';this.emit();
+          if((code===3||code===4)&&chapter>=1&&chapter<=114&&this.downloads.library?.remove){
+            this.mediaRecovery=Promise.resolve().then(()=>this.downloads.library.remove(reciter,chapter)).catch(()=>{});
+          }
+          this.onError(code===3||code===4?'تعذّر قراءة التسجيل المحمّل. اضغطي تشغيل لإعادة تنزيله.':'انقطع تشغيل التلاوة. اضغطي تشغيل للمحاولة مجددًا.');
+        }};
         a.ontimeupdate=()=>this.clock(token);
         a.onended=()=>{if(token!==this.generation)return;this.clock(token,true);};
         if(!autoplay){this.status='paused';this.emit();return;}
-        await bounded(a.play(),12000,null,()=>a.pause());if(token===this.generation){this.status='playing';this.emit();this.schedule(token);}
+        await bounded(a.play(),12000,null,()=>a.pause());if(token===this.generation&&this.status!=='error'){this.status='playing';this.emit();this.schedule(token);}
       }catch(error){if(token!==this.generation)return;this.status='paused';this.emit();this.onError(error?.name==='NotAllowedError'?'اكتمل التحميل. اضغطي تشغيل للسماح بالصوت.':'تعذّر التشغيل. اضغطي تشغيل للمحاولة مجددًا.');}
     }
     schedule(token){clearTimeout(this.boundary);const s=this.plan?.get(this.queue[this.index]);if(s?.to!=null&&this.status==='playing')this.boundary=setTimeout(()=>this.clock(token),Math.max(40,(s.to-this.audio.currentTime)*1000/this.rate));}
