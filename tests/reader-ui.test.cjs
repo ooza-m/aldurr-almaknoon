@@ -9,6 +9,10 @@ async function boot(options={}){
   const errors=[],requests=[],console=new VirtualConsole();console.on('jsdomError',error=>errors.push(error));
   const dom=new JSDOM(read('mushaf.html'),{url:'https://reader.test/mushaf.html'+(options.taskPlan?'?p='+(options.taskPlan.pages[options.taskPlan.pos]||1)+'&session=1&task='+encodeURIComponent(options.taskPlan.task):''),runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:console}),w=dom.window;
   w.matchMedia=()=>({matches:true});w.FontFace=class{async load(){return this;}};
+  if(options.mediaSession){
+    Object.defineProperty(w.navigator,'mediaSession',{value:options.mediaSession});
+    w.MediaMetadata=class{constructor(data){Object.assign(this,data);}};
+  }
   if(options.SpeechRecognition){w.SpeechRecognition=options.SpeechRecognition;Object.defineProperty(w.navigator,'mediaDevices',{value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});}
   Object.defineProperty(w.document,'fonts',{value:{add(){},load:async()=>[]}});
   w.requestAnimationFrame=fn=>{fn();return 0;};w.scrollTo=()=>{};
@@ -275,4 +279,29 @@ test('reader restores saved reciter, rate and repeat settings after reload',asyn
  assert.equal($('repeatRangeCount').value,'3');
  assert.equal($('repeatAyahCount').value,'2');
  assert.equal($('repeatGap').value,'5');
+});
+
+test('optional lock-screen media controls mirror audio and stop with the Mushaf player',async t=>{
+ const handlers=new Map(),positions=[],session={playbackState:'none',metadata:null,
+  setActionHandler:(name,fn)=>handlers.set(name,fn),
+  setPositionState:value=>positions.push(value)};
+ const {dom,w}=await boot({mediaSession:session});t.after(()=>{w.readerTest.player.stop();dom.window.close();});
+ assert.ok(handlers.has('play'));assert.ok(handlers.has('pause'));assert.ok(handlers.has('nexttrack'));assert.ok(handlers.has('previoustrack'));assert.ok(handlers.has('stop'));
+ const p=w.readerTest.player;
+ await p.start({verses:['103:1','103:2'],scope:'range'});
+ assert.equal(session.playbackState,'playing');
+ assert.match(session.metadata.title,/العصر/);
+ assert.ok(positions.length>0);
+ handlers.get('pause')();await tick();
+ assert.equal(p.status,'paused');assert.equal(session.playbackState,'paused');
+ handlers.get('play')();await tick();
+ assert.equal(p.status,'playing');assert.equal(session.playbackState,'playing');
+ handlers.get('stop')();await tick();
+ assert.equal(p.status,'idle');assert.equal(session.playbackState,'none');
+ assert.equal(session.metadata,null);
+});
+test('absence of Media Session API does not prevent audio starting',async t=>{
+ const {dom,w}=await boot();t.after(()=>{w.readerTest.player.stop();dom.window.close();});
+ await w.readerTest.player.start({verses:['103:1'],scope:'verse'});
+ assert.equal(w.readerTest.player.status,'playing');
 });
