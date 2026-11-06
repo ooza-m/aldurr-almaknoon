@@ -48,9 +48,11 @@ test('main backup and recovery preserve verse notes and night preferences, old b
 test('system appearance follows OS changes only when system mode is selected',()=>{
  const dom=new JSDOM('<!doctype html><html><body><div data-app-preferences></div></body></html>',{url:'https://prefs.test',runScripts:'outside-only'}),w=dom.window;let dark=false,change;w.matchMedia=()=>({get matches(){return dark;},addEventListener(event,fn){change=fn;}});w.eval(read('app-preferences.js'));const p=w.DurrPreferences;p.set({appearance:'system'});assert.equal(w.document.documentElement.dataset.theme,'light');dark=true;change();assert.equal(w.document.documentElement.dataset.theme,'dark');p.set({appearance:'light'});change();assert.equal(w.document.documentElement.dataset.theme,'light');dom.window.close();
 });
-test('visible settings shortcuts open before any login/logout and all local tabs render',async t=>{
+test('settings and reminders shortcuts work before login and all tabs render',async t=>{
  const {dom,w,$,errors}=await boot();t.after(()=>dom.window.close());
- for(const id of ['moreSettingsBtn','homeNotifBtn','todayTuneBtn']){$('settingsModal').classList.remove('open');$(id).click();assert.ok($('settingsModal').classList.contains('open'),id);}
+ $('moreSettingsBtn').click();assert.ok($('settingsModal').classList.contains('open'),'settings shortcut');
+ $('homeNotifBtn').click();assert.ok($('reminderModal').classList.contains('open'),'notifications open reminders');
+ $('reminderClose').click();assert.ok(!$('reminderModal').classList.contains('open'),'reminder dialog closes');
  $('settingsModal').classList.remove('open');
  for(const route of ['home','today','manual','calendar','map','more','khatma','tafsir','planning','stages','stats','tajweed','errors']){w.switchTab(route);assert.ok($('tab-'+route).classList.contains('active'),route);}
  assert.deepEqual(errors,[]);
