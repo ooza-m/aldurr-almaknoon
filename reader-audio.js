@@ -19,7 +19,9 @@
         const total=Number(response.headers?.get('content-length'))||0;if(total>180*1024*1024)throw Error('Audio too large');let loaded=0;const chunks=[];
         if(response.body?.getReader){const reader=response.body.getReader();try{for(;;){const item=await bounded(reader.read(),this.stallTimeout,signal,abort);if(item.done)break;loaded+=item.value.byteLength;if(loaded>180*1024*1024)throw Error('Audio too large');chunks.push(item.value);onProgress(loaded,total);}}catch(error){reader.cancel().catch(()=>{});throw error;}}
         else{const bytes=await bounded(response.arrayBuffer(),this.stallTimeout,signal,abort);loaded=bytes.byteLength;chunks.push(bytes);onProgress(loaded,total);}
-        if(!loaded||signal.aborted)throw Error('Empty or cancelled audio');const type=response.headers?.get('content-type')||'audio/mpeg';if(/text|json|html/.test(type))throw Error('Not an audio recording');
+        if(!loaded||signal.aborted)throw Error('Empty or cancelled audio');
+        if(total&&loaded<total)throw Error('Incomplete audio download');
+        const type=response.headers?.get('content-type')||'audio/mpeg';if(/text|json|html/.test(type))throw Error('Not an audio recording');
         return new Blob(chunks,{type:'audio/mpeg'});
       }finally{controller.abort();signal.removeEventListener('abort',abort);}
     }
