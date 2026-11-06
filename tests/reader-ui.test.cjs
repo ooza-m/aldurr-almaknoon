@@ -7,7 +7,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
 function tap(w,el,x=100,y=100){const touch={clientX:x,clientY:y},start=new w.Event('touchstart',{bubbles:true,cancelable:true}),end=new w.Event('touchend',{bubbles:true});Object.defineProperty(start,'touches',{value:[touch]});Object.defineProperty(end,'changedTouches',{value:[touch]});el.dispatchEvent(start);el.dispatchEvent(end);}
 async function boot(options={}){
   const errors=[],requests=[],console=new VirtualConsole();console.on('jsdomError',error=>errors.push(error));
-  const dom=new JSDOM(read('mushaf.html'),{url:'https://reader.test/mushaf.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:console}),w=dom.window;
+  const dom=new JSDOM(read('mushaf.html'),{url:'https://reader.test/mushaf.html'+(options.taskPlan?'?p='+(options.taskPlan.pages[options.taskPlan.pos]||1)+'&session=1&task='+encodeURIComponent(options.taskPlan.task):''),runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:console}),w=dom.window;
   w.matchMedia=()=>({matches:true});w.FontFace=class{async load(){return this;}};
   if(options.SpeechRecognition){w.SpeechRecognition=options.SpeechRecognition;Object.defineProperty(w.navigator,'mediaDevices',{value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});}
   Object.defineProperty(w.document,'fonts',{value:{add(){},load:async()=>[]}});
@@ -30,7 +30,7 @@ async function boot(options={}){
     if(match)return {ok:true,json:async()=>({tafsir:{resource_id:+match[1],text:'<p>تفسير المصدر '+match[1]+' للآية '+match[2]+'</p><p>فقرة ثانية.</p>'}})};
     throw Error('Unexpected network request: '+url);
   };
-  w.localStorage.setItem('durr-num','en');if(options.savedFocus!=null)w.localStorage.setItem('durr-focus',options.savedFocus);for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js','reader-study.js','reader-session.js'])w.eval(read(file));
+  w.localStorage.setItem('durr-num','en');if(options.taskPlan)w.localStorage.setItem('durr-active-task-session',JSON.stringify(options.taskPlan));if(options.savedFocus!=null)w.localStorage.setItem('durr-focus',options.savedFocus);for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js','reader-study.js','reader-session.js'])w.eval(read(file));
   for(const script of w.document.querySelectorAll('script:not([src])')){
     let code=script.textContent;
     if(code.includes('const REC_QUERY='))code+='\nwindow.readerTest={get player(){return audioController},get page(){return cur},get verse(){return playingVerse},get session(){return recSession},get recMode(){return recMode},get pageState(){return recPageState},get jobs(){return recJobsV86},settle,faceVerses,loadTafsir,maybeCompleteFaceTafsir,enterRecite,toggleRec,finishReciteSession,processTranscriptV73,openErrLog};';
@@ -216,4 +216,30 @@ test('reader controls and recitation UI overlay the large fixed reading area',as
   w.document.body.classList.add('face-listening');assert.equal(w.getComputedStyle($('faceListenBar')).position,'relative');assert.equal(w.getComputedStyle($('faceListenBar')).display,'flex');
   assert.equal($('faceListenBar').parentElement.id,'screen');
   await w.readerTest.enterRecite();assert.equal($('recBar').parentElement.id,'screen');assert.equal($('recEngine').parentElement.id,'mushafStatusV148');assert.equal($('recSessionChip').parentElement.id,'mushafStatusV148');
+});
+
+
+test('finishing last scheduled face without review approval preserves task and draft for re-entry',async t=>{
+ const d=new Date(),date=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+ const taskPlan={id:'resume-unapproved',task:'near',label:'مراجعة قريبة',date,pages:[1,2],pos:1};
+ const {dom,w,$}=await boot({taskPlan});t.after(()=>dom.window.close());
+ await w.readerTest.enterRecite('near');
+ assert.equal(w.readerTest.session.planId,taskPlan.id,'reader recognizes scheduled task');
+ await w.readerTest.finishReciteSession(true);
+ assert.equal(JSON.parse(w.localStorage.getItem('durr-active-task-session')).id,taskPlan.id,'plan must survive completed navigation');
+ const draft=JSON.parse(w.localStorage.getItem('durr-review-draft-v119')||'[]');
+ assert.ok(draft.some(x=>x.planId===taskPlan.id),'unapproved results survive as drafts');
+ assert.ok($('recSummaryWrap').classList.contains('open'),'approval remains available to user');
+});
+test('partial approval on last face does not delete other scheduled faces',async t=>{
+ const d=new Date(),date=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+ const taskPlan={id:'resume-partial',task:'near',label:'مراجعة قريبة',date,pages:[1,2],pos:1};
+ const {dom,w,$}=await boot({taskPlan});t.after(()=>dom.window.close());
+ await w.readerTest.enterRecite('near');
+ await w.readerTest.finishReciteSession(true);
+ const box=$('recSummaryBody').querySelector('[data-approve-page]');
+ assert.ok(box,'completion requires user confirmation for each face');
+ box.checked=true;
+ $('recSummarySave').click();
+ assert.equal(JSON.parse(w.localStorage.getItem('durr-active-task-session')).id,taskPlan.id,'one approved face does not discard remaining plan');
 });
