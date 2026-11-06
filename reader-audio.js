@@ -24,14 +24,19 @@
       }finally{controller.abort();signal.removeEventListener('abort',abort);}
     }
     async metadata(chapter,reciter,signal){
-      const mapping=CHAPTER_READERS[reciter];if(!mapping)return null;let candidate=null;
+      const mapping=CHAPTER_READERS[reciter];if(!mapping)return null;
       for(const host of ['https://api.quran.com','https://api.qurancdn.com']){
-        try{const j=await this.request(host+'/api/v4/chapter_recitations/'+mapping[0]+'/'+chapter+'?segments=true',signal,true);candidate=j.audio_file;break;}catch(e){if(signal.aborted)throw e;}
+        try{
+          const j=await this.request(host+'/api/v4/chapter_recitations/'+mapping[0]+'/'+chapter+'?segments=true',signal,true),candidate=j?.audio_file;
+          if(!candidate||+candidate.chapter_id!==+chapter||typeof candidate.audio_url!=='string')continue;
+          const u=new URL(candidate.audio_url);
+          if(u.protocol!=='https:'||u.hostname!=='download.quranicaudio.com'||!u.pathname.startsWith('/qdc/'+mapping[1]+'/murattal/'))continue;
+          const times=new Map((Array.isArray(candidate.timestamps)?candidate.timestamps:[]).filter(t=>core.validVerse(t.verse_key)&&Number.isFinite(t.timestamp_from)&&Number.isFinite(t.timestamp_to)&&t.timestamp_from>=0&&t.timestamp_to>t.timestamp_from).map(t=>[t.verse_key,t]));
+          if(!times.size)continue;
+          return {url:u.href,times,bytes:+candidate.file_size||0};
+        }catch(e){if(signal.aborted)throw e;}
       }
-      if(!candidate)return null;const u=new URL(candidate.audio_url||'');
-      if(+candidate.chapter_id!==+chapter||u.protocol!=='https:'||u.hostname!=='download.quranicaudio.com'||!u.pathname.startsWith('/qdc/'+mapping[1]+'/murattal/'))return null;
-      const times=new Map((candidate.timestamps||[]).filter(t=>core.validVerse(t.verse_key)&&Number.isFinite(t.timestamp_from)&&Number.isFinite(t.timestamp_to)&&t.timestamp_from>=0&&t.timestamp_to>t.timestamp_from).map(t=>[t.verse_key,t]));
-      return {url:u.href,times,bytes:+candidate.file_size||0};
+      return null;
     }
     async verseMetadata(key,reciter,signal){
       const mapping=CHAPTER_READERS[reciter];if(!mapping)return null;
