@@ -81,7 +81,7 @@ test('an empty streaming delta never replays the cumulative transcript',async()=
   assert.equal(run(c,'recSession.stats.quranChunks'),0);
 });
 
-test('finish waits for the final response before saving and does not send a second final',async()=>{
+test('final ASR response after close is drained once but never auto-credits speech coverage',async()=>{
   let respond;const requests=[];
   const c=context(async(url,opts)=>{
     if(opts.method==='DELETE')return {ok:true};
@@ -96,9 +96,9 @@ test('finish waits for the final response before saving and does not send a seco
   assert.equal(requests.length,1);
   assert.equal(requests[0].final,true);
   respond();await queued;await finish;
-  assert.equal(c.saved.summary.wordsCovered,4);
+  assert.equal(c.saved.summary.wordsCovered,0,'a late stream response after closing must not fabricate reviewed words');
   assert.equal(c.saved.planCompleted,false);
-  assert.equal(requests.length,1);
+  assert.equal(requests.length,1,'finalization cannot send a duplicate final request');
 });
 
 test('network failure retries identical sequence, then blocks a complete result',async()=>{
