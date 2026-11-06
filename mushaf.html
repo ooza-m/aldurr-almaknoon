@@ -1209,6 +1209,34 @@ function paintPlayingVerse(){
 }
 function versePage(vk){return faceVerses(cur).includes(vk)?cur:(pageOfVk(vk)||Object.keys(DATA.pages).map(Number).find(p=>faceVerses(p).includes(vk)));}
 function setListenIcon(playing){$('faceListenIcon').innerHTML=playing?'<path d="M8 6h3v12H8zM14 6h3v12h-3z"/>':'<path d="M9 6l9 6-9 6z"/>';$('faceListenPlay').setAttribute('aria-label',playing?'إيقاف مؤقت':'تشغيل');}
+// System lock-screen controls are optional: browsers without Media Session stay unchanged.
+let lastMediaSessionKeyV164='';
+function initMediaSessionV164(){
+  const session=navigator.mediaSession;if(!session?.setActionHandler)return;
+  const actions={
+    play:()=>{if(audioController.status!=='playing')void audioController.toggle();},
+    pause:()=>{if(audioController.status==='playing'||audioController.status==='waiting')void audioController.toggle();},
+    previoustrack:()=>{void audioController.previous();},
+    nexttrack:()=>{void audioController.next();},
+    stop:()=>closeFaceListening()
+  };
+  for(const [name,handler] of Object.entries(actions))try{session.setActionHandler(name,handler);}catch(_){}
+}
+function syncMediaSessionV164(state){
+  const session=navigator.mediaSession;if(!session)return;
+  try{
+    session.playbackState=state.status==='playing'?'playing':state.status==='paused'||state.status==='wait-paused'||state.status==='waiting'?'paused':'none';
+    if(state.key&&state.key!==lastMediaSessionKeyV164){
+      const [surah,ayah]=state.key.split(':').map(Number),reader=DurrReader.RECITERS.find(r=>r.id===state.reciter);
+      if(typeof window.MediaMetadata==='function')
+        session.metadata=new window.MediaMetadata({title:surahName(surah)+' · آية '+ayah,artist:reader?.name||'تلاوة القرآن الكريم',album:'الدُّرّ المكنون'});
+      lastMediaSessionKeyV164=state.key;
+    }
+    if(!state.key){session.metadata=null;lastMediaSessionKeyV164='';}
+    if(typeof session.setPositionState==='function'&&state.duration>0&&Number.isFinite(state.current))
+      session.setPositionState({duration:state.duration,playbackRate:state.rate,position:Math.min(state.duration,Math.max(0,state.current))});
+  }catch(_){/* Optional media controls must never interrupt Mushaf audio. */}
+}
 const audioController=new DurrAudio.BufferedPlayer({
   reciter:LS('durr-audio-reciter','alafasy'),rate:+LS('durr-audio-rate','1'),
   onVerse:async (vk,state)=>{
@@ -1216,6 +1244,7 @@ const audioController=new DurrAudio.BufferedPlayer({
     if(audioController.generation!==state.generation||audioController.snapshot().key!==vk)return;playingVerse=vk;paintPlayingVerse();
   },
   onChange:state=>{
+    syncMediaSessionV164(state);
     if(state.status!=='idle'&&!document.body.classList.contains('face-listening'))showReaderTools(true);
     document.body.classList.toggle('face-listening',state.status!=='idle');
     $('readerListen').setAttribute('aria-pressed',String(state.status!=='idle'));
@@ -1239,6 +1268,7 @@ const audioController=new DurrAudio.BufferedPlayer({
     else recTip('انتهى نطاق الاستماع');
   },onError:message=>recTip(message)
 });
+initMediaSessionV164();
 $('readerDock').append($('faceListenBar'),$('recJobStatus'));
 DurrReader.RECITERS.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.name;$('audioReciter').append(o);});
 DurrReader.RATES.forEach(rate=>{const o=document.createElement('option');o.value=rate;o.textContent=rate+'×'+(rate===1?' · عادية':'');$('audioRate').append(o);});
