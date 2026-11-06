@@ -243,3 +243,18 @@ test('partial approval on last face does not delete other scheduled faces',async
  $('recSummarySave').click();
  assert.equal(JSON.parse(w.localStorage.getItem('durr-active-task-session')).id,taskPlan.id,'one approved face does not discard remaining plan');
 });
+
+
+test('fully approved scheduled session removes its completed active plan only after confirmation',async t=>{
+ const d=new Date(),date=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+ const taskPlan={id:'finish-approved',task:'near',label:'مراجعة قريبة',date,pages:[1],pos:0};
+ const {dom,w,$}=await boot({taskPlan});t.after(()=>dom.window.close());
+ await w.readerTest.enterRecite('near');
+ await w.readerTest.finishReciteSession(true);
+ assert.ok(w.localStorage.getItem('durr-active-task-session'),'the plan exists until confirmation');
+ const choice=$('recSummaryBody').querySelector('[data-approve-page="1"]');
+ assert.ok(choice,'the completed face can be explicitly approved');
+ choice.checked=true;
+ $('recSummarySave').click();
+ assert.equal(w.localStorage.getItem('durr-active-task-session'),null,'only complete approval clears the plan');
+});
