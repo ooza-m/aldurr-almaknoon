@@ -117,7 +117,7 @@ test('multi-surah failure leaves no falsely complete plan and a retry recovers f
 
 
 test('truncated MP3 stream cannot be reported as a downloaded complete chapter',async()=>{
- const cs=caches(),timesOne=[{verse_key:'103:1',timestamp_from:0,timestamp_to:1000}];
+ const cs=caches(),timesOne=[{verse_key:'103:1',timestamp_from:0,timestamp_to:1000},{verse_key:'103:2',timestamp_from:1000,timestamp_to:2000}];
  const d=new AudioDownloads({library:new Library({cacheStorage:cs}),createUrl:()=> 'blob:should-not-exist',revokeUrl(){},
   fetcher:async url=>{
    if(url.includes('chapter_recitations'))return {ok:true,json:async()=>({audio_file:{chapter_id:103,
