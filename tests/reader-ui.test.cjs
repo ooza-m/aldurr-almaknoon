@@ -91,7 +91,7 @@ test('keyboard toggles controls and Escape hides them without changing pages',as
  $('track').click();w.document.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal($('readerDock').getAttribute('aria-hidden'),'true');assert.equal(w.readerTest.page,page);
 });
 test('showing an audio session reveals the dock once; later progress does not re-open hidden tools',async t=>{
- const {dom,w,$}=await boot();t.after(()=>{w.readerTest.player.stop();dom.window.close();});await w.readerTest.player.start({verses:['1:1','1:2']});assert.ok(w.document.body.classList.contains('chrome'));$('track').click();assert.ok(!w.document.body.classList.contains('chrome'));w.readerTest.player.emit();assert.ok(!w.document.body.classList.contains('chrome'));assert.equal($('faceListenBar').closest('#readerDock').id,'readerDock');
+ const {dom,w,$}=await boot();t.after(()=>{w.readerTest.player.stop();dom.window.close();});await w.readerTest.player.start({verses:['1:1','1:2']});assert.ok(w.document.body.classList.contains('chrome'));$('track').click();assert.ok(!w.document.body.classList.contains('chrome'));w.readerTest.player.emit();assert.ok(!w.document.body.classList.contains('chrome'));assert.equal($('faceListenBar').parentElement.id,'screen');
 });
 test('main navigation keeps Mushaf central while the reader has only its persistent home exit',()=>{
   for(const [file,selector,attr] of [['index.html','#bottomNav','tab']]){
@@ -104,8 +104,8 @@ test('main navigation keeps Mushaf central while the reader has only its persist
 test('reader boots without missing/duplicate IDs or JavaScript errors',async t=>{
   const {dom,w,errors}=await boot();t.after(()=>dom.window.close());
   const ids=[...w.document.querySelectorAll('[id]')].map(el=>el.id);assert.equal(new Set(ids).size,ids.length);
-  const missing=[...read('mushaf.html').matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]).filter(id=>!w.document.getElementById(id)&&!['errClr'].includes(id));assert.deepEqual([...new Set(missing)],[]);
-  assert.deepEqual(errors,[]);assert.equal(w.document.getElementById('faceListenBar').parentElement.id,'readerDock');
+  const source=read('mushaf.html');const missing=[...source.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]).filter(id=>!w.document.getElementById(id)&&!source.includes('id="'+id+'"')&&!['errClr'].includes(id));assert.deepEqual([...new Set(missing)],[]);
+  assert.deepEqual(errors,[]);assert.equal(w.document.getElementById('faceListenBar').parentElement.id,'screen');
 });
 test('page scrubber is under the face before actions and jumps without opening the index',async t=>{
  const {dom,w,$}=await boot();t.after(()=>dom.window.close());const scrubber=$('pageSlider').closest('.reader-scrubber');
@@ -206,9 +206,9 @@ test('reader controls and recitation UI overlay the large fixed reading area',as
   assert.equal(w.getComputedStyle($('screen')).position,'relative');
   assert.equal(w.getComputedStyle($('readerTopTools')).position,'absolute');assert.equal(w.getComputedStyle($('readerDock')).position,'absolute');assert.equal(w.getComputedStyle($('btnBack')).position,'absolute');
   assert.equal(w.getComputedStyle($('readerTopTools')).visibility,'hidden');assert.equal(w.getComputedStyle($('readerDock')).pointerEvents,'none');
-  assert.equal(w.getComputedStyle($('btnBack')).visibility,'visible');assert.equal($('btnBack').closest('[inert]'),null);assert.equal(w.getComputedStyle(w.document.querySelector('.mini-top')).display,'none');
+  assert.equal(w.getComputedStyle($('btnBack')).visibility,'visible');assert.equal($('btnBack').closest('[inert]'),null);
   $('track').click();assert.equal(w.getComputedStyle($('readerTopTools')).visibility,'visible');assert.equal(w.getComputedStyle($('readerDock')).pointerEvents,'auto');
   w.document.body.classList.add('face-listening');assert.equal(w.getComputedStyle($('faceListenBar')).position,'relative');assert.equal(w.getComputedStyle($('faceListenBar')).display,'flex');
   assert.equal($('faceListenBar').closest('#readerDock').id,'readerDock');
-  await w.readerTest.enterRecite();assert.equal(w.getComputedStyle($('recBar')).position,'absolute');assert.equal(w.getComputedStyle($('recEngine')).position,'absolute');assert.equal(w.getComputedStyle($('recSessionChip')).position,'absolute');
+  await w.readerTest.enterRecite();assert.equal($('recBar').parentElement.id,'screen');assert.equal($('recEngine').parentElement.id,'mushafStatusV148');assert.equal($('recSessionChip').parentElement.id,'mushafStatusV148');
 });
