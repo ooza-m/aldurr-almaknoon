@@ -82,3 +82,19 @@ test('a due face without completion remains in the review task',()=>{
  assert.equal(pages.length,1);
  assert.equal(pages[0],10);
 });
+
+
+test('full audio coverage without user approval never completes a review',()=>{
+ const {ctx,S,ts}=setup();
+ S.recitationSessions.push({id:'unapproved',version:149,task:'near',userReviewed:false,endedAt:ts,
+   pages:[{page:10,complete:true,coverage:1,manualConfirmed:false}]});
+ assert.equal(ctx.completeReviewTodayV62(10),false);
+ assert.equal(ctx.recitedPagesTodayV51('near').has(10),false);
+});
+test('session approval alone cannot credit a face without manual face confirmation',()=>{
+ const {ctx,S,ts}=setup();
+ S.recitationSessions.push({id:'unconfirmed-face',version:149,task:'near',userReviewed:true,endedAt:ts,
+   pages:[{page:10,complete:true,coverage:1,manualConfirmed:false}]});
+ assert.equal(ctx.completeReviewTodayV62(10),false);
+ assert.equal(ctx.recitedPagesTodayV51('near').has(10),false);
+});
