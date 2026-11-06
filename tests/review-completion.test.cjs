@@ -24,15 +24,17 @@ function setup(){
  const ctx={S,Set,Date,Math,Map,Number,todayKey:()=>day,
  keyOf:()=>day,
  pagesOfSurah:()=>[10,12],todayLogV50:()=>S.logs.find(x=>x.date===day)||{},rangeSetV50:(list)=>new Set((list||[]).flatMap(x=>Array.from({length:(x.to||x.from)-(x.from||x.to)+1},(_,i)=>(x.from||x.to)+i))),
- memCount:()=>100,firstMemDateV62:()=> '2026-09-01',recitedPagesTodayV51:()=>new Set(),
+ memCount:()=>100,firstMemDateV62:()=> '2026-09-01',
+ addDaysKeyV62:(d,n)=>new Date(Date.parse(d+'T12:00:00Z')+n*86400000).toISOString().slice(0,10),
+ reviewQueueV123:()=>({selected:[{p:10}]}),
  dayFactsV71:()=>({}),reviewBucketsV50:()=>({near:[{p:10}],far:[]}),ensurePageSchedV62:()=>({phase:'near',nextDue:day}),daysBetween:()=>60,autoPageInfo:()=>({state:'due'})};
  vm.createContext(ctx);
- vm.runInContext(['completeReviewTodayV62','recitedPagesTodayV51','taskPagesV60','reviewEngineStateV62'].map(extract).join('\n'),ctx);
+ vm.runInContext(['uniqueRecitationSessionsV163','approvedRecitationFaceV149','completeReviewTodayV62','recitedPagesTodayV51','taskPagesV60','reviewEngineStateV62'].map(extract).join('\n'),ctx);
  return{ctx,S,day,ts};
 }
 test('scheduled Mushaf completion counts once and is no longer due',()=>{
  const {ctx,S,ts}=setup();
- S.recitationSessions.push({id:'session1',task:'near',endedAt:ts,pages:[{page:10,complete:true,coverage:1}]});
+ S.recitationSessions.push({id:'session1',task:'near',endedAt:ts,version:149,userReviewed:true,pages:[{page:10,complete:true,manualConfirmed:true,coverage:1}]});
  assert.equal(ctx.completeReviewTodayV62(10),true);
  S.recitationSessions.push({...S.recitationSessions[0]});
  assert.equal(ctx.completeReviewTodayV62(10),true);
@@ -45,14 +47,14 @@ test('manual review counts the selected face and does not require voice scoring'
 });
 test('free recitation and unfinished review do not mark planned review complete',()=>{
  const{ctx,S,ts}=setup();
- S.recitationSessions.push({task:'free',endedAt:ts,pages:[{page:10,complete:true,coverage:1}]});
+ S.recitationSessions.push({task:'free',endedAt:ts,version:149,userReviewed:true,pages:[{page:10,complete:true,manualConfirmed:true,coverage:1}]});
  S.recitationSessions.push({task:'near',endedAt:ts,pages:[{page:10,complete:false,coverage:.7}]});
  assert.equal(ctx.completeReviewTodayV62(10),false);
 });
 test('manual and Mushaf completion overlap without duplicating a genuinely due face',()=>{
  const{ctx,S,day,ts}=setup();
  S.logs.push({date:day,revList:[{surahId:2,from:10,to:10,type:'near'}]});
- S.recitationSessions.push({task:'near',endedAt:ts,pages:[{page:10,complete:true,coverage:1}]});
+ S.recitationSessions.push({task:'near',endedAt:ts,version:149,userReviewed:true,pages:[{page:10,complete:true,manualConfirmed:true,coverage:1}]});
  ctx.reviewEngineStateV62=()=>({due:true,phase:'near'});
  assert.equal(ctx.taskPagesV60('near').length,0);
  assert.equal(ctx.completeReviewTodayV62(10),true);
@@ -66,7 +68,7 @@ test("manual completion clears today's due state in review engine",()=>{
 });
 test('replayed session ID does not multiply the distinct completed faces',()=>{
  const {ctx,S,ts}=setup();
- const session={id:'same',task:'near',endedAt:ts,pages:[{page:10,complete:true,coverage:1}]};
+ const session={id:'same',task:'near',endedAt:ts,version:149,userReviewed:true,pages:[{page:10,complete:true,manualConfirmed:true,coverage:1}]};
  S.recitationSessions.push(session,{...session});
  const completed=ctx.recitedPagesTodayV51('near');
  assert.equal(completed.size,1);
