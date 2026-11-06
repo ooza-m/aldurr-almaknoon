@@ -111,7 +111,7 @@
     }
     schedule(token){clearTimeout(this.boundary);const s=this.plan?.get(this.queue[this.index]);if(s?.to!=null&&this.status==='playing')this.boundary=setTimeout(()=>this.clock(token),Math.max(40,(s.to-this.audio.currentTime)*1000/this.rate));}
     clock(token,ended=false){
-      if(token!==this.generation||!this.plan||!this.queue.length)return;
+      if(token!==this.generation||!this.plan||!this.queue.length||this.status!=='playing')return;
       const now=Date.now(),t=this.audio.currentTime,last=this.lastClock;this.lastClock={at:now,time:t};
       if(last&&t>=last.time&&t-last.time<=Math.max(1.5,(now-last.at)/1000*this.rate+.8)){
         for(const key of this.queue){const s=this.plan.get(key);if(s.src!==this.audio.src)continue;const end=s.to??this.audio.duration,overlap=Math.max(0,Math.min(t,end)-Math.max(last.time,s.from));if(overlap){const ranges=[...(this.coverageRanges.get(key)||[]),[Math.max(last.time,s.from),Math.min(t,end)]].sort((a,b)=>a[0]-b[0]),merged=[];for(const range of ranges){const previous=merged.at(-1);if(previous&&range[0]<=previous[1])previous[1]=Math.max(previous[1],range[1]);else merged.push(range.slice());}this.coverageRanges.set(key,merged);this.coverage.set(key,merged.reduce((n,r)=>n+r[1]-r[0],0));}}
