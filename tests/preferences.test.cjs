@@ -32,7 +32,7 @@ async function boot(){
  const dom=new JSDOM(read('index.html'),{url:'https://app.test/index.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc}),w=dom.window;
  w.scrollTo=()=>{};w.requestAnimationFrame=fn=>{fn();return 0;};w.alert=()=>{};w.confirm=()=>false;w.matchMedia=()=>({matches:false,addEventListener(){}});w.fetch=async()=>({ok:false});
  w.localStorage.setItem('durr-skip-auth','1');for(const file of ['app-preferences.js','reader-ui.js','reader-study.js','app-data.js'])w.eval(read(file));
- w.eval([...w.document.querySelectorAll('script:not([src])')].map(s=>s.textContent).join('\n'));
+ w.eval([...w.document.querySelectorAll('script:not([src])')].map(s=>s.textContent).join('\n')+'\nwindow.__integrationState=S;');
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));await new Promise(r=>setImmediate(r));
  return {dom,w,errors,$:id=>w.document.getElementById(id)};
 }
@@ -147,7 +147,7 @@ test('approved Mushaf memorization appears once in the calendar and 604-face map
 test('approved review clears due face without writing a new memorization',async t=>{
  const {dom,w}=await boot();t.after(()=>dom.window.close());
  const day=w.todayKey(),first=w.addDaysKeyV62(day,-55),page=10;
- w.eval("S.logs.push({date:"+JSON.stringify(first)+",memList:[{surahId:2,from:10,to:10}],revList:[]});save();");
+ w.__integrationState.logs.push({date:first,memList:[{surahId:2,from:10,to:10}],revList:[]});w.save();
  assert.equal(w.reviewEngineStateV62(page).due,true,'old memorized page begins due for review');
  const draft={id:'v1-day-near-10',version:149,task:'near',userReviewed:false,endedAt:Date.now(),
   pages:[{page,complete:true,manualConfirmed:false,coverage:1,surahIds:[2],verses:[]}]};
