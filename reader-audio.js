@@ -59,9 +59,14 @@
             plan.set(key,{src:objectUrl(blob),from:0,to:null,chapter:false});done++;continue;
           }
           let file=await this.metadata(chapter,reciter,signal,keys);
+          let chapterBlob=null;
           if(file){
             progress({label:'سورة '+chapter,loaded:0,total:file.bytes,phase:'download'});
-            const blob=await this.request(file.url,signal,false,(loaded,total)=>progress({label:'سورة '+chapter,loaded,total:total||file.bytes,phase:'download'}));
+            try{chapterBlob=await this.request(file.url,signal,false,(loaded,total)=>progress({label:'سورة '+chapter,loaded,total:total||file.bytes,phase:'download'}));}
+            catch(error){if(signal.aborted)throw error;file=null;}
+          }
+          if(file){
+            const blob=chapterBlob;
             bytes+=blob.size;if(bytes>220*1024*1024)throw Error('Audio range too large');const src=objectUrl(blob);done++;
             keys.forEach(k=>{const t=file.times.get(k);plan.set(k,{src,from:t.timestamp_from/1000,to:t.timestamp_to/1000,chapter:true});});
             const record={blob,url:file.url,times:[...file.times.values()].map(t=>({verse_key:t.verse_key,timestamp_from:t.timestamp_from,timestamp_to:t.timestamp_to}))};this.records.set(chapter,record);
