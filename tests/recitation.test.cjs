@@ -90,11 +90,12 @@ test('finish waits for the final response before saving and does not send a seco
     return {ok:true,json:async()=>({seq:item.seq,streaming:true,transcript_delta:'الحمد لله رب العالمين'})};
   },{enableQuranService:true});
   run(c,`qasrRunId='stream_1';qasrActive=true;showRecSummary=()=>{};sendSession=p=>{globalThis.saved=p;};`);
+  const queued=run(c,'queueQasrChunkV73(new Float32Array(0),16000,true)');
   const finish=run(c,'finishReciteSession(false)');
   assert.equal(c.saved,undefined);
   assert.equal(requests.length,1);
   assert.equal(requests[0].final,true);
-  respond();await finish;
+  respond();await queued;await finish;
   assert.equal(c.saved.summary.wordsCovered,4);
   assert.equal(c.saved.planCompleted,false);
   assert.equal(requests.length,1);
@@ -158,7 +159,7 @@ test('recall alignment is restricted to the requested ayah',()=>{
   assert.equal(run(c,`alignChunkV75(['الرحمن'],4)`),null);
 });
 
-test('browser fallback drains its last final result before saving',async()=>{
+test('browser final callback after session close cannot fabricate coverage',async()=>{
   const c=context();
   let recognizer;
   c.window.SpeechRecognition=class {
@@ -173,7 +174,7 @@ test('browser fallback drains its last final result before saving',async()=>{
   recognizer.onresult({resultIndex:0,results:[result]});
   recognizer.onend();
   await finished;
-  assert.equal(c.saved.summary.wordsCovered,4);
+  assert.equal(c.saved.summary.wordsCovered,0,'late results after stopping the recognizer are discarded');
   assert.equal(c.saved.engine,'browser-speech');
 });
 
