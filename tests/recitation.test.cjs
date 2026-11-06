@@ -64,7 +64,7 @@ test('a short touch cannot record an error; long touch requires confirmation',()
 test('unconfirmed findings never become persistent review-queue entries',()=>{
   const html=readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
   const start=html.indexOf('function ingestRecitationSessionV51('),end=html.indexOf("\nwindow.addEventListener('message'",start+10),fn=html.slice(start,end);
-  const c=vm.createContext({S:{recitationSessions:[],errors:[]},Date,JSON,Set,keyOf:()=> '2026-10-16',ensureLogForDateV51:()=>({}),save(){},mirrorFaceLearningV61(){},showV51Toast(){},renderErrors(){},refreshV50(){},todayKey:()=> '2026-10-16'});
+  const c=vm.createContext({S:{recitationSessions:[],errors:[]},Date,JSON,Set,keyOf:()=> '2026-10-16',ensureLogForDateV51:()=>({}),findFreeRecitationPlanLinksV105:()=>[],approvedRecitationFaceV149:()=>false,save(){},mirrorFaceLearningV61(){},showV51Toast(){},renderErrors(){},refreshV50(){},todayKey:()=> '2026-10-16'});
   vm.runInContext(fn,c);vm.runInContext(`ingestRecitationSessionV51({id:'trial',version:84,endedAt:1,pages:[],findings:[{type:'possible_omission',vk:'1:2',page:1,userConfirmed:false}]})`,c);
   assert.equal(c.S.aiReviewQueue.length,0);assert.equal(c.S.errors.length,0);
   vm.runInContext(`ingestRecitationSessionV51({id:'unconfirmed-word',version:84,endedAt:1,pages:[{page:1,verses:[{vk:'1:2',errorWordIndexes:[0]}]}],findings:[]})`,c);
