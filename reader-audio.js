@@ -23,7 +23,7 @@
         return new Blob(chunks,{type:'audio/mpeg'});
       }finally{controller.abort();signal.removeEventListener('abort',abort);}
     }
-    async metadata(chapter,reciter,signal){
+    async metadata(chapter,reciter,signal,requiredKeys=[]){
       const mapping=CHAPTER_READERS[reciter];if(!mapping)return null;
       for(const host of ['https://api.quran.com','https://api.qurancdn.com']){
         try{
@@ -32,7 +32,7 @@
           const u=new URL(candidate.audio_url);
           if(u.protocol!=='https:'||u.hostname!=='download.quranicaudio.com'||!u.pathname.startsWith('/qdc/'+mapping[1]+'/murattal/'))continue;
           const times=new Map((Array.isArray(candidate.timestamps)?candidate.timestamps:[]).filter(t=>core.validVerse(t.verse_key)&&Number.isFinite(t.timestamp_from)&&Number.isFinite(t.timestamp_to)&&t.timestamp_from>=0&&t.timestamp_to>t.timestamp_from).map(t=>[t.verse_key,t]));
-          if(!times.size)continue;
+          if(!times.size||!requiredKeys.every(key=>times.has(key)))continue;
           return {url:u.href,times,bytes:+candidate.file_size||0};
         }catch(e){if(signal.aborted)throw e;}
       }
@@ -40,7 +40,7 @@
     }
     async verseMetadata(key,reciter,signal){
       const mapping=CHAPTER_READERS[reciter];if(!mapping)return null;
-      for(const host of ['https://api.quran.com','https://api.qurancdn.com'])try{const response=await this.request(host+'/api/v4/recitations/'+mapping[0]+'/by_ayah/'+key,signal,true),file=(response.audio_files||[]).find(f=>f.verse_key===key);if(!file?.url)return null;const url=new URL(file.url,'https://verses.quran.com/');if(url.protocol==='https:'&&['verses.quran.com','verses.quran.foundation'].includes(url.hostname)&&url.pathname.endsWith('.mp3'))return url.href;}catch(error){if(signal.aborted)throw error;}return null;
+      for(const host of ['https://api.quran.com','https://api.qurancdn.com'])try{const response=await this.request(host+'/api/v4/recitations/'+mapping[0]+'/by_ayah/'+key,signal,true),file=(response.audio_files||[]).find(f=>f.verse_key===key);if(!file?.url)continue;const url=new URL(file.url,'https://verses.quran.com/');if(url.protocol==='https:'&&['verses.quran.com','verses.quran.foundation'].includes(url.hostname)&&url.pathname.endsWith('.mp3'))return url.href;}catch(error){if(signal.aborted)throw error;}return null;
     }
     async prepare(verses,reciter,onProgress=()=>{}){
       const key=reciter+'|'+verses.join(',');if(this.key===key&&this.plan)return this.plan;
@@ -58,7 +58,7 @@
             for(const url of sources)try{progress({label:key,loaded:0,total:0,phase:'download'});blob=await this.request(url,signal,false,(loaded,total)=>progress({label:key,loaded,total,phase:'download'}));break;}catch(error){if(signal.aborted||url===sources.at(-1))throw error;}
             plan.set(key,{src:objectUrl(blob),from:0,to:null,chapter:false});done++;continue;
           }
-          let file=await this.metadata(chapter,reciter,signal);if(file&&!keys.every(k=>file.times.has(k)))file=null;
+          let file=await this.metadata(chapter,reciter,signal,keys);
           if(file){
             progress({label:'سورة '+chapter,loaded:0,total:file.bytes,phase:'download'});
             const blob=await this.request(file.url,signal,false,(loaded,total)=>progress({label:'سورة '+chapter,loaded,total:total||file.bytes,phase:'download'}));
