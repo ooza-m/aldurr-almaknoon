@@ -59,3 +59,22 @@ test('invalid first verse metadata falls through to second host for a single aya
  assert.equal(calls.filter(u=>u.includes('everyayah.com')).length,0);
  d.clear();
 });
+
+test('unavailable chapter MP3 falls back to per-ayah audio for the chosen reciter',async()=>{
+ const calls=[],d=new AudioDownloads({library:new Library({cacheStorage:null}),
+  createUrl:(()=>{let i=0;return()=> 'blob:verse-'+(++i);})(),revokeUrl(){},
+  fetcher:async url=>{
+   calls.push(url);
+   if(url.includes('chapter_recitations'))return {ok:true,json:async()=>metadata};
+   if(url.startsWith('https://download.quranicaudio.com'))return {ok:false,status:503};
+   if(url.includes('/Alafasy_128kbps/'))return {ok:true,arrayBuffer:async()=>new ArrayBuffer(20)};
+   throw Error('Wrong reader or untrusted audio URL '+url);
+  }});
+ const plan=await d.prepare(['103:1','103:2'],'alafasy');
+ assert.equal(plan.size,2);
+ assert.equal(plan.get('103:1').chapter,false);
+ assert.equal(plan.get('103:2').chapter,false);
+ assert.notEqual(plan.get('103:1').src,plan.get('103:2').src);
+ assert.equal(calls.filter(u=>u.includes('/Alafasy_128kbps/')).length,2);
+ d.clear();
+});
