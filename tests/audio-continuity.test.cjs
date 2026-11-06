@@ -52,3 +52,18 @@ test('pausing and resuming does not advance the verse or silently mark listening
  assert.equal(player.completed.size,0);
  player.stop();
 });
+
+
+test('seeking to a verse boundary while paused never autoplays the next verse',async()=>{
+ const {player,audio}=playerFixture();
+ await player.start({verses:['103:1','103:2'],scope:'range'});
+ await player.toggle();
+ assert.equal(player.status,'paused');
+ const plays=audio.plays;
+ audio.currentTime=1.01;
+ audio.ontimeupdate();
+ assert.equal(player.status,'paused','paused listening must remain paused');
+ assert.equal(player.index,0,'no automatic verse advancement during a paused seek');
+ assert.equal(audio.plays,plays,'a native timeupdate may not trigger autoplay');
+ player.stop();
+});
