@@ -122,3 +122,49 @@ test('a twice-repeated range spanning two surahs preserves order and ends after 
  assert.equal(player.cycle,2);
  player.stop();
 });
+
+
+test('decoder-rejected complete-size MP3 evicts only its chapter cache before manual retry',async()=>{
+ let loads=0,removed=[],notes=[];
+ const audio={src:'',currentTime:0,duration:1,readyState:1,paused:true,error:null,
+  async play(){this.paused=false;this.onplaying?.();},pause(){this.paused=true;this.onpause?.();}};
+ const downloads={library:{async remove(reciter,chapter){removed.push([reciter,chapter]);}},
+  async prepare(){loads++;return new Map([['103:1',{src:'blob:attempt-'+loads,from:0,to:1,chapter:true}]]);},clear(){}};
+ const player=new BufferedPlayer({audioFactory:()=>audio,downloads,reciter:'alafasy',onError:e=>notes.push(e)});
+ await player.start({verses:['103:1']});
+ audio.error={code:3};audio.onerror();
+ assert.equal(player.status,'error');
+ assert.equal(player.completed.size,0);
+ await player.toggle();
+ assert.deepEqual(removed,[['alafasy',103]]);
+ assert.equal(loads,2);
+ assert.equal(audio.src,'blob:attempt-2');
+ assert.equal(player.status,'playing');
+ player.stop();
+});
+test('network playback error does not delete a previously verified offline chapter',async()=>{
+ let deleted=0,loads=0;
+ const audio={src:'',currentTime:0,duration:1,readyState:1,paused:true,error:null,
+  async play(){this.paused=false;this.onplaying?.();},pause(){this.paused=true;this.onpause?.();}};
+ const player=new BufferedPlayer({audioFactory:()=>audio,onError:()=>{},downloads:{
+  library:{async remove(){deleted++;}},async prepare(){loads++;return new Map([['103:1',{src:'blob:cached',from:0,to:1,chapter:true}]]);},clear(){}}});
+ await player.start({verses:['103:1']});
+ audio.error={code:2};audio.onerror();
+ assert.equal(player.status,'error');assert.equal(deleted,0);
+ await player.toggle();assert.equal(loads,2);assert.equal(deleted,0);
+ player.stop();
+});
+test('a late play promise cannot revive playback after a media error',async()=>{
+ let resolvePlay;const audio={src:'',currentTime:0,duration:1,readyState:1,paused:true,error:{code:2},
+  play(){return new Promise(resolve=>{resolvePlay=resolve;});},pause(){this.paused=true;this.onpause?.();}};
+ const player=new BufferedPlayer({audioFactory:()=>audio,onError:()=>{},downloads:{
+  async prepare(){return new Map([['103:1',{src:'blob:late',from:0,to:1,chapter:true}]]);},clear(){}}});
+ const work=player.start({verses:['103:1']});
+ for(let i=0;i<5&&!resolvePlay;i++)await new Promise(r=>setImmediate(r));
+ assert.equal(typeof resolvePlay,'function');
+ audio.onerror();
+ resolvePlay();await work;
+ assert.equal(player.status,'error');
+ assert.equal(player.completed.size,0);
+ player.stop();
+});
