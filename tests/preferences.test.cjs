@@ -100,11 +100,21 @@ test('stage completion uses the selected-calendar picker and saves only after co
  const state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));assert.equal(state.stages[index].date,target);assert.equal(state.stages[index].status,'done');assert.equal(state.stages[index+1].status,'current');
  assert.match($('stageTrack').textContent,new RegExp(w.DurrPreferences.format(target)));
 });
-test('automatic findings reach the error log and an improved final result does not duplicate a session',async t=>{
+test('browser follow-along never stores automatic mistakes and replaying a session remains idempotent',async t=>{
  const {dom,w}=await boot();t.after(()=>dom.window.close());
  const initial={id:'background-one',version:86,task:'free',analysisStatus:'interrupted',analysisIncomplete:true,endedAt:Date.now(),pages:[{page:1,coverage:.4,complete:false,score:40,verses:[{vk:'1:2',coverage:.4,errorWordIndexes:[2],errorWords:1}]}],automaticErrorKeys:['1:2#2'],findings:[{type:'automatic_omission',automatic:true,active:true,source:'browser-speech',confidenceKind:'alignment-not-acoustic',page:1,vk:'1:2',wi:2,expected:'رب',confidence:.8}]};
- w.ingestRecitationSessionV51(initial);let state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));assert.equal(state.errors.length,1);assert.equal(state.errors[0].automatic,true);assert.equal(state.errors[0].userConfirmed,undefined);
- const final=JSON.parse(JSON.stringify(initial));final.analysisStatus='complete';final.analysisIncomplete=false;final.pages[0].coverage=.9;w.ingestRecitationSessionV51(final);w.ingestRecitationSessionV51(final);state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));assert.equal(state.recitationSessions.length,1);assert.equal(state.activityEvents.filter(e=>e.type==='recitation').length,1);assert.equal(state.verseReview['1:2'].count,1);assert.equal(state.errors.length,1);assert.equal(state.recitationSessions[0].analysisStatus,'complete');
+ w.ingestRecitationSessionV51(initial);
+ let state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));
+ assert.equal(state.errors.length,0,'a transcript omission is not an authenticated manual mistake');
+ assert.equal((state.aiReviewQueue||[]).length,0,'an automatic hypothesis never starts a review assignment');
+ const final=JSON.parse(JSON.stringify(initial));final.analysisStatus='complete';final.analysisIncomplete=false;final.pages[0].coverage=.9;
+ w.ingestRecitationSessionV51(final);w.ingestRecitationSessionV51(final);
+ state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));
+ assert.equal(state.recitationSessions.length,1);
+ assert.equal(state.activityEvents.filter(e=>e.type==='recitation').length,1);
+ assert.equal(state.verseReview['1:2'].count,1);
+ assert.equal(state.errors.length,0);
+ assert.equal(state.recitationSessions[0].analysisStatus,'complete');
 });
 test('home reading pin stays separate from memorization scheduling',async t=>{
  const {dom,w,$}=await boot();t.after(()=>dom.window.close());new w.DurrReaderUI.Bookmarks(w.localStorage).put('3:1',50,'وردي');w.refreshV50();assert.match($('homeContinueCard').textContent,/فاصلك/);assert.equal($('homeContinueCard').querySelector('[data-reading-vk]').dataset.readingVk,'3:1');assert.equal(w.lastActivityPageV50(),1);
