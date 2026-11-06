@@ -122,8 +122,10 @@ test('truncated MP3 stream cannot be reported as a downloaded complete chapter',
   fetcher:async url=>{
    if(url.includes('chapter_recitations'))return {ok:true,json:async()=>({audio_file:{chapter_id:103,
     audio_url:'https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/103.mp3',timestamps:timesOne}})};
-   if(url.includes('/103.mp3')){let read=0;return {ok:true,headers:{get:k=>k==='content-length'?'100':'audio/mpeg'},
-    body:{getReader:()=>({read:async()=>++read===1?{done:false,value:new Uint8Array(15)}:{done:true},cancel:async()=>{}})}}};}
+   if(url.includes('/103.mp3')){
+    let read=0;const reader={read:async()=>++read===1?{done:false,value:new Uint8Array(15)}:{done:true},cancel:async()=>{}};
+    return {ok:true,headers:{get:k=>k==='content-length'?'100':'audio/mpeg'},body:{getReader:()=>reader}};
+   }
    if(url.includes('/Alafasy_128kbps/'))return {ok:false,status:503};
    throw Error('Unexpected audio source '+url);
   }});
