@@ -1842,7 +1842,7 @@ function updateReviewEngineV62(p,task,date,pg,sessionId){
   if(sessionId&&S.pageReviewSched?.[p]?.lastSessionId===sessionId)return;
   S.pageReviewSched=S.pageReviewSched||{};
   const first=firstMemDateV62(p)||date,age=Math.max(0,daysBetween(first,date));
-  let x=S.pageReviewSched[p]||{page:+p,firstMemDate:first,phase:'fix',nearLevel:0,farLevel:0,nextDue:addDaysKeyV62(date,1)};
+  let x=S.pageReviewSched[p]||{page:+p,firstMemDate:first,phase:age<=30?'fix':'near',nearLevel:0,farLevel:0,nextDue:addDaysKeyV62(date,age<=30?1:NEAR_INTERVALS_V62[0])};
   x.firstMemDate=x.firstMemDate||first;x.lastReview=date;x.lastCoverage=+(pg&&pg.coverage||0);
   // A browser transcript is a navigation hint, not a reliable assessment of memorization.
   const graded=pg&&pg.manualMasteryLevel&&MASTERY_LEVELS_V116[pg.manualMasteryLevel];
