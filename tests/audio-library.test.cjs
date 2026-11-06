@@ -114,3 +114,21 @@ test('multi-surah failure leaves no falsely complete plan and a retry recovers f
  assert.equal(plan.get('104:1').chapter,true);
  d.clear();
 });
+
+
+test('truncated MP3 stream cannot be reported as a downloaded complete chapter',async()=>{
+ const cs=caches(),timesOne=[{verse_key:'103:1',timestamp_from:0,timestamp_to:1000}];
+ const d=new AudioDownloads({library:new Library({cacheStorage:cs}),createUrl:()=> 'blob:should-not-exist',revokeUrl(){},
+  fetcher:async url=>{
+   if(url.includes('chapter_recitations'))return {ok:true,json:async()=>({audio_file:{chapter_id:103,
+    audio_url:'https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/103.mp3',timestamps:timesOne}})};
+   if(url.includes('/103.mp3')){let read=0;return {ok:true,headers:{get:k=>k==='content-length'?'100':'audio/mpeg'},
+    body:{getReader:()=>({read:async()=>++read===1?{done:false,value:new Uint8Array(15)}:{done:true},cancel:async()=>{}})}}};}
+   if(url.includes('/Alafasy_128kbps/'))return {ok:false,status:503};
+   throw Error('Unexpected audio source '+url);
+  }});
+ await assert.rejects(d.prepare(['103:1','103:2'],'alafasy'));
+ assert.equal(d.plan,null);
+ assert.equal(await d.library.get('alafasy',103),null,'incomplete binary must not be cached as complete');
+ d.clear();
+});
