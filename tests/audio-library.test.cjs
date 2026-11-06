@@ -28,3 +28,34 @@ test('malformed first chapter metadata host falls through to verified alternate 
  assert.equal(calls.filter(u=>u.startsWith('https://download.quranicaudio.com')).length,1);
  d.clear();
 });
+
+test('incomplete chapter timestamps on primary host retry full-coverage metadata from alternate host',async()=>{
+ const calls=[],partial={audio_file:{...metadata.audio_file,timestamps:[times[0]]}};
+ const d=new AudioDownloads({library:new Library({cacheStorage:null}),createUrl:()=> 'blob:complete',revokeUrl(){},fetcher:async url=>{
+   calls.push(url);
+   if(url.startsWith('https://api.quran.com'))return {ok:true,json:async()=>partial};
+   if(url.startsWith('https://api.qurancdn.com'))return {ok:true,json:async()=>metadata};
+   if(url.startsWith('https://download.quranicaudio.com'))return {ok:true,arrayBuffer:async()=>new ArrayBuffer(32)};
+   throw Error('Unexpected fallback '+url);
+ }});
+ const plan=await d.prepare(['103:1','103:2','103:3'],'alafasy');
+ assert.equal(plan.size,3);
+ assert.equal(plan.get('103:3').src,'blob:complete');
+ assert.equal(calls.filter(u=>u.includes('chapter_recitations')).length,2);
+ assert.equal(calls.filter(u=>u.startsWith('https://download.quranicaudio.com')).length,1);
+ d.clear();
+});
+test('invalid first verse metadata falls through to second host for a single ayah',async()=>{
+ const calls=[],d=new AudioDownloads({library:new Library({cacheStorage:null}),createUrl:()=> 'blob:ayah',revokeUrl(){},fetcher:async url=>{
+   calls.push(url);
+   if(url.startsWith('https://api.quran.com'))return {ok:true,json:async()=>({audio_files:[]})};
+   if(url.startsWith('https://api.qurancdn.com'))return {ok:true,json:async()=>({audio_files:[{verse_key:'103:3',url:'Alafasy/mp3/103003.mp3'}]})};
+   if(url.startsWith('https://verses.quran.com'))return {ok:true,arrayBuffer:async()=>new ArrayBuffer(32)};
+   throw Error('Unexpected fallback '+url);
+ }});
+ const plan=await d.prepare(['103:3'],'alafasy');
+ assert.equal(plan.get('103:3').src,'blob:ayah');
+ assert.equal(calls.filter(u=>u.includes('/recitations/')).length,2);
+ assert.equal(calls.filter(u=>u.includes('everyayah.com')).length,0);
+ d.clear();
+});
