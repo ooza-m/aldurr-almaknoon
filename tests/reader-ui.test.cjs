@@ -139,7 +139,7 @@ test('finishing speech immediately restores navigation while the final result be
  const {dom,w,$}=await boot({SpeechRecognition:SR});t.after(()=>dom.window.close());await w.readerTest.enterRecite('free');await w.readerTest.toggleRec();const owner=w.readerTest.session.id,old=recognizers[0],finished=w.readerTest.finishReciteSession();
  assert.equal(w.readerTest.recMode,false);assert.equal(w.document.body.classList.contains('reciting'),false);assert.equal($('recSummaryWrap').classList.contains('open'),false);$('btnIndex').click();assert.ok($('indexOv').classList.contains('open'));
  await w.readerTest.enterRecite('free');const fresh=w.readerTest.session.id;assert.notEqual(fresh,owner);const result=[{transcript:'الحمد لله رب العالمين'}];result.isFinal=true;old.onresult({resultIndex:0,results:[result]});old.onend();await finished;
- assert.equal(w.readerTest.session.id,fresh);assert.equal(w.readerTest.pageState.covered.size,0);assert.equal(w.readerTest.jobs.get(owner).payload.summary.wordsCovered,0,'late browser callbacks from a closed session must not create coverage');assert.equal($('recSummaryWrap').classList.contains('open'),false);assert.match($('recJobStatus').textContent,/اكتمل/);
+ assert.equal(w.readerTest.session.id,fresh);assert.equal(w.readerTest.pageState.covered.size,0);assert.equal(w.readerTest.jobs.get(owner).payload.summary.wordsCovered,0,'late browser callbacks from a closed session must not create coverage');assert.equal($('recSummaryWrap').classList.contains('open'),false);assert.doesNotMatch($('recJobStatus').textContent,/اكتمل/,'a new active session does not display stale completion status');
  await w.readerTest.finishReciteSession();
 });
 test('browser follow-along cannot invent removable automatic error rows',async t=>{
