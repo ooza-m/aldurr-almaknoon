@@ -67,3 +67,21 @@ test('seeking to a verse boundary while paused never autoplays the next verse',a
  assert.equal(audio.plays,plays,'a native timeupdate may not trigger autoplay');
  player.stop();
 });
+
+
+test('cross-surah boundary opens the next recording once and preserves verse order',async()=>{
+ const {player,audio,seen}=playerFixture();
+ const cross=new Map([['103:3',{src:'blob:surah-103',from:0,to:1,chapter:true}],
+  ['104:1',{src:'blob:surah-104',from:0,to:1,chapter:true}]]);
+ player.downloads.prepare=async()=>cross;
+ await player.start({verses:['103:3','104:1'],scope:'range'});
+ assert.equal(player.snapshot().key,'103:3');
+ const firstPlays=audio.plays;
+ audio.currentTime=1;audio.onended();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(player.snapshot().key,'104:1','next surah remains in queue');
+ assert.equal(audio.src,'blob:surah-104');
+ assert.equal(audio.plays,firstPlays+1,'exactly one new playback starts for the new chapter file');
+ assert.deepEqual(seen,['103:3','104:1']);
+ player.stop();
+});
