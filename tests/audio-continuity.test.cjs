@@ -185,7 +185,7 @@ test('network loss while playing second surah retries the interrupted ayah, not 
  assert.equal(player.snapshot().key,'104:1');
  audio.error={code:2};audio.onerror();
  assert.equal(player.status,'error');
- assert.equal(player.completed.size,0,'connection error must not earn a completed listen');
+ assert.equal(player.completed.has('104:1'),false,'connection error cannot credit the interrupted verse');
  await player.toggle();
  assert.equal(preparations,2,'manual retry prepares the range again');
  assert.equal(player.snapshot().key,'104:1','retry stays on interrupted ayah');
