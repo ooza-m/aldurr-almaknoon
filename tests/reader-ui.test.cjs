@@ -30,7 +30,7 @@ async function boot(options={}){
     if(match)return {ok:true,json:async()=>({tafsir:{resource_id:+match[1],text:'<p>تفسير المصدر '+match[1]+' للآية '+match[2]+'</p><p>فقرة ثانية.</p>'}})};
     throw Error('Unexpected network request: '+url);
   };
-  w.localStorage.setItem('durr-num','en');if(options.taskPlan)w.localStorage.setItem('durr-active-task-session',JSON.stringify(options.taskPlan));if(options.savedFocus!=null)w.localStorage.setItem('durr-focus',options.savedFocus);for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js','reader-study.js','reader-session.js'])w.eval(read(file));
+  w.localStorage.setItem('durr-num','en');if(options.audioSettings)for(const [key,value] of Object.entries(options.audioSettings))w.localStorage.setItem(key,String(value));if(options.taskPlan)w.localStorage.setItem('durr-active-task-session',JSON.stringify(options.taskPlan));if(options.savedFocus!=null)w.localStorage.setItem('durr-focus',options.savedFocus);for(const file of ['app-preferences.js','reader-core.js','audio-library.js','reader-audio.js','recitation-core.js','recitation-jobs.js','reader-ui.js','reader-study.js','reader-session.js'])w.eval(read(file));
   for(const script of w.document.querySelectorAll('script:not([src])')){
     let code=script.textContent;
     if(code.includes('const REC_QUERY='))code+='\nwindow.readerTest={get player(){return audioController},get page(){return cur},get verse(){return playingVerse},get session(){return recSession},get recMode(){return recMode},get pageState(){return recPageState},get jobs(){return recJobsV86},settle,faceVerses,loadTafsir,maybeCompleteFaceTafsir,enterRecite,toggleRec,finishReciteSession,processTranscriptV73,openErrLog};';
@@ -257,4 +257,22 @@ test('fully approved scheduled session removes its completed active plan only af
  choice.checked=true;
  $('recSummarySave').click();
  assert.equal(w.localStorage.getItem('durr-active-task-session'),null,'only complete approval clears the plan');
+});
+
+test('reader restores saved reciter, rate and repeat settings after reload',async t=>{
+ const settings={'durr-audio-reciter':'husary','durr-audio-rate':'1.5','durr-repeat-v89':JSON.stringify({repeat:3,ayahRepeat:2,gap:5}),'durr-audio-gap-v87':'5'};
+ const {dom,w,$}=await boot({audioSettings:settings});t.after(()=>{w.readerTest.player.stop();dom.window.close();});
+ const player=w.readerTest.player;
+ assert.equal(player.reciter,'husary');
+ assert.equal(player.rate,1.5);
+ assert.equal(player.repeat,3);
+ assert.equal(player.ayahRepeat,2);
+ assert.equal(player.gap,5);
+ $('faceListenRepeat').click();
+ assert.ok($('repeatOv').classList.contains('open'));
+ assert.equal($('repeatRangeOn').checked,true);
+ assert.equal($('repeatAyahOn').checked,true);
+ assert.equal($('repeatRangeCount').value,'3');
+ assert.equal($('repeatAyahCount').value,'2');
+ assert.equal($('repeatGap').value,'5');
 });
