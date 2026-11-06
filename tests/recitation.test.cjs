@@ -7,7 +7,7 @@ const recitation = source.slice(source.indexOf('const REC_QUERY='), source.index
 const normalize = source.match(/^const norm=.*$/m)[0];
 function context(fetchImpl = async()=>({ok:true,json:async()=>({seq:0,transcript_delta:''})})) {
   const elements = new Map();
-  const element = () => ({classList:{add(){},remove(){},toggle(){}},dataset:{},style:{},addEventListener(){},setAttribute(){},removeAttribute(){}});
+  const element = () => {const names=new Set();return {classList:{add:k=>names.add(k),remove:k=>names.delete(k),toggle(k,v){if(v===undefined)v=!names.has(k);if(v)names.add(k);else names.delete(k);return v;},contains:k=>names.has(k)},dataset:{},style:{},addEventListener(){},setAttribute(){},removeAttribute(){}};};
   const c = vm.createContext({URLSearchParams,location:{search:'',origin:'https://app.test'},
     window:{addEventListener(){},DURR_CONFIG:{quranAsr:{url:'https://asr.test'}},SpeechRecognition:function(){}},
     LS:(_,fallback)=>fallback,LSet(){},localStorage:{removeItem(){}},
@@ -20,7 +20,7 @@ function context(fetchImpl = async()=>({ok:true,json:async()=>({seq:0,transcript
   });
   vm.runInContext(normalize+'\n'+recitation,c);
   vm.runInContext(`recSession=newRecSession();
-    recSeq=['الحمد','لله','رب','العالمين'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){}},dataset:{}}}));
+    recSeq=['الحمد','لله','رب','العالمين'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){},contains(){return false;}},dataset:{}}}));
     recWords=recSeq;recPageState=makePageState();recOn=true;
     checkMutashabihV73=async()=>{};updateErrCount=()=>{};recTip=()=>{};`,c);
   return c;
@@ -45,7 +45,7 @@ test('browser final results commit once, and a recognizer restart resets result 
 });
 
 test('follow-along does not save automatic errors for omissions in a transcript',()=>{
-  const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{confidence:1,confidence_calibrated:true});`);
+  const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){},contains(){return false;}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{confidence:1,confidence_calibrated:true});`);
   assert.equal(run(c,'DURR_FOLLOW_ONLY_V1'),true);
   assert.equal(run(c,'ERR.length'),0);
   assert.equal(run(c,'recPageState.errors.size'),0);
@@ -124,7 +124,7 @@ test('late responses from an old stream cannot update a new recitation session',
 });
 
 test('follow-along continues after an omitted word without registering an automatic mistake',()=>{
-  const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{});`);
+  const c=context();run(c,`recSeq=['الحمد','لله','رب','العالمين','الرحمن','الرحيم'].map((expected,wi)=>({vk:'1:2',wi,seqIndex:wi,expected,el:{classList:{add(){},remove(){},toggle(){},contains(){return false;}},dataset:{}}}));recWords=recSeq;recPageState=makePageState();recOn=false;processTranscriptV73('الحمد لله العالمين الرحمن الرحيم','quran-asr',{});`);
   assert.equal(run(c,'ERR.length'),0);
   assert.equal(run(c,`recSession.findings.some(f=>f.type==='automatic_omission')`),false);assert.equal(run(c,'recWordPos'),6);assert.equal(run(c,'recPageState.covered.size'),5);
 });
