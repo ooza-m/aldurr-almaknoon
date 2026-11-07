@@ -2414,7 +2414,7 @@ function tarteelVerseHistoryV142(){
   req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('archives'))req.result.createObjectStore('archives');};
   req.onerror=()=>reject(req.error||new Error('تعذّر فتح أرشيف ترتيل'));
   req.onsuccess=()=>{
-   const db=req.result,tx=db.transaction('archives','readonly'),get=tx.objectStore('archives').get('durr-tarteel-history-v1');
+   const db=req.result,tx=db.transaction('archives','readonly'),get=tx.objectStore('archives').get(('durr-tarteel-history-v1'+(fbUser?.uid?':'+fbUser.uid:'')));
    get.onsuccess=()=>{db.close();resolve(get.result||null);};
    get.onerror=()=>{db.close();reject(get.error||new Error('تعذّرت قراءة الأرشيف'));};
   };
@@ -5613,12 +5613,16 @@ function initCloud(){
     fbAuth.onAuthStateChanged(u=>{
       if((fbUser?.uid||null)!==(u?.uid||null)){cloudBaselineV151=null;cloudDirtyV151=false;}
       fbUser=u;
+      // Local Tarteel archives are namespaced to the authenticated account.
+      localStorage.setItem('durr-tarteel-owner-v1',u?.uid||'local-only');
+      window.dispatchEvent(new Event('durr-tarteel-history-updated'));
       if(u){
         updateAcctChip();hideGate();
         // اجلبي السحابة أولًا قبل أي حفظ، ثم عيّني الاسم بعد الجلب إن لزم
         cloudPull(true,()=>{
           if(!(S.profile&&S.profile.name)&&u.displayName){if(!S.profile)S.profile={};S.profile.name=u.displayName;save();}
           cloudListen();
+          setTimeout(consumeReviewedTarteelV166,120);
         });
       }else{updateAcctChip();cloudUnlisten();if(!localStorage.getItem('durr-skip-auth'))showGate(true);}
     });
@@ -6239,7 +6243,7 @@ renderAll();
    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('archives'))req.result.createObjectStore('archives');};
    req.onerror=()=>reject(req.error);
    req.onsuccess=()=>{
-     const db=req.result,tx=db.transaction('archives','readonly'),get=tx.objectStore('archives').get('durr-tarteel-history-v1');
+     const db=req.result,tx=db.transaction('archives','readonly'),get=tx.objectStore('archives').get(('durr-tarteel-history-v1'+(fbUser?.uid?':'+fbUser.uid:'')));
      get.onsuccess=()=>{resolve(get.result||null);db.close();};get.onerror=()=>{reject(get.error);db.close();};
    };
  });
@@ -6475,7 +6479,7 @@ renderAll();
             if(surah>=1&&surah<=114&&ayah>=1)positions.add(surah+':'+ayah);else missing++;
           }
         }
-        const archiveKey='durr-tarteel-history-v1';
+        const archiveKey=('durr-tarteel-history-v1'+(fbUser?.uid?':'+fbUser.uid:''));
         async function saveHistoricalArchive(){
           if(!window.indexedDB)throw new Error('indexeddb unavailable');
           const db=await new Promise((resolve,reject)=>{
@@ -6540,7 +6544,10 @@ async function consumeReviewedTarteelV166(){
  if(!raw)return;
  tarteelMergeBusyV166=true;
  try{
-  const queue=JSON.parse(raw),planned=api.plan(S,queue);
+  const queue=JSON.parse(raw);
+  const owner=fbUser?.uid||'local-only';
+  if(queue.owner!==owner){toast('دفعة ترتيل تخص حسابًا آخر. سجّلي الدخول إلى الحساب الصحيح أولًا.');return;}
+  const planned=api.plan(S,queue);
   if((+queue.baseUpdatedAt||0)!==(+S.updatedAt||0)){
     toast('تغيّرت بيانات التطبيق منذ مراجعة ملف ترتيل؛ أعيدي المعاينة قبل الدمج.');
     return;
