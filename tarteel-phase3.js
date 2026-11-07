@@ -1,0 +1,99 @@
+/* Phase 03: local Tarteel archive and manually reviewed batches. */
+(function(){
+'use strict';
+const $=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('en-US');
+let data=null,sourceSessions=null,sourceMistakes=null,filtered=[],selected=new Map(),page=0;
+const PAGE_SIZE=25;
+const notify=(message,error=false)=>{$('status').textContent=message;$('status').className=error?'error':'success';};
+async function fileJSON(input){
+ const file=input.files?.[0];if(!file)throw Error('اختاري ملفي الجلسات والأخطاء.');
+ if(file.size>65*1024*1024)throw Error('حجم الملف يتجاوز الحد المسموح (65 MB).');
+ const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed))throw Error('ملف التصدير لا يحتوي قائمة JSON.');
+ return parsed;
+}
+function display(){
+ if(!data)return;
+ const filter=$('typeFilter').value;
+ filtered=data.errors.filter(e=>e.faces.length&&(!filter||e.type===filter));
+ page=Math.min(page,Math.max(0,Math.ceil(filtered.length/PAGE_SIZE)-1));
+ const view=filtered.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE),root=$('records');root.replaceChildren();
+ for(const e of view){
+   const p=e.positions[0],label=document.createElement('label'),check=document.createElement('input'),body=document.createElement('div');
+   label.className='record';check.type='checkbox';check.checked=selected.has(e.key);
+   check.onchange=()=>{if(check.checked){if(selected.size>=100){check.checked=false;notify('حد الاعتماد في الدفعة 100 خطأ. اعتمدي المحدد ثم اختاري دفعة جديدة.',true);return;}selected.set(e.key,e);}else selected.delete(e.key);syncSelected();};
+   body.textContent='سورة '+p.surah+' · آية '+p.ayah+' · وجه '+e.faces[0]+' · '+(DurrTarteelMerge.LABELS[e.type]||e.type)+(e.expected?' · الصواب: '+e.expected:'')+(e.positions.length>1?' · مواضع متعددة':'');
+   label.append(check,body);root.append(label);
+ }
+ $('pageStatus').textContent=(page+1)+' من '+Math.max(1,Math.ceil(filtered.length/PAGE_SIZE))+' · '+fmt(filtered.length)+' سجلًا قابلًا للمراجعة';
+ $('prev').disabled=page===0;$('next').disabled=(page+1)*PAGE_SIZE>=filtered.length;
+ syncSelected();
+}
+function syncSelected(){$('selectionCount').textContent='المحدد: '+fmt(selected.size);$('commit').disabled=!selected.size;}
+function archiveProjection(){
+ const sessions=sourceSessions.map(s=>({id:String(s.session_id||''),start:s.started_at||'',end:s.ended_at||'',type:s.session_type||'',mode:s.recitation_mode||''}));
+ const mistakes=sourceMistakes.map(m=>({session_id:String(m.session_id||''),type:m.mistake_type||'',positions:(Array.isArray(m.positions)?m.positions:[]).map(p=>({surah_number:p.surah_number,ayah_number:p.ayah_number,word_number:p.word_number})),expected:typeof m.expected==='string'?m.expected.slice(0,150):'',received:typeof m.received==='string'?m.received.slice(0,150):'',created:m.created||''}));
+ return {format:'durr-maknun-tarteel-import',version:1,importedAt:new Date().toISOString(),sessions,mistakes,bookmarks:[],metadata:{source:'tarteel-json',counts:data.summary}};
+}
+async function saveArchive(archive){
+ if(!window.indexedDB)throw Error('التخزين المحلي الكبير غير متاح في هذا المتصفح.');
+ const db=await new Promise((res,rej)=>{const req=indexedDB.open('durr-tarteel-history',1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('archives'))req.result.createObjectStore('archives');};req.onerror=()=>rej(req.error);req.onsuccess=()=>res(req.result);});
+ try{
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('archives','readwrite'),store=tx.objectStore('archives');
+   const req=store.get('durr-tarteel-history-v1');
+   req.onsuccess=()=>{
+    if(req.result)store.put(req.result,'durr-tarteel-history-previous-v1');
+    store.put(archive,'durr-tarteel-history-v1');
+   };
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+ }finally{db.close();}
+}
+$('run').onclick=async()=>{
+ $('run').disabled=true;notify('جارٍ تحليل الملفات على هذا الجهاز…');$('output').hidden=true;data=null;selected.clear();
+ try{
+  [sourceSessions,sourceMistakes]=await Promise.all([fileJSON($('sessions')),fileJSON($('mistakes'))]);
+  const res=await fetch('data/mushaf-search.json');if(!res.ok)throw Error('تعذّر تحميل فهرس المصحف.');
+  const map=await res.json();
+  data=DurrTarteelImport.ingest(sourceSessions,sourceMistakes,{faceForAyah:(s,a)=>map[s+':'+a]?.[0]});
+  const n=data.summary;
+  $('metrics').replaceChildren();
+  for(const [title,value] of [['الجلسات',n.sessions],['الأخطاء الفريدة',n.errors],['المكررات',n.duplicates],['المرفوضة',n.rejected]]){
+   const card=document.createElement('div'),strong=document.createElement('strong');card.className='metric';card.textContent=title;strong.textContent=fmt(value);card.append(strong);$('metrics').append(card);
+  }
+  $('mapping').textContent='أخطاء لم يُعرف وجهها: '+fmt(n.unmapped)+'؛ لا يمكن اعتمادها حتى يُحدَّد موضعها.';
+  $('types').replaceChildren();$('typeFilter').replaceChildren(new Option('جميع التصنيفات',''));
+  for(const [type,count]of Object.entries(n.byType)){
+   const p=document.createElement('p');p.textContent=(DurrTarteelMerge.LABELS[type]||type)+' : '+fmt(count);$('types').append(p);
+   $('typeFilter').append(new Option(DurrTarteelMerge.LABELS[type]||type,type));
+  }
+  $('replaceArchive').checked=false;$('archive').disabled=true;page=0;$('output').hidden=false;display();
+  notify('انتهى التحليل. لم تُحفَظ الملفات أو تُعتمد أخطاء بعد.');
+ }catch(error){notify('تعذّر التحليل: '+error.message,true);}
+ finally{$('run').disabled=false;}
+};
+$('typeFilter').onchange=()=>{page=0;display();};
+$('prev').onclick=()=>{if(page>0){page--;display();}};
+$('next').onclick=()=>{page++;display();};
+$('replaceArchive').onchange=()=>{$('archive').disabled=!data||!$('replaceArchive').checked;};
+$('archive').onclick=async()=>{
+ if(!data||!$('replaceArchive').checked)return;
+ $('archive').disabled=true;$('archiveStatus').textContent='جارٍ حفظ الأرشيف في الجهاز…';
+ try{await saveArchive(archiveProjection());$('archiveStatus').textContent='حُفظ الأرشيف. يُعرض من سجل الأخطاء في التطبيق، دون أي اعتماد آلي.';notify('حُفظ الأرشيف في IndexedDB على الجهاز.');}
+ catch(error){$('archiveStatus').textContent='تعذّر حفظ الأرشيف: '+error.message;notify('لم يُحفَظ الأرشيف؛ لا تتخلصي من ملفات التصدير.',true);}
+ finally{$('archive').disabled=!$('replaceArchive').checked;}
+};
+$('commit').onclick=()=>{
+ try{
+  if(!data||!selected.size||selected.size>100)throw Error('اختاري من 1 إلى 100 خطأ.');
+  const rows=[...selected.values()],batch={schema:'durr-tarteel-confirm-v1',confirmed:true,baseUpdatedAt:0,errors:rows};
+  const existing=JSON.parse(localStorage.getItem('durr-alfareed-v2')||'{}');
+  batch.baseUpdatedAt=+existing.updatedAt||0;
+  const result=DurrTarteelMerge.plan(existing.errors?existing:{errors:[]},batch);
+  if(!result.added.length)throw Error('الأخطاء المحددة مستوردة من قبل.');
+  if(localStorage.getItem(DurrTarteelMerge.QUEUE_KEY))throw Error('هناك دفعة سابقة بانتظار مراجعتها في التطبيق.');
+  localStorage.setItem(DurrTarteelMerge.QUEUE_KEY,JSON.stringify(batch));
+  window.location.assign('index.html?tab=errors');
+ }catch(error){notify('تعذّر تجهيز الاعتماد: '+error.message,true);}
+};
+})();
