@@ -15,7 +15,7 @@
 <section id="output" hidden><h2>2. مراجعة المحتوى</h2><div id="metrics" class="metrics"></div><p id="mapping" class="hint"></p><div id="types"></div>
 <h2 style="margin-top:24px">حفظ الأرشيف التاريخي</h2><p class="hint">يبقى في IndexedDB على هذا الجهاز، خارج سجلات الأخطاء المؤكدة ومزامنة الحساب. عند الاستبدال تُحفظ النسخة السابقة للاستعادة قبل كتابة الجديدة.</p>
 <label class="row"><input id="replaceArchive" type="checkbox"> أفهم أن حفظ أرشيف جديد يستبدل العرض التاريخي الحالي بعد أخذ نسخة سابقة</label>
-<button class="secondary" type="button" id="archive" disabled>حفظ الأرشيف محليًا</button><p id="archiveStatus" role="status" class="hint"></p>
+<button class="secondary" type="button" id="archive" disabled>حفظ الأرشيف محليًا</button> <button class="secondary" type="button" id="archiveExport">تصدير نسخة الأرشيف</button> <button class="secondary" type="button" id="archiveRestorePrevious">استعادة الأرشيف السابق</button><p id="archiveStatus" role="status" class="hint"></p>
 <h2 style="margin-top:24px">3. اختيار الأخطاء لاعتمادها</h2>
 <p class="hint">اختاري فقط الأخطاء التي تحققتِ منها بنفسك. حدّ الدفعة 100 خطأ؛ ويمكن تكرار العملية دون إنشاء سجلات مكررة. كل سجل متعدد المواضع يُربط بموضعه الأول حتى تتم مراجعة المواضع الأخرى منفردة.</p>
 <div class="row-space"><label>التصنيف <select id="typeFilter"><option value="">جميع التصنيفات</option></select></label><span class="chip" id="selectionCount">المحدد: 0</span></div>
