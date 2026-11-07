@@ -2,7 +2,10 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('en-US');
-let data=null,sourceSessions=null,sourceMistakes=null,filtered=[],selected=new Map(),page=0;
+let data=null,sourceSessions=null,sourceMistakes=null,filtered=[],selected=new Map(),page=0,previewOwner=null;
+const owner=()=>localStorage.getItem('durr-tarteel-owner-v1')||'local-only';
+const archiveKey=()=> 'durr-tarteel-history-v1'+(owner()==='local-only'?'':':'+owner());
+const ownerUnchanged=()=>{if(owner()!==previewOwner)throw Error('تبدّل الحساب منذ المعاينة. أعيدي تحليل الملفات لحماية بياناتك.');};
 const PAGE_SIZE=25;
 const notify=(message,error=false)=>{$('status').textContent=message;$('status').className=error?'error':'success';};
 async function fileJSON(input){
@@ -40,10 +43,10 @@ async function saveArchive(archive){
  try{
   await new Promise((resolve,reject)=>{
    const tx=db.transaction('archives','readwrite'),store=tx.objectStore('archives');
-   const req=store.get('durr-tarteel-history-v1');
+   const key=archiveKey(),req=store.get(key);
    req.onsuccess=()=>{
-    if(req.result)store.put(req.result,'durr-tarteel-history-previous-v1');
-    store.put(archive,'durr-tarteel-history-v1');
+    if(req.result)store.put(req.result,key+'-previous');
+    store.put(archive,key);
    };
    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
   });
@@ -52,6 +55,7 @@ async function saveArchive(archive){
 $('run').onclick=async()=>{
  $('run').disabled=true;notify('جارٍ تحليل الملفات على هذا الجهاز…');$('output').hidden=true;data=null;selected.clear();
  try{
+  previewOwner=owner();
   [sourceSessions,sourceMistakes]=await Promise.all([fileJSON($('sessions')),fileJSON($('mistakes'))]);
   const res=await fetch('data/mushaf-search.json');if(!res.ok)throw Error('تعذّر تحميل فهرس المصحف.');
   const map=await res.json();
@@ -79,14 +83,15 @@ $('replaceArchive').onchange=()=>{$('archive').disabled=!data||!$('replaceArchiv
 $('archive').onclick=async()=>{
  if(!data||!$('replaceArchive').checked)return;
  $('archive').disabled=true;$('archiveStatus').textContent='جارٍ حفظ الأرشيف في الجهاز…';
- try{await saveArchive(archiveProjection());$('archiveStatus').textContent='حُفظ الأرشيف. يُعرض من سجل الأخطاء في التطبيق، دون أي اعتماد آلي.';notify('حُفظ الأرشيف في IndexedDB على الجهاز.');}
+ try{ownerUnchanged();await saveArchive(archiveProjection());$('archiveStatus').textContent='حُفظ الأرشيف. يُعرض من سجل الأخطاء في التطبيق، دون أي اعتماد آلي.';notify('حُفظ الأرشيف في IndexedDB على الجهاز.');}
  catch(error){$('archiveStatus').textContent='تعذّر حفظ الأرشيف: '+error.message;notify('لم يُحفَظ الأرشيف؛ لا تتخلصي من ملفات التصدير.',true);}
  finally{$('archive').disabled=!$('replaceArchive').checked;}
 };
 $('commit').onclick=()=>{
  try{
+  ownerUnchanged();
   if(!data||!selected.size||selected.size>100)throw Error('اختاري من 1 إلى 100 خطأ.');
-  const rows=[...selected.values()],batch={schema:'durr-tarteel-confirm-v1',confirmed:true,baseUpdatedAt:0,errors:rows};
+  const rows=[...selected.values()],batch={schema:'durr-tarteel-confirm-v1',confirmed:true,owner:previewOwner,baseUpdatedAt:0,errors:rows};
   const existing=JSON.parse(localStorage.getItem('durr-alfareed-v2')||'{}');
   batch.baseUpdatedAt=+existing.updatedAt||0;
   const result=DurrTarteelMerge.plan(existing.errors?existing:{errors:[]},batch);
