@@ -267,3 +267,31 @@ test('cloud pull and live listener must not replace divergent offline history by
  assert.match(html,/different&&!cloudRemoteAdoptionV164\(S,cloudS,cloudBaselineV151\)/);
  assert.match(html,/differs&&!cloudRemoteAdoptionV164\(S,remoteState,cloudBaselineV151\)/);
 });
+
+
+test('two devices independently approving different Tarteel errors merge without losing either',()=>{
+ const {ingest}=require('../tarteel-import.js'),{merge}=require('../tarteel-merge.js');
+ const sessions=[{session_id:'a',started_at:'2026-01-01T00:00:00Z',start_surah_number:76,start_ayah_number:1}];
+ const base={errors:[],logs:[],recitationSessions:[],pages:{},updatedAt:1};
+ const raws=['INCORRECT_TASHKEEL','MISSED_WORDS'].map((type,i)=>ingest(sessions,[{session_id:'a',mistake_type:type,positions:[{surah_number:76,ayah_number:1+i,word_number:1}],created:'2026-01-01T00:00:05Z'}],{faceForAyah:()=>578}).errors[0]);
+ const q=rows=>({schema:'durr-tarteel-confirm-v1',confirmed:true,owner:'local-only',errors:rows});
+ const local={...merge(base,q([raws[0]])).state,updatedAt:2};
+ const remote={...merge(base,q([raws[1]])).state,updatedAt:3};
+ const result=cloudPlanMergeV152(base,local,remote);
+ assert.deepEqual(result.conflicts,[]);
+ assert.equal(result.merged.errors.length,2);
+ assert.ok(result.merged.errors.every(e=>e.source==='tarteel'&&e.userConfirmed===true&&e.id.startsWith('import:tarteel:')));
+ assert.deepEqual(result.merged.recitationSessions,[]);
+});
+test('two devices disagreeing on a confirmed imported error never silently choose one',()=>{
+ const {ingest}=require('../tarteel-import.js'),{merge}=require('../tarteel-merge.js');
+ const input=ingest([{session_id:'s',started_at:'2026-01-01T00:00:00Z',start_surah_number:76,start_ayah_number:1}],
+ [{session_id:'s',mistake_type:'MISSED_WORDS',positions:[{surah_number:76,ayah_number:1,word_number:1}],created:'2026-01-01T00:00:03Z'}],{faceForAyah:()=>578});
+ const base={errors:[],updatedAt:1};
+ const q={schema:'durr-tarteel-confirm-v1',confirmed:true,owner:'local-only',errors:input.errors};
+ const local={...merge(base,q).state,updatedAt:2};
+ const remote={...merge(base,q).state,updatedAt:3};
+ remote.errors[0]={...remote.errors[0],archived:true};
+ const result=cloudPlanMergeV152(base,local,remote);
+ assert.ok(result.conflicts.includes('errors'));
+});
