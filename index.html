@@ -6559,7 +6559,9 @@ async function consumeReviewedTarteelV166(){
   for(const entry of result.state.errors)if(entry.source==='tarteel'&&!entry.surah&&entry.surahId)
     entry.surah=(SURAHS.find(row=>row[0]===entry.surahId)||[])[1]||'';
   // Never remove the pending queue unless both backup and new state were saved.
-  localStorage.setItem(api.BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),owner:fbUser?.uid||'local-only',state:JSON.parse(original)}));
+  // Keep only a small receipt in localStorage: the full checkpoint is safely stored
+  // in the account-scoped IndexedDB snapshots by backupCreateV154 above.
+  localStorage.setItem(api.BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),owner:fbUser?.uid||'local-only',originalUpdatedAt:+S.updatedAt||0,storage:'aldurr-safety-v154'}));
   const next={...result.state,updatedAt:Date.now()};
   localStorage.setItem(KEY,JSON.stringify(next));
   S=next;localStorage.removeItem(api.QUEUE_KEY);
