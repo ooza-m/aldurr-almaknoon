@@ -37,6 +37,36 @@ function archiveProjection(){
  const mistakes=sourceMistakes.map(m=>({session_id:String(m.session_id||''),type:m.mistake_type||'',positions:(Array.isArray(m.positions)?m.positions:[]).map(p=>({surah_number:p.surah_number,ayah_number:p.ayah_number,word_number:p.word_number})),expected:typeof m.expected==='string'?m.expected.slice(0,150):'',received:typeof m.received==='string'?m.received.slice(0,150):'',created:m.created||''}));
  return {format:'durr-maknun-tarteel-import',version:1,importedAt:new Date().toISOString(),sessions,mistakes,bookmarks:[],metadata:{source:'tarteel-json',counts:data.summary}};
 }
+async function accessArchive(operation){
+ if(!window.indexedDB)throw Error('التخزين المحلي للأرشيف غير متاح.');
+ const db=await new Promise((resolve,reject)=>{
+  const req=indexedDB.open('durr-tarteel-history',1);
+  req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('archives'))req.result.createObjectStore('archives');};
+  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ });
+ try{return await operation(db);}finally{db.close();}
+}
+async function readArchive(key){
+ return accessArchive(db=>new Promise((resolve,reject)=>{
+  const tx=db.transaction('archives','readonly'),req=tx.objectStore('archives').get(key);
+  req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);
+ }));
+}
+async function restorePreviousArchive(){
+ return accessArchive(db=>new Promise((resolve,reject)=>{
+  const key=archiveKey(),tx=db.transaction('archives','readwrite'),store=tx.objectStore('archives');
+  const prev=store.get(key+'-previous');
+  prev.onsuccess=()=>{
+   if(!prev.result){tx.abort();return;}
+   const current=store.get(key);
+   current.onsuccess=()=>{if(current.result)store.put(current.result,key+'-previous');store.put(prev.result,key);};
+  };
+  tx.oncomplete=()=>resolve(true);
+  tx.onabort=()=>reject(Error('لا توجد نسخة سابقة قابلة للاستعادة أو تعذّرت الكتابة.'));
+  tx.onerror=()=>reject(tx.error);
+ }));
+}
+
 async function saveArchive(archive){
  if(!window.indexedDB)throw Error('التخزين المحلي الكبير غير متاح في هذا المتصفح.');
  const db=await new Promise((res,rej)=>{const req=indexedDB.open('durr-tarteel-history',1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('archives'))req.result.createObjectStore('archives');};req.onerror=()=>rej(req.error);req.onsuccess=()=>res(req.result);});
@@ -86,6 +116,24 @@ $('archive').onclick=async()=>{
  try{ownerUnchanged();await saveArchive(archiveProjection());$('archiveStatus').textContent='حُفظ الأرشيف. يُعرض من سجل الأخطاء في التطبيق، دون أي اعتماد آلي.';notify('حُفظ الأرشيف في IndexedDB على الجهاز.');}
  catch(error){$('archiveStatus').textContent='تعذّر حفظ الأرشيف: '+error.message;notify('لم يُحفَظ الأرشيف؛ لا تتخلصي من ملفات التصدير.',true);}
  finally{$('archive').disabled=!$('replaceArchive').checked;}
+};
+$('archiveExport').onclick=async()=>{
+ $('archiveExport').disabled=true;
+ try{
+  const data=await readArchive(archiveKey());if(!data)throw Error('لا يوجد أرشيف محفوظ للحساب الحالي.');
+  const blob=new Blob([JSON.stringify(data)],{type:'application/json'}),url=URL.createObjectURL(blob);
+  try{const a=document.createElement('a');a.href=url;a.download='aldurr-tarteel-history-backup.json';document.body.append(a);a.click();a.remove();}
+  finally{URL.revokeObjectURL(url);}
+  notify('تم تجهيز تصدير الأرشيف. احفظي الملف في ملفات الجهاز بعيدًا عن المشاركة العامة.');
+ }catch(e){notify('تعذّر تصدير الأرشيف: '+e.message,true);}
+ finally{$('archiveExport').disabled=false;}
+};
+$('archiveRestorePrevious').onclick=async()=>{
+ if(!window.confirm('هل تريدين استعادة الأرشيف السابق لهذا الحساب؟ ستُحفظ النسخة الحالية لتتمكني من الرجوع إليها.'))return;
+ $('archiveRestorePrevious').disabled=true;
+ try{await restorePreviousArchive();notify('استُعيد الأرشيف السابق لهذا الحساب. افتحي السجل التاريخي في التطبيق للاطلاع عليه.');}
+ catch(e){notify('تعذّرت الاستعادة: '+e.message,true);}
+ finally{$('archiveRestorePrevious').disabled=false;}
 };
 $('commit').onclick=()=>{
  try{
