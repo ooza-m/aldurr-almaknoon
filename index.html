@@ -1210,6 +1210,7 @@ window.FIREBASE_CONFIG = {
         <summary>استيراد بيانات ترتيل وسجله المستقل</summary>
         <div class="v103-tarteel-body">
           <p class="hint">استخرجي ملف durr_tarteel_import.json من الحزمة ZIP ثم ارفعيه هنا للمعاينة. نتائج ترتيل الآلية لا تُعتمد أخطاء مؤكدة.</p>
+          <p class="hint"><a href="tarteel-import.html" style="color:var(--accent);font-weight:700">استيراد ملفات ترتيل الأصلية (الجلسات والأخطاء) مع مراجعة واعتماد محدد</a></p>
           <input type="file" id="tarteelFile" accept=".json,.csv,application/json,text/csv" style="max-width:100%;font-size:.8rem">
           <div id="tarteelPreview" style="margin-top:10px"></div>
           <button type="button" class="btn btn-ghost btn-sm" id="tarteelHistoryOpen" style="margin-top:9px">عرض السجل التاريخي المحفوظ</button>
@@ -6533,7 +6534,7 @@ renderAll();
 /* Phase 03: only explicitly reviewed Tarteel rows may enter the normal error ledger.
    Preserve the original state before any modification; never credit session completion. */
 let tarteelMergeBusyV166=false;
-function consumeReviewedTarteelV166(){
+async function consumeReviewedTarteelV166(){
  if(tarteelMergeBusyV166||!window.DurrTarteelMerge)return;
  const api=DurrTarteelMerge,raw=localStorage.getItem(api.QUEUE_KEY);
  if(!raw)return;
@@ -6546,6 +6547,8 @@ function consumeReviewedTarteelV166(){
   }
   if(!planned.added.length){localStorage.removeItem(api.QUEUE_KEY);toast('هذه الأخطاء معتمدة سابقًا ولا توجد سجلات جديدة.');return;}
   if(!window.confirm('هل تعتمدين '+planned.added.length+' خطأ محددًا من ترتيل؟ لن نعتمد أي وجه حفظ أو مراجعة تلقائيًا. ستُحفظ نسخة احتياطية قبل الدمج.'))return;
+  // The existing versioned, owner-scoped IndexedDB backup must succeed before any import.
+  await backupCreateV154('before-tarteel-merge',true);
   const original=JSON.stringify(S),result=api.merge(S,queue);
   // Never remove the pending queue unless both backup and new state were saved.
   localStorage.setItem(api.BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),owner:fbUser?.uid||'local-only',state:JSON.parse(original)}));
