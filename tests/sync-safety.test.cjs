@@ -295,3 +295,14 @@ test('two devices disagreeing on a confirmed imported error never silently choos
  const result=cloudPlanMergeV152(base,local,remote);
  assert.ok(result.conflicts.includes('errors'));
 });
+
+
+test('Tarteel history and review queue are scoped to active account rather than shared global archive',()=>{
+ const phase3=fs.readFileSync(path.join(__dirname,'..','tarteel-phase3.js'),'utf8');
+ assert.match(html,/localStorage\.setItem\('durr-tarteel-owner-v1',u\?\.uid\|\|'local-only'\)/);
+ assert.match(html,/durr-tarteel-history-v1'\+\(fbUser\?\.uid\?':'\+fbUser\.uid:''\)/);
+ assert.match(phase3,/const archiveKey=\(\)=> 'durr-tarteel-history-v1'\+/);
+ assert.match(phase3,/ownerUnchanged\(\);/);
+ assert.match(html,/if\(queue\.owner!==owner\)/);
+ assert.ok(!html.includes('id="tarteelFile"'),'legacy bulk import must not bypass review');
+});
