@@ -5,7 +5,7 @@ const {QUEUE_KEY,BACKUP_KEY,plan,merge,validate}=require('../tarteel-merge.js');
 const sessions=[{session_id:'a',session_type:'RECITE',recitation_mode:'DETECTION',started_at:'2026-01-01T00:00:00Z',start_surah_number:76,start_ayah_number:1,end_surah_number:76,end_ayah_number:2}];
 const mistakes=[{session_id:'a',mistake_type:'INCORRECT_TASHKEEL',positions:[{surah_number:76,ayah_number:1,word_number:3}],created:'2026-01-01T00:00:05Z',expected:'أَتَى',received:'أُتَى'}];
 const imported=ingest(sessions,mistakes,{faceForAyah:()=>578});
-const confirmed={schema:'durr-tarteel-confirm-v1',confirmed:true,errors:[imported.errors[0]]};
+const confirmed={schema:'durr-tarteel-confirm-v1',confirmed:true,owner:'local-only',errors:[imported.errors[0]]};
 test('explicit selected Tarteel mistakes merge into manual-confirmed error ledger only',()=>{
  const original={errors:[{source:'manual',type:'تسميع',page:1}],recitationSessions:[],logs:[],pages:{'1':'solid'}};
  const r=merge(original,confirmed);
