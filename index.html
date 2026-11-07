@@ -6554,7 +6554,7 @@ async function consumeReviewedTarteelV166(){
   if(!window.confirm('هل تعتمدين '+planned.added.length+' خطأ محددًا من ترتيل؟ لن نعتمد أي وجه حفظ أو مراجعة تلقائيًا. ستُحفظ نسخة احتياطية قبل الدمج.'))return;
   // The existing versioned, owner-scoped IndexedDB backup must succeed before any import.
   await backupCreateV154('before-tarteel-merge',true);
-  const original=JSON.stringify(S),result=api.merge(S,queue);
+  const result=api.merge(S,queue);
   // Confirmed imported errors remain normal searchable rows with the actual surah name.
   for(const entry of result.state.errors)if(entry.source==='tarteel'&&!entry.surah&&entry.surahId)
     entry.surah=(SURAHS.find(row=>row[0]===entry.surahId)||[])[1]||'';
