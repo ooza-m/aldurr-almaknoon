@@ -207,3 +207,17 @@ test('Tarteel review queue from another authenticated account is not merged into
  assert.ok(w.localStorage.getItem(w.DurrTarteelMerge.QUEUE_KEY),'foreign queue remains pending for rightful account');
  assert.equal((JSON.parse(w.localStorage.getItem('durr-alfareed-v2')||'{}').errors||[]).length,0);
 });
+
+
+test('Tarteel queue created from stale local data cannot overwrite newer changes',async t=>{
+ const {ingest}=require('../tarteel-import.js');
+ const {dom,w}=await boot();t.after(()=>dom.window.close());
+ const item=ingest([{session_id:'a',started_at:'2026-01-01T00:00:00Z',start_surah_number:76,start_ayah_number:1}],
+ [{session_id:'a',mistake_type:'MISSED_WORDS',positions:[{surah_number:76,ayah_number:1,word_number:1}],created:'2026-01-01T00:00:03Z'}],{faceForAyah:()=>578}).errors[0];
+ let backups=0;w.backupCreateV154=async()=>{backups++;return true;};w.confirm=()=>true;
+ const q={schema:'durr-tarteel-confirm-v1',confirmed:true,owner:'local-only',baseUpdatedAt:23,errors:[item]};
+ w.localStorage.setItem(w.DurrTarteelMerge.QUEUE_KEY,JSON.stringify(q));
+ await w.consumeReviewedTarteelV166();
+ assert.equal(backups,0);assert.ok(w.localStorage.getItem(w.DurrTarteelMerge.QUEUE_KEY));
+ assert.equal((JSON.parse(w.localStorage.getItem('durr-alfareed-v2')||'{}').errors||[]).length,0);
+});
