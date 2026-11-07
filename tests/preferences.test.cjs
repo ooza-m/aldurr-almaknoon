@@ -169,7 +169,7 @@ test('reviewed Tarteel queue commits only selected mistakes after a successful p
   [{session_id:'reviewed',mistake_type:'INCORRECT_TASHKEEL',positions:[{surah_number:76,ayah_number:1,word_number:2}],created:'2026-01-01T00:00:05Z'}],{faceForAyah:()=>578});
  const {dom,w}=await boot();t.after(()=>dom.window.close());
  let backupCalls=0;w.backupCreateV154=async()=>{backupCalls++;return true;};w.confirm=()=>true;
- const q={schema:'durr-tarteel-confirm-v1',confirmed:true,baseUpdatedAt:+w.__integrationState.updatedAt||0,errors:raw.errors};
+ const q={schema:'durr-tarteel-confirm-v1',confirmed:true,owner:'local-only',baseUpdatedAt:+w.__integrationState.updatedAt||0,errors:raw.errors};
  w.localStorage.setItem(w.DurrTarteelMerge.QUEUE_KEY,JSON.stringify(q));
  await w.consumeReviewedTarteelV166();
  const state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));
@@ -184,7 +184,7 @@ test('failed pre-merge backup cannot consume a reviewed Tarteel batch',async t=>
  const {dom,w}=await boot();t.after(()=>dom.window.close());
  const item=ingest([{session_id:'a',started_at:'2026-01-01T00:00:00Z',start_surah_number:76,start_ayah_number:1}],
  [{session_id:'a',mistake_type:'MISSED_WORDS',positions:[{surah_number:76,ayah_number:1,word_number:1}],created:'2026-01-01T00:00:03Z'}],{faceForAyah:()=>578}).errors[0];
- const q={schema:'durr-tarteel-confirm-v1',confirmed:true,baseUpdatedAt:+w.__integrationState.updatedAt||0,errors:[item]};
+ const q={schema:'durr-tarteel-confirm-v1',confirmed:true,owner:'local-only',baseUpdatedAt:+w.__integrationState.updatedAt||0,errors:[item]};
  w.backupCreateV154=async()=>{throw Error('quota');};w.confirm=()=>true;
  w.localStorage.setItem(w.DurrTarteelMerge.QUEUE_KEY,JSON.stringify(q));
  await w.consumeReviewedTarteelV166();
