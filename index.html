@@ -779,6 +779,7 @@ window.FIREBASE_CONFIG = {
 <script src="reader-ui.js?v=89"></script>
 <script src="reader-study.js?v=89"></script>
 <script src="app-data.js?v=89"></script>
+<script src="tarteel-merge.js?v=1"></script>
 </head>
 <body>
 <div id="v51AutoToast"><span class="v51-toast-ico">✓</span><span><b id="v51ToastTitle">سُجّلت الجلسة تلقائيًا</b><small id="v51ToastSub"></small></span></div>
@@ -6528,6 +6529,37 @@ renderAll();
     }catch(e){box.textContent='تعذّرت قراءة الملف. اختاري JSON أو CSV يحتوي سجلات أخطاء مفصلة.';}
   });
 })();
+
+/* Phase 03: only explicitly reviewed Tarteel rows may enter the normal error ledger.
+   Preserve the original state before any modification; never credit session completion. */
+let tarteelMergeBusyV166=false;
+function consumeReviewedTarteelV166(){
+ if(tarteelMergeBusyV166||!window.DurrTarteelMerge)return;
+ const api=DurrTarteelMerge,raw=localStorage.getItem(api.QUEUE_KEY);
+ if(!raw)return;
+ tarteelMergeBusyV166=true;
+ try{
+  const queue=JSON.parse(raw),planned=api.plan(S,queue);
+  if((+queue.baseUpdatedAt||0)!==(+S.updatedAt||0)){
+    toast('تغيّرت بيانات التطبيق منذ مراجعة ملف ترتيل؛ أعيدي المعاينة قبل الدمج.');
+    return;
+  }
+  if(!planned.added.length){localStorage.removeItem(api.QUEUE_KEY);toast('هذه الأخطاء معتمدة سابقًا ولا توجد سجلات جديدة.');return;}
+  if(!window.confirm('هل تعتمدين '+planned.added.length+' خطأ محددًا من ترتيل؟ لن نعتمد أي وجه حفظ أو مراجعة تلقائيًا. ستُحفظ نسخة احتياطية قبل الدمج.'))return;
+  const original=JSON.stringify(S),result=api.merge(S,queue);
+  // Never remove the pending queue unless both backup and new state were saved.
+  localStorage.setItem(api.BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),owner:fbUser?.uid||'local-only',state:JSON.parse(original)}));
+  const next={...result.state,updatedAt:Date.now()};
+  localStorage.setItem(KEY,JSON.stringify(next));
+  S=next;localStorage.removeItem(api.QUEUE_KEY);
+  cloudDirtyV151=true;backupScheduleV154();cloudPush();renderErrors();refreshV50();
+  toast('اعتُمد '+result.added+' خطأ من ترتيل، دون اعتماد حفظ أو مراجعة.');
+ }catch(error){console.warn('Tarteel confirmation not saved',error);toast('تعذّر الدمج؛ لم تُحذف البيانات المعلّقة. تحققي من مساحة التخزين.');}
+ finally{tarteelMergeBusyV166=false;}
+}
+window.addEventListener('pageshow',()=>setTimeout(consumeReviewedTarteelV166,120));
+window.addEventListener('storage',e=>{if(e.key===DurrTarteelMerge.QUEUE_KEY)consumeReviewedTarteelV166();});
+setTimeout(consumeReviewedTarteelV166,500);
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
