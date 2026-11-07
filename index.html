@@ -1209,10 +1209,8 @@ window.FIREBASE_CONFIG = {
       <details class="v103-tarteel-tools">
         <summary>استيراد بيانات ترتيل وسجله المستقل</summary>
         <div class="v103-tarteel-body">
-          <p class="hint">استخرجي ملف durr_tarteel_import.json من الحزمة ZIP ثم ارفعيه هنا للمعاينة. نتائج ترتيل الآلية لا تُعتمد أخطاء مؤكدة.</p>
-          <p class="hint"><a href="tarteel-import.html" style="color:var(--accent);font-weight:700">استيراد ملفات ترتيل الأصلية (الجلسات والأخطاء) مع مراجعة واعتماد محدد</a></p>
-          <input type="file" id="tarteelFile" accept=".json,.csv,application/json,text/csv" style="max-width:100%;font-size:.8rem">
-          <div id="tarteelPreview" style="margin-top:10px"></div>
+          <p class="hint">يُحفَظ سجل ترتيل التاريخي بمعزل عن الأخطاء المؤكدة. لا يدخل أي خطأ إلى سجل الحفظ إلا بعد تحديده واعتماده يدويًا، ولا يُحتسب إنجاز تلقائيًا.</p>
+          <p class="hint"><a href="tarteel-import.html" style="color:var(--accent);font-weight:700">فتح استيراد ملفات ترتيل الأصلية مع المعاينة والاعتماد وحفظ الأرشيف</a></p>
           <button type="button" class="btn btn-ghost btn-sm" id="tarteelHistoryOpen" style="margin-top:9px">عرض السجل التاريخي المحفوظ</button>
           <div id="tarteelHistoryPanel" style="margin-top:10px"></div>
         </div>
