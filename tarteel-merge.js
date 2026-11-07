@@ -13,7 +13,7 @@ function validate(queue){
    const p=row.positions?.[0],page=+row.faces?.[0];
    if(!p||!good(p.surah)||+p.surah>114||!good(p.ayah)||!good(p.word)||!good(page)||page>604)throw Error('Unmapped error cannot be confirmed');
    if(!/^\d{4}-\d{2}-\d{2}/.test(row.createdAt||''))throw Error('Invalid Tarteel date');
-   return {importKey:row.key,source:'tarteel',userConfirmed:true,verification:'manual-confirmation',
+   return {id:'import:'+row.key,importKey:row.key,source:'tarteel',userConfirmed:true,verification:'manual-confirmation',
     type:LABELS[row.type],errorGroup:row.type,desc:[row.expected?'الصواب: '+String(row.expected).slice(0,100):'',row.received?'القراءة: '+String(row.received).slice(0,100):''].filter(Boolean).join(' · '),
     surahId:+p.surah,ayah:+p.ayah,wordIndex:+p.word-1,verseKey:p.surah+':'+p.ayah,page,
     date:row.createdAt.slice(0,10),archived:false,externalSession:row.sessionKey||''};
