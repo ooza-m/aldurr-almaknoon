@@ -5,7 +5,7 @@ const QUEUE_KEY='durr-tarteel-review-queue-v1',BACKUP_KEY='durr-tarteel-before-m
 const LABELS={EXTRA_WORDS:'زيادة كلمات',INCORRECT_WORDS:'قراءة غير مطابقة',MISSED_WORDS:'سقوط كلمات',INCORRECT_TASHKEEL:'خطأ تشكيل',PEEKED_WORDS:'استعانة بالمصحف'};
 const good=n=>Number.isInteger(+n)&&+n>0;
 function validate(queue){
- if(!queue||queue.schema!=='durr-tarteel-confirm-v1'||queue.confirmed!==true||!Array.isArray(queue.errors)||!queue.errors.length||queue.errors.length>100)throw Error('Invalid or unconfirmed Tarteel batch');
+ if(!queue||queue.schema!=='durr-tarteel-confirm-v1'||queue.confirmed!==true||typeof queue.owner!=='string'||!queue.owner||queue.owner.length>128||!Array.isArray(queue.errors)||!queue.errors.length||queue.errors.length>100)throw Error('Invalid or unconfirmed Tarteel batch');
  const seen=new Set();
  return queue.errors.map(row=>{
    if(!row||row.source!=='tarteel'||typeof row.key!=='string'||!/^tarteel:error:[a-f0-9]{1,16}$/.test(row.key)||!LABELS[row.type]||seen.has(row.key))throw Error('Invalid or duplicate Tarteel error');
