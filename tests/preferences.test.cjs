@@ -31,7 +31,7 @@ async function boot(){
  const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));vc.on('warn',e=>errors.push(e));
  const dom=new JSDOM(read('index.html'),{url:'https://app.test/index.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc}),w=dom.window;
  w.scrollTo=()=>{};w.requestAnimationFrame=fn=>{fn();return 0;};w.alert=()=>{};w.confirm=()=>false;w.matchMedia=()=>({matches:false,addEventListener(){}});w.fetch=async()=>({ok:false});
- w.localStorage.setItem('durr-skip-auth','1');for(const file of ['app-preferences.js','reader-ui.js','reader-study.js','app-data.js'])w.eval(read(file));
+ w.localStorage.setItem('durr-skip-auth','1');for(const file of ['app-preferences.js','reader-ui.js','reader-study.js','app-data.js','tarteel-merge.js'])w.eval(read(file));
  w.eval([...w.document.querySelectorAll('script:not([src])')].map(s=>s.textContent).join('\n')+'\nwindow.__integrationState=S;');
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));await new Promise(r=>setImmediate(r));
  return {dom,w,errors,$:id=>w.document.getElementById(id)};
@@ -160,4 +160,35 @@ test('approved review clears due face without writing a new memorization',async 
  assert.equal(w.dayFactsV71(day).groups.near.has(page),true,'review appears in calendar');
  assert.equal(w.mapPageMetaV62(page,null).memorized,true,'review keeps same memorized face');
  assert.equal(w.dayFactsV71(day).groups.new.has(page),false,'review is not counted as newly memorized');
+});
+
+
+test('reviewed Tarteel queue commits only selected mistakes after a successful pre-merge backup',async t=>{
+ const {ingest}=require('../tarteel-import.js');
+ const raw=ingest([{session_id:'reviewed',session_type:'RECITE',recitation_mode:'DETECTION',started_at:'2026-01-01T00:00:00Z',start_surah_number:76,start_ayah_number:1}],
+  [{session_id:'reviewed',mistake_type:'INCORRECT_TASHKEEL',positions:[{surah_number:76,ayah_number:1,word_number:2}],created:'2026-01-01T00:00:05Z'}],{faceForAyah:()=>578});
+ const {dom,w}=await boot();t.after(()=>dom.window.close());
+ let backupCalls=0;w.backupCreateV154=async()=>{backupCalls++;return true;};w.confirm=()=>true;
+ const q={schema:'durr-tarteel-confirm-v1',confirmed:true,baseUpdatedAt:+w.__integrationState.updatedAt||0,errors:raw.errors};
+ w.localStorage.setItem(w.DurrTarteelMerge.QUEUE_KEY,JSON.stringify(q));
+ await w.consumeReviewedTarteelV166();
+ const state=JSON.parse(w.localStorage.getItem('durr-alfareed-v2'));
+ assert.equal(backupCalls,1);assert.equal(state.errors.filter(x=>x.source==='tarteel').length,1);
+ assert.equal(state.errors.find(x=>x.source==='tarteel').userConfirmed,true);
+ assert.equal(w.localStorage.getItem(w.DurrTarteelMerge.QUEUE_KEY),null);
+ assert.ok(w.localStorage.getItem(w.DurrTarteelMerge.BACKUP_KEY));
+ assert.ok(!state.recitationSessions?.length,'external history may not auto-credit recitation');
+});
+test('failed pre-merge backup cannot consume a reviewed Tarteel batch',async t=>{
+ const {ingest}=require('../tarteel-import.js');
+ const {dom,w}=await boot();t.after(()=>dom.window.close());
+ const item=ingest([{session_id:'a',started_at:'2026-01-01T00:00:00Z',start_surah_number:76,start_ayah_number:1}],
+ [{session_id:'a',mistake_type:'MISSED_WORDS',positions:[{surah_number:76,ayah_number:1,word_number:1}],created:'2026-01-01T00:00:03Z'}],{faceForAyah:()=>578}).errors[0];
+ const q={schema:'durr-tarteel-confirm-v1',confirmed:true,baseUpdatedAt:+w.__integrationState.updatedAt||0,errors:[item]};
+ w.backupCreateV154=async()=>{throw Error('quota');};w.confirm=()=>true;
+ w.localStorage.setItem(w.DurrTarteelMerge.QUEUE_KEY,JSON.stringify(q));
+ await w.consumeReviewedTarteelV166();
+ assert.ok(w.localStorage.getItem(w.DurrTarteelMerge.QUEUE_KEY),'user review remains pending');
+ assert.equal(w.localStorage.getItem(w.DurrTarteelMerge.BACKUP_KEY),null);
+ assert.equal((JSON.parse(w.localStorage.getItem('durr-alfareed-v2')||'{}').errors||[]).length,0);
 });
