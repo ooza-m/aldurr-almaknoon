@@ -48,6 +48,13 @@ test('Mushaf retains the recitation result but does not open old drafts on load'
  assert.doesNotMatch(mushaf,/window\.addEventListener\('load',\(\)=>\{const draft=loadReviewDraftV119\(\);if\(draft\)setTimeout\(\(\)=>showRecSummary\(draft\),200\);\}\)/);
 });
 
+test('saved recitation draft remains reachable without a startup popup',()=>{
+ assert.ok(mushaf.includes('button.hidden=processing===0&&!draft'));
+ assert.ok(mushaf.includes("draft?'مسودة تسميع محفوظة'"));
+ assert.ok(mushaf.includes("window.addEventListener('load',()=>renderRecJobsV86("));
+ assert.doesNotMatch(mushaf,/setTimeout\(\(\)=>showRecSummary\(draft\),200\)/);
+});
+
 test('service worker references use the same updated version',()=>{
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
  assert.match(sw,/const CACHE='durr-v103'/);
