@@ -1718,7 +1718,7 @@ function switchTab(t){
   document.body.classList.toggle('home-active',t==='home');
   document.body.dataset.page=t;
   const morePages=['khatma','tafsir','planning','stages','stats','tajweed','errors'];
-  const navTab=t==='manual'?'today':(morePages.includes(t)?'map':t);
+  const navTab=t==='manual'?'today':(morePages.includes(t)?null:t);
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
   document.querySelectorAll('#bottomNav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===navTab));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
