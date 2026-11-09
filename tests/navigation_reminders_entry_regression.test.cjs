@@ -32,9 +32,13 @@ test('notification settings are embedded in settings dialog, once each',()=>{
  assert.equal(app.getElementById('reminderModal'),null);
 });
 
-test('free recitation linkage is no longer injected into home header',()=>{
- assert.match(main,/initFreeRecitationReviewV105\(\)[\s\S]*?const home=document\.getElementById\('moreSettingsBtn'\)/);
- assert.doesNotMatch(main,/const home=document\.getElementById\('homeAccountBtn'\);\s*if\(!home\)return;\s*const button=document\.createElement\('button'\)/);
+test('free recitation linkage appears as a native More row, never in the home header',()=>{
+ const button=app.getElementById('freeRecitationReviewBtn');
+ assert.ok(button);
+ assert.ok(app.getElementById('tab-more').contains(button));
+ assert.equal(app.getElementById('tab-home').contains(button),false);
+ assert.equal(app.querySelectorAll('#freeRecitationReviewBtn').length,1);
+ assert.match(main,/const button=document\.getElementById\('freeRecitationReviewBtn'\)/);
 });
 
 test('app keeps logging sessions but does not announce automatic sync as a success toast',()=>{
