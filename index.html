@@ -1174,6 +1174,7 @@ window.FIREBASE_CONFIG = {
       </div></div>
       <div class="v70-more-section"><h3>أدوات</h3><div class="v70-more-list">
         <button data-v50-route="manual"><span><b>التسجيل اليدوي</b><small>للجلسات التي تمت خارج التطبيق</small></span><i>‹</i></button>
+        <button id="freeRecitationReviewBtn" type="button"><span><b>مراجعة ربط التسميع</b><small>الارتباطات المقترحة لجلسات التسميع الحر</small></span><i>‹</i></button>
         <button id="moreSettingsBtn"><span><b>الإعدادات</b><small>التفضيلات والحساب والنسخ الاحتياطية</small></span><i>‹</i></button>
       </div></div>
     </div>
@@ -6148,14 +6149,8 @@ initCloud();
 function renderAll(){document.body.classList.add('home-active');initDatepicks();renderToday();loadPlan();consumePendingLearningV61();consumePendingRecitationV55();mirrorFaceLearningV61();refreshV50();maybeAskPath();const wanted=new URLSearchParams(location.search).get('tab');const allowed=['home','today','manual','map','more','calendar','khatma','tafsir','planning','stages','stats','tajweed','errors'];switchTab(allowed.includes(wanted)?wanted:'home');if(typeof scheduleNotifs==='function')try{scheduleNotifs();}catch(e){}}
 renderAll();
 (function initFreeRecitationReviewV105(){
- const home=document.getElementById('moreSettingsBtn');
- if(!home)return;
- const button=document.createElement('button');
- button.type='button';button.id='freeRecitationReviewBtn';
- button.textContent='مراجعة ربط التسميع';
- button.setAttribute('aria-label','مراجعة ربط التسميع الحر بخطط الحفظ والمراجعة');
- button.style.cssText='font:inherit;font-size:.69rem;border:1px solid var(--line,#decdd2);border-radius:14px;background:var(--surface,#fff);color:var(--ink,#543c45);padding:8px 10px;cursor:pointer';
- home.parentNode.insertBefore(button,home);
+ const button=document.getElementById('freeRecitationReviewBtn');
+ if(!button)return;
  const cover=document.createElement('div');
  cover.id='freeRecitationReviewOverlay';
  cover.style.cssText='display:none;position:fixed;inset:0;z-index:9999;background:rgba(34,25,31,.4);align-items:center;justify-content:center;padding:18px';
