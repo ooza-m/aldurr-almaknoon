@@ -15,6 +15,14 @@ test('main bottom navigation reserves the fifth slot for the map',()=>{
  assert.equal(items[4].textContent.trim(),'الخريطة');
 });
 
+test('bottom navigation exposes active page to screen readers',()=>{
+ const nav=app.getElementById('bottomNav');
+ assert.equal(nav.getAttribute('aria-label'),'التنقل الرئيسي');
+ assert.equal(nav.querySelector('[data-tab="home"]').getAttribute('aria-current'),'page');
+ assert.match(main,/if\(current\)x\.setAttribute\('aria-current','page'\)/);
+ assert.match(main,/else x\.removeAttribute\('aria-current'\)/);
+});
+
 test('home shortcut opens More instead of reminders',()=>{
  const b=app.getElementById('homeNotifBtn');
  assert.ok(b);
