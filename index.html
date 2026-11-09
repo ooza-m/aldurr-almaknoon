@@ -857,7 +857,7 @@ window.FIREBASE_CONFIG = {
     <div class="v50-page v50-home">
       <div class="v50-hero">
         <div class="v50-top">
-          <button class="v50-round" id="homeNotifBtn" aria-label="التنبيهات"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
+          <button class="v50-round" id="homeNotifBtn" aria-label="المزيد"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
           <div class="v50-brand"><h1>الدُّرُّ المكنون</h1><p>رحلة حفظ القرآن الكريم ومراجعته</p></div>
           <button class="v50-round" id="homeAccountBtn" aria-label="الحساب"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
         </div>
@@ -1251,8 +1251,8 @@ window.FIREBASE_CONFIG = {
   <button data-tab="calendar">
     <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4M8 13h2M14 13h2M8 17h2"/></svg><span>التقويم</span>
   </button>
-  <button data-tab="more">
-    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>المزيد</span>
+  <button data-tab="map">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg><span>الخريطة</span>
   </button>
 </nav>
 
@@ -1309,18 +1309,6 @@ window.FIREBASE_CONFIG = {
   <div class="modal-actions"><button class="btn btn-primary" id="rgApply" style="flex:1">تطبيق</button><button class="btn btn-ghost" id="rgClose">إلغاء</button></div>
 </div></div>
 
-<div class="modal-bg" id="reminderModal"><div class="modal v70-settings-modal" role="dialog" aria-modal="true" aria-labelledby="reminderHeading">
- <button type="button" class="modal-x" id="reminderClose" aria-label="إغلاق التذكيرات">✕</button>
- <div class="v70-settings-head"><span>التنبيهات</span><h3 id="reminderHeading">التذكيرات</h3><p>إدارة تنبيهات الورد والتفسير فقط.</p></div>
-   <div class="v70-set-group">
-    <h4>التذكيرات</h4>
-    <p class="hint">تذكيرات المتصفح تعمل بقدر ما يسمح به النظام والمتصفح، ولا تُعد نظام إشعارات خلفي مضمونًا.</p>
-    <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntWird"> ورد التلاوة</label><input type="time" id="ntWirdTime"></div>
-    <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntTafsir"> قراءة التفسير</label><input type="time" id="ntTafsirTime"></div>
-    <p class="hint" id="ntStatus" style="margin-top:6px"></p>
-  </div>
-
- </div></div>
 <div class="modal-bg" id="settingsModal"><div class="modal v70-settings-modal"><button class="modal-x" onclick="document.getElementById('settingsModal').classList.remove('open')" aria-label="إغلاق">✕</button>
   <div class="v70-settings-head"><span>التفضيلات</span><h3>الإعدادات</h3><p>إعدادات التطبيق فقط؛ بيانات الحفظ والتقدّم تبقى في صفحاتها المختصة.</p></div>
   <div data-app-preferences></div>
@@ -1334,7 +1322,13 @@ window.FIREBASE_CONFIG = {
     <div class="field"><label>بداية الأسبوع</label><div class="check-row" id="weekStartPick"><label class="chip-check" data-ws="0"><input type="radio" name="ws"> الأحد</label><label class="chip-check" data-ws="1"><input type="radio" name="ws"> الاثنين</label></div></div>
     <div class="field"><label>أيام الحلقة</label><p class="hint">تظهر في التقويم لتسجيل الحضور والغياب، ولا تغيّر خطة الحفظ تلقائيًا.</p><div id="halaqaDayPick" class="check-row" style="margin-bottom:10px"></div><button class="btn btn-primary btn-sm" id="halaqaSave" style="width:100%">حفظ أيام الحلقة</button><p class="hint" id="halaqaSaveMsg" style="margin:8px 0 0;color:var(--green)"></p></div>
   </div>
-  <div class="v70-set-group"><h4>التذكيرات</h4><p class="hint">إدارة التذكيرات من زر التنبيهات في الرئيسية.</p><button type="button" class="btn btn-ghost btn-sm" id="openRemindersFromSettings">فتح التذكيرات</button></div>
+  <div class="v70-set-group">
+    <h4>التذكيرات</h4>
+    <p class="hint">تذكيرات المتصفح تعمل بقدر ما يسمح به النظام والمتصفح، ولا تُعد نظام إشعارات خلفي مضمونًا.</p>
+    <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntWird"> ورد التلاوة</label><input type="time" id="ntWirdTime"></div>
+    <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntTafsir"> قراءة التفسير</label><input type="time" id="ntTafsirTime"></div>
+    <p class="hint" id="ntStatus" style="margin-top:6px"></p>
+  </div>
   <div class="v70-set-group"><h4>النسخ الاحتياطية</h4><p class="hint">تتضمن بيانات الحفظ والفواصل وتفضيلات العرض. التنزيلات الصوتية تبقى على الجهاز ولا تدخل في ملف النسخة.</p><div class="v70-set-pair"><button class="btn btn-ghost" type="button" id="settingsBackup">تصدير نسخة</button><button class="btn btn-ghost" type="button" id="settingsRestore">استيراد نسخة</button></div><button class="btn btn-ghost btn-sm" type="button" id="settingsUndoRestore" style="width:100%;margin-top:8px">استرجاع النسخة السابقة لآخر استيراد</button>
   <details id="backupHistoryV154" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
     <summary style="cursor:pointer;font-weight:650;font-size:.82rem">النسخ التلقائية وسجل الاستعادة</summary>
@@ -1723,8 +1717,8 @@ function switchTab(t){
   }
   document.body.classList.toggle('home-active',t==='home');
   document.body.dataset.page=t;
-  const morePages=['map','khatma','tafsir','planning','stages','stats','tajweed','errors'];
-  const navTab=t==='manual'?'today':(morePages.includes(t)?'more':t);
+  const morePages=['khatma','tafsir','planning','stages','stats','tajweed','errors'];
+  const navTab=t==='manual'?'today':(morePages.includes(t)?'map':t);
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
   document.querySelectorAll('#bottomNav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===navTab));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -2856,7 +2850,7 @@ function ingestLearningEventV61(ev){
   S.activityEvents.push({id:ev.id,type:ev.type,date,ts:ev.ts||Date.now(),page,book:ev.book||'',complete:true,source:'mushaf'});
   if(S.activityEvents.length>1500)S.activityEvents=S.activityEvents.slice(-1500);
   save();mirrorFaceLearningV61();refreshV50();
-  showV51Toast(ev.type==='listen'?'اكتمل سماع الوجه':'اكتملت قراءة التفسير','الوجه '+page+' · سُجّل تلقائيًا');
+  // No automatic welcome/session toast when returning to the app; the event remains saved.
 }
 function consumePendingLearningV61(){
   try{
@@ -2938,7 +2932,7 @@ function ingestRecitationSessionV51(raw){if(!raw||!raw.id)return;if(!S.recitatio
     }
   }
 }
-S.activityEvents.push({id:rs.id+':'+p,type:'recitation',date,ts:rs.endedAt||Date.now(),page:p,task,coverage:+(pg.coverage||0),score:pg.manualConfirmed===true?null:(+pg.score||0),complete:approvedRecitationFaceV149(rs,pg)});});save();mirrorFaceLearningV61();refreshV50();showV51Toast('سُجّلت جلسة التسميع تلقائيًا',full+(full===1?' وجه مكتمل':' أوجه مكتملة')+(partial?' · '+partial+' جزئي':'')+(errAdded?' · '+errAdded+' خطأ':'') );}
+S.activityEvents.push({id:rs.id+':'+p,type:'recitation',date,ts:rs.endedAt||Date.now(),page:p,task,coverage:+(pg.coverage||0),score:pg.manualConfirmed===true?null:(+pg.score||0),complete:approvedRecitationFaceV149(rs,pg)});});save();mirrorFaceLearningV61();refreshV50();/* Automatic recitation synchronization stays silent; progress is available in the journal. */}
 window.addEventListener('message',e=>{if(e.origin!==location.origin)return;const d=e.data||{};if(d.type==='durr:recitation-complete')ingestRecitationSessionV51(d.payload);});
 /* v150 · تسليم آمن لجلسات المصحف: لا تُمسح قائمة الانتظار قبل التحقق من حفظها في السجل. */
 let consumingRecitationsV150=false;
@@ -6065,11 +6059,11 @@ setGateMode('signin');});
 /* ===== ربط عناصر v50 ===== */
 (function(){
   const a=document.getElementById('homeAccountBtn');if(a)a.addEventListener('click',()=>document.getElementById('acctChip').click());
-  const openReminders=()=>{document.getElementById('settingsModal').classList.remove('open');document.getElementById('reminderModal').classList.add('open');initNotif();};
-  const n=document.getElementById('homeNotifBtn');if(n)n.addEventListener('click',openReminders);
-  document.getElementById('openRemindersFromSettings')?.addEventListener('click',openReminders);
-  document.getElementById('reminderClose')?.addEventListener('click',()=>document.getElementById('reminderModal').classList.remove('open'));
-  document.getElementById('reminderModal')?.addEventListener('click',e=>{if(e.target.id==='reminderModal')e.currentTarget.classList.remove('open');});
+  const openReminders=()=>{openSettings();document.getElementById('ntWird')?.focus();};
+  const n=document.getElementById('homeNotifBtn');if(n)n.addEventListener('click',()=>switchTab('more'));
+  /* Reminder controls now live directly inside settingsModal. */
+  /* No separate reminderModal to dismiss. */
+  /* All reminder edits use the existing settingsModal. */
   
   const r=document.getElementById('todayRefreshV50');if(r)r.addEventListener('click',()=>refreshV50());
   ['moreSettingsBtn'].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener('click',openSettings);});
@@ -6154,11 +6148,11 @@ initCloud();
 function renderAll(){document.body.classList.add('home-active');initDatepicks();renderToday();loadPlan();consumePendingLearningV61();consumePendingRecitationV55();mirrorFaceLearningV61();refreshV50();maybeAskPath();const wanted=new URLSearchParams(location.search).get('tab');const allowed=['home','today','manual','map','more','calendar','khatma','tafsir','planning','stages','stats','tajweed','errors'];switchTab(allowed.includes(wanted)?wanted:'home');if(typeof scheduleNotifs==='function')try{scheduleNotifs();}catch(e){}}
 renderAll();
 (function initFreeRecitationReviewV105(){
- const home=document.getElementById('homeAccountBtn');
+ const home=document.getElementById('moreSettingsBtn');
  if(!home)return;
  const button=document.createElement('button');
  button.type='button';button.id='freeRecitationReviewBtn';
- button.textContent='ربط التسميع';
+ button.textContent='مراجعة ربط التسميع';
  button.setAttribute('aria-label','مراجعة ربط التسميع الحر بخطط الحفظ والمراجعة');
  button.style.cssText='font:inherit;font-size:.69rem;border:1px solid var(--line,#decdd2);border-radius:14px;background:var(--surface,#fff);color:var(--ink,#543c45);padding:8px 10px;cursor:pointer';
  home.parentNode.insertBefore(button,home);
