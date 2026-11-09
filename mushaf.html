@@ -2198,8 +2198,9 @@ $('recSummarySave').onclick=()=>{
   if(next){showRecSummary(next);return;}
   if(payload.planId)window.location.assign('index.html?tab=today');
 };
-// Offer restoration after reload, without auto-crediting any face.
-window.addEventListener('load',()=>{const draft=loadReviewDraftV119();if(draft)setTimeout(()=>showRecSummary(draft),200);});
+// Keep saved review drafts without opening the recitation result sheet on initial Mushaf entry.
+// An unfinished draft may be reviewed explicitly from the existing recitation job-status control.
+$('recJobStatus')?.addEventListener('click',()=>{const draft=loadReviewDraftV119();if(draft&&!document.getElementById('recSummaryWrap')?.classList.contains('open'))showRecSummary(draft);});
 $('recSummaryErrors').onclick=()=>{$('recSummaryWrap').classList.remove('open');openErrLog(false);};
 // حالات الوجه الأربع
 document.querySelectorAll('#stWrap [data-face-state]').forEach(st=>st.onclick=()=>{
