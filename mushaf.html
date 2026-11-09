@@ -1552,10 +1552,21 @@ function payloadForContextV86(ctx){
  const pages=s.pages||[],findings=s.findings||[];s.summary={pages:pages.length,completedPages:pages.filter(p=>p.complete).length,wordsTotal:pages.reduce((n,p)=>n+p.wordsTotal,0),wordsCovered:pages.reduce((n,p)=>n+p.wordsCovered,0),errors:pages.reduce((n,p)=>n+p.errorCount,0),uncertain:findings.filter(f=>!f.automatic&&f.userConfirmed!==true).length,mutashabih:findings.filter(f=>f.type==='mutashabih_jump').length,recallSuccess:s.recall?pages.some(p=>p.recallSuccess):null,score:pages.length?Math.round(pages.reduce((n,p)=>n+p.score,0)/pages.length):0};return JSON.parse(JSON.stringify(s));
 }
 function renderRecJobsV86(entries){
- const button=$('recJobStatus');if(!button)return;const processing=entries.filter(j=>j.status==='processing').length,latest=entries.at(-1);button.hidden=processing===0;button.textContent=processing?'جارٍ تحليل '+ARA(processing)+' جلسة':'';
+ const button=$('recJobStatus');if(!button)return;
+ const processing=entries.filter(j=>j.status==='processing').length;
+ const draft=typeof loadReviewDraftV119==='function'?loadReviewDraftV119():null;
+ button.hidden=processing===0&&!draft;
+ button.textContent=processing?'جارٍ تحليل '+ARA(processing)+' جلسة':draft?'مسودة تسميع محفوظة':'';
+ button.setAttribute('aria-label',processing?'متابعة حالة تحليل التسميع':'فتح مسودة التسميع المحفوظة عند الطلب');
 }
 const recJobsV86=new DurrRecitationJobs.Jobs({storage:localStorage,onChange:renderRecJobsV86,timeout:45000});
-$('recJobStatus')?.addEventListener('click',()=>{const job=recJobsV86.latest();if(job?.status==='processing')recTip('التحليل يعمل في الخلفية؛ يمكنك متابعة القراءة والتنقّل.');else if(job)showRecSummary(job.payload);});
+$('recJobStatus')?.addEventListener('click',()=>{
+ const running=[...recJobsV86.entries.values()].some(job=>job.status==='processing');
+ if(running){recTip('التحليل يعمل في الخلفية؛ يمكنك متابعة القراءة والتنقّل.');return;}
+ const draft=loadReviewDraftV119();
+ if(draft){showRecSummary(draft);return;}
+ const job=recJobsV86.latest();if(job)showRecSummary(job.payload);
+});
 for(const job of recJobsV86.entries.values())if(job.status==='interrupted')sendSession(job.payload);
 window.addEventListener('pagehide',()=>{
  // pagehide may terminate async analysis; persist an unapproved recovery draft synchronously.
@@ -2065,6 +2076,7 @@ function saveReviewDraftV119(payload){
    const drafts=listReviewDraftsV120().filter(x=>x.id!==payload.id);
    drafts.push(payload);
    LSet(REVIEW_DRAFT_KEY_V119,JSON.stringify(drafts));
+   if(typeof recJobsV86!=='undefined')renderRecJobsV86([...recJobsV86.entries.values()]);
    return true;
  }catch(_){recTip('تعذّر حفظ مسودة التسميع على هذا الجهاز');return false;}
 }
@@ -2072,6 +2084,7 @@ function clearReviewDraftV119(id){
  try{const drafts=listReviewDraftsV120().filter(x=>x.id!==id);
    if(drafts.length)LSet(REVIEW_DRAFT_KEY_V119,JSON.stringify(drafts));
    else localStorage.removeItem(REVIEW_DRAFT_KEY_V119);
+   if(typeof recJobsV86!=='undefined')renderRecJobsV86([...recJobsV86.entries.values()]);
  }catch(_){}
 }
 let pendingReviewApprovalV118=null;
@@ -2198,9 +2211,9 @@ $('recSummarySave').onclick=()=>{
   if(next){showRecSummary(next);return;}
   if(payload.planId)window.location.assign('index.html?tab=today');
 };
-// Keep saved review drafts without opening the recitation result sheet on initial Mushaf entry.
-// An unfinished draft may be reviewed explicitly from the existing recitation job-status control.
-$('recJobStatus')?.addEventListener('click',()=>{const draft=loadReviewDraftV119();if(draft&&!document.getElementById('recSummaryWrap')?.classList.contains('open'))showRecSummary(draft);});
+// Keep saved review drafts without opening the result sheet on initial Mushaf entry.
+// Reuse the existing visible status control when an unfinished draft exists.
+window.addEventListener('load',()=>renderRecJobsV86([...recJobsV86.entries.values()]));
 $('recSummaryErrors').onclick=()=>{$('recSummaryWrap').classList.remove('open');openErrLog(false);};
 // حالات الوجه الأربع
 document.querySelectorAll('#stWrap [data-face-state]').forEach(st=>st.onclick=()=>{
