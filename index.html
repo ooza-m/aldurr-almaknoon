@@ -1239,8 +1239,8 @@ window.FIREBASE_CONFIG = {
 
 </main>
 
-<nav class="bottom-nav" id="bottomNav">
-  <button data-tab="home" class="active">
+<nav class="bottom-nav" id="bottomNav" aria-label="التنقل الرئيسي">
+  <button data-tab="home" class="active" aria-current="page">
     <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>الرئيسية</span>
   </button>
   <button data-tab="today">
@@ -1721,7 +1721,12 @@ function switchTab(t){
   const morePages=['khatma','tafsir','planning','stages','stats','tajweed','errors'];
   const navTab=t==='manual'?'today':(morePages.includes(t)?null:t);
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
-  document.querySelectorAll('#bottomNav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===navTab));
+  document.querySelectorAll('#bottomNav button').forEach(x=>{
+    const current=x.dataset.tab===navTab;
+    x.classList.toggle('active',current);
+    if(current)x.setAttribute('aria-current','page');
+    else x.removeAttribute('aria-current');
+  });
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   const panel=document.getElementById('tab-'+t);if(panel)panel.classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
