@@ -428,7 +428,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 <link rel="stylesheet" href="reader-shell.css?v=106">
 <script src="reader-core.js?v=89"></script>
 <script src="audio-library.js?v=89"></script>
-<script src="reader-audio.js?v=89"></script>
+<script src="reader-audio.js?v=90"></script>
 <script src="phoneme-aligner.js?v=90"></script>
 <script src="recitation-core.js?v=103"></script>
 <script src="recitation-jobs.js?v=89"></script>
@@ -1253,8 +1253,8 @@ const audioController=new DurrAudio.BufferedPlayer({
     const reader=DurrReader.RECITERS.find(r=>r.id===state.reciter);
     const [s,a]=(state.key||'').split(':');
     $('faceListenTitle').textContent=s?surahName(+s)+' · آية '+ARA(a):'التلاوة';
-    $('faceListenSub').textContent=reader.name+' · '+(state.download?('جارٍ تنزيل '+state.download.label+(state.download.total?' · '+ARA(Math.min(100,Math.round(state.download.loaded/state.download.total*100)))+'%':'')+' · اكتمل '+ARA(state.download.files)+' ملف'):state.status==='loading'?'جارٍ التحضير…':state.status==='ended'?'اكتمل النطاق':state.status==='waiting'?'وقت الترديد · '+ARA(Math.ceil(state.gapRemaining))+' ث':state.status==='wait-paused'?'فاصل الترديد متوقف مؤقتًا':ARA(state.index+1)+' / '+ARA(state.queue.length));
-    const loading=state.status==='loading',pct=loading?(state.download?.total?Math.round(state.download.loaded/state.download.total*100):0):(state.duration>0?Math.round(state.current/state.duration*100):0);
+    $('faceListenSub').textContent=reader.name+' · '+(state.download?('جارٍ تنزيل '+state.download.label+(state.download.total?' · '+ARA(Math.min(100,Math.round(state.download.loaded/state.download.total*100)))+'%':'')+' · اكتمل '+ARA(state.download.files)+' ملف'):state.status==='loading'?'جارٍ التحضير…':state.status==='buffering'?'جارٍ انتظار الصوت…':state.status==='ended'?'اكتمل النطاق':state.status==='waiting'?'وقت الترديد · '+ARA(Math.ceil(state.gapRemaining))+' ث':state.status==='wait-paused'?'فاصل الترديد متوقف مؤقتًا':ARA(state.index+1)+' / '+ARA(state.queue.length));
+    const loading=state.status==='loading'||state.status==='buffering',pct=loading?(state.download?.total?Math.round(state.download.loaded/state.download.total*100):0):(state.duration>0?Math.round(state.current/state.duration*100):0);
     const clock=t=>ARA(Math.floor(Math.max(0,t)/60))+':'+ARA(String(Math.floor(Math.max(0,t)%60)).padStart(2,'0'));$('faceListenElapsed').textContent=clock(state.current);$('faceListenRemaining').textContent='−'+clock(state.duration-state.current);$('faceListenReader').textContent=reader.name;
     const seek=$('faceListenSeek');seek.disabled=loading||['waiting','wait-paused'].includes(state.status)||!state.duration;if(document.activeElement!==seek)seek.value=state.duration?state.current/state.duration*1000:0;
     const ring=$('faceListenDownloadRing');ring.toggleAttribute('hidden',!loading);ring.classList.toggle('indeterminate',loading&&!state.download?.total);ring.querySelector('.ring-value').style.strokeDashoffset=100-pct;$('faceListenIcon').toggleAttribute('hidden',loading);
@@ -1263,7 +1263,7 @@ const audioController=new DurrAudio.BufferedPlayer({
     $('faceListenProgress').style.width=pct+'%';$('faceListenProgress').parentElement.setAttribute('aria-valuenow',pct);
     $('faceListenRate').textContent=state.rate+'×';$('audioRate').value=String(state.rate);$('audioReciter').value=state.reciter;
     $('faceListenPlay').disabled=false;$('faceListenPrev').disabled=state.index===0||state.status==='loading';$('faceListenNext').disabled=state.index>=state.queue.length-1||state.status==='loading';
-    setListenIcon(state.status==='playing'||state.status==='waiting');if(state.status==='waiting')$('faceListenPlay').setAttribute('aria-label','إيقاف فاصل الترديد مؤقتًا');if(state.status==='wait-paused')$('faceListenPlay').setAttribute('aria-label','متابعة فاصل الترديد');if(loading)$('faceListenPlay').setAttribute('aria-label','إلغاء التحميل');
+    setListenIcon(state.status==='playing'||state.status==='waiting'||state.status==='buffering');if(state.status==='waiting')$('faceListenPlay').setAttribute('aria-label','إيقاف فاصل الترديد مؤقتًا');if(state.status==='wait-paused')$('faceListenPlay').setAttribute('aria-label','متابعة فاصل الترديد');if(state.status==='loading')$('faceListenPlay').setAttribute('aria-label','إلغاء التحميل');if(state.status==='buffering')$('faceListenPlay').setAttribute('aria-label','إيقاف التلاوة مؤقتًا أثناء انتظار الصوت');
   },
   onComplete:state=>{
     if(state.scope==='face'&&state.fullyPlayed){queueLearningEvent('listen',state.page,{reciter:state.reciter});recTip('اكتمل سماع الوجه وسُجّل تلقائيًا');}
