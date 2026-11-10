@@ -784,7 +784,7 @@ window.FIREBASE_CONFIG = {
 <script src="app-cloud-extras.js?v=109"></script>
 <script src="reader-ui.js?v=89"></script>
 <script src="reader-study.js?v=89"></script>
-<script src="app-data.js?v=89"></script>
+<script src="app-data.js?v=110"></script>
 <script src="tarteel-merge.js?v=1"></script>
 </head>
 <body>
@@ -5470,7 +5470,7 @@ document.getElementById('cCalc').addEventListener('click',()=>{
 /* ============ النسخ ============ */
 
 document.getElementById('moreMutashabihat').onclick=()=>window.location.assign('mushaf.html?v=89&mode=mutashabihat');
-function currentBackupV86(){return DurrData.backup(S,DurrPreferences.get(),new DurrReaderUI.Bookmarks(localStorage).items,new DurrStudy.Notes(localStorage).items);}
+function currentBackupV86(){return DurrData.backup(S,DurrPreferences.get(),new DurrReaderUI.Bookmarks(localStorage).items,new DurrStudy.Notes(localStorage).items,localStorage.getItem('durr-hl')||'');}
 /* v154 · IndexedDB rolling backups and non-sensitive sync audit, per browser only. */
 const BACKUP_DB_V154='aldurr-safety-v154';
 let backupJobV154=null;
@@ -5599,11 +5599,12 @@ document.getElementById('backupHistoryListV154')?.addEventListener('click',async
 });
 
 function applyImportV86(bundle){
- const state=DurrData.merge(DEF,bundle.state);state.updatedAt=Date.now();const keys=[KEY,DurrReaderUI.BOOKMARK_KEY,DurrStudy.NOTES_KEY,DurrPreferences.KEY,'durr-num'],previous=keys.map(key=>[key,localStorage.getItem(key)]);
+ const state=DurrData.merge(DEF,bundle.state);state.updatedAt=Date.now();const keys=[KEY,DurrReaderUI.BOOKMARK_KEY,DurrStudy.NOTES_KEY,DurrPreferences.KEY,'durr-num','durr-hl'],previous=keys.map(key=>[key,localStorage.getItem(key)]);
  const preferences=bundle.preferences?{...DurrPreferences.get(),...bundle.preferences,updatedAt:Date.now()}:null;
  try{
   localStorage.setItem(KEY,JSON.stringify(state));
   if(bundle.bookmarks)localStorage.setItem(DurrReaderUI.BOOKMARK_KEY,JSON.stringify(bundle.bookmarks));
+  if(typeof bundle.highlights==='string')localStorage.setItem('durr-hl',bundle.highlights);
   if(bundle.notes)localStorage.setItem(DurrStudy.NOTES_KEY,JSON.stringify(bundle.notes));
   if(preferences){localStorage.setItem(DurrPreferences.KEY,JSON.stringify(preferences));localStorage.setItem('durr-num',preferences.digits);}
  }catch(error){for(const [key,value] of previous)try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch(_){}throw Error('تعذّر حفظ النسخة الجديدة. نسخة الاسترجاع محفوظة قبل الاستيراد. '+error.message);}
