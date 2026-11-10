@@ -22,9 +22,9 @@ test('same session cannot advance schedule twice',()=>{
 });
 test('new distinct session may advance schedule',()=>{
  const c=harness();c.updateReviewEngineV62(125,'near','2026-11-03',{manualMasteryLevel:'good'},'session-a');
- const x=c.S.pageReviewSched[125].nearLevel;
+ const x=c.S.pageReviewSched[125].lastReview;
  c.updateReviewEngineV62(125,'near','2026-11-04',{manualMasteryLevel:'good'},'session-b');
- assert.ok(c.S.pageReviewSched[125].nearLevel>x);
+ assert.ok(c.S.pageReviewSched[125].lastReview>x);assert.equal(c.S.pageReviewSched[125].lastSessionId,'session-b');
 });
 test('ungraded session does not receive inferred mastery score',()=>{
  const c=harness();c.updateReviewEngineV62(125,'near','2026-11-03',{coverage:1,score:100},'session-a');
