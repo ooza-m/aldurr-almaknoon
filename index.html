@@ -5718,10 +5718,10 @@ async function inspectCloudV108(){
   let localBookmarks=0;
   try{const b=JSON.parse(localStorage.getItem('durr-verse-bookmarks-v86')||'[]');localBookmarks=Array.isArray(b)?b.length:0;}catch(_){}
   status.textContent='المستند السحابي موجود. آخر تحديث: '+stamp+
-   '\\nسجلات الأيام: '+n('logs')+' · جلسات التسميع: '+n('recitationSessions')+' · الأخطاء: '+n('errors')+
-   '\\nتقييمات الأوجه: '+count('pageMastery')+' · جداول مراجعة الأوجه: '+count('pageReviewSched')+
-   '\\nالفواصل على هذا الجهاز: '+localBookmarks+' (ليست جزءًا من مستند الحفظ السحابي).'+
-   '\\nهذا الفحص لا يثبت اكتمال كل البيانات التاريخية؛ قارني الأعداد مع نسختك الاحتياطية.';
+   '\nسجلات الأيام: '+n('logs')+' · جلسات التسميع: '+n('recitationSessions')+' · الأخطاء: '+n('errors')+
+   '\nتقييمات الأوجه: '+count('pageMastery')+' · جداول مراجعة الأوجه: '+count('pageReviewSched')+
+   '\nالفواصل على هذا الجهاز: '+localBookmarks+' (ليست جزءًا من مستند الحفظ السحابي).'+
+   '\nهذا الفحص لا يثبت اكتمال كل البيانات التاريخية؛ قارني الأعداد مع نسختك الاحتياطية.';
  }catch(error){status.textContent='تعذّر فحص الخادم الآن. تأكدي من الاتصال وصلاحية الحساب؛ لم تُغيّر أي بيانات.';console.warn('Read-only account inspection failed',error);}
  finally{if(button)button.disabled=false;}
 }
