@@ -769,6 +769,29 @@ main{padding-top:0!important}
 #extraReviewTodayV111 button{min-height:42px}
 /* Focused-review list removed from UI; historical records are never erased. */
 [data-focused-add-v143],[data-focused-session-v145],[data-focused-action-v143],[data-focused-mushaf-v146]{display:none!important}
+
+/* v114: responsive review controls, accessible contrast and collapsible roadmap */
+#tab-map .review-roadmap-fold-v114{display:block;max-width:100%;margin:22px 0 16px;padding:0;overflow:hidden;background:var(--surface,#fff);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.review-roadmap-summary-v114{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;padding:17px 18px;min-height:82px}
+.review-roadmap-summary-v114::-webkit-details-marker{display:none}
+.review-roadmap-summary-title-v114{display:flex;flex-direction:column;gap:2px;min-width:0}
+.review-roadmap-eyebrow-v114{font-size:.7rem;font-weight:600;color:var(--muted)}
+.review-roadmap-summary-title-v114 strong{font-size:1.12rem;color:var(--text)}
+.review-roadmap-summary-title-v114 small{font-size:.75rem;color:var(--muted)}
+.review-roadmap-summary-stat-v114{display:flex;align-items:center;gap:9px;flex-shrink:0;color:var(--ink)}
+.review-roadmap-chevron-v114{display:grid;place-items:center;width:28px;height:28px;border:1px solid var(--line);border-radius:50%;transition:transform .2s;font-size:1.3rem}
+details[open] .review-roadmap-chevron-v114{transform:rotate(180deg)}
+.review-roadmap-body-v114{border-top:1px solid var(--line);padding:16px 18px}
+.review-roadmap-body-v114 #wardReviewRoadmap{max-width:100%;overflow-wrap:anywhere}
+#tab-settings #set-name-save{color:#fff;background:var(--ink);border:1px solid var(--ink);min-height:44px;font-weight:700}
+#tab-settings #set-name{min-width:0;max-width:100%}
+#reviewPlansV111 form#createExtraReviewV111{min-width:0;max-width:100%}
+#reviewPlansV111 form#createExtraReviewV111 input,#reviewPlansV111 form#createExtraReviewV111 select{box-sizing:border-box;width:100%;min-width:0;max-width:100%;font-size:16px;line-height:1.4;color:var(--text);background:var(--surface,#fff);padding:10px 12px;min-height:48px;border:1px solid var(--line);border-radius:11px}
+#reviewPlansV111 form#createExtraReviewV111 label{min-width:0;overflow-wrap:break-word}
+#reviewPlansV111 #extraDurationDaysWrapV111[hidden]{display:none!important}
+#reviewPlansV111 #createExtraReviewV111 button[type=submit]{min-height:48px;color:#fff;background:var(--ink);font-weight:700}
+#tab-map .page-square,#tab-map .page-box,#tab-map .pg{font-weight:700}
+@media(max-width:520px){#reviewPlansV111 form#createExtraReviewV111{gap:14px!important}#reviewPlansV111 form#createExtraReviewV111>div{gap:12px!important}#reviewPlansV111 form#createExtraReviewV111 input[type=date]{direction:ltr;text-align:left}#tab-settings .field>div:has(#set-name){align-items:stretch}#tab-settings #set-name-save{flex:0 0 auto}}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <link rel="stylesheet" href="ward-phase05-home-today.css?v=1" media="not all" data-floral-stylesheet>
@@ -1073,17 +1096,23 @@ window.FIREBASE_CONFIG = {
         <span><i class="lg-weak"></i>متفلّت</span><span><i class="lg-partial"></i>جزئي</span>
         <span><i class="lg-error"></i>خطأ نشط</span>
       </div>
-      <section class="ward-review-roadmap" aria-labelledby="wardReviewHeading">
-        <div class="ward-review-head"><div><span>مسار المراجعة</span><h3 id="wardReviewHeading">المراجعة القريبة والبعيدة</h3></div><b id="wardReviewTotal" aria-live="polite"></b></div>
-        <p class="hint">كل وجه يُراجع يوميًا خلال أول 30 يومًا من حفظه، ثم ينتقل تلقائيًا إلى المراجعة البعيدة.</p>
-        <div id="wardReviewRoadmap" aria-label="تفاصيل المراجعة القريبة والبعيدة"></div>
-      </section>
+
       <div class="ward-map-juz-title"><h3 class="map-juz-heading-v96">الأجزاء الثلاثون</h3>
         <button type="button" id="btnToggleAllJuz" class="ward-map-fold" aria-label="فتح الأجزاء الثلاثين" aria-pressed="false" title="فتح الأجزاء أو طيها">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5M7 5l5 5 5-5"/></svg>
         </button>
       </div>
       <div id="juzList"></div>
+      <details class="ward-review-roadmap review-roadmap-fold-v114" aria-labelledby="wardReviewHeading">
+        <summary class="review-roadmap-summary-v114">
+          <span class="review-roadmap-summary-title-v114"><span class="review-roadmap-eyebrow-v114">متابعة الحفظ</span><strong id="wardReviewHeading">مسار المراجعة</strong><small>القريبة والبعيدة · عرض التفاصيل</small></span>
+          <span class="review-roadmap-summary-stat-v114"><b id="wardReviewTotal" aria-live="polite"></b><span aria-hidden="true" class="review-roadmap-chevron-v114">⌄</span></span>
+        </summary>
+        <div class="review-roadmap-body-v114">
+          <p class="hint">القريبة خلال أول 30 يومًا من الحفظ، ثم ينتقل الوجه تلقائيًا إلى المراجعة البعيدة.</p>
+          <div id="wardReviewRoadmap" aria-label="تفاصيل المراجعة القريبة والبعيدة"></div>
+        </div>
+      </details>
       <button class="btn btn-ghost btn-sm" id="btnOpenErrors" style="width:100%;margin-top:14px">سجلّ الأخطاء</button>
     </div>
   </section>
@@ -4279,7 +4308,7 @@ function renderHeatmap(){
   const ws=(S.weekStart|0); // ٠=الأحد، ١=الاثنين
   // اضبط البداية على بداية الأسبوع المختارة (فيصبح أوّل صفٍّ هو اليوم المختار)
   start.setDate(start.getDate()-((start.getDay()-ws+7)%7));
-  const levels=['#EFE7DE','#E3C9B8','#CE9C93','#B06E7A','#8A4A5E']; // من الباهت للغامق (ثيم اللافندر)
+  const levels=['color-mix(in srgb, var(--parch-2) 66%, white)','color-mix(in srgb, var(--gold) 18%, var(--parch))','color-mix(in srgb, var(--gold) 40%, var(--parch))','color-mix(in srgb, var(--gold) 65%, var(--ink))','var(--ink)']; // من الباهت للغامق (ثيم اللافندر)
   const AR_MON=DurrPreferences.MONTHS[DurrPreferences.get().calendar];
   let cols='';let lastMonth=-1;let monthLabels='';
   let cur=new Date(start);
