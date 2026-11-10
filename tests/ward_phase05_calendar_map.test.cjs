@@ -26,8 +26,9 @@ test('calendar retains the original elements required for its heatmap, dates and
  for(const id of ['calendarSummaryV70','hmYear','heatmap','hmInfoBtn','calPrev','calTitle','calNext','vWeek','vMonth','calMonth','calWeek','calGrid']){
   assert.ok(cal.querySelector('#'+id),id);
  }
- assert.ok(cal.querySelector('#datePickModal'));
- assert.ok(cal.querySelector('#hmInfoModal'));
+ // Both dialogs live in the shared modal layer, outside tab-calendar.
+ assert.ok(dom.getElementById('datePickModal'));
+ assert.ok(dom.getElementById('hmInfoModal'));
 });
 
 test('roadmap retains page lookup, filters, summary and the 30-part container',()=>{
