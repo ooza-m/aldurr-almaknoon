@@ -1,8 +1,9 @@
-const CACHE='durr-v117';
+const CACHE='durr-v118';
 const STATIC=[
   './app-preferences.js?v=109','./app-preferences.css?v=109','./app-cloud-extras.js?v=109',
   './reader-session.js?v=89','./reader-study.js?v=89','./audio-library.js?v=89','./recitation-core.js?v=89','./recitation-jobs.js?v=89','./reader-ui.js?v=89','./reader-tools.css?v=94','./app-data.js?v=111','./data/recitation-aliases.json',
-  './manifest.json?v=117','./icon-rose.svg?v=117','./icon-192.png?v=117','./icon-512.png?v=117',
+  './manifest-rose.json?v=118','./manifest-navy.json?v=118','./manifest-olive.json?v=118','./manifest-plum.json?v=118',
+  './icons/app-rose.svg?v=118','./icons/app-navy.svg?v=118','./icons/app-olive.svg?v=118','./icons/app-plum.svg?v=118',
   './ward-phase05-home-today.css?v=1','./ward-phase05-calendar-map.css?v=1','./ward-phase05-manual-settings-review.css?v=2','./ward-phase05-more-subpages.css?v=1','./ward-phase05-dialogs.css?v=1','./assets/ward-blossoms.svg',
   './app-navigation.css?v=89','./reader-shell.css?v=107','./reader-core.js?v=89','./reader-audio.js?v=90',
   './data/mushaf-data.json','./data/mushaf-search.json',
