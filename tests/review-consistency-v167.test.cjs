@@ -40,3 +40,10 @@ test('far quota never exceeds available pending due pages',()=>{
  run(taskPagesSource,ctx);
  assert.deepEqual(Array.from(ctx.taskPagesV60('far')),[496]);
 });
+
+test('memorization stored in face-learning remains visible even without manual logs',()=>{
+ const S={logs:[],recitationSessions:[],faceLearning:{501:{hifz:{first:'2026-10-04'}}},updatedAt:1};
+ const ctx={S,firstMemDateCacheV111:null,uniqueRecitationSessionsV163:a=>a,approvedRecitationFaceV149:()=>false,pagesOfSurah:()=>null,keyOf:()=>''};
+ run(firstDatesSource,ctx);
+ assert.equal(ctx.firstMemDateMapV50()[501],'2026-10-04');
+});
