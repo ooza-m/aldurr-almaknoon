@@ -2504,7 +2504,7 @@ async function drawTarteelVerseHistoryV142(host){
    (repeated.length?repeated.slice(0,25).map(g=>{
     const [sid,ayah]=g.vk.split(':').map(Number),sur=(SURAHS.find(s=>s[0]===sid)||[])[1]||sid;
     const types=[...g.types].sort((a,b)=>b[1].size-a[1].size).slice(0,3).map(([type,set])=>esc(labels[type]||type)+' ('+set.size+' جلسات)').join(' · ');
-    return '<div style="padding:9px 0;border-top:1px solid var(--line)"><b>سورة '+esc(sur)+' · الآية '+ayah+'</b><div class="hint">'+g.sessionIds.size+' جلسات مختلفة · '+types+(g.last?' · آخر ظهور '+esc(g.last):'')+'</div><button type="button" class="btn btn-ghost btn-sm" data-focused-add-v143="'+esc(g.vk)+'" data-focused-source-v143="tarteel">إضافة إلى المراجعة المركزة</button></div>';
+    return '<div style="padding:9px 0;border-top:1px solid var(--line)"><b>سورة '+esc(sur)+' · الآية '+ayah+'</b><div class="hint">'+g.sessionIds.size+' جلسات مختلفة · '+types+(g.last?' · آخر ظهور '+esc(g.last):'')+'</div></div>';
    }).join(''):'<p class="hint">لا توجد آية ظهرت بها ملاحظات في جلستين مختلفتين ضمن الأرشيف الحالي.</p>')+
    '<p class="hint">لا تُدمج هذه الأعداد مع سجل الأخطاء المؤكدة ولا تُستخدم لتغيير درجة الإتقان أو جدول المراجعة.</p>';
  }catch(e){if(target.isConnected)target.textContent='تعذّرت قراءة سجل ترتيل المحلي: '+(e?.message||'خطأ غير معروف');}
@@ -2710,7 +2710,7 @@ function renderVerseErrorAnalysisV141(){
   const kind=[...g.types.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,n])=>esc(k)+' ('+n+')').join(' · ');
   return '<div style="border-top:1px solid var(--line);padding:9px 0"><b>سورة '+esc(name)+' · الآية '+g.ayah+'</b>'+
    '<div class="hint">نشط '+g.active+' · مؤرشف '+g.archived+' · '+kind+'</div>'+
-   '<button type="button" class="btn btn-ghost btn-sm" data-focused-add-v143="'+esc(g.key)+'" data-focused-page-v143="'+(g.page||'')+'" data-focused-source-v143="manual">إضافة إلى المراجعة المركزة</button>'+
+   ''+
    (g.page?'<button type="button" class="btn btn-ghost btn-sm" data-open-face-v140="'+g.page+'">فتح ملف الوجه '+g.page+'</button>':'<small class="hint">لم يُحفظ رقم الوجه مع هذا الخطأ؛ لا يُفترض موضع تقريبي.</small>')+'</div>';
  };
  host.innerHTML='<details><summary style="cursor:pointer;font-weight:700">مواضع الأخطاء المتكررة · الآيات والأوجه</summary>'+
@@ -2781,7 +2781,7 @@ function organizeTodayV156(){
  const today=document.getElementById('tab-today'),stats=document.getElementById('tab-stats');
  if(!today||!stats||today.dataset.organizedV156==='1')return;
  const focus=document.getElementById('focusedVerseReviewsV143');
- if(focus)focus.remove(); // UI retired; historical error data are untouched.
+ if(focus)focus.remove(); // History remains in storage.
  const details=document.createElement('details');
  details.id='todayFurtherV156';details.className='v50-glass v50-card';
  details.style.cssText='margin:14px 0;padding:14px';
@@ -2934,8 +2934,6 @@ document.addEventListener('click',e=>{
   const continueFocused=e.target.closest('[data-focused-mushaf-v146]');if(continueFocused){window.location.assign('mushaf.html?focused=1&app=1');return;}
   const focusSession=e.target.closest('[data-focused-session-v145]');
   if(focusSession){const action=focusSession.dataset.focusedSessionV145;if(action==='start')startFocusedSessionV145();else if(action==='end')endFocusedSessionV145();else advanceFocusedSessionV145(action);return;}
-  const add=e.target.closest('[data-focused-add-v143]');
-  if(add){addFocusedVerseV143(add.dataset.focusedAddV143,add.dataset.focusedSourceV143,+add.dataset.focusedPageV143);renderFocusedVerseReviewsV143();return;}
   const change=e.target.closest('[data-focused-action-v143]');
   if(change){changeFocusedVerseV143(change.dataset.focusedVkV143,change.dataset.focusedActionV143);renderFocusedVerseReviewsV143();return;}
   const openFocused=e.target.closest('[data-focused-open-v143]');
