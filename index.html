@@ -792,6 +792,13 @@ details[open] .review-roadmap-chevron-v114{transform:rotate(180deg)}
 #reviewPlansV111 #createExtraReviewV111 button[type=submit]{min-height:48px;color:#fff;background:var(--ink);font-weight:700}
 #tab-map .page-square,#tab-map .page-box,#tab-map .pg{font-weight:700}
 @media(max-width:520px){#reviewPlansV111 form#createExtraReviewV111{gap:14px!important}#reviewPlansV111 form#createExtraReviewV111>div{gap:12px!important}#reviewPlansV111 form#createExtraReviewV111 input[type=date]{direction:ltr;text-align:left}#tab-settings .field>div:has(#set-name){align-items:stretch}#tab-settings #set-name-save{flex:0 0 auto}}
+
+/* v114: mobile inputs and consistently legible page numbers */
+#tab-map .pg>span{color:inherit!important;opacity:1!important;position:relative;z-index:1}
+#reviewPlansV111 input[type=date]{direction:ltr!important;text-align:left!important;unicode-bidi:isolate}
+#reviewPlansV111 .hint,#tab-settings .hint{overflow-wrap:anywhere}
+#tab-settings .v70-set-pair{display:flex;flex-wrap:wrap;gap:8px}
+#tab-settings .v70-set-pair button{white-space:normal;min-height:44px}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <link rel="stylesheet" href="ward-phase05-home-today.css?v=1" media="not all" data-floral-stylesheet>
@@ -3815,6 +3822,15 @@ function fillJuzPages(j){
     return '<div class="surah-group"><div class="surah-label">'+seg.sur[1]+'</div><div class="pg-row">'+cells+'</div></div>';
   }).join('');
   cont.querySelectorAll('.pg').forEach(c=>c.addEventListener('click',ev=>{ev.stopPropagation();openPage(+c.dataset.page,+c.dataset.surah);}));
+  // v114: حساب لون الرقم من الخلفية الفعلية بدل افتراض أن كل الأوجه المحفوظة داكنة.
+  cont.querySelectorAll('.pg').forEach(c=>{
+    const bg=getComputedStyle(c).backgroundColor.match(/[\\d.]+/g);
+    if(!bg||bg.length<3)return;
+    const channel=bg.slice(0,3).map(n=>{const v=Math.min(255,+n)/255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});
+    const luminance=.2126*channel[0]+.7152*channel[1]+.0722*channel[2];
+    c.style.color=luminance>.18?'#30212A':'#FFFFFF';
+    c.style.textShadow='none';
+  });
 }
 function updateMapCount(){
   let solid=0,near=0,far=0,weak=0,fix=0,partial=0,errors=0,mem=0,dueNow=0;
@@ -4308,7 +4324,7 @@ function renderHeatmap(){
   const ws=(S.weekStart|0); // ٠=الأحد، ١=الاثنين
   // اضبط البداية على بداية الأسبوع المختارة (فيصبح أوّل صفٍّ هو اليوم المختار)
   start.setDate(start.getDate()-((start.getDay()-ws+7)%7));
-  const levels=['color-mix(in srgb, var(--parch-2) 66%, white)','color-mix(in srgb, var(--gold) 18%, var(--parch))','color-mix(in srgb, var(--gold) 40%, var(--parch))','color-mix(in srgb, var(--gold) 65%, var(--ink))','var(--ink)']; // من الباهت للغامق (ثيم اللافندر)
+  const levels=['color-mix(in srgb, var(--parch-2) 66%, white)','color-mix(in srgb, var(--gold) 18%, var(--parch))','color-mix(in srgb, var(--gold) 40%, var(--parch))','color-mix(in srgb, var(--gold) 65%, var(--ink))','var(--ink)']; // درجات مشتقة من الثيم النشط
   const AR_MON=DurrPreferences.MONTHS[DurrPreferences.get().calendar];
   let cols='';let lastMonth=-1;let monthLabels='';
   let cur=new Date(start);
