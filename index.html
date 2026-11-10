@@ -6243,6 +6243,12 @@ function cloudPull(silent,done){
     if(snap.exists){
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
       let cloudS=null;try{cloudS=JSON.parse(d.payload);}catch(e){}
+      if(!cloudS||typeof cloudS!=='object'||Array.isArray(cloudS)){
+        cloudDirtyV151=true;cloudConflictV151();
+        const indicator=document.getElementById('cloudMini');
+        if(indicator)indicator.textContent='⚠ تعذّرت قراءة النسخة السحابية؛ لم تُستبدل البيانات المحلية';
+        pullingNow=false;if(done)done();return;
+      }
       const cloudHas=hasData(cloudS),localHas=hasData(S);
       const different=cloudHas&&localHas&&!cloudEqualV152(S,cloudS);
       if((cloudDirtyV151&&cloudBaselineV151!==d.payload)||
@@ -6312,11 +6318,19 @@ function cloudListen(){
       if(!snap.exists)return;
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
       let remoteState=null;try{remoteState=JSON.parse(d.payload);}catch(_){}
+      if(!remoteState||typeof remoteState!=='object'||Array.isArray(remoteState)){
+        cloudDirtyV151=true;cloudConflictV151();return;
+      }
       const differs=hasData(S)&&hasData(remoteState)&&!cloudEqualV152(S,remoteState);
       if((cloudDirtyV151&&cloudBaselineV151!==d.payload)||
          (differs&&!cloudRemoteAdoptionV164(S,remoteState,cloudBaselineV151))){
        backupLocalBeforeCloudReplaceV125('cloud-listener-conflict');
        cloudDirtyV151=true;cloudConflictV151();cloudShowConflictV152(d.payload);return;
+      }
+      // لا تبدّلي خط الأساس إذا كانت النسخة البعيدة أقدم ومختلفة.
+      if(cloudUpdated<=localUpdated&&!cloudEqualV152(S,remoteState)){
+        backupLocalBeforeCloudReplaceV125('cloud-listener-older-different');
+        cloudDirtyV151=true;cloudConflictV151();cloudShowConflictV152(d.payload);return;
       }
       cloudRememberV151(d);
       // طبّقي فقط إن كانت السحابة أحدث (تعديل من جهاز آخر)
