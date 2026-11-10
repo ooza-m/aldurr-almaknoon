@@ -12,6 +12,8 @@ test('all 30 roadmap sections expose keyboard toggle, aria-expanded and preserve
  const start=index.indexOf('function renderMap(){');
  const end=index.indexOf("\nlet mapFilter='all';",start);
  assert.ok(start>=0&&end>start);
+ // The real user can focus the roadmap only when the map tab is visible.
+ doc.getElementById('tab-map').classList.add('active');
  const openJuz=new Set();
  const ranges=Array.from({length:30},(_,i)=>[i*20+1,i*20+20]);
  const render=new Function('document','SURAHS','toAr','JUZ_RANGE','juzStateSummaryV64','juzAvgInfo','openJuz','surahOfPage','JUZ_NAME_PICK','JUZ_NAME','updateMapCount','wardReviewRoadmapV205','requestAnimationFrame','fillJuzPages',index.slice(start,end)+'\nreturn renderMap;')(
