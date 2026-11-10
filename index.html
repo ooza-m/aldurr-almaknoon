@@ -2016,35 +2016,68 @@ function taskPagesV60(id){
   }
   return[];
 }
+/* v111 · extra user-defined review paths, independent of near/far. */
+function optionalDailyItemsV111(){
+ const o=S.dailyTaskOptions||{};
+ return{tilawa:o.tilawa!==false,tafsir:o.tafsir!==false};
+}
+function extraReviewPlansV111(){return Array.isArray(S.extraReviewPlans)?S.extraReviewPlans.filter(p=>p&&p.active!==false):[];}
+function extraReviewPagesV111(plan){
+ const a=Math.max(1,Math.min(604,+plan.from||1)),b=Math.max(1,Math.min(604,+plan.to||604));
+ const pages=Array.from({length:Math.abs(b-a)+1},(_,i)=>Math.min(a,b)+i);
+ if(plan.direction==='down')pages.reverse();
+ return pages;
+}
+function extraReviewDueV111(plan,day=todayKey()){
+ const pages=extraReviewPagesV111(plan),elapsed=daysBetween(plan.startDate||todayKey(),day);
+ const duration=Number(plan.durationDays);
+ if(elapsed<0||Number.isInteger(duration)&&duration>0&&elapsed>=duration||!pages.length)return[];
+ const count=Math.max(1,Math.min(pages.length,Math.floor(+plan.dailyPages||1)));
+ const start=(elapsed*count)%pages.length,scheduled=[];
+ for(let i=0;i<count;i++)scheduled.push(pages[(start+i)%pages.length]);
+ return scheduled;
+}
+function extraReviewDoneV111(plan,p,day=todayKey()){
+ if((S.extraReviewCompletions||[]).some(x=>x.planId===plan.id&&x.date===day&&+x.page===+p))return true;
+ const log=(S.logs||[]).find(x=>x.date===day);
+ if(log&&rangeSetV50(log.revList||[]).has(+p))return true;
+ return uniqueRecitationSessionsV163(S.recitationSessions||[]).some(rs=>{
+  const date=keyOf(new Date(rs.endedAt||rs.startedAt||0));
+  return date===day&&['near','fix','far'].includes(rs.task)&&(rs.pages||[]).some(pg=>+pg.page===+p&&approvedRecitationFaceV149(rs,pg));
+ });
+}
+function markExtraReviewV111(id,page){
+ const plan=extraReviewPlansV111().find(x=>x.id===id),p=+page;
+ if(!plan||!extraReviewDueV111(plan).includes(p))return;
+ S.extraReviewCompletions=S.extraReviewCompletions||[];
+ if(!extraReviewDoneV111(plan,p)){
+  S.extraReviewCompletions.push({planId:id,page:p,date:todayKey(),id:'extra_'+Date.now()+'_'+p});
+  save();
+ }
+ renderTodayV50();renderReviewPlansV111();
+}
 function tasksV50(){
-  const log=todayLogV50(),memLegacy=rangeSetV50(log.memList||[]),allRev=rangeSetV50(log.revList||[]),nearDone=rangeSetV50(log.revList||[],x=>x.type!=='far'),farDone=rangeSetV50(log.revList||[],x=>x.type==='far');
-  const memAuto=recitedPagesTodayV51('new'),fixAuto=recitedPagesTodayV51('fix'),nearAuto=recitedPagesTodayV51('near'),farAuto=recitedPagesTodayV51('far');
-  const memDoneSet=new Set([...memLegacy,...memAuto]);
-  const fix=fixationPagesV50(),bucket=reviewBucketsV50();
-  // Count distinct completed faces as well as pending ones: due buckets exclude completed faces.
-  const completedReview=new Set([...allRev,...fixAuto,...nearAuto,...farAuto]);
-  const fixDone=fix.filter(p=>completedReview.has(p)).length;
-  const reviewedNear=[...completedReview].filter(p=>{const first=firstMemDateV62(p);if(!first||daysBetween(first,todayKey())<=30)return false;return reviewEngineStateV62(p).phase==='near';});
-  const reviewedFar=[...completedReview].filter(p=>{const first=firstMemDateV62(p);if(!first||daysBetween(first,todayKey())<=30)return false;return reviewEngineStateV62(p).phase==='far';});
-  const nearDoneN=reviewedNear.length;
-  const farLimit=memCount()>402?60:40;
-  const farDoneN=reviewedFar.length;
-  const scheduledFix=taskPagesV60('fix'),scheduledNear=taskPagesV60('near'),scheduledFar=taskPagesV60('far');
-  const capacity=reviewCapacityV123();
-  const newTarget=weeklyMemorizationV135().dayTarget,halaqa=isHalaqaDay(todayKey(),new Date().getDay());
-  const arr=[
-    {id:'new',label:'حفظ جديد',done:memDoneSet.size,target:newTarget,pages:taskPagesV60('new'),kind:'book',action:'ابدئي جلسة الحفظ',color:'var(--green)'},
-    {id:'fix',label:'تثبيت 30 يومًا',done:fixDone,target:fixDone+scheduledFix.length,pages:scheduledFix,kind:'leaf',action:'ابدئي جلسة التثبيت',color:'var(--gold)'},
-    {id:'near',label:'مراجعة قريبة',done:nearDoneN,target:nearDoneN+scheduledNear.length,pages:scheduledNear,kind:'repeat',action:'ابدئي جلسة المراجعة',color:'var(--clay)'},
-    {id:'far',label:'مراجعة بعيدة',done:farDoneN,target:farDoneN+scheduledFar.length,pages:scheduledFar,kind:'far',action:'ابدئي جلسة المراجعة',color:'var(--blue)'},
-    {id:'tilawa',label:'ورد التلاوة',done:log.tilawa?1:0,target:1,pages:[S.khatma?Math.max(1,Math.min(604,(S.khatma.current||0)+1)):lastActivityPageV50()],kind:'book',action:'افتحي موضع التلاوة',color:'#A68BB7'},
-    {id:'tafsir',label:'ورد التفسير',done:(log.tafsir||(S.activityEvents||[]).some(e=>e&&e.type==='tafsir'&&e.date===todayKey()))?1:0,target:1,pages:[lastActivityPageV50()],kind:'tafsir',action:'افتحي تفسير الوجه',color:'#C89B3C'}
-  ];
-  const smart=(S.aiReviewQueue||[]).filter(q=>q&&q.status==='pending');
-  if(smart.length)arr.push({id:'ai-review',label:'مراجعة ذكية',done:0,target:smart.length,pages:[...new Set(smart.map(q=>+q.page).filter(Boolean))],kind:'repeat',action:'اختبري المواضع',color:'#8C72A0'});
-  arr.forEach(t=>t.page=t.pages&&t.pages.length?t.pages[0]:null);
-  if(halaqa)arr.push({id:'halaqa',label:'حلقة القرآن',done:attStatus(todayKey())==='present'?1:0,target:1,pages:[],page:null,kind:'people',action:'تسجيل الحضور',color:'var(--pink)'});
-  return arr;
+ const log=todayLogV50(),memLegacy=rangeSetV50(log.memList||[]),allRev=rangeSetV50(log.revList||[]);
+ const memAuto=recitedPagesTodayV51('new'),completedReview=new Set([...allRev,...recitedPagesTodayV51('fix'),...recitedPagesTodayV51('near'),...recitedPagesTodayV51('far')]);
+ const freshDue=taskPagesV60('new'),nearDue=taskPagesV60('near'),farDue=taskPagesV60('far');
+ const firsts=firstMemDateMapV50(),nearDone=[...completedReview].filter(p=>firsts[p]&&daysBetween(firsts[p],todayKey())<30).length;
+ const farDone=[...completedReview].filter(p=>firsts[p]&&daysBetween(firsts[p],todayKey())>=30).length;
+ const newDone=new Set([...memLegacy,...memAuto]).size;
+ const result=[
+  {id:'new',label:'حفظ جديد',done:newDone,target:weeklyMemorizationV135().dayTarget,pages:freshDue,kind:'book',color:'var(--green)'},
+  {id:'near',label:'مراجعة قريبة · أول 30 يومًا',done:nearDone,target:nearDone+nearDue.length,pages:nearDue,kind:'repeat',color:'var(--clay)'},
+  {id:'far',label:'مراجعة بعيدة · دورة '+farCycleDaysV111()+' أيام',done:farDone,target:farDone+farDue.length,pages:farDue,kind:'far',color:'var(--blue)'}
+ ];
+ const opt=optionalDailyItemsV111();
+ if(opt.tilawa)result.push({id:'tilawa',label:'ورد التلاوة',done:log.tilawa?1:0,target:1,pages:[S.khatma?Math.max(1,Math.min(604,(S.khatma.current||0)+1)):lastActivityPageV50()],kind:'book',color:'#A68BB7'});
+ if(opt.tafsir)result.push({id:'tafsir',label:'ورد التفسير',done:(log.tafsir||(S.activityEvents||[]).some(e=>e&&e.type==='tafsir'&&e.date===todayKey()))?1:0,target:1,pages:[lastActivityPageV50()],kind:'tafsir',color:'#C89B3C'});
+ for(const plan of extraReviewPlansV111()){
+  const pages=extraReviewDueV111(plan),pending=pages.filter(p=>!extraReviewDoneV111(plan,p));
+  result.push({id:'extra:'+plan.id,planId:plan.id,label:plan.name||'مراجعة إضافية',done:pages.length-pending.length,target:pages.length,pages:pending,kind:'repeat',color:'var(--purple)',extra:true});
+ }
+ result.forEach(t=>t.page=t.pages?.[0]||null);
+ if(isHalaqaDay(todayKey(),new Date().getDay()))result.push({id:'halaqa',label:'حلقة القرآن',done:attStatus(todayKey())==='present'?1:0,target:1,pages:[],page:null,kind:'people',color:'var(--pink)'});
+ return result;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
 function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=89&p='+page+(mode?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
