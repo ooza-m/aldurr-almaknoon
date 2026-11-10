@@ -25,7 +25,7 @@ test('manual entry and settings preserve their original form identifiers',()=>{
  for(const id of ['settingsModal','ntWird','ntWirdTime','ntTafsir','ntTafsirTime','set-name','set-name-save','set-reset','in-date','btnManualEntryV50']){
   assert.ok(document.getElementById(id),id);
  }
- assert.match(index,/ward-phase05-manual-settings-review\.css\?v=1/);
+ assert.match(index,/ward-phase05-manual-settings-review\.css\?v=2/);
  assert.match(mapStyle,/#settingsModal/);
  assert.match(mapStyle,/#tab-manual/);
 });
