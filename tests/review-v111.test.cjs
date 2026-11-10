@@ -45,7 +45,7 @@ test('a recently completed far face is not re-scheduled before cycle elapses',()
  assert.equal(rows.length,0,'Future-due faces do not appear in today\'s far-review bucket');
  assert.equal(model.reviewEngineStateV62(1).nextDue,'2026-11-16');
  const app=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
- assert.match(app,/bucket\.far\.filter\(x=>x\.doneToday\|\|x\.due<=todayKey\(\)\)/);
+ assert.match(app,/bucket\.far\.filter\(x=>!x\.doneToday&&x\.due<=todayKey\(\)\)/);
 });
 test('calendar labels a complete juz, a complete surah, and a page range',()=>{
  const SURAHS=[[44,'الدخان',496],[45,'الجاثية',499],[46,'الأحقاف',502]];
