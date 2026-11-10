@@ -812,6 +812,10 @@ details[open] .review-roadmap-chevron-v114{transform:rotate(180deg)}
 #tab-map .review-roadmap-summary-stat-v114 b{font-size:.75rem;max-width:150px;white-space:normal;text-align:left;line-height:1.5}
 #tab-map .review-roadmap-body-v114{min-width:0}
 @media(max-width:380px){#reviewPlansV111 form#createExtraReviewV111>div{gap:8px!important}#reviewPlansV111 form#createExtraReviewV111 label{font-size:.77rem}#tab-map .review-roadmap-summary-v114{padding:14px 12px;gap:8px}#tab-map .review-roadmap-summary-stat-v114 b{max-width:104px}}
+/* v170: theme-aware help action, readable focus state */
+#hmInfoBtn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#hmScroll{scrollbar-width:thin;scrollbar-color:var(--gold-soft) transparent}
+#heatmap .hm-cell[data-date]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* v170: primary actions use the theme's accessible on-accent pair in light and dark modes. */
 #tab-settings #set-name-save{background:var(--accent)!important;color:var(--on-accent,#fff)!important;border-color:var(--accent)!important}
 #tab-settings #set-name-save:focus-visible,#reviewPlansV111 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1038,7 +1042,7 @@ window.FIREBASE_CONFIG = {
           <div class="section-eyebrow">نشاط السنة · <span id="hmYear"></span></div>
           <h2 style="margin:0"><span class="em">✦</span> خريطة المثابرة</h2>
         </div>
-        <button id="hmInfoBtn" title="كيف تُحسب النقاط؟" style="background:#fff;border:1.5px solid var(--line);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--clay);font-weight:800;font-size:1rem;flex-shrink:0">ⓘ</button>
+        <button type="button" id="hmInfoBtn" title="كيف تُحسب النقاط؟" aria-label="شرح احتساب خريطة المثابرة" style="background:var(--surface);border:1.5px solid var(--line);width:40px;height:40px;border-radius:50%;cursor:pointer;color:var(--accent);font-weight:800;font-size:1rem;flex-shrink:0">ⓘ</button>
       </div>
       <p class="hint">كلّ مربّعٍ يومٌ — كلّما كثُر نشاطك زاد وضوح لونه. مرآةٌ لمثابرتك عبر السنة.</p>
       <div id="heatmap" style="margin-top:14px"></div>
