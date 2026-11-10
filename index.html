@@ -1334,7 +1334,7 @@ window.FIREBASE_CONFIG = {
     <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntTafsir"> قراءة التفسير</label><input type="time" id="ntTafsirTime"></div>
     <p class="hint" id="ntStatus" style="margin-top:6px"></p>
   </div>
-  <div class="v70-set-group"><h4>النسخ الاحتياطية</h4><p class="hint">تتضمن بيانات الحفظ والفواصل وتفضيلات العرض. التنزيلات الصوتية تبقى على الجهاز ولا تدخل في ملف النسخة.</p><div class="v70-set-pair"><button class="btn btn-ghost" type="button" id="settingsBackup">تصدير نسخة</button><button class="btn btn-ghost" type="button" id="settingsRestore">استيراد نسخة</button></div><button class="btn btn-ghost btn-sm" type="button" id="settingsUndoRestore" style="width:100%;margin-top:8px">استرجاع النسخة السابقة لآخر استيراد</button>
+  <div class="v70-set-group"><h4>النسخ الاحتياطية</h4><p class="hint">تتضمن بيانات الحفظ والفواصل وتفضيلات العرض. التنزيلات الصوتية تبقى على الجهاز ولا تدخل في ملف النسخة.</p><div style="margin:10px 0 13px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fffdfb)"><b style="font-size:.8rem">التحقق من بيانات Firebase</b><p class="hint" style="margin:4px 0 9px">فحص للقراءة فقط: يوضح وجود السجل السحابي ومحتوياته الرئيسية دون حفظ أو استبدال أي بيانات.</p><button class="btn btn-ghost btn-sm" type="button" id="cloudInspectV108">فحص بيانات الحساب</button><div class="hint" id="cloudInspectStatusV108" role="status" aria-live="polite" style="margin-top:9px;white-space:pre-line"></div></div><div class="v70-set-pair"><button class="btn btn-ghost" type="button" id="settingsBackup">تصدير نسخة</button><button class="btn btn-ghost" type="button" id="settingsRestore">استيراد نسخة</button></div><button class="btn btn-ghost btn-sm" type="button" id="settingsUndoRestore" style="width:100%;margin-top:8px">استرجاع النسخة السابقة لآخر استيراد</button>
   <details id="backupHistoryV154" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
     <summary style="cursor:pointer;font-weight:650;font-size:.82rem">النسخ التلقائية وسجل الاستعادة</summary>
     <p class="hint" style="margin:9px 0">يُحتفظ بحد أقصى 5 نسخ يومية على هذا الجهاز فقط. الحذف التلقائي لبيانات المتصفح قد يُزيلها؛ صدّري نسخة إلى ملفات الجهاز احتياطًا.</p>
@@ -5698,6 +5698,35 @@ function setGateMode(m){
 function gMsg(t){const el=document.getElementById('gMsg');if(el)el.textContent=t||'';}
 /* ---- Firestore ---- */
 function docRef(){return fbDb.collection('users').doc(fbUser.uid).collection('data').doc('dashboard');}
+/* v108 · read-only account inventory. Never writes, merges or restores on inspection. */
+async function inspectCloudV108(){
+ const button=document.getElementById('cloudInspectV108'),status=document.getElementById('cloudInspectStatusV108');
+ if(!status)return;
+ if(!cloudReady||!fbUser){status.textContent='سجّلي الدخول إلى حسابك أولًا حتى يمكن فحص بياناته السحابية.';return;}
+ if(button)button.disabled=true;
+ status.textContent='جارٍ فحص المستند السحابي دون تعديل البيانات…';
+ try{
+  const snap=await docRef().get({source:'server'});
+  if(!snap.exists){status.textContent='لم يُعثر على مستند الحفظ السحابي لهذا الحساب. هذا لا يعني أن بيانات جهاز آخر قد حُذفت؛ لا تنفذي استيرادًا أو مسحًا قبل حفظ نسخة احتياطية.';return;}
+  const raw=snap.data()?.payload;
+  if(typeof raw!=='string'){status.textContent='المستند موجود، لكن صيغة البيانات ليست كما يتوقعها التطبيق. لم تُغيّر أي بيانات.';return;}
+  let data;try{data=JSON.parse(raw);}catch(_){status.textContent='المستند موجود لكن تعذّرت قراءة محتواه. لم تُغيّر أي بيانات.';return;}
+  const n=k=>Array.isArray(data?.[k])?data[k].length:0;
+  const count=k=>data?.[k]&&typeof data[k]==='object'&&!Array.isArray(data[k])?Object.keys(data[k]).length:0;
+  const when=snap.data()?.updatedAt;
+  const stamp=Number.isFinite(+when)&&+when>0?new Date(+when).toLocaleString('ar-AE'):'غير محدد';
+  let localBookmarks=0;
+  try{const b=JSON.parse(localStorage.getItem('durr-verse-bookmarks-v86')||'[]');localBookmarks=Array.isArray(b)?b.length:0;}catch(_){}
+  status.textContent='المستند السحابي موجود. آخر تحديث: '+stamp+
+   '\\nسجلات الأيام: '+n('logs')+' · جلسات التسميع: '+n('recitationSessions')+' · الأخطاء: '+n('errors')+
+   '\\nتقييمات الأوجه: '+count('pageMastery')+' · جداول مراجعة الأوجه: '+count('pageReviewSched')+
+   '\\nالفواصل على هذا الجهاز: '+localBookmarks+' (ليست جزءًا من مستند الحفظ السحابي).'+
+   '\\nهذا الفحص لا يثبت اكتمال كل البيانات التاريخية؛ قارني الأعداد مع نسختك الاحتياطية.';
+ }catch(error){status.textContent='تعذّر فحص الخادم الآن. تأكدي من الاتصال وصلاحية الحساب؛ لم تُغيّر أي بيانات.';console.warn('Read-only account inspection failed',error);}
+ finally{if(button)button.disabled=false;}
+}
+document.getElementById('cloudInspectV108')?.addEventListener('click',inspectCloudV108);
+
 /* v151 · optimistic concurrency: لا تكتبي فوق مستند تغيّر في جهاز آخر. */
 let cloudBaselineV151=null,cloudDirtyV151=false;
 function cloudRememberV151(doc){
