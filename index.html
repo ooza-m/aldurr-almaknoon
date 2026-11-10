@@ -3849,13 +3849,13 @@ function wardReviewRoadmapV205(){
  const dueNear=near.filter(x=>todayNear.has(x.p)),dueFar=far.filter(x=>todayFar.has(x.p));
  const doneNear=near.filter(x=>x.state.doneToday),doneFar=far.filter(x=>x.state.doneToday);
  const remaining=dueNear.length+dueFar.length;
- if(count)count.textContent=remaining?toAr(remaining)+' وجهًا اليوم':'لا مراجعات متبقية اليوم';
+ if(count)count.textContent=remaining?toAr(remaining)+' أوجه اليوم':'لا مراجعات متبقية اليوم';
  const face=x=>'<button type="button" class="review-face-v173" data-ward-face="'+x.p+'"><span class="review-face-number-v173">'+toAr(x.p)+'</span><span class="review-face-copy-v173"><strong>'+esc(x.name)+'</strong><small>'+(x.state.doneToday?'أُنجز اليوم':x.state.phase==='near'?'اليوم '+toAr(x.state.day)+' من 30':'الموعد '+esc(x.state.nextDue||'—'))+'</small></span><span class="review-face-arrow-v173" aria-hidden="true">‹</span></button>';
  const list=(rows,empty)=>rows.length?rows.map(face).join(''):'<p class="review-empty-v173">'+empty+'</p>';
  const stat=(label,number,note)=>'<div class="review-stat-v173"><span>'+label+'</span><strong>'+toAr(number)+'</strong><small>'+note+'</small></div>';
  const details=(title,number,description,rows,empty)=>'<details class="review-details-v173"><summary><span><strong>'+title+'</strong><small>'+description+'</small></span><b>'+toAr(number)+'</b><span class="review-detail-chevron-v173" aria-hidden="true">⌄</span></summary><div class="review-detail-content-v173">'+list(rows,empty)+'</div></details>';
  host.innerHTML='<div class="review-overview-v173">'+
-  '<div class="review-today-title-v173"><span>مراجعة اليوم</span><strong>'+(remaining?toAr(remaining)+' وجهًا متبقيًا':'اكتملت المهام المحددة لليوم')+'</strong></div>'+
+  '<div class="review-today-title-v173"><span>مراجعة اليوم</span><strong>'+(remaining?toAr(remaining)+' أوجه متبقية':'اكتملت المهام المحددة لليوم')+'</strong></div>'+
   '<div class="review-stats-v173">'+
    stat('قريبة',dueNear.length,'خلال أول 30 يومًا')+
    stat('بعيدة',dueFar.length,'وفق نصاب اليوم')+
