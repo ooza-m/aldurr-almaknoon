@@ -1052,23 +1052,22 @@ window.FIREBASE_CONFIG = {
           <button class="btn btn-ghost btn-sm mapfilt" data-filter="errors">أخطاء</button>
         </div>
       </div>
-      <details class="map-options-v96">
-        <summary>خيارات عرض الخريطة ومفتاح الألوان</summary>
-        <div class="map-controls map-expand-actions-v96">
-          <button class="btn btn-ghost btn-sm" id="btnExpandAll">فتح الأجزاء كلها</button>
-          <button class="btn btn-ghost btn-sm" id="btnCollapseAll">طيّ الأجزاء كلها</button>
-        </div>
-        <div class="map-legend-v64" aria-label="مفتاح الخريطة">
-          <span><i class="lg-fix"></i>تثبيت</span>
-          <span><i class="lg-near"></i>قريبة</span>
-          <span><i class="lg-far"></i>بعيدة</span>
-          <span><i class="lg-solid"></i>متقن</span>
-          <span><i class="lg-weak"></i>متفلّت</span>
-          <span><i class="lg-partial"></i>جزئي</span>
-          <span><i class="lg-error"></i>خطأ نشط</span>
-        </div>
-      </details>
-      <h3 class="map-juz-heading-v96">الأجزاء الثلاثون</h3>
+      <div class="map-legend-v64 ward-map-legend" aria-label="مفتاح ألوان الأوجه">
+        <span><i class="lg-fix"></i>تثبيت</span><span><i class="lg-near"></i>قريبة</span>
+        <span><i class="lg-far"></i>بعيدة</span><span><i class="lg-solid"></i>متقن</span>
+        <span><i class="lg-weak"></i>متفلّت</span><span><i class="lg-partial"></i>جزئي</span>
+        <span><i class="lg-error"></i>خطأ نشط</span>
+      </div>
+      <section class="ward-review-roadmap" aria-labelledby="wardReviewHeading">
+        <div class="ward-review-head"><div><span>مسار المراجعة</span><h3 id="wardReviewHeading">التثبيت والمراجعة القريبة</h3></div><b id="wardReviewTotal" aria-live="polite"></b></div>
+        <p class="hint">أول 30 يومًا تثبيت يومي، ثم مراجعة قريبة بفواصل متدرجة قبل الانتقال إلى البعيدة.</p>
+        <div id="wardReviewRoadmap" aria-live="polite"></div>
+      </section>
+      <div class="ward-map-juz-title"><h3 class="map-juz-heading-v96">الأجزاء الثلاثون</h3>
+        <button type="button" id="btnToggleAllJuz" class="ward-map-fold" aria-label="فتح الأجزاء الثلاثين" aria-pressed="false" title="فتح الأجزاء أو طيها">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5M7 5l5 5 5-5"/></svg>
+        </button>
+      </div>
       <div id="juzList"></div>
       <button class="btn btn-ghost btn-sm" id="btnOpenErrors" style="width:100%;margin-top:14px">سجلّ الأخطاء</button>
     </div>
@@ -3539,6 +3538,37 @@ function juzStateSummaryV64(from,to){
   }
   return o;
 }
+function wardReviewRoadmapV205(){
+  const host=document.getElementById('wardReviewRoadmap'),count=document.getElementById('wardReviewTotal');
+  if(!host)return;
+  const today=todayKey(),fix=[],near=[];
+  for(let p=1;p<=604;p++){
+    const first=firstMemDateV62(p);
+    if(!first)continue;
+    const state=reviewEngineStateV62(p);
+    if(state.phase!=='fix'&&state.phase!=='near')continue;
+    const sur=surahOfPage(p),name='سورة '+sur[1];
+    if(state.phase==='fix'){
+      const age=Math.max(0,daysBetween(first,today));
+      const remaining=Math.max(0,30-age);
+      fix.push({p,name,first,remaining,day:Math.min(30,Math.max(1,age)),due:!!state.due});
+    }else{
+      const dueDate=state.nextDue||today;
+      const days=Math.max(0,daysBetween(today,dueDate));
+      near.push({p,name,dueDate,days,due:!!state.due});
+    }
+  }
+  fix.sort((a,b)=>a.remaining-b.remaining||a.p-b.p);
+  near.sort((a,b)=>Number(b.due)-Number(a.due)||a.days-b.days||a.p-b.p);
+  if(count)count.textContent=String(fix.length+near.length)+' وجه';
+  const fixed=fix.map(v=>'<button type="button" class="ward-review-face" data-ward-face="'+v.p+'"><span><strong>وجه '+v.p+' · '+esc(v.name)+'</strong><small>يوم التثبيت '+v.day+' من 30 · منذ '+esc(v.first)+'</small></span><em>'+ (v.remaining?v.remaining+' يوم متبقٍ':'ينتقل إلى القريبة غدًا')+'</em></button>').join('');
+  const nearby=near.map(v=>'<button type="button" class="ward-review-face" data-ward-face="'+v.p+'"><span><strong>وجه '+v.p+' · '+esc(v.name)+'</strong><small>الموعد التالي '+esc(v.dueDate)+'</small></span><em>'+(v.due?'مستحق الآن':v.days+' يوم حتى الموعد')+'</em></button>').join('');
+  host.innerHTML='<div class="ward-review-group"><h4>ضمن دورة التثبيت (30 يومًا) <b>'+fix.length+'</b></h4>'+
+    (fixed||'<p class="ward-review-empty">لا توجد أوجه ضمن التثبيت حاليًا.</p>')+'</div>'+
+    '<div class="ward-review-group"><h4>المراجعة القريبة بعد التثبيت <b>'+near.length+'</b></h4>'+
+    (nearby||'<p class="ward-review-empty">لا توجد أوجه في مرحلة المراجعة القريبة حاليًا.</p>')+'</div>';
+  host.querySelectorAll('[data-ward-face]').forEach(btn=>btn.addEventListener('click',()=>openPage(+btn.dataset.wardFace)));
+}
 function renderMap(){
   const box=document.getElementById('juzList');box.innerHTML='';
   const js=document.getElementById('jumpSurah');
@@ -3569,6 +3599,9 @@ function renderMap(){
   }
   box.querySelectorAll('.juz-head').forEach(h=>h.addEventListener('click',()=>{const j=+h.dataset.j;if(openJuz.has(j))openJuz.delete(j);else openJuz.add(j);renderMap();}));
   updateMapCount();
+  wardReviewRoadmapV205();
+  const toggle=document.getElementById('btnToggleAllJuz');
+  if(toggle){const expanded=openJuz.size===30;toggle.setAttribute('aria-pressed',String(expanded));toggle.setAttribute('aria-label',expanded?'طيّ الأجزاء الثلاثين':'فتح الأجزاء الثلاثين');toggle.classList.toggle('expanded',expanded);}
   let i=0;function step(){if(i<toOpen.length){fillJuzPages(toOpen[i]);i++;requestAnimationFrame(step);}}
   if(toOpen.length)requestAnimationFrame(step);
 }
@@ -3641,7 +3674,7 @@ function updateMapCount(){
     '<div class="map-sum-foot"><span>'+toAr(dueNow)+' وجهًا مستحقًا الآن</span><span>'+toAr(remaining)+' وجهًا متبقيًا للحفظ</span>'+(errors?'<span class="warn">'+toAr(errors)+' بخطأ نشط</span>':'')+'</div>';
 }
 function cnt(v){let n=0;for(let p=1;p<=604;p++){if(pageState(p)===v)n++;}return n;}
-document.getElementById('btnExpandAll').addEventListener('click',()=>{for(let j=0;j<30;j++)openJuz.add(j);renderMap();});
+document.getElementById('btnToggleAllJuz').addEventListener('click',()=>{if(openJuz.size===30)openJuz.clear();else for(let j=0;j<30;j++)openJuz.add(j);renderMap();});
 document.querySelectorAll('.mapfilt').forEach(b=>b.addEventListener('click',()=>{
   mapFilter=b.dataset.filter;
   document.querySelectorAll('.mapfilt').forEach(x=>x.classList.toggle('on',x===b));
@@ -3658,7 +3691,7 @@ document.querySelectorAll('.mapfilt').forEach(b=>b.addEventListener('click',()=>
   }
   renderMap();
 }));
-document.getElementById('btnCollapseAll').addEventListener('click',()=>{openJuz.clear();renderMap();});
+/* The single map fold icon now handles both expand and collapse. */
 function jumpMapToPageV96(pg){
   const status=document.getElementById('mapJumpMsgV96');
   if(!Number.isInteger(pg)||pg<1||pg>604){
