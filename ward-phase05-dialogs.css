@@ -87,3 +87,13 @@
   animation:none!important;transition:none!important
  }
 }
+
+/* Verse detail: keep the bookmarks-page shortcut clear of the control above. */
+#ayBookmark {
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ margin-block-start:12px;
+ min-height:44px;
+ min-width:44px;
+}
