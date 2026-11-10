@@ -1873,7 +1873,7 @@ function reviewBucketsV50(){
   const p=+key,st=reviewEngineStateV62(p),age=daysBetween(first,todayKey());
   const row={p,days:st.overdueDays||0,due:st.nextDue,doneToday:!!st.doneToday};
   if(age>=1&&age<30&&st.due)near.push(row);
-  else if(age>=30)far.push(row);
+  else if(age>=30&&(st.due||st.doneToday))far.push(row);
  }
  near.sort((a,b)=>b.days-a.days||a.p-b.p);
  // Earliest reviewed first, so the entire far-review pool rotates.
