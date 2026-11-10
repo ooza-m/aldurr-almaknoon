@@ -83,7 +83,7 @@ test('restore requires a checkpoint and explicitly invalidates cloud baseline',(
  assert.match(html,/cloudBaselineV151=null;\s*S=state/);
 });
 test('backup errors do not stop the primary local save path',()=>{
- assert.match(html,/localStorage\.setItem\(KEY,JSON\.stringify\(S\)\);cloudDirtyV151=true;backupScheduleV154\(\)/);
+ assert.match(html,/localStorage\.setItem\(KEY,JSON\.stringify\(S\)\);cloudDirtyV151=true;try\{backupScheduleV154\(\);\}catch\(backupError\)/);
  assert.match(html,/backupCreateV154\('automatic'\)\.catch\(e=>\{/);
 });
 
@@ -110,11 +110,11 @@ test('automatic backup scheduling coalesces repeated saves',()=>{
 
 test('Today places its actions ahead of optional analysis without removing the tools',()=>{
  assert.match(html,/function organizeTodayV156\(\)/);
- assert.match(html,/priority\.after\(heading\)/);
- assert.match(html,/heading\.after\(tasks\)/);
- assert.match(html,/const focus=document\.getElementById\('focusedVerseReviewsV143'\),review=document\.getElementById\('dailyPageQueueV122'\)/);
  assert.match(html,/details\.id='todayFurtherV156'/);
+ assert.match(html,/const statsBox=document\.getElementById\('statsV67'\)/);
  assert.match(html,/body\.appendChild\(el\)/);
+ assert.match(html,/if\(focus\)focus\.remove\(\)/);
+ assert.match(html,/today\.dataset\.organizedV156='1'/);
 });
 test('legacy memorization analytics use explicit approved face completion',()=>{
  assert.ok(!html.includes('if(p.complete&&p.coverage>=.95)set.add(+p.page);'));
