@@ -85,16 +85,29 @@
     root.dataset.appearance=current.appearance;root.dataset.theme=dark?'dark':'light';root.style.colorScheme=dark?'dark':'light';root.dataset.palette=current.palette;root.dataset.design=current.design;root.dataset.digits=current.digits;
     win.document.querySelectorAll('link[data-floral-stylesheet]').forEach(link=>{link.media=current.design==='floral'?'all':'not all';});root.dataset.calendar=current.calendar;
     win.document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?p.page:p.accent2);
-    // Keep the browser icon and install manifest synchronized with the selected classic palette.
+    // Palette-specific icon references; retain SVG fallback until the original PNG assets are uploaded.
     const iconPalette=Object.prototype.hasOwnProperty.call(PALETTES,current.palette)?current.palette:'rose';
-    const iconPath='icons/app-'+iconPalette+'.svg';
-    const iconVersion='v=118';
-    win.document.querySelectorAll('link[data-app-theme-icon]').forEach(link=>{
-      link.setAttribute('href',iconPath+'?'+iconVersion);
-    });
+    const iconVersion='v=119';
+    const fallbackIcon='icons/app-'+iconPalette+'.svg?'+iconVersion;
     const manifestLink=win.document.querySelector('link[rel="manifest"]');
     if(manifestLink)manifestLink.setAttribute('href','manifest-'+iconPalette+'.json?'+iconVersion);
-    // iOS home-screen icons are captured at installation and cannot be swapped live by a PWA.
+    win.document.querySelectorAll('link[data-app-theme-icon="favicon"]').forEach(link=>{
+      link.type='image/svg+xml';link.href=fallbackIcon;
+    });
+    const pngIcon='icons/app-'+iconPalette+'-192.png?'+iconVersion;
+    // Resolve asynchronously with a selection guard to prevent stale palette assets winning a race.
+    const revision=win.__durrIconRevision=(win.__durrIconRevision||0)+1;
+    const img=new win.Image();
+    img.onload=()=>{
+      if(win.__durrIconRevision!==revision)return;
+      win.document.querySelectorAll('link[data-app-theme-icon="favicon"]').forEach(link=>{
+        link.type='image/png';link.href=pngIcon;
+      });
+      win.document.querySelectorAll('link[data-app-theme-icon="touch"]').forEach(link=>link.href=pngIcon);
+    };
+    img.onerror=()=>{};
+    img.src=pngIcon;
+    // iOS keeps its existing installed home-screen icon until the PWA shortcut is re-added.
 
     const vars={...p,quran:dark?'#f1ece5':'#241A20',frameA:p.accent,frameB:p.accent2,'on-accent':dark?NIGHT.page:'#ffffff',green:dark?'#b4d49c':'#506b3f','green-bg':dark?'#283827':'#eaf0e4',clay:p.accent,'clay-soft':p.wash,parch:p.page,'parch-2':p.wash2,'wash-2':p.wash2,text:p.ink,'ink-2':p.ink2,'accent-2':p.accent2,gold:p.accent,'gold-soft':p.soft,pink:p.accent,'pink-soft':p.wash,'line':'color-mix(in srgb, '+p.ink+' 15%, transparent)','line-2':'color-mix(in srgb, '+p.ink+' 8%, transparent)','v50-glass':p.surface,'v50-glass-strong':p.surface,'v50-cloud':p.surface,'v50-sky':p.wash};
     Object.entries(vars).forEach(([k,v])=>{if(k!=='name')root.style.setProperty('--'+k,v);});formatNumbers(win.document.body);
