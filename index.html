@@ -1869,14 +1869,13 @@ function reviewBucketsV50(){
  const near=[],far=[],firsts=firstMemDateMapV50();
  for(const [key,first] of Object.entries(firsts)){
   const p=+key,st=reviewEngineStateV62(p),age=daysBetween(first,todayKey());
-  if(st.doneToday)continue;
-  const row={p,days:st.overdueDays||0,due:st.nextDue};
+  const row={p,days:st.overdueDays||0,due:st.nextDue,doneToday:!!st.doneToday};
   if(age>=1&&age<30&&st.due)near.push(row);
   else if(age>=30)far.push(row);
  }
  near.sort((a,b)=>b.days-a.days||a.p-b.p);
  // Earliest reviewed first, so the entire far-review pool rotates.
- far.sort((a,b)=>String(a.due).localeCompare(String(b.due))||a.p-b.p);
+ far.sort((a,b)=>Number(b.doneToday)-Number(a.doneToday)||String(a.due).localeCompare(String(b.due))||a.p-b.p);
  return{near,far};
 }
 function farDailyQuotaV111(){
