@@ -3936,7 +3936,7 @@ function renderMap(){
       const j=+h.dataset.j;
       if(openJuz.has(j))openJuz.delete(j);else openJuz.add(j);
       renderMap();
-      document.querySelector('#juzList .juz-head[data-j="'+j+'"]')?.focus({preventScroll:true});
+      const newHead=document.querySelector('#juzList .juz-head[data-j="'+j+'"]');if(newHead){newHead.focus();if(document.activeElement!==newHead)newHead.focus({preventScroll:true});}
     };
     h.addEventListener('click',activate);
     h.addEventListener('keydown',event=>{
