@@ -812,6 +812,10 @@ details[open] .review-roadmap-chevron-v114{transform:rotate(180deg)}
 #tab-map .review-roadmap-summary-stat-v114 b{font-size:.75rem;max-width:150px;white-space:normal;text-align:left;line-height:1.5}
 #tab-map .review-roadmap-body-v114{min-width:0}
 @media(max-width:380px){#reviewPlansV111 form#createExtraReviewV111>div{gap:8px!important}#reviewPlansV111 form#createExtraReviewV111 label{font-size:.77rem}#tab-map .review-roadmap-summary-v114{padding:14px 12px;gap:8px}#tab-map .review-roadmap-summary-stat-v114 b{max-width:104px}}
+/* v170: primary actions use the theme's accessible on-accent pair in light and dark modes. */
+#tab-settings #set-name-save{background:var(--accent)!important;color:var(--on-accent,#fff)!important;border-color:var(--accent)!important}
+#tab-settings #set-name-save:focus-visible,#reviewPlansV111 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#tab-settings #set-name-save,#reviewPlansV111 form#createExtraReviewV111 button[type=submit]{-webkit-tap-highlight-color:transparent}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <link rel="stylesheet" href="ward-phase05-home-today.css?v=1" media="not all" data-floral-stylesheet>
