@@ -20,7 +20,7 @@ test('heatmap legend shares exactly the same palette and today outline uses acce
  assert.match(heatmap,/outline:2px solid var\(--accent\)/);
 });
 function contrast(raw){
- const start=html.indexOf('const isFloat=',html.indexOf("cont.querySelectorAll('.pg').forEach(c=>{"));
+ const start=html.indexOf('const raw=',html.indexOf("cont.querySelectorAll('.pg').forEach(c=>{"));
  const end=html.indexOf("c.style.textShadow='none';",start);
  assert.ok(start>=0&&end>start,'Missing contrast calculation');
  const statement=html.slice(start,end);
