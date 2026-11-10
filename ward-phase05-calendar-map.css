@@ -1,0 +1,197 @@
+/* Ward Phase 05 / second production pass.
+   Calendar and 604-face roadmap only. Colors encoding learning/review states
+   and the heatmap intensity are deliberately inherited from the app engine. */
+body[data-page="calendar"],body[data-page="map"]{
+ background:radial-gradient(circle at 90% 6%,rgba(242,219,223,.86),transparent 34%),
+ radial-gradient(circle at 3% 70%,rgba(229,236,222,.72),transparent 32%),
+ linear-gradient(180deg,#fcf8f3,#f9f0ea 52%,#faf6f0);
+ background-attachment:fixed;
+}
+#tab-calendar,#tab-map{
+ --ward-ink:#533846;--ward-plum:#8e4a66;--ward-soft:#f7e9ed;
+ --ward-sage:#849781;--ward-border:rgba(129,84,99,.15);
+ width:min(100%,560px);margin-inline:auto;
+ padding:calc(16px + env(safe-area-inset-top)) clamp(13px,4vw,20px)
+ calc(110px + env(safe-area-inset-bottom));
+ color:var(--ward-ink);min-width:0;
+}
+#tab-calendar .v67-subpage-head,
+#tab-map>.card:first-child{
+ isolation:isolate;
+}
+#tab-calendar .v67-subpage-head{
+ position:relative;overflow:hidden;min-height:135px;
+ padding:25px 18px 23px;margin:-16px -14px 17px;
+ border-radius:0 0 28px 28px;
+ background:linear-gradient(115deg,rgba(255,247,242,.9),rgba(252,236,238,.82)),
+ url("assets/ward-blossoms.svg") no-repeat left top / min(86%,405px) auto;
+ border:1px solid rgba(133,78,98,.08);
+}
+#tab-calendar .v67-subpage-head h1{
+ font-family:"Amiri",serif;color:#704253;font-size:2rem;line-height:1.35;
+}
+#tab-calendar .v67-subpage-head p,#tab-calendar .v67-subpage-head span{
+ color:#735963;line-height:1.65;
+}
+#tab-calendar .v67-subpage-head .v67-back{
+ flex-shrink:0;min-height:42px;min-width:42px;border-radius:50%;
+ background:rgba(255,252,249,.83);border:1px solid #eedfe1;color:#774657;
+}
+#tab-calendar>.card,
+#tab-map>.card{
+ border-radius:23px;background:rgba(255,253,251,.96);
+ border:1px solid var(--ward-border);
+ box-shadow:0 9px 26px rgba(103,61,79,.08);
+ padding:19px 17px;margin-bottom:15px;min-width:0;
+}
+#tab-calendar #calendarSummaryV70>*{border-radius:18px}
+#tab-calendar .section-eyebrow,
+#tab-map .section-eyebrow{color:#8b5470;font-weight:700}
+#tab-calendar>.card h2,#tab-map>.card h2{color:#5c3b4d}
+#tab-calendar #hmInfoBtn,#tab-map #mapInfoBtn{
+ width:42px!important;height:42px!important;border-radius:50%!important;
+ background:#fff8f7!important;border:1px solid #e7d6dd!important;
+ color:#854963!important;box-shadow:0 2px 9px #54384612;
+}
+#tab-calendar #heatmap{overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:5px}
+#tab-calendar .cal-head{gap:11px;margin:0 0 15px}
+#tab-calendar .cal-head>div:first-child{min-width:0;flex-wrap:wrap}
+#tab-calendar #calTitle{color:#603c50;font-weight:700}
+#tab-calendar #calPrev,#tab-calendar #calNext{
+ min-width:39px;min-height:39px;border-radius:12px;
+ background:#fff9f6;color:#7c455c;border:1px solid #eadce0;
+}
+#tab-calendar .view-toggle{
+ background:#f5eaeb;border:1px solid #eddae0;border-radius:13px;padding:4px;
+}
+#tab-calendar .view-toggle button{
+ min-height:37px;padding:7px 13px;border-radius:10px;
+ color:#745b67;font-size:.78rem;
+}
+#tab-calendar .view-toggle button.on{
+ background:#fff;color:#793e58;box-shadow:0 3px 9px #6d3a5016;
+}
+#tab-calendar .v71-cal-legend{gap:7px;padding-bottom:8px}
+#tab-calendar .v71-cal-legend span{
+ padding:6px 9px;background:#fcf8f6;border:1px solid #eadddf;
+ font-size:.65rem;color:#69545f;
+}
+#tab-calendar .cal-grid{gap:4px}
+#tab-calendar .cal-dow{color:#725d67;font-weight:700}
+#tab-calendar .cal-cell{
+ min-height:57px;padding:6px 4px;border-radius:12px;
+ background:#faf4f0;border-color:#efe6e2;color:#5d4750;
+}
+#tab-calendar .cal-cell.empty{background:transparent;border-color:transparent}
+#tab-calendar .cal-cell.today{
+ background:#fffdfc;border:2px solid #9b5570;
+ box-shadow:0 2px 12px #a46d8324;
+}
+#tab-calendar .cal-cell.halaqa-day{background:#f9eaec}
+#tab-calendar .week-row{gap:9px}
+#tab-calendar .week-day{
+ padding:13px;border-radius:17px;background:#fbf6f2;
+ border:1px solid #eee1df;gap:12px;
+}
+#tab-calendar .week-day.today{
+ background:linear-gradient(120deg,#fffaf7,#f5e5eb);
+ border-color:#bd879b;box-shadow:0 4px 15px #753f5411;
+}
+#tab-calendar .wd-date{
+ background:rgba(255,255,255,.78);border-radius:11px;
+ padding:8px 4px;min-width:51px;width:51px;
+}
+#tab-calendar .wd-date .d{color:#75405a}
+#tab-calendar .wd-tags{gap:6px}
+#tab-calendar .tag{padding:5px 8px;line-height:1.5;font-size:.69rem}
+#tab-map>.card:first-child{position:relative;overflow:visible}
+#tab-map>.card:first-child::before{
+ content:"";display:block;position:absolute;inset:0 0 auto;
+ height:165px;border-radius:23px 23px 0 0;pointer-events:none;z-index:-1;
+ background:linear-gradient(105deg,rgba(255,249,245,.88),rgba(253,239,240,.64)),
+ url("assets/ward-blossoms.svg") no-repeat left top / min(86%,405px) auto;
+}
+#tab-map>.card h2{
+ font-family:"Amiri",serif;font-size:1.65rem;margin:0;line-height:1.45;
+}
+#tab-map .map-summary-v64{
+ background:linear-gradient(125deg,#f6e5eb,#fff9f4);
+ border-color:#ead6df;box-shadow:none;border-radius:17px;
+}
+#tab-map .map-sum-main b{color:#733f58}
+#tab-map .map-jump-v96{gap:9px 12px;margin-top:18px}
+#tab-map .map-jump-v96>label,
+#tab-map .map-page-jump-v96>label{color:#6b5060;font-size:.76rem}
+#tab-map #jumpSurah,#tab-map .map-page-jump-v96 input{
+ min-height:45px;background:#fffdfa;border:1px solid #e6d6dc;
+ color:#503745;border-radius:12px;font-size:16px;
+}
+#tab-map .map-page-jump-v96 button{
+ min-height:45px;background:#f2e5e9;border:1px solid #e7d2da;
+ color:#6f3a53;border-radius:12px;
+}
+#tab-map .map-filter-title-v96{color:#634453;font-size:.78rem}
+#tab-map .map-filter-strip-v96{padding:2px 0 11px;gap:8px}
+#tab-map .map-filter-strip-v96 .mapfilt{
+ min-height:41px;border-radius:14px;
+ border:1px solid #e6d6dc;background:#fffaf9;color:#674d5a;
+ font-size:.71rem;box-shadow:none;
+}
+#tab-map .map-filter-strip-v96 .mapfilt.on{
+ background:#8d4d67;color:#fff;border-color:#8d4d67;
+ box-shadow:0 4px 12px #8d4d6725;
+}
+#tab-map .map-options-v96{
+ background:#fcf7f5;border-color:#eddee1;border-radius:16px;
+ padding:13px 14px;
+}
+#tab-map .map-options-v96>summary{color:#6d485c;min-height:25px;line-height:1.7}
+#tab-map .map-juz-heading-v96{
+ font-size:.96rem;color:#6a4054;margin:21px 0 13px;
+}
+#tab-map .juz-block{
+ border-color:#e7d9dc;background:#fffcfa;border-radius:17px;
+ box-shadow:0 3px 12px rgba(100,60,77,.045);margin-bottom:11px;
+}
+#tab-map .juz-head{
+ padding:14px 12px;gap:10px;
+ background:linear-gradient(110deg,#fffdfa,#f9f0ed);
+}
+#tab-map .juz-block.open .juz-head{background:linear-gradient(110deg,#f9ecee,#fffaf8)}
+#tab-map .juz-head .jt{color:#634154;font-size:.86rem}
+#tab-map .juz-head .js{color:#705e66;font-size:.68rem;line-height:1.6}
+#tab-map .juz-badge{
+ border-radius:12px;min-width:37px;height:39px;
+ background:#88516b;color:white;font-size:1.12rem;
+}
+#tab-map .juz-pages{background:#fffdfa;padding:13px 11px;border-color:#eee2e4}
+#tab-map .juz-info{min-width:0}
+#tab-map .juz-prog{max-width:66px}
+#tab-map .juz-prog .pbar{background:#efe4e6}
+#tab-map .juz-prog .pnum{color:#6b5260}
+#tab-map .surah-label{color:#6d4355;line-height:1.7}
+#tab-map .pg-row{gap:6px}
+#tab-map .pg{
+ min-width:35px;min-height:35px;height:35px;border-radius:10px;
+ font-variant-numeric:tabular-nums;
+}
+/* The semantic face-state colors and overlays are NOT changed here. */
+#tab-map .pg:focus-visible,#tab-map .juz-head:focus-visible,
+#tab-map button:focus-visible,#tab-map input:focus-visible,#tab-map select:focus-visible,
+#tab-calendar button:focus-visible,#tab-calendar .cal-cell:focus-visible,
+#tab-calendar .week-day:focus-visible{
+ outline:3px solid #82455f;outline-offset:2px;
+}
+#tab-calendar button,#tab-map button{font-family:inherit}
+@media(max-width:390px){
+ #tab-calendar,#tab-map{padding-inline:12px}
+ #tab-calendar .cal-head{align-items:stretch}
+ #tab-calendar .cal-head>div:first-child{justify-content:space-between}
+ #tab-map .juz-head{gap:7px;padding-inline:9px}
+ #tab-map .juz-badge{min-width:34px;width:34px}
+ #tab-map .juz-prog{max-width:55px}
+ #tab-map .pg{min-width:34px}
+}
+@media(prefers-reduced-motion:reduce){
+ #tab-calendar *,#tab-map *{animation:none!important;transition:none!important}
+}
