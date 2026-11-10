@@ -50,7 +50,7 @@ body[data-page="manual"]{
  box-shadow:0 22px 65px #3a26355c;
 }
 #settingsModal .v70-settings-head{
- position:relative;margin:-24px -26px 13px;padding:33px 28px 28px;
+ position:relative;margin:-24px calc(-1 * clamp(16px,4vw,26px)) 13px;padding:33px 28px 28px;
  background:linear-gradient(120deg,#fffaf5ec,#f4e1e6d9),
  url("assets/ward-blossoms.svg") no-repeat left top / min(90%,400px) auto;
  border-radius:26px 26px 19px 19px;min-height:120px;
