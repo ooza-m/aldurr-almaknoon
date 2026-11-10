@@ -2060,7 +2060,7 @@ function extraReviewDoneV111(plan,p,day=todayKey()){
  if(log&&rangeSetV50(log.revList||[]).has(+p))return true;
  return uniqueRecitationSessionsV163(S.recitationSessions||[]).some(rs=>{
   const date=keyOf(new Date(rs.endedAt||rs.startedAt||0));
-  return date===day&&['near','fix','far'].includes(rs.task)&&(rs.pages||[]).some(pg=>+pg.page===+p&&approvedRecitationFaceV149(rs,pg));
+  return date===day&&(rs.pages||[]).some(pg=>+pg.page===+p&&((['near','fix','far'].includes(rs.task)&&approvedRecitationFaceV149(rs,pg))||(rs.task==='free'&&rs.userReviewed===true&&pg.complete===true&&pg.manualConfirmed===true)));
  });
 }
 function markExtraReviewV111(id,page){
