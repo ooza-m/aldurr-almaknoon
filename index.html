@@ -781,6 +781,7 @@ window.FIREBASE_CONFIG = {
 </script>
 <link rel="stylesheet" href="app-preferences.css?v=109">
 <script src="app-preferences.js?v=109"></script>
+<script src="app-cloud-extras.js?v=109"></script>
 <script src="reader-ui.js?v=89"></script>
 <script src="reader-study.js?v=89"></script>
 <script src="app-data.js?v=89"></script>
@@ -1334,7 +1335,7 @@ window.FIREBASE_CONFIG = {
     <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntTafsir"> قراءة التفسير</label><input type="time" id="ntTafsirTime"></div>
     <p class="hint" id="ntStatus" style="margin-top:6px"></p>
   </div>
-  <div class="v70-set-group"><h4>النسخ الاحتياطية</h4><p class="hint">تتضمن بيانات الحفظ والفواصل وتفضيلات العرض. التنزيلات الصوتية تبقى على الجهاز ولا تدخل في ملف النسخة.</p><div style="margin:10px 0 13px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fffdfb)"><b style="font-size:.8rem">التحقق من بيانات Firebase</b><p class="hint" style="margin:4px 0 9px">فحص للقراءة فقط: يوضح وجود السجل السحابي ومحتوياته الرئيسية دون حفظ أو استبدال أي بيانات.</p><button class="btn btn-ghost btn-sm" type="button" id="cloudInspectV108">فحص بيانات الحساب</button><div class="hint" id="cloudInspectStatusV108" role="status" aria-live="polite" style="margin-top:9px;white-space:pre-line"></div></div><div class="v70-set-pair"><button class="btn btn-ghost" type="button" id="settingsBackup">تصدير نسخة</button><button class="btn btn-ghost" type="button" id="settingsRestore">استيراد نسخة</button></div><button class="btn btn-ghost btn-sm" type="button" id="settingsUndoRestore" style="width:100%;margin-top:8px">استرجاع النسخة السابقة لآخر استيراد</button>
+  <div class="v70-set-group"><h4>النسخ الاحتياطية</h4><p class="hint">تتضمن بيانات الحفظ والفواصل وتفضيلات العرض. التنزيلات الصوتية تبقى على الجهاز ولا تدخل في ملف النسخة.</p><div style="margin:10px 0 13px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fffdfb)"><b style="font-size:.8rem">التحقق من بيانات Firebase</b><p class="hint" style="margin:4px 0 9px">فحص للقراءة فقط: يوضح وجود السجل السحابي ومحتوياته الرئيسية دون حفظ أو استبدال أي بيانات.</p><button class="btn btn-ghost btn-sm" type="button" id="cloudInspectV108">فحص بيانات الحساب</button><div class="hint" id="cloudInspectStatusV108" role="status" aria-live="polite" style="margin-top:9px;white-space:pre-line"></div></div><div style="margin:10px 0 13px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fffdfb)"><b style="font-size:.8rem">مزامنة الفواصل وتفضيلات القراءة</b><p class="hint" style="margin:4px 0 9px">تُزامن فواصل الآيات وألوانها وتفضيلات العرض مع حسابك، ولا يُستبدل اختلاف بين جهازين تلقائيًا.</p><div class="hint" id="cloudExtrasStatusV109" role="status" aria-live="polite">سجّلي الدخول لفحص المزامنة.</div><div id="cloudExtrasConflictV109" hidden style="margin-top:9px"><p class="hint">احتفظي بكلتا النسختين قبل تسوية اختلافات البيانات.</p><div class="v70-set-pair"><button type="button" class="btn btn-ghost btn-sm" id="cloudExtrasLocalV109">تصدير نسخة الجهاز</button><button type="button" class="btn btn-ghost btn-sm" id="cloudExtrasRemoteV109">تصدير نسخة السحابة</button></div></div></div><div class="v70-set-pair"><button class="btn btn-ghost" type="button" id="settingsBackup">تصدير نسخة</button><button class="btn btn-ghost" type="button" id="settingsRestore">استيراد نسخة</button></div><button class="btn btn-ghost btn-sm" type="button" id="settingsUndoRestore" style="width:100%;margin-top:8px">استرجاع النسخة السابقة لآخر استيراد</button>
   <details id="backupHistoryV154" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
     <summary style="cursor:pointer;font-weight:650;font-size:.82rem">النسخ التلقائية وسجل الاستعادة</summary>
     <p class="hint" style="margin:9px 0">يُحتفظ بحد أقصى 5 نسخ يومية على هذا الجهاز فقط. الحذف التلقائي لبيانات المتصفح قد يُزيلها؛ صدّري نسخة إلى ملفات الجهاز احتياطًا.</p>
@@ -5599,7 +5600,7 @@ document.getElementById('backupHistoryListV154')?.addEventListener('click',async
 
 function applyImportV86(bundle){
  const state=DurrData.merge(DEF,bundle.state);state.updatedAt=Date.now();const keys=[KEY,DurrReaderUI.BOOKMARK_KEY,DurrStudy.NOTES_KEY,DurrPreferences.KEY,'durr-num'],previous=keys.map(key=>[key,localStorage.getItem(key)]);
- const preferences=bundle.preferences?{...DurrPreferences.get(),...bundle.preferences,design:'classic',updatedAt:Date.now()}:null;
+ const preferences=bundle.preferences?{...DurrPreferences.get(),...bundle.preferences,updatedAt:Date.now()}:null;
  try{
   localStorage.setItem(KEY,JSON.stringify(state));
   if(bundle.bookmarks)localStorage.setItem(DurrReaderUI.BOOKMARK_KEY,JSON.stringify(bundle.bookmarks));
@@ -5667,11 +5668,12 @@ function initCloud(){
         updateAcctChip();hideGate();
         // اجلبي السحابة أولًا قبل أي حفظ، ثم عيّني الاسم بعد الجلب إن لزم
         cloudPull(true,()=>{
+          if(window.DurrCloudExtras)void window.DurrCloudExtras.start(u.uid,fbDb);
           if(!(S.profile&&S.profile.name)&&u.displayName){if(!S.profile)S.profile={};S.profile.name=u.displayName;save();}
           cloudListen();
           setTimeout(consumeReviewedTarteelV166,120);
         });
-      }else{updateAcctChip();cloudUnlisten();if(!localStorage.getItem('durr-skip-auth'))showGate(true);}
+      }else{updateAcctChip();cloudUnlisten();if(window.DurrCloudExtras)void window.DurrCloudExtras.start(null,null);if(!localStorage.getItem('durr-skip-auth'))showGate(true);}
     });
   }catch(e){console.warn('cloud init failed',e);showGate(true);}
 }
