@@ -758,6 +758,8 @@ main{padding-top:0!important}
 .v104-focus-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.76rem}
 .v104-focus-row span{flex:1;min-width:0}
 .v104-focus-row .btn{flex:0 0 auto}
+/* Focused-review list removed from UI; historical records are never erased. */
+[data-focused-add-v143],[data-focused-session-v145],[data-focused-action-v143],[data-focused-mushaf-v146]{display:none!important}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <link rel="stylesheet" href="ward-phase05-home-today.css?v=1" media="not all" data-floral-stylesheet>
@@ -4112,9 +4114,22 @@ function expandItemsToPagesV71(items){
   const set=new Set();(items||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(+it.from,+it.to),Math.max(+it.from,+it.to)]:pagesOfSurah(+it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)set.add(p);});return set;
 }
 /* v111 · readable calendar activity: complete juz, surah, or contiguous face ranges. */
-function calendarPageSummaryV111(pages,label){
+function calendarPageSummaryV111(pages,label,sourceItems=[]){
  const list=[...new Set([...pages].map(Number).filter(p=>p>=1&&p<=604))].sort((a,b)=>a-b);
  if(!list.length)return'';
+ // If the manual record explicitly covers a complete surah, retain its name,
+ // including boundary pages shared with the next surah.
+ if(Array.isArray(sourceItems)&&sourceItems.length===1){
+  const item=sourceItems[0],range=pagesOfSurah(+item?.surahId);
+  if(range){
+   const a=item.from&&item.to?Math.min(+item.from,+item.to):range[0];
+   const b=item.from&&item.to?Math.max(+item.from,+item.to):range[1];
+   if(a===range[0]&&b===range[1]&&list[0]===a&&list.at(-1)===b&&list.length===b-a+1){
+    const sur=SURAHS.find(x=>x[0]===+item.surahId);
+    if(sur)return label+' سورة '+sur[1];
+   }
+  }
+ }
  const wholeJuz=JUZ_RANGE.findIndex(range=>list.length===range[1]-range[0]+1&&list[0]===range[0]&&list.at(-1)===range[1]&&list.every((p,i)=>p===range[0]+i));
  if(wholeJuz>=0)return label+': الجزء '+(wholeJuz+1);
  const grouped=[],bySurah=new Map();
@@ -4282,7 +4297,7 @@ function renderWeek(){
   for(let i=0;i<7;i++){
     const d=new Date(sun);d.setDate(sun.getDate()+i);const k=keyOf(d),f=dayFactsV71(k),hal=isHalaqaDay(k,d.getDay()),mrev=isManualReviewDay(k),att=attStatus(k);let tags='';
     const tag=(cls,txt)=>'<span class="tag '+cls+'">'+txt+'</span>';
-    if(f.groups.new.size)tags+=tag('new',esc(calendarPageSummaryV111(f.groups.new,'حفظ')));
+    if(f.groups.new.size)tags+=tag('new',esc(calendarPageSummaryV111(f.groups.new,'حفظ',f.log?.memList)));
     if(f.groups.near.size)tags+=tag('near',esc(calendarPageSummaryV111(f.groups.near,'مراجعة قريبة')));
     if(f.groups.far.size)tags+=tag('far',esc(calendarPageSummaryV111(f.groups.far,'مراجعة بعيدة')));
     if(f.tilawa)tags+=tag('tilawa','تلاوة');if(f.tafsir)tags+=tag('tafsir','تفسير');if(f.listen)tags+=tag('v71-listen','سماع');
@@ -4298,9 +4313,9 @@ function openDay(k){
   const dt=parseKey(k),dow=dt.getDay(),hal=isHalaqaDay(k,dow),f=fmtD(k),facts=dayFactsV71(k);
   document.getElementById('dayActTitle').textContent=AR_DOW[dow]+' · '+f.d+' '+f.m+' '+f.y;
   const box=document.getElementById('dayActBody');let html='';
-  const groupLine=(label,set,cls)=>set.size?'<div class="v71-day-line '+cls+'"><b>'+esc(calendarPageSummaryV111(set,label))+'</b><span>'+toAr(set.size)+' وجه</span><details style="grid-column:1/-1"><summary style="cursor:pointer;font-size:.72rem">تفاصيل الأوجه</summary><small>'+[...set].sort((a,b)=>a-b).map(p=>'سورة '+esc(surahOfPage(p)[1])+' · ص'+p).join('، ')+'</small></details></div>':'';
+  const groupLine=(label,set,cls,items)=>set.size?'<div class="v71-day-line '+cls+'"><b>'+esc(calendarPageSummaryV111(set,label,items))+'</b><span>'+toAr(set.size)+' وجه</span><details style="grid-column:1/-1"><summary style="cursor:pointer;font-size:.72rem">تفاصيل الأوجه</summary><small>'+[...set].sort((a,b)=>a-b).map(p=>'سورة '+esc(surahOfPage(p)[1])+' · ص'+p).join('، ')+'</small></details></div>':'';
   if(facts.active){
-    html+='<div class="v71-day-summary">'+groupLine('حفظ',facts.groups.new,'mem')+groupLine('مراجعة قريبة',facts.groups.near,'near')+groupLine('مراجعة بعيدة',facts.groups.far,'far');
+    html+='<div class="v71-day-summary">'+groupLine('حفظ',facts.groups.new,'mem',facts.log?.memList)+groupLine('مراجعة قريبة',facts.groups.near,'near')+groupLine('مراجعة بعيدة',facts.groups.far,'far');
     if(facts.tilawa)html+='<button class="v71-day-route" data-day-route="khatma"><b>التلاوة</b><span>'+esc((facts.log&&facts.log.tilawaTxt)||'مسجلة في هذا اليوم')+'</span></button>';
     if(facts.tafsir)html+='<button class="v71-day-route" data-day-route="tafsir"><b>التفسير</b><span>'+toAr(facts.tafsirEvents.length||1)+' نشاط مسجل</span></button>';
     if(facts.listen)html+='<div class="v71-day-line listen"><b>السماع</b><span>'+toAr(facts.listenEvents.length)+' نشاط</span><small>'+facts.listenEvents.map(e=>'وجه '+toAr(e.page||0)).filter(x=>!x.endsWith('٠')).join(' · ')+'</small></div>';
