@@ -53,23 +53,25 @@ function clearConflict(){
  blocked=false;const panel=document.getElementById('cloudExtrasConflictV109');if(panel)panel.hidden=true;
 }
 async function push(local,baseline){
- if(!user||blocked||busy)return;
+ if(!user||blocked||busy||!db)return;
+ const requestSerial=serial,target=ref(),database=db;
  busy=true;const next=stable(local),expected=baseline;
  try{
-  const result=await db.runTransaction(async tx=>{
-   const snap=await tx.get(ref()),remote=snap.exists?snap.data()?.payload:null;
+  const result=await database.runTransaction(async tx=>{
+   const snap=await tx.get(target),remote=snap.exists?snap.data()?.payload:null;
    if(remote===next)return 'equal';
    if(remote!==expected)return 'conflict';
-   tx.set(ref(),{payload:next,updatedAt:Date.now()});
+   tx.set(target,{payload:next,updatedAt:Date.now()});
    return 'saved';
   });
+  if(requestSerial!==serial)return; // A different account or sync session is now active.
   if(result==='conflict'){conflict();return;}
   saveBaseline(next);remotePayload=next;
   status(result==='saved'?'تمت مزامنة الفواصل وألوانها وتفضيلات القراءة.':'بيانات القراءة متطابقة مع السحابة.');
   // Do not drop changes made while the network request was in flight.
   if(stable(snapshot())!==next)setTimeout(()=>sync(),100);
- }catch(e){status('تعذّرت مزامنة بيانات القراءة. بيانات الجهاز محفوظة؛ حاولي عند توفر الاتصال.');console.warn('reader extras sync',e);}
- finally{busy=false;}
+ }catch(e){if(requestSerial===serial){status('تعذّرت مزامنة بيانات القراءة. بيانات الجهاز محفوظة؛ حاولي عند توفر الاتصال.');console.warn('reader extras sync',e);}}
+ finally{if(requestSerial===serial)busy=false;}
 }
 async function start(uid,firestore){
  serial++;const thisRun=serial;
