@@ -2759,50 +2759,42 @@ function renderDailyPageQueueV122(){
  if(modeInput)modeInput.onchange=()=>{S.reviewWeaknessMode=modeInput.value;save();refreshV50();};
 }
 /* v156 · التركيز على إنجاز اليوم أولًا، وإتاحة التفاصيل عند الطلب. */
+/* v111: statistics and planning belong in Statistics, not Today's execution view. */
 function organizeTodayV156(){
- const root=document.getElementById('tab-today');
- if(!root||root.dataset.organizedV156==='1')return;
- const main=root.querySelector('.today-v50'),tasks=document.getElementById('todayTasksV50');
- if(!main||!tasks)return;
- const heading=tasks.previousElementSibling,secondary=tasks.nextElementSibling;
- const focus=document.getElementById('focusedVerseReviewsV143'),review=document.getElementById('dailyPageQueueV122');
+ const today=document.getElementById('tab-today'),stats=document.getElementById('tab-stats');
+ if(!today||!stats||today.dataset.organizedV156==='1')return;
+ const focus=document.getElementById('focusedVerseReviewsV143');
+ if(focus)focus.remove(); // UI retired; historical error data are untouched.
  const details=document.createElement('details');
  details.id='todayFurtherV156';details.className='v50-glass v50-card';
- details.style.cssText='margin:12px 0;padding:14px';
- details.innerHTML='<summary style="cursor:pointer;font-weight:700">التفاصيل والتخطيط <small style="font-weight:400;color:var(--muted)">· تحليلات، توقعات، اختبارات وإعدادات</small></summary><div id="todayFurtherBodyV156" style="display:grid;gap:12px;margin-top:12px"></div>';
+ details.style.cssText='margin:14px 0;padding:14px';
+ details.innerHTML='<summary style="cursor:pointer;font-weight:700">التحليلات والتخطيط <small style="font-weight:400;color:var(--muted)">· توقعات، اختبارات وإعدادات</small></summary><div id="todayFurtherBodyV156" style="display:grid;gap:12px;margin-top:12px"></div>';
  const body=details.querySelector('#todayFurtherBodyV156');
- for(const id of ['smartReview','weeklyAchievementV136','longTermProgressV139','detailedMemorizationV140','studyPlanSettingsV134','reviewForecastV124','teacherTestV127','teacherCatchupV129']){
+ for(const id of ['smartReview','weeklyAchievementV136','longTermProgressV139','detailedMemorizationV140','studyPlanSettingsV134','reviewForecastV124','teacherTestV127','teacherCatchupV129','dailyPageQueueV122']){
   const el=document.getElementById(id);if(el){el.style.margin='0';body.appendChild(el);}
  }
- // رابط تحليل الأخطاء خيار إضافي، ولا ينبغي أن يقطع ترتيب مهام اليوم.
- const errorsLink=main.querySelector('.v50-glass.v50-card button[data-v50-route="errors"]')?.closest('.v50-glass.v50-card');
- if(errorsLink)body.appendChild(errorsLink);
- const priority=document.getElementById('todayPriorityV50');
- if(priority&&heading.parentNode===main)priority.after(heading);
- if(heading.parentNode===main)heading.after(tasks);
- if(tasks.parentNode===main){
-  if(secondary&&secondary.parentNode===main)tasks.after(secondary);
-  const tail=secondary&&secondary.parentNode===main?secondary:tasks;
-  if(focus)tail.after(focus);
-  if(review&&focus)focus.after(review);else if(review)tail.after(review);
-  (review||focus||tail).after(details);
- }
- root.dataset.organizedV156='1';
+ const statsBox=document.getElementById('statsV67');
+ if(statsBox)statsBox.after(details);else stats.appendChild(details);
+ // An older auxiliary analysis card must not clutter Today's tasks.
+ const errorLink=today.querySelector('.v50-glass.v50-card button[data-v50-route="errors"]')?.closest('.v50-glass.v50-card');
+ if(errorLink)body.appendChild(errorLink);
+ today.dataset.organizedV156='1';
 }
 function renderTodayV50(){
   organizeTodayV156();
-  mergeFocusedMushafActionsV146();
-  renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderDetailedMemorizationV140();renderFocusedVerseReviewsV143();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
+  /* focused review list retired; existing session history is preserved */
+  renderSmartReview();renderWeeklyAchievementV136();renderLongTermProgressV139();renderDetailedMemorizationV140();renderStudyPlanSettingsV134();renderDailyPageQueueV122();renderReviewForecastV124();renderTeacherTestV127();renderTeacherCatchupV129();
   const d=new Date(),date=document.getElementById('todayDateV50');if(date)date.textContent=DurrPreferences.format(d,{weekday:'long'});
-  const tasks=tasksV50(),recTasks=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
+  const tasks=tasksV50(),recTasks=tasks.filter(t=>t.id==='new'||t.id==='near'||t.id==='far'||t.extra),recTarget=recTasks.reduce((n,t)=>n+Math.max(0,t.target||0),0),recDone=recTasks.reduce((n,t)=>n+Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0)),0),pct=recTarget?Math.min(100,Math.round(recDone/recTarget*100)):100,r=37,c=2*Math.PI*r,off=c*(1-pct/100),ov=document.getElementById('todayOverviewV50'),remaining=recTasks.reduce((n,t)=>n+(t.pages||[]).length,0);
   if(ov)ov.innerHTML='<div class="v50-today-overview"><div class="v50-ring" style="width:100px;height:100px"><svg viewBox="0 0 100 100" style="width:100px;height:100px"><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="rgba(94,58,77,.08)" stroke-width="9"/><circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--clay)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'"/></svg><b style="font-size:1rem">'+pct+'%</b></div><div class="v50-task-legend"><div class="v60-today-title"><b>'+(remaining?'بقي '+remaining+' وجهًا للحفظ والمراجعة':'أنجزتِ مهام الحفظ والمراجعة')+'</b><small>هذه النسبة لا تخلط التلاوة والتفسير والحلقة مع أداء الحفظ.</small></div>'+recTasks.map(t=>'<div class="v50-legend-row"><i style="background:'+t.color+'"></i><span>'+t.label+'</span><b>'+t.done+'/'+t.target+'</b></div>').join('')+'</div></div>';
   const p=priorityV50(),pc=document.getElementById('todayPriorityV50'),pt=tasks.find(t=>t.id===(p.taskId||'')),canSession=pt&&pt.pages&&pt.pages.length;
   if(pc)pc.innerHTML='<div class="v50-priority-top"><div class="v50-kicker">'+(p.complete?'الحفظ والمراجعة':'ابدئي من هنا')+'</div><span class="v50-badge">'+p.kind+'</span></div><h3>'+esc(p.title)+'</h3><p>'+esc(p.sub)+'</p>'+(p.complete?'<div class="v72-priority-done">بقية المهام المساندة موجودة أدناه.</div>':'<button class="v50-btn primary" style="width:100%" '+(canSession?'data-v60-session="'+p.taskId+'"':'data-v50-mushaf="'+p.page+'" data-mode="recite" data-task="'+(p.taskId||'free')+'"')+'>'+(canSession?'ابدئي الجلسة':'افتحي المصحف')+'</button>');
   const list=document.getElementById('todayTasksV50');
+  renderCustomReviewTodayV111();
   let pausedPlan=null;
   try{pausedPlan=JSON.parse(localStorage.getItem('durr-active-task-session')||'null');}catch(_){}
   if(list)list.innerHTML=tasks.map(t=>{const done=t.target>0&&t.done>=t.target,remain=(t.pages||[]).length,rec=['new','fix','near','far'].includes(t.id),first=t.page,loc=first?surahOfPage(first):null,
-    resume=rec&&remain&&pausedPlan?.task===t.id&&pausedPlan?.date===todayKey()&&Array.isArray(pausedPlan.pages)&&pausedPlan.pages.length;let sub=t.target===0?'لا يوجد مطلوب اليوم':done?'مكتمل لليوم':rec?(remain+' وجه'+(first?' · التالي: '+(loc?loc[1]+' · ':'')+first:'')):(t.done+' من '+t.target),action='';if(t.id==='halaqa')action='<button class="v50-task-action" data-v50-halaqa="1">'+(done?'مكتمل':'تسجيل الحضور')+'</button>';else if(t.id==='ai-review')action='<button class="v50-task-action" data-v50-route="errors">راجعي '+t.target+' موضعًا</button>';else if(t.id==='tilawa'&&!S.khatma)action='<button class="v50-task-action" data-v50-route="khatma">إعداد الختمة</button>';else if(rec)action='<button class="v50-task-action" '+(remain?'data-v60-session="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':resume?'استئناف الجلسة':t.done?'أكملي الجلسة':t.action)+'</button>';else action='<button class="v50-task-action" '+(first?'data-v50-mushaf="'+first+'" data-mode="'+(t.id==='tafsir'?'tafsir':'')+'" data-task="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':t.action)+'</button>';const progress=t.target?Math.min(100,Math.round((t.done/t.target)*100)):0;return '<div class="v50-glass v50-task v60-task'+(done?' done':'')+'"><div class="v50-task-icon" style="color:'+t.color+'">'+v50Svg(t.kind)+'</div><div class="v50-task-main"><b>'+t.label+'</b><small>'+sub+(t.id==='fix'&&t.target?' · يوميًا خلال مرحلة التثبيت':'')+'</small><div class="v60-mini-progress"><i style="width:'+progress+'%;background:'+t.color+'"></i></div></div>'+action+'</div>';}).join('');
+    resume=rec&&remain&&pausedPlan?.task===t.id&&pausedPlan?.date===todayKey()&&Array.isArray(pausedPlan.pages)&&pausedPlan.pages.length;let sub=t.target===0?'لا يوجد مطلوب اليوم':done?'مكتمل لليوم':rec?(remain+' وجه'+(first?' · التالي: '+(loc?loc[1]+' · ':'')+first:'')):(t.done+' من '+t.target),action='';if(t.id==='halaqa')action='<button class="v50-task-action" data-v50-halaqa="1">'+(done?'مكتمل':'تسجيل الحضور')+'</button>';else if(t.extra)action='<button class="v50-task-action" data-extra-review-open-v111="'+esc(t.planId)+'" '+(!remain?'disabled':'')+'>'+(done?'مكتمل':'عرض الأوجه')+'</button>';else if(t.id==='tilawa'&&!S.khatma)action='<button class="v50-task-action" data-v50-route="khatma">إعداد الختمة</button>';else if(rec)action='<button class="v50-task-action" '+(remain?'data-v60-session="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':resume?'استئناف الجلسة':t.done?'أكملي الجلسة':t.id==='new'?'ابدئي الحفظ':'ابدئي المراجعة')+'</button>';else action='<button class="v50-task-action" '+(first?'data-v50-mushaf="'+first+'" data-mode="'+(t.id==='tafsir'?'tafsir':'')+'" data-task="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':t.id==='tafsir'?'فتح التفسير':'فتح المصحف')+'</button>';const progress=t.target?Math.min(100,Math.round((t.done/t.target)*100)):0;return '<div class="v50-glass v50-task v60-task'+(done?' done':'')+'"><div class="v50-task-icon" style="color:'+t.color+'">'+v50Svg(t.kind)+'</div><div class="v50-task-main"><b>'+t.label+'</b><small>'+sub+(t.id==='fix'&&t.target?' · يوميًا خلال مرحلة التثبيت':'')+'</small><div class="v60-mini-progress"><i style="width:'+progress+'%;background:'+t.color+'"></i></div></div>'+action+'</div>';}).join('');
 }
 function renderTafsirSummaryV67(){
   const box=document.getElementById('tafsirAutoSummary');if(!box)return;
