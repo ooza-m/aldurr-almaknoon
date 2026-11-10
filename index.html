@@ -2808,6 +2808,76 @@ function newMemPagesSinceV69(days){
   (S.logs||[]).filter(l=>l.date>=ck).forEach(l=>(l.memList||[]).forEach(it=>{const rg=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);if(rg)for(let p=rg[0];p<=rg[1];p++)set.add(p);}));
   return set;
 }
+/* v111 · settings for automatic far review and independent custom review plans. */
+function renderReviewPlansV111(){
+ const parent=document.getElementById('tab-planning');
+ if(!parent)return;
+ let host=document.getElementById('reviewPlansV111');
+ if(!host){host=document.createElement('section');host.id='reviewPlansV111';host.className='card';host.style.cssText='margin:14px 0;padding:18px';const real=document.getElementById('planningRealityV69');if(real)real.after(host);else parent.appendChild(host);}
+ const opt=optionalDailyItemsV111(),plans=Array.isArray(S.extraReviewPlans)?S.extraReviewPlans:[];
+ host.innerHTML='<h3 style="margin-bottom:8px">مسارات المراجعة</h3>'+
+ '<p class="hint">القريبة: كل وجه لمدة 30 يومًا من تاريخ حفظه، ثم ينتقل تلقائيًا إلى البعيدة.</p>'+
+ '<label style="display:grid;gap:6px;margin:12px 0">دورة المراجعة البعيدة (ختم جميع أوجهها كل كم يومًا؟)<input id="farCycleDaysV111" type="number" min="1" max="365" inputmode="numeric" value="'+farCycleDaysV111()+'" style="max-width:145px"></label>'+
+ '<p class="hint">النصاب اليومي يُحسب من عدد الأوجه التي انتقلت إلى البعيدة ÷ عدد أيام الدورة، ويُقرّب للأعلى.</p>'+
+ '<fieldset style="border:1px solid var(--line);padding:12px;border-radius:14px;margin-top:12px"><legend>إظهار الأوراد الاختيارية في مهام اليوم</legend>'+
+ '<label style="display:block;margin:7px 0"><input type="checkbox" id="dailyTilawaV111" '+(opt.tilawa?'checked':'')+'> ورد التلاوة</label>'+
+ '<label style="display:block;margin:7px 0"><input type="checkbox" id="dailyTafsirV111" '+(opt.tafsir?'checked':'')+'> ورد التفسير</label></fieldset>'+
+ '<button class="btn btn-primary btn-sm" type="button" id="saveReviewSettingsV111" style="margin:12px 0">حفظ إعدادات المسارات</button>'+
+ '<h3 style="margin:17px 0 5px">مراجعات إضافية</h3><p class="hint">أنشئي مراجعة مستقلة من الأعلى أو الأسفل، لمدة محددة أو بصورة مستمرة. لا تغيّر خطة القريبة والبعيدة.</p>'+
+ '<div id="reviewPlanListV111" style="display:grid;gap:8px;margin:12px 0">'+(plans.length?plans.map(p=>'<div style="padding:11px;border:1px solid var(--line);border-radius:12px"><b>'+esc(p.name||'مراجعة إضافية')+'</b><small style="display:block;color:var(--muted)">الأوجه '+p.from+'–'+p.to+' · '+p.dailyPages+' وجه/يوم · '+(p.direction==='down'?'من الأسفل':'من الأعلى')+' · '+(p.durationDays?p.durationDays+' يومًا':'مستمرة')+'</small><button class="btn btn-ghost btn-sm" type="button" data-extra-toggle-v111="'+esc(p.id)+'">'+(p.active===false?'تفعيل':'إيقاف مؤقت')+'</button> <button class="btn btn-ghost btn-sm" type="button" data-extra-delete-v111="'+esc(p.id)+'">حذف المسار</button></div>').join(''):'<p class="hint">لا توجد مراجعات إضافية بعد.</p>')+'</div>'+
+ '<form id="createExtraReviewV111" style="display:grid;gap:9px;border-top:1px solid var(--line);padding-top:12px">'+
+ '<label>الاسم (اختياري)<input name="reviewName" maxlength="60" placeholder="مثال: مراجعة من آخر المصحف"></label>'+
+ '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label>من وجه<input name="from" type="number" min="1" max="604" value="1" required></label><label>إلى وجه<input name="to" type="number" min="1" max="604" value="604" required></label></div>'+
+ '<label>الاتجاه<select name="direction"><option value="up">من الأعلى إلى الأسفل</option><option value="down">من الأسفل إلى الأعلى</option></select></label>'+
+ '<label>عدد الأوجه يوميًا<input name="dailyPages" type="number" min="1" max="604" value="5" required></label>'+
+ '<label>المدة<select name="durationMode" id="extraDurationModeV111"><option value="ongoing">مستمرة</option><option value="fixed">محددة بالأيام</option></select></label>'+
+ '<label id="extraDurationDaysWrapV111" hidden>عدد الأيام<input name="durationDays" type="number" min="1" max="3650" value="60"></label>'+
+ '<label>تاريخ البدء<input name="startDate" type="date" value="'+todayKey()+'" required></label>'+
+ '<button type="submit" class="btn btn-primary">إضافة المراجعة</button></form><p id="reviewPlanMessageV111" class="hint" role="status"></p>';
+ document.getElementById('saveReviewSettingsV111').onclick=()=>{
+  const days=Number(document.getElementById('farCycleDaysV111').value);
+  if(!Number.isInteger(days)||days<1||days>365){document.getElementById('reviewPlanMessageV111').textContent='دورة البعيدة يجب أن تكون بين 1 و365 يومًا.';return;}
+  S.farReviewCycleDays=days;
+  S.dailyTaskOptions={tilawa:document.getElementById('dailyTilawaV111').checked,tafsir:document.getElementById('dailyTafsirV111').checked};
+  save();refreshV50();renderReviewPlansV111();
+ };
+ const mode=document.getElementById('extraDurationModeV111'),wrap=document.getElementById('extraDurationDaysWrapV111');
+ mode.onchange=()=>wrap.hidden=mode.value!=='fixed';
+ document.getElementById('createExtraReviewV111').onsubmit=event=>{
+  event.preventDefault();
+  const v=Object.fromEntries(new FormData(event.currentTarget).entries()),from=+v.from,to=+v.to,dailyPages=+v.dailyPages;
+  const duration=v.durationMode==='fixed'?+v.durationDays:null;
+  if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||to<1||from>604||to>604||!Number.isInteger(dailyPages)||dailyPages<1||dailyPages>604||duration!==null&&(!Number.isInteger(duration)||duration<1||duration>3650)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(v.startDate)){
+   document.getElementById('reviewPlanMessageV111').textContent='تحققي من أرقام الأوجه والمدة وتاريخ البدء.';return;
+  }
+  S.extraReviewPlans=S.extraReviewPlans||[];
+  S.extraReviewPlans.push({id:'rp_'+Date.now()+'_'+Math.floor(Math.random()*100000),name:String(v.reviewName||'').trim().slice(0,60),from,to,direction:v.direction,dailyPages,durationDays:duration,startDate:v.startDate,active:true});
+  save();refreshV50();renderReviewPlansV111();
+ };
+ host.onclick=event=>{
+  const toggle=event.target.closest('[data-extra-toggle-v111]'),del=event.target.closest('[data-extra-delete-v111]');
+  if(!toggle&&!del)return;
+  const id=(toggle||del).dataset[toggle?'extraToggleV111':'extraDeleteV111'];
+  const item=(S.extraReviewPlans||[]).find(p=>p.id===id);if(!item)return;
+  if(toggle)item.active=item.active===false;
+  else if(confirm('هل تريدين حذف هذا المسار؟ ستبقى سجلات المراجعات التاريخية محفوظة.'))S.extraReviewPlans=S.extraReviewPlans.filter(p=>p.id!==id);
+  else return;
+  save();refreshV50();renderReviewPlansV111();
+ };
+}
+function renderCustomReviewTodayV111(){
+ const tasks=document.getElementById('todayTasksV50');if(!tasks)return;
+ let host=document.getElementById('extraReviewTodayV111');
+ if(!host){host=document.createElement('div');host.id='extraReviewTodayV111';tasks.after(host);}
+ const plans=extraReviewPlansV111().map(plan=>({plan,due:extraReviewDueV111(plan)})).filter(x=>x.due.length);
+ host.innerHTML=plans.map(({plan,due})=>'<details style="margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:14px" data-extra-panel-v111="'+esc(plan.id)+'"><summary style="cursor:pointer;font-weight:700">'+esc(plan.name||'مراجعة إضافية')+' · '+due.filter(p=>!extraReviewDoneV111(plan,p)).length+' متبقية</summary><div style="display:grid;gap:7px;margin-top:9px">'+due.map(p=>'<div style="display:flex;gap:7px;align-items:center;justify-content:space-between"><span>سورة '+esc(surahOfPage(p)[1])+' · ص'+p+'</span><span><button class="btn btn-ghost btn-sm" data-v50-mushaf="'+p+'" data-mode="recite" data-task="free">فتح</button> <button class="btn btn-ghost btn-sm" data-extra-mark-v111="'+esc(plan.id)+'" data-extra-page-v111="'+p+'" '+(extraReviewDoneV111(plan,p)?'disabled':'')+'>'+(extraReviewDoneV111(plan,p)?'تمت':'تمت المراجعة')+'</button></span></div>').join('')+'</div></details>').join('');
+ host.onclick=event=>{const mark=event.target.closest('[data-extra-mark-v111]');if(mark)markExtraReviewV111(mark.dataset.extraMarkV111,+mark.dataset.extraPageV111);};
+}
+document.addEventListener('click',event=>{
+ const btn=event.target.closest('[data-extra-review-open-v111]');if(!btn)return;
+ const panel=[...document.querySelectorAll('[data-extra-panel-v111]')].find(x=>x.dataset.extraPanelV111===btn.dataset.extraReviewOpenV111);
+ if(panel){panel.open=true;panel.scrollIntoView({block:'nearest',behavior:'smooth'});}
+});
 function renderPlanningV67(){
   const box=document.getElementById('planningSummary'),real=document.getElementById('planningRealityV69');if(!box||!real)return;
   const goal=Math.max(1,(S.goal&&S.goal.pages)||1),mem=memCount(),remain=Math.max(0,604-mem),days=Math.ceil(remain/goal),finish=addDaysKeyV62(todayKey(),Math.max(0,days-1));
@@ -2817,6 +2887,7 @@ function renderPlanningV67(){
     '<div class="v69-plan-progress"><i><em style="width:'+Math.round(mem/604*100)+'%"></em></i><div><span>'+toAr(mem)+' محفوظ</span><span>'+toAr(remain)+' متبقٍ</span></div></div>';
   const b=document.getElementById('v67GoalEdit');if(b)b.onclick=()=>{const n=prompt('كم وجهًا تريدين هدفًا يوميًا؟',goal);if(n===null)return;const v=Math.max(1,Math.min(20,+n||goal));S.goal=S.goal||{};S.goal.pages=v;S.goal.active=true;save();renderPlanningV67();refreshV50();};
   real.innerHTML='<div class="v69-plan-grid"><div class="card"><span>آخر 7 أيام</span><b>'+toAr(p7.size)+' وجهًا جديدًا</b><small>من الإنجاز المسجّل فعليًا</small></div><div class="card"><span>متوسط 30 يومًا</span><b>'+toAr(Math.round(actual*10)/10)+' وجه/يوم</b><small>'+(actualFinish?'بهذا المعدّل: '+DurrPreferences.format(actualFinish):'لا توجد بيانات كافية بعد')+'</small></div><div class="card"><span>عبء المراجعة الآن</span><b>'+toAr(reviewLoad)+' وجهًا</b><small>'+toAr(fix)+' تثبيت · '+toAr(near)+' قريبة · '+toAr(far)+' بعيدة</small></div><div class="card"><span>هدف أسبوع كامل</span><b>'+toAr(goal*7)+' وجهًا</b><small>قبل إضافة عبء المراجعة</small></div></div>';
+  renderReviewPlansV111();
 }
 function renderStatsV67(){
   const box=document.getElementById('statsV67');if(!box)return;
