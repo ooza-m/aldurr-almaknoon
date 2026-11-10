@@ -6620,7 +6620,7 @@ setTimeout(consumeReviewedTarteelV166,500);
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=108');
+      const reg=await navigator.serviceWorker.register('sw.js?v=109');
       reg.update().catch(()=>{});
       let reloaded=sessionStorage.getItem('durr-sw81-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
