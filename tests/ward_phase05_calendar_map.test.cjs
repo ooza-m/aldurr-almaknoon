@@ -43,7 +43,7 @@ test('roadmap retains page lookup, filters, summary and the 30-part container',(
  assert.equal(page.getAttribute('min'),'1');
  assert.equal(page.getAttribute('max'),'604');
  assert.deepEqual([...map.querySelectorAll('.mapfilt')].map(x=>x.dataset.filter),
-  ['all','fix','partial','near','far','weak','errors']);
+  ['all','partial','near','far','weak','errors']);
 });
 
 test('Ward styles do not replace the memorization state palette or grade an entire face',()=>{

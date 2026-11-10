@@ -55,8 +55,8 @@ test('system appearance follows OS changes only when system mode is selected',()
 test('settings and reminders shortcuts work before login and all tabs render',async t=>{
  const {dom,w,$,errors}=await boot();t.after(()=>dom.window.close());
  $('moreSettingsBtn').click();assert.ok($('settingsModal').classList.contains('open'),'settings shortcut');
- $('homeNotifBtn').click();assert.ok($('reminderModal').classList.contains('open'),'notifications open reminders');
- $('reminderClose').click();assert.ok(!$('reminderModal').classList.contains('open'),'reminder dialog closes');
+ $('homeNotifBtn').click();assert.ok($('tab-more').classList.contains('active'),'home shortcut opens More');
+ assert.equal($('reminderModal'),null,'notification preferences are embedded in Settings');
  $('settingsModal').classList.remove('open');
  for(const route of ['home','today','manual','calendar','map','more','khatma','tafsir','planning','stages','stats','tajweed','errors']){w.switchTab(route);assert.ok($('tab-'+route).classList.contains('active'),route);}
  assert.deepEqual(errors,[]);
@@ -92,7 +92,7 @@ test('navigation controls and More shortcuts target real panels',async t=>{
  const {dom,w,$}=await boot();t.after(()=>dom.window.close());
  const targets=[...new Set([...w.document.querySelectorAll('[data-v50-route]')].map(b=>b.dataset.v50Route))];
  for(const target of targets){assert.ok($('tab-'+target),target);w.document.querySelector('[data-v50-route="'+target+'"]').click();assert.ok($('tab-'+target).classList.contains('active'),target);}
- for(const target of ['home','today','calendar','more']){w.document.querySelector('#bottomNav [data-tab="'+target+'"]').click();assert.ok($('tab-'+target).classList.contains('active'));}
+ for(const target of ['home','today','calendar','map']){w.document.querySelector('#bottomNav [data-tab="'+target+'"]').click();assert.ok($('tab-'+target).classList.contains('active'));}
  $('moreSettingsBtn').click();$('set-name').value='اختبار';$('set-name-save').click();assert.equal(JSON.parse(w.localStorage.getItem('durr-alfareed-v2')).profile.name,'اختبار');
 });
 test('stage completion uses the selected-calendar picker and saves only after confirmation',async t=>{

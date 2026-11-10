@@ -37,26 +37,27 @@ test('reader home follows the top controls and the page slider is in front of dr
  assert.match(readerStyle,/\.reader-dock \.rec-job-status\{order:2;position:relative;z-index:1/);
 });
 
-test('review roadmap renders remaining fixation days and the near-review due date from engine state',()=>{
+test('review roadmap uses the same near and far pages as Today and opens the requested face',()=>{
  const start=index.indexOf('function wardReviewRoadmapV205(){'),end=index.indexOf('\nfunction renderMap(){',start);
  assert.ok(start>=0&&end>start);
- const first={12:'2026-10-21',20:'2026-10-11',35:'2026-09-20',40:'2026-08-20'};
- const engine={12:{phase:'fix',due:true},20:{phase:'fix',due:false},35:{phase:'near',due:true,nextDue:'2026-11-09'},40:{phase:'far',due:true,nextDue:'2026-11-10'}};
+ const first={12:'2026-10-21',35:'2026-09-20',40:'2026-08-20'};
+ const engine={12:{phase:'near',day:21,due:true,doneToday:false,nextDue:'2026-11-10'},
+ 35:{phase:'near',day:30,due:false,doneToday:true,nextDue:'2026-11-11'},
+ 40:{phase:'far',due:true,doneToday:false,nextDue:'2026-11-10'}};
  let opened=null;
- const fn=new Function('document','todayKey','firstMemDateV62','reviewEngineStateV62','surahOfPage','daysBetween','esc','openPage',
+ const fn=new Function('document','firstMemDateV62','reviewEngineStateV62','surahOfPage','esc','openPage','taskPagesV60','toAr','farCycleDaysV111','farDailyQuotaV111',
  index.slice(start,end)+'\nreturn wardReviewRoadmapV205;')(
-  document,()=> '2026-11-10',p=>first[p]||null,p=>engine[p]||{phase:'unseen'},
-  ()=>[1,'البقرة'],(a,b)=>Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000),
-  x=>String(x),p=>{opened=p}
+ document,p=>first[p]||null,p=>engine[p]||{phase:'unseen'},
+ ()=>[1,'البقرة'],x=>String(x),p=>{opened=p},
+ task=>task==='near'?[12]:task==='far'?[40]:[],String,()=>7,()=>1
  );
  fn();
  const container=document.getElementById('wardReviewRoadmap'),summary=document.getElementById('wardReviewTotal');
- assert.equal(summary.textContent,'3 وجه');
- const lines=[...container.querySelectorAll('[data-ward-face]')];
- assert.deepEqual(lines.map(el=>Number(el.dataset.wardFace)),[20,12,35]);
- assert.match(lines[0].textContent,/ينتقل إلى القريبة غدًا/);
- assert.match(lines[1].textContent,/10 يوم متبقٍ/);
- assert.match(lines[2].textContent,/مستحق الآن/);
- assert.ok(!container.textContent.includes('وجه 40'));
- lines[1].click();assert.equal(opened,12);
+ assert.match(summary.textContent,/2 أوجه اليوم/);
+ const visible=[...container.querySelectorAll('.review-today-list-v173 [data-ward-face]')];
+ assert.deepEqual(visible.map(el=>Number(el.dataset.wardFace)),[12,40]);
+ assert.match(container.textContent,/المراجعة القريبة/);
+ assert.match(container.textContent,/المراجعة البعيدة/);
+ assert.match(container.textContent,/أُنجز اليوم/);
+ visible[0].click();assert.equal(opened,12);
 });

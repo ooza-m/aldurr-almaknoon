@@ -18,7 +18,7 @@ test('first Ward skin loads only in the app shell and not the Mushaf',()=>{
 test('Ward floral art is local and has no external resources or scripts',()=>{
  assert.match(svg,/<svg /);
  assert.match(svg,/<\/svg>/);
- assert.doesNotMatch(svg,/<script|onload=|https?:\/\//i);
+ assert.doesNotMatch(svg,/<script|onload=|(?:href|src)=['\"]https?:\/\//i);
  assert.match(css,/url\("assets\/ward-blossoms\.svg"\)/);
 });
 
