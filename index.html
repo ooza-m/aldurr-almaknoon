@@ -3824,7 +3824,7 @@ function fillJuzPages(j){
   cont.querySelectorAll('.pg').forEach(c=>c.addEventListener('click',ev=>{ev.stopPropagation();openPage(+c.dataset.page,+c.dataset.surah);}));
   // v114: حساب لون الرقم من الخلفية الفعلية بدل افتراض أن كل الأوجه المحفوظة داكنة.
   cont.querySelectorAll('.pg').forEach(c=>{
-    const bg=getComputedStyle(c).backgroundColor.match(/[\\d.]+/g);
+    const bg=getComputedStyle(c).backgroundColor.match(/[\d.]+/g);
     if(!bg||bg.length<3)return;
     const channel=bg.slice(0,3).map(n=>{const v=Math.min(255,+n)/255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});
     const luminance=.2126*channel[0]+.7152*channel[1]+.0722*channel[2];
