@@ -1814,78 +1814,74 @@ function firstMemDateV62(p){
   if(f&&f.first)return f.first;
   return firstMemDateMapV50()[p]||null;
 }
+/* v111: two canonical review tracks. Historical 'fix' logs remain readable. */
+function farCycleDaysV111(){const n=Number(S.farReviewCycleDays);return Number.isInteger(n)&&n>=1&&n<=365?n:7;}
 function ensurePageSchedV62(p){
-  S.pageReviewSched=S.pageReviewSched||{};
-  let x=S.pageReviewSched[p];const first=firstMemDateV62(p);if(!first)return null;
-  const age=daysBetween(first,todayKey());
-  if(!x){
-    x={page:+p,firstMemDate:first,phase:age<=30?'fix':'near',nearLevel:0,farLevel:0,nextDue:age<=30?todayKey():todayKey(),lastReview:null,updatedAt:Date.now()};
-    S.pageReviewSched[p]=x;
-  }else if(!x.firstMemDate)x.firstMemDate=first;
-  if(age<=30){x.phase='fix';if(!x.nextDue)x.nextDue=addDaysKeyV62(x.lastReview||first,1);}
-  else if(x.phase==='fix'){x.phase='near';x.nearLevel=0;x.nextDue=todayKey();}
-  return x;
+ S.pageReviewSched=S.pageReviewSched||{};
+ const first=firstMemDateV62(p);if(!first)return null;
+ let x=S.pageReviewSched[p]||{page:+p,firstMemDate:first,lastReview:null};
+ x.firstMemDate=first;
+ const age=Math.max(0,daysBetween(first,todayKey()));
+ // The thirty-day near stage starts at first memorization and ends after day 30.
+ x.phase=age<30?'near':'far';
+ if(!x.nextDue)x.nextDue=age<30?addDaysKeyV62(first,1):todayKey();
+ S.pageReviewSched[p]=x;
+ return x;
+}
+function lastManualReviewDateV111(p,first){
+ let latest=null;
+ for(const log of S.logs||[]){
+  if(!log.date||log.date<first||log.date>todayKey())continue;
+  if((log.revList||[]).some(it=>{
+   const range=it.from&&it.to?[Math.min(+it.from,+it.to),Math.max(+it.from,+it.to)]:pagesOfSurah(+it.surahId);
+   return range&&+p>=range[0]&&+p<=range[1];
+  })&&(!latest||log.date>latest))latest=log.date;
+ }
+ return latest;
 }
 function reviewEngineStateV62(p){
-  const first=firstMemDateV62(p);if(!first)return{phase:'unseen',due:false,firstMemDate:null};
-  const age=Math.max(0,daysBetween(first,todayKey())),doneToday=completeReviewTodayV62(p);
-  const x=ensurePageSchedV62(p);
-  if(age<=30)return{phase:'fix',day:Math.min(30,Math.max(1,age)),due:age>=1&&!doneToday,doneToday,firstMemDate:first,nextDue:doneToday?addDaysKeyV62(todayKey(),1):(x.nextDue||todayKey()),schedule:x};
-  // A manual review is not a scored recitation. Respect its date without
-  // promoting mastery levels or overwriting the original schedule/history.
-  const latestManual=(S.logs||[]).filter(log=>log.date&&log.date>=first&&log.date<=todayKey()&&(log.revList||[]).some(item=>{
-    const range=item.from&&item.to?[Math.min(+item.from,+item.to),Math.max(+item.from,+item.to)]:pagesOfSurah(+item.surahId);
-    return range&&+p>=range[0]&&+p<=range[1];
-  })).reduce((latest,log)=>!latest||log.date>latest?log.date:latest,null);
-  const phase=x&&x.phase==='far'?'far':'near';
-  const manualIsLatest=latestManual&&(!x.lastReview||latestManual>x.lastReview);
-  const dueDate=manualIsLatest?addDaysKeyV62(latestManual,phase==='far'?7:3):((x&&x.nextDue)||todayKey());
-  return{phase,due:!doneToday&&dueDate<=todayKey(),doneToday,firstMemDate:first,nextDue:dueDate,overdueDays:dueDate<=todayKey()?Math.max(0,daysBetween(dueDate,todayKey())):0,schedule:x};
+ const first=firstMemDateV62(p);if(!first)return{phase:'unseen',due:false,firstMemDate:null};
+ const age=Math.max(0,daysBetween(first,todayKey()));
+ const x=ensurePageSchedV62(p),doneToday=completeReviewTodayV62(p);
+ if(age<30)return{phase:'near',day:Math.min(30,age+1),due:age>=1&&!doneToday,doneToday,firstMemDate:first,nextDue:doneToday?addDaysKeyV62(todayKey(),1):addDaysKeyV62(x.lastReview||first,1),schedule:x};
+ const lastManual=lastManualReviewDateV111(p,first);
+ const last=lastManual&&(!x.lastReview||lastManual>x.lastReview)?lastManual:x.lastReview;
+ const earliest=addDaysKeyV62(first,30);
+ const nextDue=last&&last>=earliest?addDaysKeyV62(last,farCycleDaysV111()):earliest;
+ return{phase:'far',due:!doneToday&&nextDue<=todayKey(),doneToday,firstMemDate:first,nextDue,overdueDays:nextDue<todayKey()?daysBetween(nextDue,todayKey()):0,schedule:x,cycleDays:farCycleDaysV111()};
 }
 function updateReviewEngineV62(p,task,date,pg,sessionId){
-  if(!p||!date)return;
-  if(sessionId&&S.pageReviewSched?.[p]?.lastSessionId===sessionId)return;
-  S.pageReviewSched=S.pageReviewSched||{};
-  const first=firstMemDateV62(p)||date,age=Math.max(0,daysBetween(first,date));
-  let x=S.pageReviewSched[p]||{page:+p,firstMemDate:first,phase:age<=30?'fix':'near',nearLevel:0,farLevel:0,nextDue:addDaysKeyV62(date,age<=30?1:NEAR_INTERVALS_V62[0])};
-  x.firstMemDate=x.firstMemDate||first;x.lastReview=date;x.lastCoverage=+(pg&&pg.coverage||0);
-  // A browser transcript is a navigation hint, not a reliable assessment of memorization.
-  const graded=pg&&pg.manualMasteryLevel&&MASTERY_LEVELS_V116[pg.manualMasteryLevel];
-  if(graded)x.lastManualLevel=pg.manualMasteryLevel;
-  x.updatedAt=Date.now();if(sessionId)x.lastSessionId=sessionId;
-  if(task==='new'||age<=30){
-    x.phase=age>=30?'near':'fix';x.nearLevel=x.nearLevel||0;
-    x.nextDue=age>=30?addDaysKeyV62(date,NEAR_INTERVALS_V62[0]):addDaysKeyV62(date,1);
-  }else{
-    if(!graded){ // A completed follow-along session closes the day's task but must not advance mastery.
-      x.nextDue=addDaysKeyV62(date,x.phase==='far'?7:3);S.pageReviewSched[p]=x;return;}
-    const difficult=['weak','needs'].includes(pg.manualMasteryLevel);
-    if((x.phase||'near')==='near'){
-      let level=Math.max(0,+x.nearLevel||0);
-      if(difficult)x.nextDue=addDaysKeyV62(date,2);
-      else if(level<NEAR_INTERVALS_V62.length-1){level++;x.nearLevel=level;x.nextDue=addDaysKeyV62(date,NEAR_INTERVALS_V62[level]);}
-      else{x.phase='far';x.farLevel=0;x.nextDue=addDaysKeyV62(date,FAR_INTERVALS_V62[0]);}
-    }else{
-      let level=Math.max(0,+x.farLevel||0);
-      if(difficult)x.nextDue=addDaysKeyV62(date,7);
-      else{level=Math.min(level+1,FAR_INTERVALS_V62.length-1);x.farLevel=level;x.nextDue=addDaysKeyV62(date,FAR_INTERVALS_V62[level]);}
-    }
-  }
-  S.pageReviewSched[p]=x;
+ if(!p||!date)return;
+ if(sessionId&&S.pageReviewSched?.[p]?.lastSessionId===sessionId)return;
+ S.pageReviewSched=S.pageReviewSched||{};
+ const first=firstMemDateV62(p)||date,age=Math.max(0,daysBetween(first,date));
+ let x=S.pageReviewSched[p]||{page:+p,firstMemDate:first};
+ x.firstMemDate=first;x.phase=age<30?'near':'far';
+ x.lastReview=date;x.lastCoverage=+(pg&&pg.coverage||0);
+ const manualLevel=pg&&pg.manualMasteryLevel&&MASTERY_LEVELS_V116[pg.manualMasteryLevel];
+ if(manualLevel)x.lastManualLevel=pg.manualMasteryLevel;
+ x.updatedAt=Date.now();if(sessionId)x.lastSessionId=sessionId;
+ x.nextDue=addDaysKeyV62(date,age<30?1:farCycleDaysV111());
+ S.pageReviewSched[p]=x;
 }
-function fixationPagesV50(){
-  const m=firstMemDateMapV50(),arr=[];Object.keys(m).forEach(k=>{const d=daysBetween(m[k],todayKey());if(d>=1&&d<=30)arr.push(+k);});
-  return arr.sort((a,b)=>a-b);
-}
+function fixationPagesV50(){return [];} // legacy name kept for old callers; no third track
 function reviewBucketsV50(){
-  const near=[],far=[],m=firstMemDateMapV50();
-  Object.keys(m).forEach(k=>{
-    const p=+k,age=daysBetween(m[k],todayKey());if(age<=30)return;
-    const st=reviewEngineStateV62(p);if(!st.due)return;
-    const o={p,days:st.overdueDays||0,due:st.nextDue};
-    (st.phase==='far'?far:near).push(o);
-  });
-  near.sort((a,b)=>b.days-a.days||a.p-b.p);far.sort((a,b)=>b.days-a.days||a.p-b.p);return{near,far};
+ const near=[],far=[],firsts=firstMemDateMapV50();
+ for(const [key,first] of Object.entries(firsts)){
+  const p=+key,st=reviewEngineStateV62(p),age=daysBetween(first,todayKey());
+  if(st.doneToday)continue;
+  const row={p,days:st.overdueDays||0,due:st.nextDue};
+  if(age>=1&&age<30&&st.due)near.push(row);
+  else if(age>=30)far.push(row);
+ }
+ near.sort((a,b)=>b.days-a.days||a.p-b.p);
+ // Earliest reviewed first, so the entire far-review pool rotates.
+ far.sort((a,b)=>String(a.due).localeCompare(String(b.due))||a.p-b.p);
+ return{near,far};
+}
+function farDailyQuotaV111(){
+ const count=Object.keys(firstMemDateMapV50()).filter(p=>daysBetween(firstMemDateV62(+p),todayKey())>=30).length;
+ return count?Math.ceil(count/farCycleDaysV111()):0;
 }
 function readingPinV86(){try{return new DurrReaderUI.Bookmarks(localStorage).latest();}catch(_){return null;}}
 function lastActivityPageV50(){const rs=[...(S.recitationSessions||[])].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0))[0];if(rs&&rs.pages&&rs.pages.length){const p=rs.pages[rs.pages.length-1].page;if(p)return Math.max(1,Math.min(604,+p));}const logs=[...S.logs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));for(const l of logs){const all=[...(l.memList||[]),...(l.revList||[])];for(let i=all.length-1;i>=0;i--){const r=(all[i].from&&all[i].to)?[all[i].from,all[i].to]:pagesOfSurah(all[i].surahId);if(r)return Math.max(1,Math.min(604,r[1]));}}return 1;}
@@ -2011,14 +2007,12 @@ function taskPagesV60(id){
     while(out.length<remain&&p>=1&&p<=604){out.push(p);p+=dir;}
     return out;
   }
-  if(id==='fix'){const allowed=new Set(reviewQueueV123().selected.map(x=>x.p));return fixationPagesV50().filter(p=>allowed.has(p)&&reviewEngineStateV62(p).due&&!allRev.has(p)&&!doneAuto.has(p));}
+  if(id==='fix')return []; // old fix sessions retained historically, not a current task
   const bucket=reviewBucketsV50();
-  if(id==='near'){const allowed=new Set(reviewQueueV123().selected.map(x=>x.p));return bucket.near.filter(x=>allowed.has(x.p)&&!completeReviewTodayV62(x.p)).map(x=>x.p);}
+  if(id==='near')return bucket.near.filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
   if(id==='far'){
-    const completedFar=new Set([...allRev,...recitedPagesTodayV51('fix'),...recitedPagesTodayV51('near'),...recitedPagesTodayV51('far')]);
-    const alreadyDone=[...completedFar].filter(p=>firstMemDateV62(p)&&daysBetween(firstMemDateV62(p),todayKey())>30&&reviewEngineStateV62(p).phase==='far').length;
-    const daily=Math.max(0,Math.min(bucket.far.length,(memCount()>402?60:40)-alreadyDone));
-    const allowed=new Set(reviewQueueV123().selected.map(x=>x.p));return bucket.far.slice(0,daily).filter(x=>allowed.has(x.p)&&!completeReviewTodayV62(x.p)).map(x=>x.p);
+    // Fixed user-defined completion window; never cap the far review with an unrelated hard-coded quota.
+    return bucket.far.slice(0,farDailyQuotaV111()).filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
   }
   return[];
 }
