@@ -5,15 +5,15 @@ const fs=require('node:fs');
 const path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 const heatmap=html.slice(html.indexOf('function renderHeatmap(){'),html.indexOf('function renderMonth(){'));
-test('heatmap has five theme-derived levels with former penultimate as brightest activity',()=>{
+test('heatmap has five theme-derived levels with vivid maximum activity',()=>{
  const m=heatmap.match(/const levels=\[([\s\S]*?)\];/);
  assert.ok(m,'Missing levels palette');
  const colors=[...m[1].matchAll(/'([^']+)'/g)].map(v=>v[1]);
  assert.equal(colors.length,5);
- assert.equal(colors[4],'color-mix(in srgb, var(--gold) 65%, var(--ink))');
+ assert.equal(colors[4],'color-mix(in srgb, var(--gold) 82%, var(--surface))');
  assert.equal(colors[2],'color-mix(in srgb, var(--gold) 30%, var(--parch))');
  assert.ok(colors.every(x=>x.includes('var(')),'Palette levels should follow user theme');
- assert.ok(!colors.includes('var(--ink)'),'Do not use near-black for highest activity');
+ assert.ok(!colors[4].includes('var(--ink)'),'The highest activity color must not mix with dark ink');
 });
 test('heatmap legend shares exactly the same palette and today outline uses accent',()=>{
  assert.match(heatmap,/levels\.map\(\(c,i\)=>/);
