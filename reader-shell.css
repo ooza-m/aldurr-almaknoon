@@ -5,8 +5,9 @@ body.app-standalone{height:var(--app-vh,100dvh);min-height:0;padding:0;overflow:
 body.app-standalone .screen{position:relative!important;inset:auto!important;display:flex;flex-direction:column;flex:0 0 auto;width:100%;height:var(--app-vh,100dvh)!important;min-height:0;max-height:var(--app-vh,100dvh)!important;padding:calc(var(--reader-safe-top) + 44px) 0 var(--reader-safe-bottom);overflow:hidden}
 .mini-top{display:flex;order:1;flex:0 0 25px;min-height:25px;max-width:760px;width:100%;margin:-41px auto 0;padding:2px 20px 1px;align-items:center;justify-content:space-between;box-sizing:border-box;color:var(--muted)}
 .reader-home{position:absolute;top:var(--reader-safe-top);inset-inline-start:max(8px,calc((100% - 760px)/2 + 8px));z-index:35;min-height:44px;background:var(--page)}
-/* The only persistent exit must remain visible even when the optional reader chrome is hidden. */
-body.app-standalone #btnBack{visibility:visible;opacity:1;pointer-events:auto}
+/* The home control follows the same visibility state as the optional top chrome. */
+body.app-standalone #btnBack{visibility:hidden;opacity:0;pointer-events:none;transition:opacity .18s ease,visibility .18s ease}
+body.app-standalone.chrome #btnBack{visibility:visible;opacity:1;pointer-events:auto}
 .chrome-top{position:absolute;inset:var(--reader-safe-top) 0 auto;order:0;height:44px;min-height:44px;max-width:760px;width:100%;margin:0 auto;padding:0 10px;padding-inline-start:56px;background:var(--page);z-index:30;gap:6px}
 .chrome-top .ttl{font-size:.83rem;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .chrome-top .side{gap:2px;flex:0 0 auto}
@@ -33,8 +34,10 @@ body.app-standalone #btnBack{visibility:visible;opacity:1;pointer-events:auto}
 .chrome-top,.reader-dock{opacity:0;visibility:hidden;pointer-events:none;transform:translateY(5px);transition:opacity .18s ease,transform .18s ease,visibility .18s}
 body.chrome .chrome-top,body.chrome .reader-dock{opacity:1;visibility:visible;pointer-events:auto;transform:none}
 .reader-dock .face-listen-bar{order:0}
-.reader-dock .rec-job-status{order:1}
-.reader-dock .reader-scrubber{order:2}
+.reader-dock .reader-scrubber{order:1;position:relative;z-index:3}
+.reader-dock .rec-job-status{order:2;position:relative;z-index:1;margin-block:2px 7px}
+.reader-dock .reader-scrubber .pslider{position:relative;z-index:5}
+.reader-dock .reader-scrubber .sbubble{z-index:9;pointer-events:none}
 .reader-dock .chrome-bot{order:3}
 .page-jump{margin:6px 18px 8px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:16px}
 .page-jump>label{font-size:.78rem}.page-jump>input{width:70px;margin:0 10px;padding:7px;border:1px solid var(--line);border-radius:10px;background:var(--page);color:var(--ink);font:inherit;text-align:center}.page-jump>button{min-height:36px;padding:5px 12px;border:0;border-radius:10px;background:var(--wash);color:var(--accent-2);font:inherit}.page-jump>.pslider{margin-top:12px}
