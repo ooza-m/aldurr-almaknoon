@@ -899,7 +899,7 @@ window.FIREBASE_CONFIG = {
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
        <div id="smartReview"></div><div id="weeklyAchievementV136" class="v50-glass v50-card" style="margin:12px 0"></div><div id="longTermProgressV139" class="v50-glass v50-card" style="margin:12px 0"></div><div id="detailedMemorizationV140" class="v50-glass v50-card" style="margin:12px 0"></div><div class="v50-glass v50-card" style="margin:12px 0;padding:13px"><b>تحليل مواضع الأخطاء</b><p class="hint">التحليل التفصيلي للسور والأوجه والآيات في سجل الأخطاء.</p><button type="button" class="btn btn-ghost btn-sm" data-v50-route="errors">فتح تحليل الأخطاء</button></div><div id="focusedVerseReviewsV143" class="v50-glass v50-card" style="margin:12px 0"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
-      <div class="v50-section-head"><h2>مهام اليوم</h2><button id="todayRefreshV50">تحديث</button></div>
+      <div class="v50-section-head"><h2>مهام اليوم</h2><div style="display:flex;align-items:center;gap:8px"><button type="button" class="btn btn-ghost btn-sm" data-v50-route="planning">تخصيص المهام</button><button id="todayRefreshV50">تحديث</button></div></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
     </div>
@@ -1905,10 +1905,9 @@ function nextNewPageV50(){
  return Math.max(1,Math.min(604,last+dir));
 }
 function priorityV50(){
-  const buckets=reviewBucketsV50(),far=taskPagesV60('far'),near=taskPagesV60('near'),fix=taskPagesV60('fix'),fresh=taskPagesV60('new');
+  const buckets=reviewBucketsV50(),far=taskPagesV60('far'),near=taskPagesV60('near'),fresh=taskPagesV60('new');
   if(far.length){const p=far[0],o=buckets.far.find(x=>x.p===p)||{},s=surahOfPage(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة بعيدة مستحقة اليوم',kind:'بعيدة',taskId:'far'};}
   if(near.length){const p=near[0],o=buckets.near.find(x=>x.p===p)||{},s=surahOfPage(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة قريبة مستحقة اليوم',kind:'قريبة',taskId:'near'};}
-  if(fix.length){const p=fix[0],s=surahOfPage(p),st=reviewEngineStateV62(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:'اليوم '+st.day+' من 30 · تثبيت يومي',kind:'تثبيت',taskId:'fix'};}
   if(fresh.length){const p=fresh[0],s=surahOfPage(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:'الحفظ الجديد المقرر لليوم',kind:'حفظ',taskId:'new'};}
   const p=lastActivityPageV50();return{page:p,title:'اكتملت مهام الحفظ والمراجعة',sub:'يمكنك متابعة التلاوة أو التفسير من بقية مهام اليوم.',kind:'مكتمل',taskId:'free',complete:true};
 }
@@ -1957,7 +1956,7 @@ function renderRecitationLedgerV163(){
   options.map(([id,label])=>'<button type="button" data-recitation-status-v163="'+id+'" aria-pressed="'+(status===id)+'" class="btn btn-ghost btn-sm" style="font-size:.72rem;'+(status===id?'border-color:var(--accent);':'')+'">'+label+(id==='all'?'':(' '+toAr(groups[id])))+'</button>').join('')+'</div>'+
   (show.length?show.map(s=>{
    const result=recitationSessionStatusV163(s);
-   const task={new:'حفظ جديد',fix:'تثبيت',near:'مراجعة قريبة',far:'مراجعة بعيدة',free:'تسميع حر','ai-review':'استدعاء',practice:'تدريب'}[s.task]||'تسميع';
+   const task={new:'حفظ جديد',fix:'مراجعة قريبة',near:'مراجعة قريبة',far:'مراجعة بعيدة',free:'تسميع حر','ai-review':'استدعاء',practice:'تدريب'}[s.task]||'تسميع';
    const stamp=s.endedAt||s.startedAt||0;
    const when=stamp?new Date(stamp).toLocaleString('ar-AE'):'وقت غير محدد';
    const faces=(s.pages||[]).map(p=>+p.page).filter(p=>Number.isInteger(p)&&p>=1&&p<=604);
@@ -3725,7 +3724,7 @@ function renderMap(){
   let i=0;function step(){if(i<toOpen.length){fillJuzPages(toOpen[i]);i++;requestAnimationFrame(step);}}
   if(toOpen.length)requestAnimationFrame(step);
 }
-let mapFilter='all'; // all | fix | partial | near | far | weak | errors
+let mapFilter='all'; // all | partial | near | far | weak | errors
 function fillJuzPages(j){
   const [from,to]=JUZ_RANGE[j],cont=document.getElementById('jp-'+j);if(!cont)return;
   const segs=[];
@@ -3740,7 +3739,6 @@ function fillJuzPages(j){
       const m=mapPageMetaV62(p,seg.sur[0]),hasErr=pageHasActiveErrors(p,seg.sur[0]);
       const phase=m.engine&&m.memorized?m.engine.phase:'unseen';
       const match=mapFilter==='all'||
-        (mapFilter==='fix'&&phase==='fix')||
         (mapFilter==='partial'&&m.partial)||
         (mapFilter==='near'&&phase==='near')||
         (mapFilter==='far'&&phase==='far')||
@@ -4358,7 +4356,7 @@ function openDay(k){
   if(facts.sessionPages.length){
     const uniq={};facts.sessionPages.forEach(x=>{const k2=x.page+'|'+x.task;if(!uniq[k2]||x.ts>uniq[k2].ts)uniq[k2]=x;});
     html+='<div class="v71-day-section"><div class="v71-day-title"><b>جلسات التسميع المكتملة</b><span>'+toAr(Object.keys(uniq).length)+'</span></div>'+
-      Object.values(uniq).sort((a,b)=>a.page-b.page).map(x=>'<button class="v71-session-row" data-open-session="'+x.page+'"><span><b>الوجه '+toAr(x.page)+'</b><small>'+({new:'حفظ',fix:'تثبيت',near:'قريبة',far:'بعيدة'}[x.task]||'تسميع')+'</small></span><em>'+(x.score==null?'إنجاز معتمد':toAr(Math.round(x.score))+'٪')+(x.errorCount?' · '+toAr(x.errorCount)+' خطأ':'')+'</em></button>').join('')+'</div>';
+      Object.values(uniq).sort((a,b)=>a.page-b.page).map(x=>'<button class="v71-session-row" data-open-session="'+x.page+'"><span><b>الوجه '+toAr(x.page)+'</b><small>'+({new:'حفظ',fix:'قريبة',near:'قريبة',far:'بعيدة'}[x.task]||'تسميع')+'</small></span><em>'+(x.score==null?'إنجاز معتمد':toAr(Math.round(x.score))+'٪')+(x.errorCount?' · '+toAr(x.errorCount)+' خطأ':'')+'</em></button>').join('')+'</div>';
   }
   if(facts.errors.length){
     html+='<div class="v71-day-section"><div class="v71-day-title"><b>الأخطاء</b><span>'+toAr(facts.errors.length)+'</span></div>'+
