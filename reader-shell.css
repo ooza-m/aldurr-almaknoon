@@ -234,3 +234,20 @@ html[data-theme="dark"] body.app-standalone .reader-action:hover{background:var(
 /* The scrubber callout is mounted under document.body so scrolling cannot clip it. */
 body>.sbubble.reader-floating-bubble{position:fixed!important;bottom:auto!important;right:auto!important;transform:translateX(-50%)!important;z-index:250!important;max-width:calc(100vw - 24px)!important;white-space:normal!important;overflow-wrap:anywhere!important;background:var(--ink);color:var(--page);pointer-events:none}
 html[data-theme="dark"] body>.sbubble.reader-floating-bubble{background:var(--surface)!important;color:var(--ink)!important}
+
+
+/* v176: viewport-anchored reader drawer and unclipped tooltips on iPhone */
+body.app-standalone.chrome #readerDock{
+ position:fixed!important;top:auto!important;bottom:0!important;
+ inset-inline:0!important;margin-inline:auto!important;
+ width:min(100vw,620px)!important;max-height:min(66dvh,calc(100dvh - var(--reader-safe-top) - 12px))!important;
+ overflow-y:auto!important;overflow-x:clip!important;
+ border-radius:24px 24px 0 0!important;padding-bottom:max(16px,env(safe-area-inset-bottom))!important;
+ z-index:145!important;
+}
+body.app-standalone.chrome #readerDock .reader-scrubber,
+body.app-standalone.chrome #readerDock .pslider{overflow:visible!important}
+body>.sbubble.reader-floating-bubble{position:fixed!important;left:50%;top:auto;transform:translateX(-50%)!important;max-width:calc(100vw - 32px)!important;z-index:450!important;white-space:normal!important}
+html[data-theme="dark"] body.app-standalone.chrome #readerDock{background:var(--page)!important;border-color:var(--line)!important}
+html[data-theme="dark"] body.app-standalone :is(.reader-action,.scrubber-label,.pagefoot){color:var(--ink)!important}
+html[data-theme="dark"] body.app-standalone .reader-dock :is(.reader-scrubber,.chrome-bot){background:transparent!important}
