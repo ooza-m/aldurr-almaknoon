@@ -1,0 +1,127 @@
+/* Ward Phase05 · More and secondary pages.
+   Pure presentation: keep all IDs, page routes, forms and save logic intact. */
+body[data-page="more"],
+body[data-page="khatma"],body[data-page="tafsir"],
+body[data-page="planning"],body[data-page="stages"],
+body[data-page="stats"],body[data-page="tajweed"],body[data-page="errors"]{
+ background:radial-gradient(circle at 88% 5%,#f3dfe5 0,transparent 32%),
+ radial-gradient(circle at 5% 77%,#eaf0e5 0,transparent 34%),
+ linear-gradient(180deg,#fdf9f5,#f9f1ec 68%,#fcf8f4);
+ background-attachment:fixed;
+}
+#tab-more>.v50-page{
+ max-width:560px;padding:calc(15px + env(safe-area-inset-top)) 15px
+ calc(116px + env(safe-area-inset-bottom));
+}
+#tab-more>.v50-page::before,#tab-more>.v50-page::after{display:none}
+#tab-more .v50-top{
+ min-height:136px;border-radius:0 0 28px 28px;
+ margin:-15px -15px 20px;padding:21px 18px 28px;
+ background:linear-gradient(125deg,rgba(255,248,242,.94),rgba(248,231,234,.8)),
+ url("assets/ward-blossoms.svg") no-repeat left top / min(90%,410px) auto;
+ border-bottom:1px solid #eddde0;
+}
+#tab-more .v50-title h1{color:#744359;font:700 2.05rem/1.4 "Amiri",serif}
+#tab-more .v50-title p{color:#715b66;font-size:.77rem;line-height:1.6}
+#tab-more .v70-more-section{margin-bottom:18px}
+#tab-more .v70-more-section h3{color:#84526c;font-size:.86rem;margin:0 5px 9px;font-weight:700}
+#tab-more .v70-more-row,#tab-more .v70-more-list{gap:9px}
+#tab-more .v70-more-row button,#tab-more .v70-more-list button{
+ min-height:68px;border-radius:17px;border:1px solid #eadce0;
+ background:rgba(255,253,251,.95);color:#5d4050;
+ padding:14px 13px;box-shadow:0 5px 16px #693e5110;
+ text-align:right;font:inherit;
+}
+#tab-more .v70-more-row button:nth-child(3n+1){background:#fff9f6}
+#tab-more .v70-more-row button:nth-child(3n+2){background:#f6eef0}
+#tab-more .v70-more-row button:nth-child(3n+3){background:#f1f3ec}
+#tab-more .v70-more-row b,#tab-more .v70-more-list b{color:#654354;font-size:.87rem;line-height:1.65}
+#tab-more .v70-more-row small,#tab-more .v70-more-list small{
+ color:#745f69;font-size:.73rem;line-height:1.6;margin-top:3px;
+}
+#tab-more .v70-more-list i{font-size:1.2rem;color:#95627a}
+#tab-more button:focus-visible{outline:3px solid #84465f;outline-offset:3px}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors){
+ width:min(100%,560px);margin-inline:auto;
+ padding:calc(16px + env(safe-area-inset-top)) 14px
+ calc(110px + env(safe-area-inset-bottom));
+ min-width:0;color:#593e4e;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .v67-subpage-head{
+ min-height:128px;padding:24px 19px;
+ margin:-16px -14px 16px;border-radius:0 0 27px 27px;
+ border:1px solid #f0e4e5;
+ background:linear-gradient(120deg,rgba(255,248,242,.93),rgba(250,232,237,.77)),
+ url("assets/ward-blossoms.svg") no-repeat left top / min(85%,405px) auto;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .v67-subpage-head h1{
+ color:#6c4055;font:700 1.95rem/1.4 "Amiri",serif;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .v67-subpage-head span{
+ color:#985b71;font-size:.74rem;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .v67-subpage-head p{
+ color:#735b67;line-height:1.75;font-size:.77rem;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .v67-back{
+ flex-shrink:0;min-width:44px;min-height:44px;
+ border:1px solid #ecdde1;border-radius:50%;
+ background:rgba(255,252,250,.94);color:#805069;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .card{
+ border-radius:21px;border:1px solid #e9dce0;
+ background:rgba(255,253,251,.96);box-shadow:0 7px 20px #673f510e;
+ padding:17px;margin-bottom:12px;min-width:0;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .card h2,
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .card h3{
+ color:#694358;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .hint{
+ color:#78636c;font-size:.74rem;line-height:1.8;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .field label{
+ color:#674856;font-size:.77rem;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) input:not([type=checkbox]):not([type=radio]),
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) select{
+ min-height:44px;max-width:100%;min-width:0;font:inherit;font-size:16px;
+ border-radius:12px;border:1px solid #e5d6dc;background:#fffdfb;color:#543c4a;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .btn-primary,
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .btn-gold{
+ border-radius:12px;background:#8e4e68;border:1px solid #8e4e68;color:#fff;
+ min-height:42px;
+}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) .btn-ghost{
+ border-radius:12px;background:#fcf4f2;border-color:#e8d9dd;
+ color:#74465c;min-height:42px;
+}
+#tab-tafsir .v69-tafsir-focus,#tab-planning .v67-info-card{
+ background:linear-gradient(130deg,#f7e7eb,#fffaf5);border-color:#ecd8df;
+}
+#tab-tajweed .v70-tj-filters{gap:7px;padding-bottom:8px}
+#tab-tajweed .v70-tj-filters button{
+ min-height:41px;border-radius:13px;border:1px solid #e6d8db;
+ background:#fff9f8;color:#704b5b;font-size:.75rem;padding:9px 12px;
+}
+#tab-tajweed .v70-tj-filters button.on{background:#8c4964;color:#fff;border-color:#8c4964}
+#tab-errors .v103-tabs{gap:6px}
+#tab-errors .v103-tabs button{min-height:42px;border-radius:12px}
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) button:focus-visible,
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) input:focus-visible,
+:is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) select:focus-visible{
+ outline:3px solid #87465d;outline-offset:2px;
+}
+@media(max-width:360px){
+ #tab-more>.v50-page{padding-inline:12px}
+ #tab-more .v70-more-row{gap:6px}
+ #tab-more .v70-more-row button{padding:12px 9px}
+ :is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors){padding-inline:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ #tab-more *,
+ :is(#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors) *{
+ transition:none!important;animation:none!important
+ }
+}
