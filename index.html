@@ -2325,7 +2325,7 @@ function tasksV50(){
  return result;
 }
 function taskTotalsV50(){const a=tasksV50();return a.reduce((o,t)=>{o.target+=Math.max(0,t.target||0);o.done+=Math.min(Math.max(0,t.done||0),Math.max(0,t.target||0));return o;},{done:0,target:0});}
-function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=174&p='+page+(mode&&mode!=='recite'?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
+function openMushafAtV50(page,mode,task,ayah){page=Math.max(1,Math.min(604,+page||1));const q='mushaf.html?v=175&p='+page+(mode&&mode!=='recite'?'&mode='+encodeURIComponent(mode):'')+(task?'&task='+encodeURIComponent(task):'')+(ayah?'&ayah='+encodeURIComponent(ayah):'')+'&app=1';window.location.assign(q);}
 function startTaskSessionV60(taskId){
   const t=tasksV50().find(x=>x.id===taskId);
   if(!t)return;
@@ -2343,7 +2343,7 @@ function startTaskSessionV60(taskId){
   const plan=resumable?{...previous,pages:pages.slice(),pos:nextIndex>=0?nextIndex:0}:
     {id:'ts_'+Date.now().toString(36),task:taskId,label:t.label,pages,startedAt:Date.now(),date:todayKey(),pos:0,version:157};
   try{localStorage.setItem('durr-active-task-session',JSON.stringify(plan));}catch(e){}
-  const q='mushaf.html?v=174&p='+pages[plan.pos||0]+'&task='+encodeURIComponent(taskId)+'&session=1&app=1';
+  const q='mushaf.html?v=175&p='+pages[plan.pos||0]+'&task='+encodeURIComponent(taskId)+'&session=1&app=1';
   window.location.assign(q);
 }
 function renderHomeV50(){
@@ -4982,7 +4982,7 @@ document.getElementById('erSave').addEventListener('click',()=>{
   toast('سُجّل الخطأ في الوجه '+toAr(page));
 });
 function smartReviewLabelV76(t){return({possible_omission:'سقوط محتمل',possible_substitution:'استبدال محتمل',possible_repetition:'تكرار محتمل',possible_extra_word:'زيادة محتملة',mutashabih_jump:'انتقال إلى متشابه محتمل'})[t]||'موضع يحتاج تحقق';}
-function openSmartRecallV76(q){if(!q||!q.page||!q.verseKey)return;const url='mushaf.html?v=174&p='+encodeURIComponent(q.page)+'&mode=recall&task=ai-review&ayah='+encodeURIComponent(q.verseKey)+'&rid='+encodeURIComponent(q.id)+'&app=1';window.location.assign(url);}
+function openSmartRecallV76(q){if(!q||!q.page||!q.verseKey)return;const url='mushaf.html?v=175&p='+encodeURIComponent(q.page)+'&mode=recall&task=ai-review&ayah='+encodeURIComponent(q.verseKey)+'&rid='+encodeURIComponent(q.id)+'&app=1';window.location.assign(url);}
 /* v101 · السجل الزمني للأخطاء المسجلة، دون استنتاج جودة الحفظ من الأرشفة */
 function errorTimeBucketsV101(mode='week'){
   const now=todayKey(),periods=mode==='month'?6:8,items=[];
@@ -5919,7 +5919,7 @@ document.getElementById('cCalc').addEventListener('click',()=>{
 
 /* ============ النسخ ============ */
 
-document.getElementById('moreMutashabihat').onclick=()=>window.location.assign('mushaf.html?v=174&mode=mutashabihat');
+document.getElementById('moreMutashabihat').onclick=()=>window.location.assign('mushaf.html?v=175&mode=mutashabihat');
 function currentBackupV86(){return DurrData.backup(S,DurrPreferences.get(),new DurrReaderUI.Bookmarks(localStorage).items,new DurrStudy.Notes(localStorage).items,localStorage.getItem('durr-hl')||'');}
 /* v154 · IndexedDB rolling backups and non-sensitive sync audit, per browser only. */
 const BACKUP_DB_V154='aldurr-safety-v154';
@@ -7166,7 +7166,7 @@ setTimeout(consumeReviewedTarteelV166,500);
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=174');
+      const reg=await navigator.serviceWorker.register('sw.js?v=175');
       reg.update().catch(()=>{});
       let reloaded=sessionStorage.getItem('durr-sw81-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
