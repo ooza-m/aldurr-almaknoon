@@ -7,13 +7,23 @@
  function validate(input){
    if(!object(input))throw Error('يجب أن تكون النسخة ملف بيانات للتطبيق');inspect(input);
    const wrapped=input.format==='durr-backup',state=wrapped?input.state:input;if(!object(state)||!['pages','logs','stages','errors','recitationSessions','profile'].some(k=>k in state))throw Error('هذا ليس ملف نسخة احتياطية للتطبيق');
-   const arrays=['logs','stages','errors','tafsir','tajweed','recitationSessions','activityEvents','aiReviewQueue'];for(const key of arrays)if(key in state){if(!Array.isArray(state[key])||state[key].some(v=>!object(v)))throw Error('بنية «'+key+'» غير صحيحة');}
+   const arrays=['logs','stages','errors','tafsir','tajweed','recitationSessions','activityEvents','aiReviewQueue','extraReviewPlans','extraReviewCompletions'];for(const key of arrays)if(key in state){if(!Array.isArray(state[key])||state[key].some(v=>!object(v)))throw Error('بنية «'+key+'» غير صحيحة');}
    const maps=['pages','plan','profile','halaqa','attendance','extraHalaqa','goal','mreviewDays','notif','reviewSched','pageReviewSched','faceLearning','verseReview','tajweedDone'];for(const key of maps)if(key in state&&!object(state[key]))throw Error('بنية «'+key+'» غير صحيحة');
    for(const log of state.logs||[]){if(!date(log.date))throw Error('تاريخ في سجل الحفظ غير صالح');for(const key of ['memList','revList'])if(key in log&&(!Array.isArray(log[key])||log[key].some(v=>!object(v))))throw Error('قائمة حفظ أو مراجعة غير صالحة');}
    for(const stage of state.stages||[]){if(stage.name!=null&&typeof stage.name!=='string'||stage.range!=null&&typeof stage.range!=='string'||stage.note!=null&&typeof stage.note!=='string')throw Error('نص مرحلية غير صالح');if(stage.date&&!date(stage.date))throw Error('تاريخ مرحلية غير صالح');if(stage.status&&!['upcoming','current','done'].includes(stage.status))throw Error('حالة مرحلية غير صالحة');}
    for(const error of state.errors||[]){if(error.date&&!date(error.date))throw Error('تاريخ خطأ غير صالح');if(error.page!=null&&!(+error.page>=1&&+error.page<=604))throw Error('رقم وجه غير صالح');}
    for(const session of state.recitationSessions||[]){if(session.pages!=null&&!Array.isArray(session.pages))throw Error('جلسة تسميع غير صالحة');for(const page of session.pages||[]){if(!object(page)||!(+page.page>=1&&+page.page<=604)||page.verses!=null&&!Array.isArray(page.verses))throw Error('أوجه جلسة التسميع غير صالحة');}}
    if(state.profile?.name!=null&&typeof state.profile.name!=='string')throw Error('الاسم في النسخة غير صالح');
+   if(state.farReviewCycleDays!=null&&(!Number.isInteger(state.farReviewCycleDays)||state.farReviewCycleDays<1||state.farReviewCycleDays>365))throw Error('مدة دورة المراجعة البعيدة غير صالحة');
+   if(state.dailyTaskOptions!=null&&(!object(state.dailyTaskOptions)||['tilawa','tafsir'].some(k=>state.dailyTaskOptions[k]!=null&&typeof state.dailyTaskOptions[k]!=='boolean')))throw Error('خيارات أوراد اليوم غير صالحة');
+   if(state.extraReviewPlans?.length>100)throw Error('عدد مسارات المراجعة الإضافية كبير');
+   for(const plan of state.extraReviewPlans||[]){
+    if(typeof plan.id!=='string'||plan.id.length>100||plan.name!=null&&(typeof plan.name!=='string'||plan.name.length>60)||!Number.isInteger(+plan.from)||!Number.isInteger(+plan.to)||+plan.from<1||+plan.from>604||+plan.to<1||+plan.to>604||!Number.isInteger(+plan.dailyPages)||+plan.dailyPages<1||+plan.dailyPages>604||!['up','down'].includes(plan.direction)||!date(plan.startDate)||plan.durationDays!=null&&(!Number.isInteger(+plan.durationDays)||+plan.durationDays<1||+plan.durationDays>3650))throw Error('إعدادات مسار مراجعة إضافية غير صالحة');
+   }
+   if(state.extraReviewCompletions?.length>200000)throw Error('سجل المراجعات الإضافية كبير');
+   for(const completion of state.extraReviewCompletions||[]){
+    if(typeof completion.planId!=='string'||!date(completion.date)||!Number.isInteger(+completion.page)||+completion.page<1||+completion.page>604)throw Error('تسجيل مراجعة إضافية غير صالح');
+   }
    const bookmarks=wrapped?input.bookmarks:undefined;if(bookmarks!=null&&(!Array.isArray(bookmarks)||bookmarks.some(b=>!object(b)||!/^\d{1,3}:\d{1,3}$/.test(b.vk)||!(b.page>=1&&b.page<=604)||typeof b.name!=='string')))throw Error('فواصل النسخة غير صالحة');
    const preferences=wrapped?input.displayPreferences:undefined;if(preferences!=null&&(!object(preferences)||!['rose','olive','navy','plum'].includes(preferences.palette)||!['ar','en'].includes(preferences.digits)||!['hijri','gregorian'].includes(preferences.calendar)))throw Error('تفضيلات العرض غير صالحة');
    if(preferences?.appearance!=null&&!['light','dark','system'].includes(preferences.appearance))throw Error('إضاءة العرض غير صالحة');
