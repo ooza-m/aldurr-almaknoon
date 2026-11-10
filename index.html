@@ -2897,11 +2897,11 @@ function renderPlanningV67(){
   const box=document.getElementById('planningSummary'),real=document.getElementById('planningRealityV69');if(!box||!real)return;
   const goal=Math.max(1,(S.goal&&S.goal.pages)||1),mem=memCount(),remain=Math.max(0,604-mem),days=Math.ceil(remain/goal),finish=addDaysKeyV62(todayKey(),Math.max(0,days-1));
   const p30=newMemPagesSinceV69(30),p7=newMemPagesSinceV69(7),actual=(p30.size/30),actualFinish=actual>0?addDaysKeyV62(todayKey(),Math.max(0,Math.ceil(remain/actual)-1)):null;
-  const fix=taskPagesV60('fix').length,near=taskPagesV60('near').length,far=taskPagesV60('far').length,reviewLoad=fix+near+far;
+  const near=taskPagesV60('near').length,far=taskPagesV60('far').length,reviewLoad=near+far;
   box.innerHTML='<div class="v69-plan-hero"><div><span>الهدف اليومي</span><h2>'+toAr(goal)+' '+facesShort(goal)+'</h2><p>إن استمر هذا الهدف يوميًا، التاريخ النظري لإتمام الحفظ: <b>'+DurrPreferences.format(finish)+'</b></p></div><button class="btn btn-primary btn-sm" id="v67GoalEdit">تعديل الهدف</button></div>'+
     '<div class="v69-plan-progress"><i><em style="width:'+Math.round(mem/604*100)+'%"></em></i><div><span>'+toAr(mem)+' محفوظ</span><span>'+toAr(remain)+' متبقٍ</span></div></div>';
   const b=document.getElementById('v67GoalEdit');if(b)b.onclick=()=>{const n=prompt('كم وجهًا تريدين هدفًا يوميًا؟',goal);if(n===null)return;const v=Math.max(1,Math.min(20,+n||goal));S.goal=S.goal||{};S.goal.pages=v;S.goal.active=true;save();renderPlanningV67();refreshV50();};
-  real.innerHTML='<div class="v69-plan-grid"><div class="card"><span>آخر 7 أيام</span><b>'+toAr(p7.size)+' وجهًا جديدًا</b><small>من الإنجاز المسجّل فعليًا</small></div><div class="card"><span>متوسط 30 يومًا</span><b>'+toAr(Math.round(actual*10)/10)+' وجه/يوم</b><small>'+(actualFinish?'بهذا المعدّل: '+DurrPreferences.format(actualFinish):'لا توجد بيانات كافية بعد')+'</small></div><div class="card"><span>عبء المراجعة الآن</span><b>'+toAr(reviewLoad)+' وجهًا</b><small>'+toAr(fix)+' تثبيت · '+toAr(near)+' قريبة · '+toAr(far)+' بعيدة</small></div><div class="card"><span>هدف أسبوع كامل</span><b>'+toAr(goal*7)+' وجهًا</b><small>قبل إضافة عبء المراجعة</small></div></div>';
+  real.innerHTML='<div class="v69-plan-grid"><div class="card"><span>آخر 7 أيام</span><b>'+toAr(p7.size)+' وجهًا جديدًا</b><small>من الإنجاز المسجّل فعليًا</small></div><div class="card"><span>متوسط 30 يومًا</span><b>'+toAr(Math.round(actual*10)/10)+' وجه/يوم</b><small>'+(actualFinish?'بهذا المعدّل: '+DurrPreferences.format(actualFinish):'لا توجد بيانات كافية بعد')+'</small></div><div class="card"><span>عبء المراجعة الآن</span><b>'+toAr(reviewLoad)+' وجهًا</b><small>'+toAr(near)+' قريبة · '+toAr(far)+' بعيدة</small></div><div class="card"><span>هدف أسبوع كامل</span><b>'+toAr(goal*7)+' وجهًا</b><small>قبل إضافة عبء المراجعة</small></div></div>';
   renderReviewPlansV111();
 }
 function renderStatsV67(){
@@ -2917,9 +2917,9 @@ function renderStatsV67(){
   for(let i=5;i>=0;i--){const bucket=DurrPreferences.month(DurrPreferences.shiftMonth(d,-i)),k=keyOf(bucket.start),end=keyOf(bucket.next);const faceDays=new Set();uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(r=>{const date=keyOf(new Date(r.endedAt||r.startedAt||0));return r.task==='new'&&date>=k&&date<end;}).forEach(r=>(r.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(r,p))faceDays.add(keyOf(new Date(r.endedAt||r.startedAt))+'|'+p.page);}));months.push({k,n:faceDays.size});}
   const maxM=Math.max(1,...months.map(x=>x.n)),listen=(S.activityEvents||[]).filter(e=>e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e.type==='tafsir').length,task=t=>donePages.filter(p=>p.task===t).length;
   box.innerHTML='<div class="v67-stat-grid"><div><span>المحفوظ</span><b>'+toAr(mem)+'</b><small>من 604 وجه</small></div><div><span>متوسط تقييم التسميع</span><b>'+(avg==null?'—':toAr(avg)+'٪')+'</b><small>'+(avg==null?'لا يوجد تقييم رقمي؛ الاعتماد يدوي':'آخر 30 يومًا · تقييمات مسجلة')+'</small></div><div><span>مستحق الآن</span><b>'+toAr(due)+'</b><small>وجهًا</small></div><div><span>أخطاء نشطة</span><b>'+toAr(errors.length)+'</b><small>'+toAr(autoErr)+' آلي</small></div></div>'+
-  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>توزيع المحفوظ</span><b>حالة المراجعة الحالية</b></div></div><div class="v67-bars">'+[['تثبيت',fix,'#C89B3C'],['قريبة',near,'#D7B45B'],['بعيدة',far,'#7482A8'],['متفلّت',weak,'#C77486'],['جزئي',partial,'#A68BB7']].map(x=>'<div><span>'+x[0]+'</span><i><em style="width:'+Math.min(100,mem?Math.round(x[1]/mem*100):0)+'%;background:'+x[2]+'"></em></i><b>'+toAr(x[1])+'</b></div>').join('')+'</div></div>'+
+  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>توزيع المحفوظ</span><b>حالة المراجعة الحالية</b></div></div><div class="v67-bars">'+[['قريبة',near,'#D7B45B'],['بعيدة',far,'#7482A8'],['متفلّت',weak,'#C77486'],['جزئي',partial,'#A68BB7']].map(x=>'<div><span>'+x[0]+'</span><i><em style="width:'+Math.min(100,mem?Math.round(x[1]/mem*100):0)+'%;background:'+x[2]+'"></em></i><b>'+toAr(x[1])+'</b></div>').join('')+'</div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>6 أشهر</span><b>الحفظ الجديد</b></div></div><div class="v67-month-chart">'+months.map(x=>{const dt=parseKey(x.k);return '<div><i><em style="height:'+Math.round(x.n/maxM*100)+'%"></em></i><b>'+toAr(x.n)+'</b><span>'+DurrPreferences.month(dt).name+'</span></div>';}).join('')+'</div></div>'+
-  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>آخر 30 يومًا</span><b>جلسات التسميع المكتملة</b></div><strong>'+toAr(donePages.length)+'</strong></div><div class="v67-inline-stats"><span>حفظ <b>'+toAr(task('new'))+'</b></span><span>تثبيت <b>'+toAr(task('fix'))+'</b></span><span>قريبة <b>'+toAr(task('near'))+'</b></span><span>بعيدة <b>'+toAr(task('far'))+'</b></span></div></div>'+
+  '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>آخر 30 يومًا</span><b>جلسات التسميع المكتملة</b></div><strong>'+toAr(donePages.length)+'</strong></div><div class="v67-inline-stats"><span>حفظ <b>'+toAr(task('new'))+'</b></span><span>قريبة <b>'+toAr(task('near')+task('fix'))+'</b></span><span>بعيدة <b>'+toAr(task('far'))+'</b></span></div></div>'+
   '<div class="card v67-stats-card"><div class="v67-card-title"><div><span>أنشطة مساندة</span><b>السماع والتفسير</b></div></div><div class="v67-inline-stats"><span>سماع مكتمل <b>'+toAr(listen)+'</b></span><span>تفسير مقروء <b>'+toAr(tf)+'</b></span></div></div>'+
   '<section class="card v67-stats-card" id="recitationLedgerV163" aria-label="سجل جلسات التسميع"></section>';
   renderRecitationLedgerV163();
@@ -3637,8 +3637,7 @@ function juzStateSummaryV64(from,to){
   const o={fix:0,near:0,far:0,weak:0,partial:0,errors:0,memorized:0};
   for(let p=from;p<=to;p++){
     const m=mapPageMetaV62(p,null);if(m.memorized)o.memorized++;
-    if(m.engine&&m.engine.phase==='fix'&&m.memorized)o.fix++;
-    else if(m.engine&&m.engine.phase==='near'&&m.memorized)o.near++;
+    if(m.engine&&m.engine.phase==='near'&&m.memorized)o.near++;
     else if(m.engine&&m.engine.phase==='far'&&m.memorized)o.far++;
     if(m.state==='weak')o.weak++;
     if(m.partial)o.partial++;
@@ -3675,7 +3674,6 @@ function renderMap(){
     const complete=sum.memorized===pagesInJuz&&sum.fix===0&&sum.near===0&&sum.weak===0;
     const badgeStyle=avg.seen?'background:'+(complete?'rgb(74,105,60)':avg.color)+';color:#fff':'';
     const bits=[];
-    if(sum.fix)bits.push('<span class="jz-mini fix">'+toAr(sum.fix)+' تثبيت</span>');
     if(sum.near)bits.push('<span class="jz-mini near">'+toAr(sum.near)+' قريبة</span>');
     if(sum.far)bits.push('<span class="jz-mini far">'+toAr(sum.far)+' بعيدة</span>');
     if(sum.weak)bits.push('<span class="jz-mini weak">'+toAr(sum.weak)+' متفلّت</span>');
@@ -3734,15 +3732,13 @@ function fillJuzPages(j){
       const dim=match?'':'opacity:.13;';
       const cov=m.partial?Math.max(4,Math.round(m.coverage*100)):0;
       const txt=((m.state==='fresh'||m.state==='weak')&&!m.partial&&phase!=='fix')?'color:#fff;':'color:var(--ink);';
-      const phaseClass=phase==='fix'?' phase-fix':phase==='near'?' phase-near':phase==='far'?' phase-far':'';
+      const phaseClass=phase==='near'?' phase-near':phase==='far'?' phase-far':'';
       const mastery=masteryOfPageV116(p);
       const cls='pg'+phaseClass+(m.partial?' partial':'')+(hasErr?' has-err':'');
       let bg='background:'+m.color+';';
-      if(phase==='fix')bg='background:#F0DC9F;';
-      else if(phase==='near')bg='background:#E5C87B;';
+      if(phase==='near')bg='background:#E5C87B;';
       else if(m.partial)bg='background:var(--parch-2);';
-      const phaseMark=phase==='fix'?'<i class="phase-mark fix">'+toAr(m.engine.day)+'</i>':
-        phase==='near'?'<i class="phase-mark near"></i>':
+      const phaseMark=phase==='near'?'<i class="phase-mark near">'+toAr(m.engine.day)+'</i>':
         phase==='far'?'<i class="phase-mark far"></i>':'';
       const cover=m.partial?'<i class="cover-bar" style="--cover:'+cov+'%"></i>':'';
       const title='وجه '+p+(m.label?' · '+m.label:'')+(mastery?' · ضبط: '+MASTERY_LEVELS_V116[mastery.level]:'')+(hasErr?' · خطأ نشط':'');
@@ -3771,7 +3767,7 @@ function updateMapCount(){
     '<div class="map-sum-main"><div><small>المحفوظ</small><b>'+toAr(mem)+' <em>من 604</em></b><span>'+toAr(pct)+'٪ من المصحف</span></div>'+
     '<div class="map-sum-ring" style="--p:'+pct+'"><strong>'+toAr(pct)+'٪</strong></div></div>'+
     '<div class="map-sum-grid">'+
-      '<div><i class="lg-fix"></i><b>'+toAr(fix)+'</b><span>تثبيت</span></div>'+
+
       '<div><i class="lg-near"></i><b>'+toAr(near)+'</b><span>قريبة</span></div>'+
       '<div><i class="lg-far"></i><b>'+toAr(far)+'</b><span>بعيدة</span></div>'+
       '<div><i class="lg-weak"></i><b>'+toAr(weak)+'</b><span>متفلّت</span></div>'+
