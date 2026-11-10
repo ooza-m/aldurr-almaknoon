@@ -148,3 +148,17 @@ body[data-page="manual"]{
  #tab-map .ward-map-fold svg{transition:none}
  #tab-manual *,#settingsModal *{transition:none!important}
 }
+
+/* The manual-entry shortcut in Today is a Ward card as well. */
+#tab-today .v72-manual-secondary{
+ margin:15px 0 3px;padding:13px 14px;min-height:68px;
+ background:linear-gradient(125deg,#f7e8ec,#fff8f5);
+ border:1px solid #ead5dd;border-radius:18px;color:#664657;
+ box-shadow:0 4px 15px #6e405310;flex-wrap:wrap;
+}
+#tab-today .v72-manual-secondary span{font-size:.73rem;line-height:1.7;flex:1}
+#tab-today .v72-manual-secondary button{
+ border:1px solid #e1c7d1;background:#fff9f8;color:#814a64;
+ border-radius:12px;padding:10px 13px;min-height:43px;font-size:.76rem;
+}
+#tab-today .v72-manual-secondary button:focus-visible{outline:3px solid #82445e;outline-offset:2px}
