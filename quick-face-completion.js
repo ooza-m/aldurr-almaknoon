@@ -74,7 +74,7 @@ overlay.querySelector('#dqForm').addEventListener('submit',function(e){
    const listKey=kind==='memorize'?'memList':'revList';
    if(!Array.isArray(log[listKey]))log[listKey]=[];
    for(const {page,sid} of targets){
-    if(!log[listKey].some(x=>Number(x.surahId)===sid&&((Number(x.from)<=page&&Number(x.to)>=page)||(x.from==null&&x.to==null)))){
+    if(!log[listKey].some(x=>Number(x.surahId)===sid&&(listKey!=='revList'||(x.type==='far'?'far':'near')===kind)&&((Number(x.from)<=page&&Number(x.to)>=page)||(x.from==null&&x.to==null)))){
      const item={surahId:sid,from:page,to:page,source:'manual'};
      if(listKey==='revList')item.type=kind;
      log[listKey].push(item);
