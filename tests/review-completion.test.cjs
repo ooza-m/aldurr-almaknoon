@@ -26,10 +26,10 @@ function setup(){
  pagesOfSurah:()=>[10,12],todayLogV50:()=>S.logs.find(x=>x.date===day)||{},rangeSetV50:(list)=>new Set((list||[]).flatMap(x=>Array.from({length:(x.to||x.from)-(x.from||x.to)+1},(_,i)=>(x.from||x.to)+i))),
  memCount:()=>100,firstMemDateV62:()=> '2026-09-01',
  addDaysKeyV62:(d,n)=>new Date(Date.parse(d+'T12:00:00Z')+n*86400000).toISOString().slice(0,10),
- reviewQueueV123:()=>({selected:[{p:10}]}),
+ reviewQueueV123:()=>({selected:[{p:10}]}),farCycleDaysV111:()=>7,
  dayFactsV71:()=>({}),reviewBucketsV50:()=>({near:[{p:10}],far:[]}),ensurePageSchedV62:()=>({phase:'near',nextDue:day}),daysBetween:()=>60,autoPageInfo:()=>({state:'due'})};
  vm.createContext(ctx);
- vm.runInContext(['uniqueRecitationSessionsV163','approvedRecitationFaceV149','completeReviewTodayV62','recitedPagesTodayV51','taskPagesV60','reviewEngineStateV62'].map(extract).join('\n'),ctx);
+ vm.runInContext(['uniqueRecitationSessionsV163','approvedRecitationFaceV149','completeReviewTodayV62','recitedPagesTodayV51','taskPagesV60','lastManualReviewDateV111','reviewEngineStateV62'].map(extract).join('\n'),ctx);
  return{ctx,S,day,ts};
 }
 test('scheduled Mushaf completion counts once and is no longer due',()=>{
