@@ -126,3 +126,64 @@ body.app-standalone.chrome .reader-home{opacity:1;visibility:visible;pointer-eve
 body.app-standalone.chrome .mini-top{visibility:hidden;pointer-events:none}
 body.app-standalone:not(.chrome) .mini-top{visibility:visible}
 body.app-standalone .pane{padding-block:2px}
+
+/* v171: mobile accessibility and keyboard-safe reader overlays.
+   Never modify QCF word sizes or the verified fifteen-line page layout. */
+body.app-standalone .ov,
+body.app-standalone .sheet-wrap{
+  height:var(--app-vh,100dvh);
+  max-height:var(--app-vh,100dvh);
+}
+body.app-standalone .ov-top{flex:0 0 auto;min-height:56px}
+body.app-standalone .ov-body{
+  min-height:0;
+  max-height:100%;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:max(26px,calc(var(--reader-safe-bottom) + 18px));
+}
+body.app-standalone .sheet{
+  box-sizing:border-box;
+  max-height:calc(var(--app-vh,100dvh) - var(--reader-safe-top) - 8px);
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+body.app-standalone .ov input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+body.app-standalone .ov select,
+body.app-standalone .ov textarea,
+body.app-standalone .sheet input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+body.app-standalone .sheet select,
+body.app-standalone .sheet textarea{
+  font-size:max(16px,1rem);
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+body.app-standalone .ov input[type="number"],
+body.app-standalone .ov input[type="date"],
+body.app-standalone .sheet input[type="number"],
+body.app-standalone .sheet input[type="date"]{
+  direction:ltr;
+  text-align:start;
+  font-variant-numeric:tabular-nums;
+}
+body.app-standalone .ov :is(button,input,select,textarea):focus-visible,
+body.app-standalone .sheet :is(button,input,select,textarea):focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+body.app-standalone .reader-dock{
+  box-sizing:border-box;
+  max-width:100%;
+  padding-inline:max(4px,env(safe-area-inset-left)) max(4px,env(safe-area-inset-right));
+}
+body.app-standalone .reader-dock .chrome-bot{
+  box-sizing:border-box;
+  max-width:100%;
+}
+@media(max-width:375px){
+  body.app-standalone .reader-dock .chrome-bot{gap:0;padding-inline:4px}
+  body.app-standalone .reader-dock .reader-action{min-width:0;flex:1 1 0;padding-inline:3px}
+  body.app-standalone .reader-dock .reader-action span{font-size:.61rem}
+  body.app-standalone .reader-dock .face-listen-bar{width:calc(100% - 12px)}
+}
