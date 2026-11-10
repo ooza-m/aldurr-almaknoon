@@ -18,10 +18,12 @@
    const preferences=wrapped?input.displayPreferences:undefined;if(preferences!=null&&(!object(preferences)||!['rose','olive','navy','plum'].includes(preferences.palette)||!['ar','en'].includes(preferences.digits)||!['hijri','gregorian'].includes(preferences.calendar)))throw Error('تفضيلات العرض غير صالحة');
    if(preferences?.appearance!=null&&!['light','dark','system'].includes(preferences.appearance))throw Error('إضاءة العرض غير صالحة');
    const notes=wrapped?input.notes:undefined;if(notes!=null&&(!Array.isArray(notes)||notes.length>12472||notes.some(n=>!object(n)||!/^\d{1,3}:\d{1,3}$/.test(n.vk)||+n.vk.split(':')[0]<1||+n.vk.split(':')[0]>114||+n.vk.split(':')[1]<1||+n.vk.split(':')[1]>286||!Number.isInteger(n.page)||n.page<1||n.page>604||!['personal','teacher'].includes(n.kind)||typeof n.text!=='string'||n.text.length>4000||!Number.isFinite(n.updatedAt)||n.updatedAt<0)))throw Error('ملاحظات النسخة غير صالحة');
-   return {state:JSON.parse(JSON.stringify(state)),bookmarks,preferences,notes};
+   const highlights=wrapped?input.highlightColors:undefined;
+   if(highlights!=null&&(typeof highlights!=='string'||highlights.length>200000||highlights.split(',').some(item=>item&&!/^\\d{1,3}:\\d{1,3}=#[0-9a-fA-F]{6}$/.test(item))))throw Error('ألوان الفواصل في النسخة غير صالحة');
+   return {state:JSON.parse(JSON.stringify(state)),bookmarks,preferences,notes,highlights};
  }
  function merge(defaults,data){const out=JSON.parse(JSON.stringify(defaults));for(const [key,value] of Object.entries(data))out[key]=object(value)&&object(out[key])?merge(out[key],value):value;return out;}
- function backup(state,preferences,bookmarks,notes){return {format:'durr-backup',version:87,exportedAt:new Date().toISOString(),state,displayPreferences:preferences,bookmarks,...(notes?{notes}:{})};}
+ function backup(state,preferences,bookmarks,notes,highlights){return {format:'durr-backup',version:110,exportedAt:new Date().toISOString(),state,displayPreferences:preferences,bookmarks,...(notes?{notes}:{}),...(typeof highlights==='string'?{highlightColors:highlights}:{})};}
  function checkpoint(storage,bundle){storage.setItem(RESTORE_KEY,JSON.stringify(bundle));}
  return {RESTORE_KEY,validate,merge,backup,checkpoint,date};
 });
