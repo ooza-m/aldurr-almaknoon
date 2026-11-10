@@ -2030,7 +2030,7 @@ function taskPagesV60(id){
   if(id==='near')return bucket.near.filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
   if(id==='far'){
     // Fixed user-defined completion window; never cap the far review with an unrelated hard-coded quota.
-    return bucket.far.slice(0,farDailyQuotaV111()).filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
+    return bucket.far.filter(x=>x.doneToday||x.due<=todayKey()).slice(0,farDailyQuotaV111()).filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
   }
   return[];
 }
