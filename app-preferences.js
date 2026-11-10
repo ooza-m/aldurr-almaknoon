@@ -87,7 +87,7 @@
     win.document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?p.page:p.accent2);
     // Original high-resolution PNG artwork for the selected classic theme.
     const iconPalette=Object.prototype.hasOwnProperty.call(PALETTES,current.palette)?current.palette:'rose';
-    const iconVersion='v=120';
+    const iconVersion='v=121';
     const pngIcon='icons/app-'+iconPalette+'-192.png?'+iconVersion;
     const manifestLink=win.document.querySelector('link[rel="manifest"]');
     if(manifestLink)manifestLink.href='manifest-'+iconPalette+'.json?'+iconVersion;
