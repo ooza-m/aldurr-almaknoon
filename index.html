@@ -880,7 +880,7 @@ window.FIREBASE_CONFIG = {
 };
 </script>
 <link rel="stylesheet" href="app-preferences.css?v=109">
-<script src="app-preferences.js?v=109"></script>
+<script src="app-preferences.js?v=118"></script>
 <script src="app-cloud-extras.js?v=109"></script>
 <script src="reader-ui.js?v=89"></script>
 <script src="reader-study.js?v=89"></script>
@@ -7081,7 +7081,7 @@ setTimeout(consumeReviewedTarteelV166,500);
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=109');
+      const reg=await navigator.serviceWorker.register('sw.js?v=118');
       reg.update().catch(()=>{});
       let reloaded=sessionStorage.getItem('durr-sw81-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
