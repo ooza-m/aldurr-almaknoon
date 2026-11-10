@@ -13,7 +13,7 @@ body{background:radial-gradient(ellipse at 0 0,var(--wash),transparent 55%),line
 .preferences-panel small{font-size:.7rem;color:var(--muted);line-height:1.9;display:block;margin-top:7px}
 .design-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .design-current,.design-future{padding:12px;border:1px solid var(--line);border-radius:15px;background:var(--surface);text-align:right;color:var(--ink);font:inherit}
-.design-current{border-color:var(--accent);background:var(--wash2)}.design-future:disabled{opacity:.7;cursor:default}
+.design-current,.design-future{cursor:pointer;min-height:76px}.design-options button.on{border-color:var(--accent);background:var(--wash2);box-shadow:inset 0 0 0 1px var(--accent)}.design-options button:not(.on){border-color:var(--line);background:var(--surface)}
 .design-options b{font-size:.8rem}.design-options small{font-size:.65rem}
 .palette-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .palette-grid button{border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:12px;min-height:90px;text-align:right;color:var(--ink);font:inherit;cursor:pointer}
