@@ -1,6 +1,6 @@
 const CACHE='durr-v118';
 const STATIC=[
-  './app-preferences.js?v=109','./app-preferences.css?v=109','./app-cloud-extras.js?v=109',
+  './app-preferences.js?v=118','./app-preferences.css?v=109','./app-cloud-extras.js?v=109',
   './reader-session.js?v=89','./reader-study.js?v=89','./audio-library.js?v=89','./recitation-core.js?v=89','./recitation-jobs.js?v=89','./reader-ui.js?v=89','./reader-tools.css?v=94','./app-data.js?v=111','./data/recitation-aliases.json',
   './manifest-rose.json?v=118','./manifest-navy.json?v=118','./manifest-olive.json?v=118','./manifest-plum.json?v=118',
   './icons/app-rose.svg?v=118','./icons/app-navy.svg?v=118','./icons/app-olive.svg?v=118','./icons/app-plum.svg?v=118',
