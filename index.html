@@ -4099,11 +4099,28 @@ document.getElementById('calNext').addEventListener('click',()=>{if(calMode==='w
 function expandItemsToPagesV71(items){
   const set=new Set();(items||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(+it.from,+it.to),Math.max(+it.from,+it.to)]:pagesOfSurah(+it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)set.add(p);});return set;
 }
+/* v111 · readable calendar activity: complete juz, surah, or contiguous face ranges. */
+function calendarPageSummaryV111(pages,label){
+ const list=[...new Set([...pages].map(Number).filter(p=>p>=1&&p<=604))].sort((a,b)=>a-b);
+ if(!list.length)return'';
+ const wholeJuz=JUZ_RANGE.findIndex(range=>list.length===range[1]-range[0]+1&&list[0]===range[0]&&list.at(-1)===range[1]&&list.every((p,i)=>p===range[0]+i));
+ if(wholeJuz>=0)return label+': الجزء '+(wholeJuz+1);
+ const grouped=[],bySurah=new Map();
+ for(const p of list){const sur=surahOfPage(p),id=sur[0];if(!bySurah.has(id))bySurah.set(id,{sur,arr:[]});bySurah.get(id).arr.push(p);}
+ for(const {sur,arr} of bySurah.values()){
+  const rg=pagesOfSurah(sur[0]),whole=rg&&arr.length===rg[1]-rg[0]+1&&arr[0]===rg[0]&&arr.at(-1)===rg[1];
+  if(whole){grouped.push('سورة '+sur[1]);continue;}
+  const ranges=[];let a=arr[0],prev=a;
+  for(let i=1;i<=arr.length;i++){const p=arr[i];if(i===arr.length||p!==prev+1){ranges.push(a===prev?'ص'+a:'ص'+a+'–'+prev);a=p;}prev=p;}
+  grouped.push('سورة '+sur[1]+': '+ranges.join('، '));
+ }
+ return label+' '+grouped.join(' · ');
+}
 function dayFactsV71(k){
   const log=(S.logs||[]).find(x=>x.date===k)||null;
   const events=(S.activityEvents||[]).filter(e=>e&&e.date===k);
   const sessions=uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(r=>keyOf(new Date(r.endedAt||r.startedAt||0))===k);
-  const groups={new:expandItemsToPagesV71(log&&log.memList),fix:new Set(),near:new Set(),far:new Set()};
+  const groups={new:expandItemsToPagesV71(log&&log.memList),fix:new Set(),near:new Set(),far:new Set()}; // legacy fixation is included in near below
   const manualRev=(log&&log.revList)||[];
   manualRev.forEach(it=>{const target=it.type==='far'?groups.far:groups.near;expandItemsToPagesV71([it]).forEach(p=>target.add(p));});
   const sessionPages=[];
@@ -4112,7 +4129,7 @@ function dayFactsV71(k){
     const p=+pg.page;if(!p)return;
     const task=['new','fix','near','far'].includes(r.task)?r.task:null;
     if(!task) return; // free/practice/AI follow-along is not an assigned review quota
-    groups[task].add(p);
+    groups[task==='fix'?'near':task].add(p);
     sessionPages.push({page:p,task,score:pg.manualConfirmed===true?null:(Number.isFinite(+pg.score)?+pg.score:null),coverage:+pg.coverage||0,errorCount:+pg.errorCount||0,ts:r.endedAt||r.startedAt||0});
   }));
   const errors=(S.errors||[]).filter(e=>e.date===k);
@@ -4126,7 +4143,7 @@ function dayFactsV71(k){
 function dayDots(k){
   const f=dayFactsV71(k);let d='';
   if(f.groups.new.size)d+='<i class="dot-new" title="حفظ"></i>';
-  if(f.groups.fix.size)d+='<i class="dot-fix" title="تثبيت"></i>';
+  
   if(f.groups.near.size)d+='<i class="dot-near" title="مراجعة قريبة"></i>';
   if(f.groups.far.size)d+='<i class="dot-far" title="مراجعة بعيدة"></i>';
   if(f.tilawa)d+='<i class="dot-tilawa" title="تلاوة"></i>';
@@ -4253,10 +4270,9 @@ function renderWeek(){
   for(let i=0;i<7;i++){
     const d=new Date(sun);d.setDate(sun.getDate()+i);const k=keyOf(d),f=dayFactsV71(k),hal=isHalaqaDay(k,d.getDay()),mrev=isManualReviewDay(k),att=attStatus(k);let tags='';
     const tag=(cls,txt)=>'<span class="tag '+cls+'">'+txt+'</span>';
-    if(f.groups.new.size)tags+=tag('new','حفظ · '+toAr(f.groups.new.size)+' وجه');
-    if(f.groups.fix.size)tags+=tag('v71-fix','تثبيت · '+toAr(f.groups.fix.size));
-    if(f.groups.near.size)tags+=tag('near','قريبة · '+toAr(f.groups.near.size));
-    if(f.groups.far.size)tags+=tag('far','بعيدة · '+toAr(f.groups.far.size));
+    if(f.groups.new.size)tags+=tag('new',esc(calendarPageSummaryV111(f.groups.new,'حفظ')));
+    if(f.groups.near.size)tags+=tag('near',esc(calendarPageSummaryV111(f.groups.near,'مراجعة قريبة')));
+    if(f.groups.far.size)tags+=tag('far',esc(calendarPageSummaryV111(f.groups.far,'مراجعة بعيدة')));
     if(f.tilawa)tags+=tag('tilawa','تلاوة');if(f.tafsir)tags+=tag('tafsir','تفسير');if(f.listen)tags+=tag('v71-listen','سماع');
     if(f.errors.length)tags+=tag('v71-error','أخطاء · '+toAr(f.errors.length));
     if(mrev)tags+=tag('v71-mreview','مراجعة شهرية');
@@ -4270,9 +4286,9 @@ function openDay(k){
   const dt=parseKey(k),dow=dt.getDay(),hal=isHalaqaDay(k,dow),f=fmtD(k),facts=dayFactsV71(k);
   document.getElementById('dayActTitle').textContent=AR_DOW[dow]+' · '+f.d+' '+f.m+' '+f.y;
   const box=document.getElementById('dayActBody');let html='';
-  const groupLine=(label,set,cls)=>set.size?'<div class="v71-day-line '+cls+'"><b>'+label+'</b><span>'+toAr(set.size)+' وجه</span><small>'+[...set].sort((a,b)=>a-b).map(p=>toAr(p)).join('، ')+'</small></div>':'';
+  const groupLine=(label,set,cls)=>set.size?'<div class="v71-day-line '+cls+'"><b>'+esc(calendarPageSummaryV111(set,label))+'</b><span>'+toAr(set.size)+' وجه</span><details style="grid-column:1/-1"><summary style="cursor:pointer;font-size:.72rem">تفاصيل الأوجه</summary><small>'+[...set].sort((a,b)=>a-b).map(p=>'سورة '+esc(surahOfPage(p)[1])+' · ص'+p).join('، ')+'</small></details></div>':'';
   if(facts.active){
-    html+='<div class="v71-day-summary">'+groupLine('حفظ جديد',facts.groups.new,'mem')+groupLine('تثبيت',facts.groups.fix,'fix')+groupLine('مراجعة قريبة',facts.groups.near,'near')+groupLine('مراجعة بعيدة',facts.groups.far,'far');
+    html+='<div class="v71-day-summary">'+groupLine('حفظ',facts.groups.new,'mem')+groupLine('مراجعة قريبة',facts.groups.near,'near')+groupLine('مراجعة بعيدة',facts.groups.far,'far');
     if(facts.tilawa)html+='<button class="v71-day-route" data-day-route="khatma"><b>التلاوة</b><span>'+esc((facts.log&&facts.log.tilawaTxt)||'مسجلة في هذا اليوم')+'</span></button>';
     if(facts.tafsir)html+='<button class="v71-day-route" data-day-route="tafsir"><b>التفسير</b><span>'+toAr(facts.tafsirEvents.length||1)+' نشاط مسجل</span></button>';
     if(facts.listen)html+='<div class="v71-day-line listen"><b>السماع</b><span>'+toAr(facts.listenEvents.length)+' نشاط</span><small>'+facts.listenEvents.map(e=>'وجه '+toAr(e.page||0)).filter(x=>!x.endsWith('٠')).join(' · ')+'</small></div>';
