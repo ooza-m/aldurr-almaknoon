@@ -1684,7 +1684,7 @@ function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(
   if(v1){const d=JSON.parse(v1);const m=Object.assign({},JSON.parse(JSON.stringify(DEF)),d);return m;}
 }catch(e){}return JSON.parse(JSON.stringify(DEF));}
 let flashT;
-function save(){try{archiveWeeklyGoalV138(S.weeklyMemGoal==null?3:S.weeklyMemGoal);S.updatedAt=Date.now();if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));cloudDirtyV151=true;backupScheduleV154();const f=document.getElementById('saveFlash');f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
+function save(){try{archiveWeeklyGoalV138(S.weeklyMemGoal==null?3:S.weeklyMemGoal);S.updatedAt=Date.now();firstMemDateCacheV111=null;if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));cloudDirtyV151=true;backupScheduleV154();const f=document.getElementById('saveFlash');f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
 
 /* ============ أدوات ============ */
 const AR_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
@@ -1789,7 +1789,8 @@ function approvedRecitationFaceV149(rs,pg){
  return !!(rs&&pg&&['new','fix','near','far'].includes(rs.task)&&pg.complete===true&&pg.manualConfirmed===true&&
    (+rs.version<86||rs.userReviewed===true));
 }
-function firstMemDateMapV50(){const out={};[...S.logs].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(l=>{(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)if(!out[p])out[p]=l.date;});});uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(x=>x&&x.task==='new').sort((a,b)=>(a.endedAt||0)-(b.endedAt||0)).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now()));(rs.pages||[]).filter(pg=>approvedRecitationFaceV149(rs,pg)).forEach(pg=>{if(!out[pg.page])out[pg.page]=d;});});return out;}
+let firstMemDateCacheV111=null;
+function firstMemDateMapV50(){const old=firstMemDateCacheV111;if(old&&old.state===S&&old.updatedAt===S.updatedAt&&old.logs===S.logs&&old.sessions===S.recitationSessions&&old.logsLength===S.logs.length&&old.sessionsLength===S.recitationSessions.length)return old.result;const out={};[...S.logs].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(l=>{(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)if(!out[p])out[p]=l.date;});});uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(x=>x&&x.task==='new').sort((a,b)=>(a.endedAt||0)-(b.endedAt||0)).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now()));(rs.pages||[]).filter(pg=>approvedRecitationFaceV149(rs,pg)).forEach(pg=>{if(!out[pg.page])out[pg.page]=d;});});firstMemDateCacheV111={state:S,updatedAt:S.updatedAt,logs:S.logs,sessions:S.recitationSessions,logsLength:S.logs.length,sessionsLength:S.recitationSessions.length,result:out};return out;}
 const NEAR_INTERVALS_V62=[3,7,14],FAR_INTERVALS_V62=[30,60,90,120];
 function addDaysKeyV62(k,n){const d=parseKey(k);d.setDate(d.getDate()+n);return keyOf(d);}
 function completeReviewTodayV62(p,day=todayKey()){
@@ -2303,13 +2304,13 @@ function reviewPriorityReasonV132(item){
 }
 function weeklyAchievementV136(offset=0){
  const current=weeklyMemorizationV135(),start=addDaysKeyV62(current.start,-7*offset),end=addDaysKeyV62(start,6);
- const categories={new:new Set(),fix:new Set(),near:new Set(),far:new Set()},tests=new Set(),catchup=new Set();
+ const categories={new:new Set(),near:new Set(),far:new Set()},tests=new Set(),catchup=new Set();
  const add=(type,page)=>{page=+page;if(categories[type]&&Number.isInteger(page)&&page>=1&&page<=604)categories[type].add(page);};
  const addRange=(item,type,date)=>{
   const rg=item.from!=null&&item.to!=null?[+item.from,+item.to]:pagesOfSurah(+item.surahId);
   if(!rg||!rg.every(Number.isFinite))return;
   for(let p=Math.max(1,Math.min(...rg));p<=Math.min(604,Math.max(...rg));p++){
-   const phase=type==='review'?(item.type==='far'?'far':(firstMemDateV62(p)&&daysBetween(firstMemDateV62(p),date)<=30?'fix':'near')):type;
+   const phase=type==='review'?(item.type==='far'?'far':'near'):type;
    add(phase,p);
   }
  };
@@ -2318,9 +2319,9 @@ function weeklyAchievementV136(offset=0){
   (log.revList||[]).forEach(x=>addRange(x,'review',log.date));
  });
  (S.recitationSessions||[]).forEach(rs=>{
-  const stamp=rs.endedAt||rs.startedAt;if(!stamp||!categories[rs.task])return;
+  const stamp=rs.endedAt||rs.startedAt;if(!stamp||!categories[rs.task==='fix'?'near':rs.task])return;
   const day=keyOf(new Date(stamp));if(day<start||day>end)return;
-  (rs.pages||[]).forEach(pg=>{if(pg.complete&&pg.manualConfirmed===true)add(rs.task,pg.page);});
+  (rs.pages||[]).forEach(pg=>{if(pg.complete&&pg.manualConfirmed===true)add(rs.task==='fix'?'near':rs.task,pg.page);});
  });
  (S.teacherTests||[]).filter(x=>x.date>=start&&x.date<=end).forEach(test=>{
   const grades=Array.isArray(test.results)?test.results:(test.pages||[]).map(page=>({page,level:test.level}));
@@ -2334,7 +2335,7 @@ function renderWeeklyAchievementV136(offset){
  const prior=host.querySelector('#weeklyHistorySelectV137');
  const chosen=Number.isInteger(offset)?offset:(prior?+prior.value:0);
  const selected=Math.max(0,Math.min(11,chosen)),x=weeklyAchievementV136(selected);
- const tiles=[['الحفظ الجديد',x.completed+(x.goal===null?' وجهًا':' / '+x.goal)],['التثبيت',x.fix],['المراجعة القريبة',x.near],['المراجعة البعيدة',x.far],['أوجه اختُبرت',x.tested],['تحتاج استدراكًا',x.needsCatchup]];
+ const tiles=[['الحفظ الجديد',x.completed+(x.goal===null?' وجهًا':' / '+x.goal)],['المراجعة القريبة',x.near],['المراجعة البعيدة',x.far],['أوجه اختُبرت',x.tested],['تحتاج استدراكًا',x.needsCatchup]];
  host.innerHTML='<details open><summary style="cursor:pointer;font-weight:700">حصيلة الأسبوع · '+esc(x.start)+' – '+esc(x.end)+'</summary>'+
  '<label style="display:block;margin:10px 0;font-size:.8rem">الأسبوع <select id="weeklyHistorySelectV137">'+Array.from({length:12},(_,i)=>'<option value="'+i+'" '+(i===selected?'selected':'')+'>'+(i===0?'الحالي':i===1?'السابق':'قبل '+i+' أسابيع')+'</option>').join('')+'</select></label>'+
  '<p class="hint">تُحتسب الأوجه المميزة من السجلات المعتمدة فقط. لا نحسب عدد مرات التسميع إنجازات إضافية.</p>'+
