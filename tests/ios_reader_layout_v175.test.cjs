@@ -19,13 +19,22 @@ test('page bubble is viewport-clamped outside scrolling toolbar',()=>{
  assert.match(reader,/body>\.sbubble\.reader-floating-bubble\{position:fixed!important/);
 });
 test('all secondary pages reserve iOS status space and Continue points left',()=>{
- assert.match(app,/--app-header-clearance:max\(86px/);
+ assert.match(app,/--app-header-clearance:max\(90px/);
  assert.match(app,/main>\.tab-panel:not\(#tab-home\)/);
  assert.match(app,/m15 18-6-6 6-6/);
 });
 test('new PWA cache version matches new reader resources',()=>{
- assert.match(sw,/durr-v175/);
- assert.match(html,/reader-shell\.css\?v=175/);
- assert.match(html,/quick-face-completion\.js\?v=175/);
- assert.match(app,/sw\.js\?v=175/);
+ assert.match(sw,/durr-v176/);
+ assert.match(html,/reader-shell\.css\?v=176/);
+ assert.match(html,/quick-face-completion\.js\?v=176/);
+ assert.match(app,/sw\.js\?v=176/);
+});
+
+test('modal options escape clipped Quran container and open at bottom',()=>{
+ assert.match(html,/document\.querySelectorAll\('\.sheet-wrap'\)\.forEach/);
+ assert.match(html,/body>\.sheet-wrap\.open \.sheet\{transform:translate3d\(0,0,0\)!important\}/);
+});
+test('completion success keeps center icon rather than replacing its contents',()=>{
+ assert.doesNotMatch(completion,/trigger\.textContent='✓'/);
+ assert.match(completion,/trigger\.classList\.add\('dq-saved'\)/);
 });
