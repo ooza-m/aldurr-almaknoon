@@ -5900,7 +5900,7 @@ function cloudRememberV151(doc){
 /* v152 · معاينة دمج ثلاثي تحفظ التعارضات دون حسم تلقائي.
    Only safely identified append-only records can be unioned; edits/deletions require review. */
 let cloudConflictSnapshotV152=null;
-const CLOUD_RECORD_LISTS_V152=new Set(['recitationSessions','errors','activityEvents','quickCompletions']);
+const CLOUD_RECORD_LISTS_V152=new Set(['recitationSessions','errors','activityEvents','quickCompletions','extraReviewCompletions']);
 function cloudEqualV152(a,b){return JSON.stringify(a)===JSON.stringify(b);}
 function cloudListIndexV152(arr){
  if(!Array.isArray(arr))return null;
@@ -6139,7 +6139,20 @@ function cloudPush(){
   }
  },1200);
 }
-function hasData(s){return s&&((s.quickCompletions&&s.quickCompletions.length)||(s.logs&&s.logs.length)||(s.errors&&s.errors.length)||(s.tafsir&&s.tafsir.length)||(s.stages&&s.stages.length)||(s.pages&&Object.keys(s.pages).length)||(s.recitationSessions&&s.recitationSessions.length)||(s.khatma));}
+function hasData(s){
+ return !!(s&&(
+  (s.quickCompletions&&s.quickCompletions.length)||
+  (s.logs&&s.logs.length)||(s.errors&&s.errors.length)||
+  (s.tafsir&&s.tafsir.length)||(s.stages&&s.stages.length)||
+  (s.pages&&Object.keys(s.pages).length)||
+  (s.recitationSessions&&s.recitationSessions.length)||
+  (s.extraReviewPlans&&s.extraReviewPlans.length)||
+  (s.extraReviewCompletions&&s.extraReviewCompletions.length)||
+  (Number.isInteger(s.farReviewCycleDays)&&s.farReviewCycleDays>=1)||
+  (s.dailyTaskOptions&&typeof s.dailyTaskOptions==='object')||
+  s.khatma
+ ));
+}
 /* Refresh local state when returning from the standalone mushaf, before cloud comparison. */
 function refreshQuickCompletionState(){
  try{const disk=JSON.parse(localStorage.getItem(KEY)||'null');if(!disk||!Array.isArray(disk.quickCompletions))return;
