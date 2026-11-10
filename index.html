@@ -1063,7 +1063,7 @@ window.FIREBASE_CONFIG = {
       <section class="ward-review-roadmap" aria-labelledby="wardReviewHeading">
         <div class="ward-review-head"><div><span>مسار المراجعة</span><h3 id="wardReviewHeading">التثبيت والمراجعة القريبة</h3></div><b id="wardReviewTotal" aria-live="polite"></b></div>
         <p class="hint">أول 30 يومًا تثبيت يومي، ثم مراجعة قريبة بفواصل متدرجة قبل الانتقال إلى البعيدة.</p>
-        <div id="wardReviewRoadmap" aria-live="polite"></div>
+        <div id="wardReviewRoadmap" aria-label="تفاصيل أوجه التثبيت والمراجعة القريبة"></div>
       </section>
       <div class="ward-map-juz-title"><h3 class="map-juz-heading-v96">الأجزاء الثلاثون</h3>
         <button type="button" id="btnToggleAllJuz" class="ward-map-fold" aria-label="فتح الأجزاء الثلاثين" aria-pressed="false" title="فتح الأجزاء أو طيها">
@@ -3589,7 +3589,7 @@ function renderMap(){
     if(sum.weak)bits.push('<span class="jz-mini weak">'+toAr(sum.weak)+' متفلّت</span>');
     if(sum.errors)bits.push('<span class="jz-mini err">'+toAr(sum.errors)+' أخطاء</span>');
     block.innerHTML=
-      '<div class="juz-head" data-j="'+j+'">'+
+      '<div class="juz-head" role="button" tabindex="0" aria-expanded="'+String(openJuz.has(j))+'" aria-controls="jp-'+j+'" aria-label="الجزء '+toAr(j+1)+'، '+(openJuz.has(j)?'طيّ الأوجه':'عرض الأوجه')+'" data-j="'+j+'">'+
         '<div class="juz-badge" style="'+badgeStyle+'">'+toAr(j+1)+'</div>'+
         '<div class="juz-info"><div class="jt">الجزء '+toAr(j+1)+' · '+(JUZ_NAME_PICK[j+1]||JUZ_NAME[j])+'</div>'+
         '<div class="js">الأوجه '+toAr(from)+' – '+toAr(to)+' · '+surahOfPage(from)[1]+'</div>'+
@@ -3599,7 +3599,18 @@ function renderMap(){
       '<div class="juz-pages" id="jp-'+j+'"></div>';
     box.appendChild(block);if(openJuz.has(j))toOpen.push(j);
   }
-  box.querySelectorAll('.juz-head').forEach(h=>h.addEventListener('click',()=>{const j=+h.dataset.j;if(openJuz.has(j))openJuz.delete(j);else openJuz.add(j);renderMap();}));
+  box.querySelectorAll('.juz-head').forEach(h=>{
+    const activate=()=>{
+      const j=+h.dataset.j;
+      if(openJuz.has(j))openJuz.delete(j);else openJuz.add(j);
+      renderMap();
+      document.querySelector('#juzList .juz-head[data-j="'+j+'"]')?.focus({preventScroll:true});
+    };
+    h.addEventListener('click',activate);
+    h.addEventListener('keydown',event=>{
+      if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}
+    });
+  });
   updateMapCount();
   wardReviewRoadmapV205();
   const toggle=document.getElementById('btnToggleAllJuz');
