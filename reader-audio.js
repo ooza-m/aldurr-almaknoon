@@ -1,7 +1,7 @@
 /* Download before playback. Chapter audio and its own timestamps stay together. */
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./reader-core.js'):root.DurrReader,typeof module==='object'&&module.exports?require('./audio-library.js'):root.DurrAudioLibrary);if(typeof module==='object'&&module.exports)module.exports=api;else root.DurrAudio=api;})(typeof globalThis!=='undefined'?globalThis:this,function(core,libraryApi){
   'use strict';
-  const CHAPTER_READERS={alafasy:[7,'mishari_al_afasy'],husary:[6,'khalil_al_husary'],minshawi:[9,'siddiq_minshawi'],abdulbasit:[2,'abdul_baset'],sudais:[3,'abdurrahmaan_as_sudais'],shatri:[4,'abu_bakr_shatri']};
+  const CHAPTER_READERS={alafasy:[7,'mishari_al_afasy'],husary:[6,'khalil_al_husary'],minshawi:[9,'siddiq_minshawi'],abdulbasit:[1,'abdul_baset'],sudais:[3,'abdurrahmaan_as_sudais'],shatri:[4,'abu_bakr_shatri']};
 
   function bounded(work,ms,signal,onTimeout=()=>{}){
     return new Promise((resolve,reject)=>{let timer;const abort=()=>done(new Error('Audio cancelled'));const done=(error,value)=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);error?reject(error):resolve(value);};
@@ -103,7 +103,7 @@
         if(token!==this.generation)return;this.plan=plan;this.download=null;return this.playIndex(Math.min(startIndex,this.queue.length-1),{autoplay});
       }catch(error){if(token!==this.generation)return;this.status='error';this.download=null;console.warn('Audio preparation failed',error);this.emit();this.onError('لم يكتمل تنزيل التلاوة. تحققي من الاتصال واضغطي تشغيل للمحاولة مجددًا.');}
     }
-    halt(){clearTimeout(this.gapTimer);this.gapTimer=null;this.gapRemaining=0;this.gapDeadline=0;clearTimeout(this.boundary);this.boundary=null;this.lastClock=null;if(this.audio){this.audio.onloadedmetadata=this.audio.onended=this.audio.onpause=this.audio.ontimeupdate=this.audio.onplaying=this.audio.onerror=null;this.audio.pause();}}
+    halt(){clearTimeout(this.gapTimer);this.gapTimer=null;this.gapRemaining=0;this.gapDeadline=0;clearTimeout(this.boundary);this.boundary=null;this.lastClock=null;if(this.audio){this.audio.onloadedmetadata=this.audio.onended=this.audio.onpause=this.audio.ontimeupdate=this.audio.onplaying=this.audio.onwaiting=this.audio.onstalled=this.audio.onerror=null;this.audio.pause();}}
     async playIndex(index,{autoplay=true,keepAyahCycle=false}={}){
       if(!this.plan)return super.playIndex(index,{autoplay});
       if(index<0)return;if(index>=this.queue.length)return this.finish();
@@ -115,7 +115,9 @@
         const seek=()=>{if(token===this.generation)a.currentTime=segment.from;};
         a.onloadedmetadata=seek;if(a.readyState>=1||typeof a.readyState!=='number')seek();a.playbackRate=this.rate;a.preservesPitch=true;if('webkitPreservesPitch' in a)a.webkitPreservesPitch=true;
         a.onplaying=()=>{if(token===this.generation){this.status='playing';this.lastClock={at:Date.now(),time:a.currentTime};this.emit();this.schedule(token);}};
-        a.onpause=()=>{if(token===this.generation&&this.status==='playing'){clearTimeout(this.boundary);this.status='paused';this.lastClock=null;this.emit();}};
+        const markBuffering=()=>{if(token===this.generation&&this.status==='playing'){clearTimeout(this.boundary);this.boundary=null;this.status='buffering';this.lastClock=null;this.emit();}};
+        a.onwaiting=markBuffering;a.onstalled=markBuffering;
+        a.onpause=()=>{if(token===this.generation&&['playing','buffering'].includes(this.status)){clearTimeout(this.boundary);this.boundary=null;this.status='paused';this.lastClock=null;this.emit();}};
         a.onerror=()=>{if(token===this.generation){
           const code=a.error?.code,chapter=+String(this.queue[this.index]||'').split(':')[0],reciter=this.reciter;
           this.halt();this.status='error';this.emit();
@@ -127,7 +129,7 @@
         a.ontimeupdate=()=>this.clock(token);
         a.onended=()=>{if(token!==this.generation)return;this.clock(token,true);};
         if(!autoplay){this.status='paused';this.emit();return;}
-        await bounded(a.play(),12000,null,()=>a.pause());if(token===this.generation&&this.status!=='error'){this.status='playing';this.emit();this.schedule(token);}
+        await bounded(a.play(),12000,null,()=>a.pause());if(token===this.generation&&this.status!=='error'&&this.status!=='buffering'){this.status='playing';this.emit();this.schedule(token);}
       }catch(error){if(token!==this.generation)return;this.status='paused';this.emit();this.onError(error?.name==='NotAllowedError'?'اكتمل التحميل. اضغطي تشغيل للسماح بالصوت.':'تعذّر التشغيل. اضغطي تشغيل للمحاولة مجددًا.');}
     }
     schedule(token){clearTimeout(this.boundary);const s=this.plan?.get(this.queue[this.index]);if(s?.to!=null&&this.status==='playing')this.boundary=setTimeout(()=>this.clock(token),Math.max(40,(s.to-this.audio.currentTime)*1000/this.rate));}
@@ -150,7 +152,7 @@
       }
       this.emit();this.schedule(token);
     }
-    async toggle(){if(this.status==='waiting'){this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());clearTimeout(this.gapTimer);this.gapTimer=null;this.status='wait-paused';this.emit();return;}if(this.status==='wait-paused'){this.waitForRepeat(this.gapRemaining,this.gapTarget,this.gapKeepAyah);return;}if(this.status==='error')return this.start({verses:this.queue,scope:this.scope,page:this.page,startIndex:this.index});await super.toggle();if(this.plan&&this.status==='playing')this.schedule(this.generation);}
+    async toggle(){if(this.status==='buffering'){this.audio?.pause();this.status='paused';this.lastClock=null;this.emit();return;}if(this.status==='waiting'){this.gapRemaining=Math.max(0,this.gapDeadline-Date.now());clearTimeout(this.gapTimer);this.gapTimer=null;this.status='wait-paused';this.emit();return;}if(this.status==='wait-paused'){this.waitForRepeat(this.gapRemaining,this.gapTarget,this.gapKeepAyah);return;}if(this.status==='error')return this.start({verses:this.queue,scope:this.scope,page:this.page,startIndex:this.index});await super.toggle();if(this.plan&&this.status==='playing')this.schedule(this.generation);}
     setRate(value){super.setRate(value);if(this.plan)this.schedule(this.generation);}
     async setReciter(id){if(!core.RECITERS.some(r=>r.id===id)||id===this.reciter)return;const playing=this.status==='playing',queue=this.queue.slice(),scope=this.scope,page=this.page,startIndex=this.index;this.reciter=id;if(!queue.length){this.emit();return;}await this.start({verses:queue,scope,page,autoplay:playing,startIndex});}
     setAyahRepeat(count){if([1,2,3,5,10,0].includes(+count)){this.ayahRepeat=+count;this.ayahCycle=1;this.emit();}}
