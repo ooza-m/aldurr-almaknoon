@@ -5876,7 +5876,35 @@ function initCloud(){
     // «تذكّرني» يُضبط عند الدخول. الافتراضي محلّي (يبقى مسجّلًا).
     fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
     fbAuth.onAuthStateChanged(u=>{
-      if((fbUser?.uid||null)!==(u?.uid||null)){cloudBaselineV151=null;cloudDirtyV151=false;}
+      const previousUid=fbUser?.uid||null;
+      if(previousUid!==(u?.uid||null)){cloudBaselineV151=null;cloudDirtyV151=false;}
+      // v167: protect one account's memorization records from being synced into another.
+      if(u?.uid){
+        const ownerKey='durr-dashboard-owner-v167';
+        const knownOwner=localStorage.getItem(ownerKey);
+        if(knownOwner&&knownOwner!==u.uid){
+          try{
+            const previousCopy=localStorage.getItem(KEY);
+            if(previousCopy)localStorage.setItem('durr-dashboard-account-v167-'+knownOwner,previousCopy);
+            const nextCopy=localStorage.getItem('durr-dashboard-account-v167-'+u.uid);
+            // Unknown target account starts with defaults, then safely pulls its own cloud data.
+            const restored=nextCopy?JSON.parse(nextCopy):JSON.parse(JSON.stringify(DEF));
+            if(!restored||typeof restored!=='object'||Array.isArray(restored))throw Error('Invalid account data');
+            localStorage.setItem(KEY,JSON.stringify(restored));
+            S=Object.assign({},JSON.parse(JSON.stringify(DEF)),restored);
+            reRenderAll();
+          }catch(accountError){
+            console.error('Account isolation failed; preventing cross-account synchronization',accountError);
+            const chip=document.getElementById('cloudMini');
+            if(chip)chip.textContent='⚠ تعذّر فصل بيانات الحسابات؛ أُوقفت المزامنة للحماية';
+            return;
+          }
+        }
+        try{localStorage.setItem(ownerKey,u.uid);}catch(accountError){
+          console.warn('Cannot persist dashboard account ownership',accountError);
+          return;
+        }
+      }
       fbUser=u;
       // Local Tarteel archives are namespaced to the authenticated account.
       localStorage.setItem('durr-tarteel-owner-v1',u?.uid||'local-only');
@@ -6159,7 +6187,7 @@ function cloudPush(){
  if(!cloudReady||!fbUser)return;
  clearTimeout(pushTimer);
  pushTimer=setTimeout(async()=>{
-  if(pullingNow)return;
+  if(pullingNow){cloudPush();return;}
   const localPayload=JSON.stringify(S),localTimestamp=S.updatedAt||Date.now();
   try{
    const ref=docRef();
