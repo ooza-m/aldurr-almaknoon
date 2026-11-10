@@ -837,7 +837,7 @@ function updateChrome(){
   const names=pg.s.map(s=>surahName(s.id));
   $('mtJuz').textContent='الجزء '+AR(pg.j);
   $('mtSurah').textContent=names.length>1?names.join(' · '):'سورة '+(names[0]||'');
-  $('chromeTtl').textContent='الجزء '+AR(pg.j)+' · وجه '+AR(cur);
+  $('chromeTtl').textContent=(names.length>1?names.join(' · '):'سورة '+(names[0]||''))+' · الجزء '+AR(pg.j)+' · وجه '+AR(cur);
   const foot=$('pagefoot');
   const quarterIndex=(DATA.quarterStart||[]).findIndex(p=>Number(p)===cur);
   // يظهر الحزب في الوجه الذي يبدأ فيه ربع حزب فقط، ولا يكرر في بقية الأوجه.
