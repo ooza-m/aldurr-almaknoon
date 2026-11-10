@@ -1,9 +1,9 @@
-const CACHE='durr-v106';
+const CACHE='durr-v107';
 const STATIC=[
   './app-preferences.js?v=89','./app-preferences.css?v=89',
   './reader-session.js?v=89','./reader-study.js?v=89','./audio-library.js?v=89','./recitation-core.js?v=89','./recitation-jobs.js?v=89','./reader-ui.js?v=89','./reader-tools.css?v=89','./app-data.js?v=89','./data/recitation-aliases.json',
   './manifest.json','./icon.png','./icon-180.png',
-  './ward-phase05-home-today.css?v=1','./ward-phase05-calendar-map.css?v=1','./ward-phase05-manual-settings-review.css?v=1','./assets/ward-blossoms.svg',
+  './ward-phase05-home-today.css?v=1','./ward-phase05-calendar-map.css?v=1','./ward-phase05-manual-settings-review.css?v=1','./ward-phase05-more-subpages.css?v=1','./assets/ward-blossoms.svg',
   './app-navigation.css?v=89','./reader-shell.css?v=106','./reader-core.js?v=89','./reader-audio.js?v=89',
   './data/mushaf-data.json','./data/mushaf-search.json',
   './data/mushaf-mutashabihat.json','./data/surah-frame.svg'
