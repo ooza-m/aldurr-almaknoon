@@ -4408,14 +4408,14 @@ function renderHeatmap(){
   const ws=(S.weekStart|0); // ٠=الأحد، ١=الاثنين
   // اضبط البداية على بداية الأسبوع المختارة (فيصبح أوّل صفٍّ هو اليوم المختار)
   start.setDate(start.getDate()-((start.getDay()-ws+7)%7));
-  // v170: five palette-sensitive steps; avoid the almost-black maximum.
-  // Keep the former penultimate shade as the new maximum and add a distinct middle tone.
+  // v172: five theme-sensitive steps; the maximum uses a vivid palette accent,
+  // never blends with dark ink. Preserve the other four shades.
   const levels=[
     'color-mix(in srgb, var(--parch-2) 66%, var(--surface))',
     'color-mix(in srgb, var(--gold) 18%, var(--parch))',
     'color-mix(in srgb, var(--gold) 30%, var(--parch))',
     'color-mix(in srgb, var(--gold) 40%, var(--parch))',
-    'color-mix(in srgb, var(--gold) 65%, var(--ink))'
+    'color-mix(in srgb, var(--gold) 82%, var(--surface))'
   ];
   const AR_MON=DurrPreferences.MONTHS[DurrPreferences.get().calendar];
   let cols='';let lastMonth=-1;let monthLabels='';
