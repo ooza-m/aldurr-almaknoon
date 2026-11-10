@@ -439,6 +439,25 @@ html,body{overflow-x:hidden}
 #recBar .rec-pill{min-width:0}
 @media(max-width:390px){.sheet-wrap .sheet{padding-inline:14px}.rec-pill .rec-i{width:38px}}
 
+
+/* v173 · streamlined reader-only preferences and night contrast */
+#setOv [data-app-preferences] .preferences-panel>h3,
+#setOv [data-app-preferences] .preferences-intro,
+#setOv [data-app-preferences] fieldset:has([data-design]),
+#setOv [data-app-preferences] fieldset:has([data-palette]),
+#setOv [data-app-preferences] fieldset:has([data-calendar]){display:none!important}
+#setOv [data-app-preferences] .preferences-panel{padding-top:4px}
+html[data-theme="dark"] .sheet-wrap .sheet,
+html[data-theme="dark"] .dq-sheet{background:var(--page)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .sbubble{background:var(--surface)!important;color:var(--ink)!important}
+html[data-theme="dark"] .rec-engine,html[data-theme="dark"] .rec-session-chip{background:var(--surface)!important;color:var(--ink)!important}
+html[data-theme="dark"] #recBar,html[data-theme="dark"] .rec-btn,html[data-theme="dark"] .rec-pill,html[data-theme="dark"] .rec-i{background:var(--surface);color:var(--ink)}
+html[data-theme="dark"] .face-listen-bar,html[data-theme="dark"] .ayah-quote,html[data-theme="dark"] .face-tf-v{background:var(--surface)!important;color:var(--quran)!important}
+html[data-theme="dark"] .app-bottom-nav{background:var(--surface)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .app-bottom-nav button{color:var(--ink-2)!important}
+html[data-theme="dark"] .app-bottom-nav button.active{background:var(--wash)!important;color:var(--accent)!important}
+html[data-theme="dark"] .sheet-wrap input,html[data-theme="dark"] .sheet-wrap select{color:var(--ink);background:var(--surface);border-color:var(--line)}
+
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <link rel="stylesheet" href="reader-shell.css?v=107">
