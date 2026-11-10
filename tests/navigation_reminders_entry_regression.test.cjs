@@ -69,7 +69,7 @@ test('saved recitation draft remains reachable without a startup popup',()=>{
 
 test('service worker references use the same updated version',()=>{
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- assert.match(sw,/const CACHE='durr-v105'/);
- assert.match(main,/register\('sw\.js\?v=105'\)/);
- assert.match(mushaf,/register\('sw\.js\?v=105'\)/);
+ assert.match(sw,/const CACHE='durr-v106'/);
+ assert.match(main,/register\('sw\.js\?v=106'\)/);
+ assert.match(mushaf,/register\('sw\.js\?v=106'\)/);
 });
