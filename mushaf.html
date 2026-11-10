@@ -2315,21 +2315,20 @@ function readerInputFocusedV171(){
  const el=document.activeElement;
  return !!(el&&el.matches?.('input:not([type=range]),textarea,select,[contenteditable=true]'));
 }
+let lastReaderViewportHeightV171=0;
 function syncReaderViewport(){
   const vv=window.visualViewport;
   const vh=Math.round((vv&&vv.height)||window.innerHeight||document.documentElement.clientHeight||700);
+  if(vh===lastReaderViewportHeightV171)return;
+  lastReaderViewportHeightV171=vh;
   document.documentElement.style.setProperty('--app-vh',vh+'px');
-  // iOS resizes visualViewport when the keyboard opens. Keep Quran glyphs
-  // steady during text entry; overlays still follow the visible viewport.
+  // Keyboard opening must not force Quran line reflow while the user types.
+  // A later real viewport resize recalibrates the face after the keyboard closes.
   if(readerInputFocusedV171())return;
   requestAnimationFrame(()=>{[paneCur,panePrev,paneNext].forEach(fitPane);});
 }
 window.addEventListener('resize',syncReaderViewport,{passive:true});
 if(window.visualViewport){visualViewport.addEventListener('resize',syncReaderViewport,{passive:true});visualViewport.addEventListener('scroll',syncReaderViewport,{passive:true});}
-document.addEventListener('focusout',event=>{
-  if(event.target?.matches?.('input:not([type=range]),textarea,select,[contenteditable=true]'))
-    requestAnimationFrame(syncReaderViewport);
-});
 readerToolsV86=DurrReaderUI.mount({document,window,storage:localStorage,setSeparator:(vk,color)=>toggleHl(vk,color),getSeparator:vk=>hlMap.get(vk)||'',player:audioController,reciters:DurrReader.RECITERS,AudioDownloads:DurrAudio.AudioDownloads,getData:()=>DATA,getPage:()=>cur,getVerse:()=>ayCur,pageOfVerse:versePage,surahName,closeAll,toast:recTip,digits:ARA,navigate:async(page,vk)=>{if(recMode)finishReciteSession(false);await settle(page);flashVerse(vk);}});
 try{for(const [vk,color] of hlMap){if(!readerToolsV86.store.has(vk)){const [surah,ayah]=vk.split(':').map(Number),page=versePage(vk);if(page)readerToolsV86.store.put(vk,page,surahName(surah)+' · آية '+ARA(ayah));}}for(const item of readerToolsV86.store.items){if(!hlMap.has(item.vk))hlMap.set(item.vk,'#E3A9B6');}saveHl();readerToolsV86.paintBookmarks();}catch(e){}
 audioController.setGap(+LS('durr-audio-gap-v87','0'));
