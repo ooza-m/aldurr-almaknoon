@@ -24,14 +24,8 @@
       "purpose": "any"
     },
     {
-      "src": "icons/app-rose.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
+      "src": "icons/app-rose-1024.png",
+      "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
     }
