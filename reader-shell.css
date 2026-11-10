@@ -187,3 +187,20 @@ body.app-standalone .reader-dock .chrome-bot{
   body.app-standalone .reader-dock .reader-action span{font-size:.61rem}
   body.app-standalone .reader-dock .face-listen-bar{width:calc(100% - 12px)}
 }
+
+
+/* v174: keep native iOS status bar clear even when the PWA safe inset is zero */
+body.app-standalone{--reader-safe-top:max(54px,env(safe-area-inset-top,0px));}
+body.app-standalone .screen{padding-top:calc(var(--reader-safe-top) + 44px);}
+body.app-standalone .mini-top{margin-top:-41px;min-height:30px;white-space:nowrap;}
+body.app-standalone .mini-top .s{min-width:0;max-width:72%;text-overflow:ellipsis;}
+body.app-standalone .chrome-top{top:var(--reader-safe-top);bottom:auto;}
+body.app-standalone .reader-home{top:var(--reader-safe-top);}
+body.app-standalone .reader-dock{bottom:calc(var(--app-nav-h) + 2px);max-height:min(52dvh,calc(var(--app-vh) - var(--reader-safe-top) - var(--app-nav-h) - 10px));border-radius:24px 24px 0 0;overflow-y:auto;}
+body.app-standalone .reader-dock .reader-scrubber{padding-inline:12px}
+body.app-standalone .reader-dock .sbubble{max-width:calc(100vw - 40px)}
+body.app-standalone .reader-dock .sbubble::after{border-top-color:var(--ink)}
+@media(max-height:700px){body.app-standalone .reader-dock{max-height:47dvh}}
+html[data-theme="dark"] body.app-standalone .reader-dock{background:var(--page);border-color:var(--line)}
+html[data-theme="dark"] body.app-standalone .reader-action{color:var(--ink-2)}
+html[data-theme="dark"] body.app-standalone .reader-action:active{background:var(--wash)}
