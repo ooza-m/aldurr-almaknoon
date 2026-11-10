@@ -9,10 +9,14 @@ test('night palette text and primary-action text meet WCAG AA contrast numerical
  for(const bg of ['page','surface','wash','wash2'])for(const ink of ['ink','ink2','muted'])assert.ok(ratio(P.NIGHT[ink],P.NIGHT[bg])>=4.5,ink+' on '+bg);
  for(const accent of Object.values(P.NIGHT_ACCENTS)){assert.ok(ratio(accent,P.NIGHT.surface)>=4.5);assert.ok(ratio(P.NIGHT.page,accent)>=4.5);}
 });
-test('preferences validate, persist, migrate digits and keep future design unavailable',()=>{
- const map=reset();P.set({palette:'navy',digits:'en',calendar:'hijri',design:'floral'});
- assert.equal(P.get().design,'classic');assert.equal(P.get().palette,'navy');assert.equal(JSON.parse(map.get(P.KEY)).calendar,'hijri');
- P.load({getItem:k=>k==='durr-num'?'en':null});assert.equal(P.get().digits,'en');
+test('classic is the default, floral is an explicit persisted choice, and digits migrate',()=>{
+ const map=reset();assert.equal(P.get().design,'classic');
+ P.set({palette:'navy',digits:'en',calendar:'hijri',design:'floral'});
+ assert.equal(P.get().design,'floral');assert.equal(P.get().palette,'navy');
+ assert.equal(JSON.parse(map.get(P.KEY)).design,'floral');
+ P.load({getItem:k=>map.get(k)});assert.equal(P.get().design,'floral');
+ P.set({design:'classic'});assert.equal(P.get().design,'classic');
+ P.load({getItem:k=>k==='durr-num'?'en':null});assert.equal(P.get().digits,'en');assert.equal(P.get().design,'classic');
  P.load({getItem:()=>'{broken'});assert.equal(P.get().palette,'rose');
 });
 test('Hijri month boundaries roundtrip actual dates and preserve stored Gregorian keys',()=>{
