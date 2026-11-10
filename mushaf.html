@@ -460,7 +460,7 @@ html[data-theme="dark"] .sheet-wrap input,html[data-theme="dark"] .sheet-wrap se
 
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
-<link rel="stylesheet" href="reader-shell.css?v=174">
+<link rel="stylesheet" href="reader-shell.css?v=175">
 <script src="reader-core.js?v=89"></script>
 <script src="audio-library.js?v=89"></script>
 <script src="reader-audio.js?v=90"></script>
@@ -2289,14 +2289,26 @@ $('searchInput').addEventListener('input',e=>{clearTimeout(srT);srT=setTimeout((
 
 /* ===== المنزلق مع فقاعة السورة+الوجه ===== */
 const slider=$('pageSlider'),bubble=$('sBubble');
-function bubblePos(){const min=+slider.min,max=+slider.max,v=+slider.value;const frac=(v-min)/(max-min);
-  // dir=rtl: القيمة الدنيا يمينًا → بُعد الإبهام عن اليمين ∝ frac
-  const w=slider.clientWidth;const bw=bubble.offsetWidth||120;let x=frac*w;
-  x=Math.max(bw/2,Math.min(w-bw/2,x));bubble.style.right=x+'px';}
+// A fixed callout outside the scrolling reader dock cannot be clipped at its edges.
+bubble.classList.add('reader-floating-bubble');
+document.body.appendChild(bubble);
+function bubblePos(){
+ const min=+slider.min,max=+slider.max,v=+slider.value;
+ const frac=(v-min)/Math.max(1,max-min),rect=slider.getBoundingClientRect();
+ const bw=Math.min(bubble.offsetWidth||150,window.innerWidth-24);
+ const x=rect.right-frac*rect.width;
+ const left=Math.max(bw/2+12,Math.min(window.innerWidth-bw/2-12,x));
+ const top=Math.max(8,rect.top-(bubble.offsetHeight||56)-22);
+ bubble.style.left=left+'px';
+ bubble.style.top=top+'px';
+ bubble.style.right='auto';
+}
 function showBubble(){const v=+slider.value;$('sbSurah').textContent=surahOfPageStart(v)||('وجه '+AR(v));$('sbPage').textContent='وجه '+AR(v)+' · الجزء '+AR(juzOfPage(v));bubblePos();bubble.classList.add('on');}
 slider.addEventListener('input',()=>{showBubble();});
 slider.addEventListener('touchstart',showBubble,{passive:true});
 slider.addEventListener('mousedown',showBubble);
+window.addEventListener('resize',()=>{if(bubble.classList.contains('on'))bubblePos()});
+document.getElementById('readerDock')?.addEventListener('scroll',()=>{if(bubble.classList.contains('on'))bubblePos()},{passive:true});
 function endSlide(){bubble.classList.remove('on');const v=+slider.value;closeAll();if(v!==cur){settle(v);flashPane();}}
 slider.addEventListener('change',endSlide);
 $('readerJumpForm').onsubmit=e=>{e.preventDefault();const page=+$('pageJump').value;if(!Number.isInteger(page)||page<1||page>604)return;closeAll();settle(page);};
@@ -2549,9 +2561,9 @@ function startFocusedReaderV146(force=false){
 });
 </script>
 <script>
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=174').then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=175').then(r=>r.update()).catch(()=>{}));}
 </script>
-<script src="quick-face-completion.js?v=174"></script>
+<script src="quick-face-completion.js?v=175"></script>
 <script src="recitation-diagnostics.js?v=1"></script>
 <script src="recitation-feedback.js?v=1"></script>
 <script src="recitation-feedback-ui.js?v=1"></script>
