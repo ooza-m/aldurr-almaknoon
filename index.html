@@ -886,6 +886,13 @@ html[data-theme="dark"] .bottom-nav button.active{background:var(--wash)!importa
 html[data-theme="dark"] .gate-card,html[data-theme="dark"] .gate-card input{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
 html[data-theme="dark"] #todayRefreshV50,html[data-theme="dark"] .v50-section-head [aria-label="تخصيص المهام"]{background:var(--surface)!important;color:var(--ink)!important}
 
+
+/* v174 · accessible vector task controls and consistently readable night surfaces */
+#todayRefreshV50 svg,.v50-section-head [aria-label="تخصيص المهام"] svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+html[data-theme="dark"] body{background:radial-gradient(circle at 18% 8%,#2e3440 0,transparent 36%),radial-gradient(circle at 90% 82%,#28232c 0,transparent 38%),#16191f!important;color:var(--ink)}
+html[data-theme="dark"] #tab-more .card,html[data-theme="dark"] .legacy-today .card,html[data-theme="dark"] #pageModal .modal{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme="dark"] #tab-more .card :is(h2,h3,b,strong),html[data-theme="dark"] #pageModal .modal :is(h2,h3,b,strong){color:var(--ink)!important}
+html[data-theme="dark"] :is(.pm-verse-row,.v50-task,.v50-round){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <link rel="stylesheet" href="ward-phase05-home-today.css?v=1" media="not all" data-floral-stylesheet>
@@ -1025,7 +1032,7 @@ window.FIREBASE_CONFIG = {
       <div class="v50-glass v50-card" id="todayOverviewV50"></div>
       <div class="v50-glass v50-priority" id="todayPriorityV50"></div>
        <div id="smartReview"></div><div id="weeklyAchievementV136" class="v50-glass v50-card" style="margin:12px 0"></div><div id="longTermProgressV139" class="v50-glass v50-card" style="margin:12px 0"></div><div id="detailedMemorizationV140" class="v50-glass v50-card" style="margin:12px 0"></div><div class="v50-glass v50-card" style="margin:12px 0;padding:13px"><b>تحليل مواضع الأخطاء</b><p class="hint">التحليل التفصيلي للسور والأوجه والآيات في سجل الأخطاء.</p><button type="button" class="btn btn-ghost btn-sm" data-v50-route="errors">فتح تحليل الأخطاء</button></div><div id="focusedVerseReviewsV143" class="v50-glass v50-card" style="margin:12px 0"></div><div id="studyPlanSettingsV134" class="v50-glass v50-card" style="margin:12px 0"></div><div id="dailyPageQueueV122" class="v50-glass v50-card" style="margin:12px 0"></div><div id="reviewForecastV124" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherTestV127" class="v50-glass v50-card" style="margin:12px 0"></div><div id="teacherCatchupV129" class="v50-glass v50-card" style="margin:12px 0"></div>
-      <div class="v50-section-head"><h2>مهام اليوم</h2><div style="display:flex;align-items:center;gap:8px"><button type="button" class="btn btn-ghost btn-sm" data-v50-route="planning" aria-label="تخصيص المهام" title="تخصيص المهام">⚙</button><button id="todayRefreshV50" aria-label="تحديث المهام" title="تحديث المهام">↻</button></div></div>
+      <div class="v50-section-head"><h2>مهام اليوم</h2><div style="display:flex;align-items:center;gap:8px"><button type="button" class="btn btn-ghost btn-sm" data-v50-route="planning" aria-label="تخصيص المهام" title="تخصيص المهام"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.7-2.1 2.1m-8.6 8.6-2.1 2.1"/><circle cx="12" cy="12" r="4"/></svg></button><button type="button" id="todayRefreshV50" aria-label="تحديث المهام" title="تحديث المهام"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5"/><path d="M5.7 9a7 7 0 0 1 12-2L20 11M4 13l2.3 4a7 7 0 0 0 12-2"/></svg></button></div></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
     </div>
