@@ -34,10 +34,10 @@ test('dialog styling is scoped to index and does not alter Quran reading layout'
 });
 
 test('dialog update is included in offline shell cache',()=>{
- assert.match(sw,/const CACHE='durr-v174'/);
+ assert.match(sw,/const CACHE='durr-v175'/);
  assert.match(sw,/ward-phase05-dialogs\.css\?v=1/);
- assert.match(html,/register\('sw\.js\?v=174'\)/);
- assert.match(reader,/register\('sw\.js\?v=174'\)/);
+ assert.match(html,/register\('sw\.js\?v=175'\)/);
+ assert.match(reader,/register\('sw\.js\?v=175'\)/);
 });
 
 test('existing form fields and save actions remain available',()=>{
