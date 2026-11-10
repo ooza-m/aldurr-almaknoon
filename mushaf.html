@@ -425,7 +425,7 @@ body.face-tafsir-open .app-bottom-nav{opacity:0;pointer-events:none}
 .pane.reciting .qw.rec-suspected-live{opacity:1!important;text-decoration:underline dotted #b88b47;text-decoration-thickness:2px;text-underline-offset:5px}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
-<link rel="stylesheet" href="reader-shell.css?v=106">
+<link rel="stylesheet" href="reader-shell.css?v=107">
 <script src="reader-core.js?v=89"></script>
 <script src="audio-library.js?v=89"></script>
 <script src="reader-audio.js?v=90"></script>
@@ -2311,16 +2311,25 @@ $('tgDir').querySelectorAll('button').forEach(b=>b.onclick=()=>{scrollDir=b.data
 const qtest=$('qasrTest');if(qtest)qtest.onclick=()=>qasrHealthV75(true);
 
 /* v55: قياس top-level visual viewport مباشرة؛ لم يعد هناك iframe وسيط. */
+function readerInputFocusedV171(){
+ const el=document.activeElement;
+ return !!(el&&el.matches?.('input:not([type=range]),textarea,select,[contenteditable=true]'));
+}
 function syncReaderViewport(){
   const vv=window.visualViewport;
   const vh=Math.round((vv&&vv.height)||window.innerHeight||document.documentElement.clientHeight||700);
-
   document.documentElement.style.setProperty('--app-vh',vh+'px');
-
+  // iOS resizes visualViewport when the keyboard opens. Keep Quran glyphs
+  // steady during text entry; overlays still follow the visible viewport.
+  if(readerInputFocusedV171())return;
   requestAnimationFrame(()=>{[paneCur,panePrev,paneNext].forEach(fitPane);});
 }
 window.addEventListener('resize',syncReaderViewport,{passive:true});
 if(window.visualViewport){visualViewport.addEventListener('resize',syncReaderViewport,{passive:true});visualViewport.addEventListener('scroll',syncReaderViewport,{passive:true});}
+document.addEventListener('focusout',event=>{
+  if(event.target?.matches?.('input:not([type=range]),textarea,select,[contenteditable=true]'))
+    requestAnimationFrame(syncReaderViewport);
+});
 readerToolsV86=DurrReaderUI.mount({document,window,storage:localStorage,setSeparator:(vk,color)=>toggleHl(vk,color),getSeparator:vk=>hlMap.get(vk)||'',player:audioController,reciters:DurrReader.RECITERS,AudioDownloads:DurrAudio.AudioDownloads,getData:()=>DATA,getPage:()=>cur,getVerse:()=>ayCur,pageOfVerse:versePage,surahName,closeAll,toast:recTip,digits:ARA,navigate:async(page,vk)=>{if(recMode)finishReciteSession(false);await settle(page);flashVerse(vk);}});
 try{for(const [vk,color] of hlMap){if(!readerToolsV86.store.has(vk)){const [surah,ayah]=vk.split(':').map(Number),page=versePage(vk);if(page)readerToolsV86.store.put(vk,page,surahName(surah)+' · آية '+ARA(ayah));}}for(const item of readerToolsV86.store.items){if(!hlMap.has(item.vk))hlMap.set(item.vk,'#E3A9B6');}saveHl();readerToolsV86.paintBookmarks();}catch(e){}
 audioController.setGap(+LS('durr-audio-gap-v87','0'));
