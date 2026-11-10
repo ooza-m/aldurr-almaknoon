@@ -2002,11 +2002,18 @@ function uniqueRecitationSessionsV163(sessions){
 }
 function recitationSessionStatusV163(session){
  const pages=Array.isArray(session?.pages)?session.pages:[];
- const confirmed=pages.filter(p=>approvedRecitationFaceV149(session,p)).length;
- if(confirmed&&confirmed===pages.length)return{key:'approved',label:'إنجاز معتمد',confirmed,total:pages.length};
- if(confirmed)return{key:'partial',label:'اعتماد جزئي',confirmed,total:pages.length};
- if(['new','fix','near','far'].includes(session?.task))return{key:'draft',label:'غير معتمدة',confirmed:0,total:pages.length};
- return{key:'follow',label:'متابعة فقط',confirmed:0,total:pages.length};
+ // Repeated partial snapshots are one face, not separate assigned faces.
+ const unique=new Map();
+ for(const pg of pages){
+  const face=+pg?.page;
+  if(!Number.isInteger(face)||face<1||face>604)continue;
+  if(!unique.has(face)||(!approvedRecitationFaceV149(session,unique.get(face))&&approvedRecitationFaceV149(session,pg)))unique.set(face,pg);
+ }
+ const total=unique.size,confirmed=[...unique.values()].filter(p=>approvedRecitationFaceV149(session,p)).length;
+ if(confirmed&&confirmed===total)return{key:'approved',label:'إنجاز معتمد',confirmed,total};
+ if(confirmed)return{key:'partial',label:'اعتماد جزئي',confirmed,total};
+ if(['new','fix','near','far'].includes(session?.task))return{key:'draft',label:'غير معتمدة',confirmed:0,total};
+ return{key:'follow',label:'متابعة فقط',confirmed:0,total};
 }
 function localReviewDraftsV163(){
  try{
@@ -3132,7 +3139,7 @@ function ingestRecitationSessionV51(raw){if(!raw||!raw.id)return;if(!S.recitatio
   const previousApproved=approvedRecitationFaceV149(rs,prior);
   if((approved&&!previousApproved)||(approved===previousApproved&&Number(candidate.coverage||0)>Number(prior.coverage||0)))effectPagesV168.set(page,candidate);
  }
- for(const pg of effectPagesV168.values()){const p=+pg.page||0;if(!p)return;(pg.verses||[]).forEach(v=>{if(!v||!v.vk)return;const prev=S.verseReview[v.vk]||{};if((v.coverage||0)>0){S.verseReview[v.vk]={lastReview:date,lastTs:rs.endedAt||Date.now(),page:p,coverage:+(v.coverage||0),score:+(pg.score||0),errors:+(v.errorWords||0),suspected:+(v.suspectedWords||0),assisted:+(v.assistedWords||0),sessionId:rs.id,count:(prev.count||0)+(prev.sessionId===rs.id?0:1)};}const parts=String(v.vk).split(':').map(Number),sid=parts[0],ayah=parts[1];(v.errorWordIndexes||[]).forEach(wi=>{if(rs.version>=84&&!(rs.manualErrorKeys||[]).includes(v.vk+'#'+wi))return;const dup=(S.errors||[]).some(e=>e.sessionId===rs.id&&e.verseKey===v.vk&&+e.wordIndex===+wi);if(!dup){const sur=(SURAHS.find(x=>x[0]===sid)||[])[1]||'',finding=(rs.findings||[]).find(f=>f&&f.vk===v.vk&&+f.wi===+wi&&String(f.type||'').startsWith('confirmed_')),kind=finding&&finding.type==='confirmed_omission'?'سقوط كلمة':finding&&finding.type==='confirmed_substitution'?'استبدال كلمة':'خطأ أثناء التسميع',conf=finding&&finding.confidence!=null?+finding.confidence:null;S.errors.push({surah:sur,surahId:sid,page:p,ayah,type:'تسميع',desc:kind+' · الكلمة '+(+wi+1),date,archived:false,source:'recitation',aiDetected:!!finding,confidence:conf,sessionId:rs.id,verseKey:v.vk,wordIndex:+wi});errAdded++;}});});if(!['ai-review','practice'].includes(task)&&approvedRecitationFaceV149(rs,pg)){
+ for(const pg of effectPagesV168.values()){const p=+pg.page||0;if(!p)continue;(pg.verses||[]).forEach(v=>{if(!v||!v.vk)return;const prev=S.verseReview[v.vk]||{};if((v.coverage||0)>0){S.verseReview[v.vk]={lastReview:date,lastTs:rs.endedAt||Date.now(),page:p,coverage:+(v.coverage||0),score:+(pg.score||0),errors:+(v.errorWords||0),suspected:+(v.suspectedWords||0),assisted:+(v.assistedWords||0),sessionId:rs.id,count:(prev.count||0)+(prev.sessionId===rs.id?0:1)};}const parts=String(v.vk).split(':').map(Number),sid=parts[0],ayah=parts[1];(v.errorWordIndexes||[]).forEach(wi=>{if(rs.version>=84&&!(rs.manualErrorKeys||[]).includes(v.vk+'#'+wi))return;const dup=(S.errors||[]).some(e=>e.sessionId===rs.id&&e.verseKey===v.vk&&+e.wordIndex===+wi);if(!dup){const sur=(SURAHS.find(x=>x[0]===sid)||[])[1]||'',finding=(rs.findings||[]).find(f=>f&&f.vk===v.vk&&+f.wi===+wi&&String(f.type||'').startsWith('confirmed_')),kind=finding&&finding.type==='confirmed_omission'?'سقوط كلمة':finding&&finding.type==='confirmed_substitution'?'استبدال كلمة':'خطأ أثناء التسميع',conf=finding&&finding.confidence!=null?+finding.confidence:null;S.errors.push({surah:sur,surahId:sid,page:p,ayah,type:'تسميع',desc:kind+' · الكلمة '+(+wi+1),date,archived:false,source:'recitation',aiDetected:!!finding,confidence:conf,sessionId:rs.id,verseKey:v.vk,wordIndex:+wi});errAdded++;}});});if(!['ai-review','practice'].includes(task)&&approvedRecitationFaceV149(rs,pg)){
   full++;
   const fl=ensureFaceLearningV61(),f=fl[p]||(fl[p]={}),prevR=f.recite||{};
   f.recite={last:date,lastTs:rs.endedAt||Date.now(),count:(prevR.count||0)+(prevR.lastSessionId===rs.id?0:1),lastSessionId:rs.id,score:pg.manualConfirmed===true?null:(+pg.score||0),complete:true,task,manualConfirmed:pg.manualConfirmed===true};
