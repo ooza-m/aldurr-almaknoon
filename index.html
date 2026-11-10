@@ -1835,7 +1835,32 @@ function approvedRecitationFaceV149(rs,pg){
    (+rs.version<86||rs.userReviewed===true));
 }
 let firstMemDateCacheV111=null;
-function firstMemDateMapV50(){const old=firstMemDateCacheV111;if(old&&old.state===S&&old.updatedAt===S.updatedAt&&old.logs===S.logs&&old.sessions===S.recitationSessions&&old.logsLength===S.logs.length&&old.sessionsLength===S.recitationSessions.length)return old.result;const out={};[...S.logs].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(l=>{(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)if(!out[p])out[p]=l.date;});});uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(x=>x&&x.task==='new').sort((a,b)=>(a.endedAt||0)-(b.endedAt||0)).forEach(rs=>{const d=keyOf(new Date(rs.endedAt||rs.startedAt||Date.now()));(rs.pages||[]).filter(pg=>approvedRecitationFaceV149(rs,pg)).forEach(pg=>{if(!out[pg.page])out[pg.page]=d;});});firstMemDateCacheV111={state:S,updatedAt:S.updatedAt,logs:S.logs,sessions:S.recitationSessions,logsLength:S.logs.length,sessionsLength:S.recitationSessions.length,result:out};return out;}
+function firstMemDateMapV50(){
+ const old=firstMemDateCacheV111;
+ if(old&&old.state===S&&old.updatedAt===S.updatedAt&&old.logs===S.logs&&old.sessions===S.recitationSessions&&old.logsLength===S.logs.length&&old.sessionsLength===S.recitationSessions.length)return old.result;
+ const out={};
+ const record=(p,day)=>{
+  p=+p;
+  if(!Number.isInteger(p)||p<1||p>604||typeof day!=='string'||!/^(\\d{4})-(\\d{2})-(\\d{2})$/.test(day))return;
+  if(!out[p]||day<out[p])out[p]=day;
+ };
+ (S.logs||[]).forEach(log=>{
+  (log.memList||[]).forEach(it=>{
+   const range=it.from!=null&&it.to!=null?[Math.min(+it.from,+it.to),Math.max(+it.from,+it.to)]:pagesOfSurah(+it.surahId);
+   if(range&&Number.isFinite(range[0])&&Number.isFinite(range[1]))for(let p=Math.max(1,range[0]);p<=Math.min(604,range[1]);p++)record(p,log.date);
+  });
+ });
+ uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(rs=>rs&&rs.task==='new').forEach(rs=>{
+  const timestamp=rs.endedAt||rs.startedAt;
+  if(!timestamp)return;
+  const parsed=new Date(timestamp);
+  if(Number.isNaN(parsed.getTime()))return;
+  const day=keyOf(parsed);
+  (rs.pages||[]).forEach(pg=>{if(approvedRecitationFaceV149(rs,pg))record(pg.page,day);});
+ });
+ firstMemDateCacheV111={state:S,updatedAt:S.updatedAt,logs:S.logs,sessions:S.recitationSessions,logsLength:S.logs.length,sessionsLength:S.recitationSessions.length,result:out};
+ return out;
+}
 const NEAR_INTERVALS_V62=[3,7,14],FAR_INTERVALS_V62=[30,60,90,120];
 function addDaysKeyV62(k,n){const d=parseKey(k);d.setDate(d.getDate()+n);return keyOf(d);}
 function completeReviewTodayV62(p,day=todayKey()){
@@ -2074,7 +2099,10 @@ function taskPagesV60(id){
   if(id==='near')return bucket.near.filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
   if(id==='far'){
     // Fixed user-defined completion window; never cap the far review with an unrelated hard-coded quota.
-    return bucket.far.filter(x=>x.doneToday||x.due<=todayKey()).slice(0,farDailyQuotaV111()).filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
+    const quota=farDailyQuotaV111();
+    const completed=bucket.far.filter(x=>x.doneToday).length;
+    const remaining=Math.max(0,quota-completed);
+    return bucket.far.filter(x=>!x.doneToday&&x.due<=todayKey()).slice(0,remaining).map(x=>x.p);
   }
   return[];
 }
@@ -4236,7 +4264,11 @@ function dayFactsV71(k){
   const sessions=uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(r=>keyOf(new Date(r.endedAt||r.startedAt||0))===k);
   const groups={new:expandItemsToPagesV71(log&&log.memList),fix:new Set(),near:new Set(),far:new Set()}; // legacy fixation is included in near below
   const manualRev=(log&&log.revList)||[];
-  manualRev.forEach(it=>{const target=it.type==='far'?groups.far:groups.near;expandItemsToPagesV71([it]).forEach(p=>target.add(p));});
+  manualRev.forEach(it=>expandItemsToPagesV71([it]).forEach(p=>{
+    const first=firstMemDateV62(p);
+    const category=first&&daysBetween(first,k)>=30?'far':'near';
+    groups[category].add(p);
+  }));
   const sessionPages=[];
   sessions.forEach(r=>(r.pages||[]).forEach(pg=>{
     if(!approvedRecitationFaceV149(r,pg))return;
