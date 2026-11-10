@@ -9,7 +9,7 @@ body.app-standalone .screen{position:relative!important;inset:auto!important;dis
 body.app-standalone #btnBack{visibility:hidden;opacity:0;pointer-events:none;transition:opacity .18s ease,visibility .18s ease}
 body.app-standalone.chrome #btnBack{visibility:visible;opacity:1;pointer-events:auto}
 .chrome-top{position:absolute;inset:var(--reader-safe-top) 0 auto;order:0;height:44px;min-height:44px;max-width:760px;width:100%;margin:0 auto;padding:0 10px;padding-inline-start:56px;background:var(--page);z-index:30;gap:6px}
-.chrome-top .ttl{font-size:.83rem;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.chrome-top .ttl{font-size:.8rem;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;direction:rtl;color:var(--ink-2);font-weight:700}
 .chrome-top .side{gap:2px;flex:0 0 auto}
 .ico{width:42px;height:44px;border-radius:14px;color:var(--ink-2);touch-action:manipulation}
 .ico svg{width:21px;height:21px;pointer-events:none}
