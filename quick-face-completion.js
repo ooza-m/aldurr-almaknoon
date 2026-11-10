@@ -6,7 +6,7 @@ const css=document.createElement('style');
 css.textContent=`
 .dq-toolbar{order:-3;display:flex;flex:0 0 auto;align-items:center;justify-content:flex-end;min-height:36px;padding:2px 12px 1px;direction:rtl}
 .dq-trigger{position:static;display:inline-flex;align-items:center;justify-content:center;width:auto;height:34px;min-width:65px;z-index:auto;border:1px solid var(--line,rgba(94,58,77,.15));border-radius:12px;background:var(--surface,#fffdfa);color:var(--ink-2,#5E3A4D);padding:5px 12px;font:600 12px "IBM Plex Sans Arabic",sans-serif;box-shadow:none;cursor:pointer;line-height:1.3}
-.dq-trigger:focus-visible{outline:2px solid var(--accent,#A8546B);outline-offset:2px}
+.reader-action.dq-saved{background:var(--wash)!important;color:var(--accent)!important}\n.dq-trigger:focus-visible{outline:2px solid var(--accent,#A8546B);outline-offset:2px}
 .dq-overlay{position:fixed;inset:0;background:#160c1585;z-index:10000;display:none;align-items:flex-end;justify-content:center}
 .dq-overlay.open{display:flex}
 .dq-sheet{width:min(100%,460px);background:var(--page,#FBF6F1);color:var(--ink,#3D2632);border-radius:24px 24px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -12px 30px #0002;max-height:85dvh;overflow:auto;font:14px "IBM Plex Sans Arabic",sans-serif}
@@ -94,8 +94,10 @@ overlay.querySelector('#dqForm').addEventListener('submit',function(e){
   localStorage.setItem(KEY,JSON.stringify(state));
   localStorage.setItem('durr-quick-pending-sync',event.id);
   close();
-  const old=trigger.textContent;trigger.textContent='✓';trigger.setAttribute('aria-label','سُجّل إنجاز الوجه');
-  setTimeout(()=>{trigger.textContent=old;trigger.setAttribute('aria-label','تسجيل الإنجاز')},2200);
+  const originalLabel=trigger.getAttribute('aria-label');
+  trigger.setAttribute('aria-label','سُجّل إنجاز الوجه');
+  trigger.classList.add('dq-saved');
+  setTimeout(()=>{trigger.classList.remove('dq-saved');trigger.setAttribute('aria-label',originalLabel||'تسجيل الإنجاز')},2200);
  }catch(err){alert('تعذّر تسجيل الإنجاز: '+err.message)}
 });
 })();
