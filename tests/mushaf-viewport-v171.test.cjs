@@ -39,6 +39,6 @@ test('reader overlays and form controls respect iOS safe areas and keyboard inpu
  assert.match(css,/calc\(var\(--app-vh,100dvh\) - var\(--reader-safe-top\) - 8px\)/);
 });
 test('new stylesheet version is matched in Mushaf and Service Worker',()=>{
- assert.match(mushaf,/reader-shell\.css\?v=175/);
- assert.match(sw,/reader-shell\.css\?v=175/);
+ assert.match(mushaf,/reader-shell\.css\?v=176/);
+ assert.match(sw,/reader-shell\.css\?v=176/);
 });
