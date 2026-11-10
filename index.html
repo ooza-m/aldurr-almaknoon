@@ -3892,8 +3892,8 @@ function fillJuzPages(j){
   // Otherwise a light tile can be mistaken for near-black and its number becomes white.
   cont.querySelectorAll('.pg').forEach(c=>{
     const raw=getComputedStyle(c).backgroundColor.trim();
-    const isFloat=/^color\\((?:srgb|display-p3)\\s/i.test(raw);
-    const values=(raw.match(/[0-9]*\\.?[0-9]+(?:e[+-]?[0-9]+)?/gi)||[]).map(Number);
+    const isFloat=/^color\((?:srgb|display-p3)\s/i.test(raw);
+    const values=(raw.match(/[0-9]*\.?[0-9]+(?:e[+-]?[0-9]+)?/gi)||[]).map(Number);
     if(values.length<3)return;
     const rgb=values.slice(0,3).map(x=>Math.max(0,Math.min(1,isFloat?x:x/255)));
     const channel=rgb.map(v=>v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4));
