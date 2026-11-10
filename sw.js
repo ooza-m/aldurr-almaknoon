@@ -1,4 +1,4 @@
-const CACHE='durr-v113';
+const CACHE='durr-v114';
 const STATIC=[
   './app-preferences.js?v=109','./app-preferences.css?v=109','./app-cloud-extras.js?v=109',
   './reader-session.js?v=89','./reader-study.js?v=89','./audio-library.js?v=89','./recitation-core.js?v=89','./recitation-jobs.js?v=89','./reader-ui.js?v=89','./reader-tools.css?v=94','./app-data.js?v=111','./data/recitation-aliases.json',
