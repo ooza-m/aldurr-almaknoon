@@ -1057,7 +1057,7 @@ window.FIREBASE_CONFIG = {
         </div>
       </div>
       <div class="map-legend-v64 ward-map-legend" aria-label="مفتاح ألوان الأوجه">
-        <span><i class="lg-fix"></i>تثبيت</span><span><i class="lg-near"></i>قريبة</span>
+        <span><i class="lg-near"></i>قريبة · 30 يومًا</span>
         <span><i class="lg-far"></i>بعيدة</span><span><i class="lg-solid"></i>متقن</span>
         <span><i class="lg-weak"></i>متفلّت</span><span><i class="lg-partial"></i>جزئي</span>
         <span><i class="lg-error"></i>خطأ نشط</span>
@@ -1065,7 +1065,7 @@ window.FIREBASE_CONFIG = {
       <section class="ward-review-roadmap" aria-labelledby="wardReviewHeading">
         <div class="ward-review-head"><div><span>مسار المراجعة</span><h3 id="wardReviewHeading">المراجعة القريبة والبعيدة</h3></div><b id="wardReviewTotal" aria-live="polite"></b></div>
         <p class="hint">كل وجه يُراجع يوميًا خلال أول 30 يومًا من حفظه، ثم ينتقل تلقائيًا إلى المراجعة البعيدة.</p>
-        <div id="wardReviewRoadmap" aria-label="تفاصيل أوجه التثبيت والمراجعة القريبة"></div>
+        <div id="wardReviewRoadmap" aria-label="تفاصيل المراجعة القريبة والبعيدة"></div>
       </section>
       <div class="ward-map-juz-title"><h3 class="map-juz-heading-v96">الأجزاء الثلاثون</h3>
         <button type="button" id="btnToggleAllJuz" class="ward-map-fold" aria-label="فتح الأجزاء الثلاثين" aria-pressed="false" title="فتح الأجزاء أو طيها">
@@ -2106,17 +2106,33 @@ function renderHomeV50(){
   let mem=0,fix=0,near=0,far=0,weak=0,partial=0,dueNow=0;
   for(let pg=1;pg<=604;pg++){const m=mapPageMetaV62(pg,null),phase=m.engine&&m.memorized?m.engine.phase:'unseen';if(m.memorized)mem++;if(phase==='near')near++;else if(phase==='far')far++;if(m.state==='weak')weak++;if(m.partial)partial++;if(m.engine&&m.engine.due)dueNow++;}
   const pct=Math.round(mem/604*100),pr=document.getElementById('homeProgressCard');
-  if(pr)pr.innerHTML='<div class="v65-journey"><div class="v65-journey-ring" style="--p:'+pct+'"><b>'+pct+'%</b><small>من المصحف</small></div><div class="v65-journey-main"><div class="v50-kicker">رحلتك في الحفظ</div><h3>'+mem+' وجهًا محفوظًا</h3><p>الخريطة تفصل بين المحفوظ، والتثبيت، والمراجعة، والإتقان.</p><div class="v65-state-row"><span><i class="lg-fix"></i>'+fix+' تثبيت</span><span><i class="lg-near"></i>'+near+' قريبة</span><span><i class="lg-far"></i>'+far+' بعيدة</span><span><i class="lg-weak"></i>'+weak+' متفلّت</span></div><button class="v50-btn soft" data-v50-route="map">عرض خريطة الأوجه</button></div></div>';
+  if(pr)pr.innerHTML='<div class="v65-journey"><div class="v65-journey-ring" style="--p:'+pct+'"><b>'+pct+'%</b><small>من المصحف</small></div><div class="v65-journey-main"><div class="v50-kicker">رحلتك في الحفظ</div><h3>'+mem+' وجهًا محفوظًا</h3><p>الخريطة تفصل بين المحفوظ، والمراجعة القريبة، والبعيدة، والإتقان.</p><div class="v65-state-row"><span><i class="lg-near"></i>'+near+' قريبة</span><span><i class="lg-far"></i>'+far+' بعيدة</span><span><i class="lg-weak"></i>'+weak+' متفلّت</span></div><button class="v50-btn soft" data-v50-route="map">عرض خريطة الأوجه</button></div></div>';
   const pin=readingPinV86(),last=pin?.page||lastActivityPageV50(),s=pin?(SURAHS.find(s=>s[0]===+pin.vk.split(':')[0])||surahOfPage(last)):surahOfPage(last),mLast=mapPageMetaV62(last,null),hc=document.getElementById('homeContinueCard'),lf=(S.faceLearning&&S.faceLearning[last])||{},books=lf.tafsir?Object.keys(lf.tafsir).filter(k=>lf.tafsir[k]&&lf.tafsir[k].complete).length:0;
-  const phaseTxt=mLast.engine&&mLast.engine.phase==='fix'?'تثبيت · اليوم '+mLast.engine.day+' من 30':mLast.engine&&mLast.engine.phase==='near'?'مراجعة قريبة':mLast.engine&&mLast.engine.phase==='far'?'مراجعة بعيدة':mLast.memorized?'محفوظ':'قراءة';
+  const phaseTxt=mLast.engine&&mLast.engine.phase==='near'?'مراجعة قريبة · اليوم '+mLast.engine.day+' من 30':mLast.engine&&mLast.engine.phase==='far'?'مراجعة بعيدة':mLast.memorized?'محفوظ':'قراءة';
   if(hc)hc.innerHTML='<div class="v50-continue v65-continue"><div class="v65-page-token">'+last+'</div><div class="v65-continue-copy"><div class="v50-kicker">'+(pin?'فاصلك في المصحف':'مواصلة آخر نشاط')+'</div><h3>سورة '+s[1]+'</h3><p>الوجه '+last+' · '+(pin?'فاصل مثبت عند الآية '+toAr(pin.vk.split(':')[1]):phaseTxt)+'</p><div class="v65-learning-dots"><span class="'+(lf.listen?'on':'')+'">سماع</span><span class="'+(books?'on':'')+'">تفسير</span><span class="'+(lf.hifz?'on':'')+'">حفظ</span><span class="'+(lf.recite?'on':'')+'">تسميع</span></div></div><button class="v50-arrow" data-v50-mushaf="'+last+'" data-reading-vk="'+(pin?.vk||'')+'" aria-label="متابعة">‹</button></div>';
-  const tasks=tasksV50(),core=tasks.filter(t=>['new','fix','near','far'].includes(t.id)),target=core.reduce((n,t)=>n+(t.target||0),0),done=core.reduce((n,t)=>n+Math.min(t.done||0,t.target||0),0),remain=core.reduce((n,t)=>n+(t.pages||[]).length,0),tc=document.getElementById('homeTodayCard'),support=tasks.filter(t=>!['new','fix','near','far'].includes(t.id)),supportDone=support.filter(t=>t.target>0&&t.done>=t.target).length;
+  const tasks=tasksV50(),core=tasks.filter(t=>t.id==='new'||t.id==='near'||t.id==='far'||t.extra),target=core.reduce((n,t)=>n+(t.target||0),0),done=core.reduce((n,t)=>n+Math.min(t.done||0,t.target||0),0),remain=core.reduce((n,t)=>n+(t.pages||[]).length,0),tc=document.getElementById('homeTodayCard'),support=tasks.filter(t=>t.id!=='new'&&t.id!=='near'&&t.id!=='far'&&!t.extra),supportDone=support.filter(t=>t.target>0&&t.done>=t.target).length;
   if(tc)tc.innerHTML='<div class="v72-home-today"><div><div class="v50-kicker">اليوم</div><h3>'+(remain?'بقي '+remain+' وجهًا للحفظ والمراجعة':'اكتملت مهام الحفظ والمراجعة')+'</h3><p>'+done+' من '+target+' من متطلبات الحفظ والمراجعة'+(support.length?' · '+supportDone+' من '+support.length+' من المهام المساندة':'')+'</p></div><button data-v50-route="today">فتح مهام اليوم</button></div>';
   const att=document.getElementById('homeAttentionCard'),errs=(S.errors||[]).filter(e=>!e.archived).length;
-  if(att){const items=[],smartN=(S.aiReviewQueue||[]).filter(q=>q&&q.status==='pending').length;if(dueNow)items.push('<button data-v50-route="today"><i class="lg-near"></i><span><b>'+dueNow+' وجهًا مستحقًا الآن</b><small>ضمن مهام المراجعة اليوم</small></span></button>');if(smartN)items.push('<button data-v50-route="errors"><i class="lg-partial"></i><span><b>'+smartN+' موضعًا يحتاج تحققًا</b><small>مراجعة ذكية بالاستدعاء النشط</small></span></button>');if(partial)items.push('<button data-v50-route="map"><i class="lg-partial"></i><span><b>'+partial+' مراجعة جزئية</b><small>مواضع لم تكتمل تغطيتها</small></span></button>');if(errs)items.push('<button data-v50-route="errors"><i class="lg-error"></i><span><b>'+errs+' موضع خطأ نشط</b><small>راجعي الأخطاء قبل أن تتكرر</small></span></button>');att.innerHTML=items.length?'<div class="v65-att-head"><div><div class="v50-kicker">يحتاج انتباهك</div><h3>الأهم خارج الملخص العام</h3></div></div><div class="v65-att-list">'+items.slice(0,3).join('')+'</div>':'<div class="v65-clear"><i class="lg-solid"></i><div><b>لا توجد مواضع ملحّة الآن</b><small>لا مراجعات متأخرة ولا أخطاء نشطة تحتاج تدخّلًا.</small></div></div>';}
+  if(att){
+   const items=[],bucket=reviewBucketsV50(),farDue=taskPagesV60('far'),nearDue=taskPagesV60('near'),partialDue=partial;
+   if(farDue.length){
+    const p=farDue[0],overdue=bucket.far.filter(x=>x.days>0).length;
+    items.push('<button data-attention-face-v111="'+p+'"><i class="lg-far"></i><span><b>المراجعة البعيدة: '+farDue.length+' وجهًا اليوم</b><small>ختم البعيدة كل '+farCycleDaysV111()+' أيام · '+(overdue?overdue+' متأخرة · ':'')+'ابدئي بسورة '+esc(surahOfPage(p)[1])+' ص'+p+'</small></span></button>');
+   }
+   if(nearDue.length){
+    const p=nearDue[0];items.push('<button data-attention-face-v111="'+p+'"><i class="lg-near"></i><span><b>المراجعة القريبة: '+nearDue.length+' وجهًا</b><small>المراجعة اليومية خلال أول 30 يومًا · ص'+p+'</small></span></button>');
+   }
+   if(partialDue)items.push('<button data-v50-route="map"><i class="lg-partial"></i><span><b>'+partialDue+' مراجعة جزئية</b><small>مواضع لم تكتمل تغطيتها</small></span></button>');
+   if(errs)items.push('<button data-v50-route="errors"><i class="lg-error"></i><span><b>'+errs+' موضع خطأ نشط</b><small>راجعي الأخطاء قبل أن تتكرر</small></span></button>');
+   att.innerHTML=items.length?'<div class="v65-att-head"><div><div class="v50-kicker">يحتاج انتباهك</div><h3>المستحق من المراجعات والمواضع</h3></div></div><div class="v65-att-list">'+items.slice(0,3).join('')+'</div>':'<div class="v65-clear"><i class="lg-solid"></i><div><b>لا توجد مواضع ملحّة الآن</b><small>لا مراجعات متأخرة ولا أخطاء نشطة تحتاج تدخّلًا.</small></div></div>';
+  }
   const recent=document.getElementById('homeRecent');
   if(recent){const arr=[],streak=calcStreak(),month=pagesMemorizedInMonth();if(streak>0)arr.push([streak+' يومًا','سلسلة الاستمرار الحالية']);if(month>0)arr.push([month+' وجهًا','حفظ جديد هذا الشهر']);const listen=(S.activityEvents||[]).filter(e=>e&&e.type==='listen').length,tf=(S.activityEvents||[]).filter(e=>e&&e.type==='tafsir').length;if(listen)arr.push([listen+' جلسة سماع','سُجّلت تلقائيًا']);if(tf)arr.push([tf+' وجه تفسير','أُنجزت قراءته']);if(!arr.length)arr.push(['ابدئي أول جلسة','سيظهر تقدمك الحقيقي هنا']);recent.innerHTML=arr.slice(0,4).map(x=>'<div class="v50-glass v50-ach"><b>'+esc(x[0])+'</b><small>'+esc(x[1])+'</small></div>').join('');}
 }
+document.addEventListener('click',e=>{
+ const button=e.target.closest('[data-attention-face-v111]');if(!button)return;
+ switchTab('map');openPage(+button.dataset.attentionFaceV111);
+});
 function reviewCapacityV123(){const v=+(S.reviewDailyCapacity||20);return [5,10,15,20,30,40,60].includes(v)?v:20;}
 function teacherCatchupProgressV130(){
  const latest=new Map();
@@ -4108,7 +4124,7 @@ function calendarPageSummaryV111(pages,label){
  const grouped=[],bySurah=new Map();
  for(const p of list){const sur=surahOfPage(p),id=sur[0];if(!bySurah.has(id))bySurah.set(id,{sur,arr:[]});bySurah.get(id).arr.push(p);}
  for(const {sur,arr} of bySurah.values()){
-  const rg=pagesOfSurah(sur[0]),whole=rg&&arr.length===rg[1]-rg[0]+1&&arr[0]===rg[0]&&arr.at(-1)===rg[1];
+  const rg=pagesOfSurah(sur[0]),last=rg?Math.max(rg[0],rg[1]-(sur[0]===114?0:1)):null,whole=rg&&arr.length===last-rg[0]+1&&arr[0]===rg[0]&&arr.at(-1)===last;
   if(whole){grouped.push('سورة '+sur[1]);continue;}
   const ranges=[];let a=arr[0],prev=a;
   for(let i=1;i<=arr.length;i++){const p=arr[i];if(i===arr.length||p!==prev+1){ranges.push(a===prev?'ص'+a:'ص'+a+'–'+prev);a=p;}prev=p;}
