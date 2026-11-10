@@ -2925,7 +2925,7 @@ function renderPlanningV67(){
 function renderStatsV67(){
   const box=document.getElementById('statsV67');if(!box)return;
   let mem=0,near=0,far=0,weak=0,due=0,partial=0;
-  for(let p=1;p<=604;p++){const m=mapPageMetaV62(p,null),ph=m.engine&&m.memorized?m.engine.phase:'unseen';if(m.memorized)mem++;if(ph==='fix')fix++;else if(ph==='near')near++;else if(ph==='far')far++;if(m.state==='weak')weak++;if(m.engine&&m.engine.due)due++;if(m.partial)partial++;}
+  for(let p=1;p<=604;p++){const m=mapPageMetaV62(p,null),ph=m.engine&&m.memorized?m.engine.phase:'unseen';if(m.memorized)mem++;if(ph==='near')near++;else if(ph==='far')far++;if(m.state==='weak')weak++;if(m.engine&&m.engine.due)due++;if(m.partial)partial++;}
   const now=Date.now(),cut=now-30*86400000,rs=uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(x=>(x.endedAt||x.startedAt||0)>=cut),donePages=[];
   const countedPages=new Set();
   rs.forEach(x=>(x.pages||[]).forEach(p=>{const key=keyOf(new Date(x.endedAt||x.startedAt||0))+'|'+x.task+'|'+p.page;if(approvedRecitationFaceV149(x,p)&&!countedPages.has(key)){countedPages.add(key);donePages.push(Object.assign({},p,{task:x.task}));}}));
