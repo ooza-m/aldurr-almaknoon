@@ -1729,7 +1729,7 @@ function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(
   if(v1){const d=JSON.parse(v1);const m=Object.assign({},JSON.parse(JSON.stringify(DEF)),d);return m;}
 }catch(e){}return JSON.parse(JSON.stringify(DEF));}
 let flashT;
-function save(){try{archiveWeeklyGoalV138(S.weeklyMemGoal==null?3:S.weeklyMemGoal);S.updatedAt=Date.now();firstMemDateCacheV111=null;if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));cloudDirtyV151=true;backupScheduleV154();const f=document.getElementById('saveFlash');f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
+function save(){try{archiveWeeklyGoalV138(S.weeklyMemGoal==null?3:S.weeklyMemGoal);S.updatedAt=Date.now();firstMemDateCacheV111=null;if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));cloudDirtyV151=true;backupScheduleV154();const f=document.getElementById('saveFlash');if(f){f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);}cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
 
 /* ============ أدوات ============ */
 const AR_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
@@ -6251,8 +6251,7 @@ function cloudPull(silent,done){
        cloudDirtyV151=true;
        cloudConflictV151();cloudShowConflictV152(d.payload);pullingNow=false;if(done)done();return;
       }
-      // لا تعيدي ضبط خط الأساس قبل التحقق من أمان تبنّي النسخة البعيدة.
-      cloudRememberV151(d);
+      // حافظي على خط الأساس الأصلي حتى تنتهي مقارنة الأحدث وتظهر التعارضات.
       // القاعدة الذهبية: لا تدمُر بيانات موجودة أبدًا.
       // ١) السحابة فيها بيانات والمحلّي فارغ → اجلبي السحابة دائمًا (أهمّ حالة: جهاز جديد)
       // ٢) كلاهما فيه بيانات → خذي الأحدث
@@ -6260,6 +6259,7 @@ function cloudPull(silent,done){
       if(cloudS&&(cloudHas&&!localHas || (cloudHas&&cloudUpdated>localUpdated))){
         backupLocalBeforeCloudReplaceV125('cloud-pull');
         S=Object.assign({},JSON.parse(JSON.stringify(DEF)),cloudS);
+        cloudRememberV151(d);
         void backupAuditV154('استعادة بيانات سحابية');
         cloudDirtyV151=false;
         localStorage.setItem(KEY,JSON.stringify(S));
@@ -6267,6 +6267,9 @@ function cloudPull(silent,done){
         if(typeof renderMap==='function')try{renderMap();}catch(e){}
         if(typeof renderCal==='function')try{renderCal();}catch(e){}
         if(!silent)alert('تم جلب أحدث نسخة من السحابة.');
+      }else if(cloudEqualV152(S,cloudS)){
+        cloudRememberV151(d);
+        cloudDirtyV151=false;
       }else if(localHas&&cloudHas&&localUpdated>cloudUpdated&&!cloudEqualV152(S,cloudS)){
         // التاريخ وحده لا يضمن تفوق نسخة على أخرى؛ يلزم مقارنة ثلاثية صريحة.
         backupLocalBeforeCloudReplaceV125('local-newer-cloud-diff');
