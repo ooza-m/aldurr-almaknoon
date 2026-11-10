@@ -9,6 +9,8 @@ const index=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 test('all 30 roadmap sections expose keyboard toggle, aria-expanded and preserved focus',()=>{
  const dom=new JSDOM(index,{runScripts:'outside-only'});
  const doc=dom.window.document;
+ // Keyboard focus is only meaningful when the map tab is actually visible.
+ const mapTab=doc.getElementById('tab-map');mapTab.classList.add('active');mapTab.style.display='block';
  const start=index.indexOf('function renderMap(){');
  const end=index.indexOf("\nlet mapFilter='all';",start);
  assert.ok(start>=0&&end>start);
