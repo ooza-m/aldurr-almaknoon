@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="الدُّرّ المكنون">
 <meta name="theme-color" content="#5E3A4D">
-<link rel="manifest" href="manifest-rose.json?v=118">
-<link rel="icon" data-app-theme-icon type="image/svg+xml" href="icons/app-rose.svg?v=118">
-<link rel="apple-touch-icon" data-app-theme-icon href="icons/app-rose.svg?v=118">
+<link rel="manifest" href="manifest-rose.json?v=119">
+<link rel="icon" data-app-theme-icon="favicon" type="image/svg+xml" href="icons/app-rose.svg?v=119">
+<link rel="apple-touch-icon" data-app-theme-icon="touch" sizes="192x192" href="icon-192.png?v=117">
 <title>الدُّرّ المكنون — رحلة الحفظ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -880,7 +880,7 @@ window.FIREBASE_CONFIG = {
 };
 </script>
 <link rel="stylesheet" href="app-preferences.css?v=109">
-<script src="app-preferences.js?v=118"></script>
+<script src="app-preferences.js?v=119"></script>
 <script src="app-cloud-extras.js?v=109"></script>
 <script src="reader-ui.js?v=89"></script>
 <script src="reader-study.js?v=89"></script>
@@ -7081,7 +7081,7 @@ setTimeout(consumeReviewedTarteelV166,500);
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('sw.js?v=118');
+      const reg=await navigator.serviceWorker.register('sw.js?v=119');
       reg.update().catch(()=>{});
       let reloaded=sessionStorage.getItem('durr-sw81-reloaded')==='1';
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
