@@ -1729,7 +1729,7 @@ function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(
   if(v1){const d=JSON.parse(v1);const m=Object.assign({},JSON.parse(JSON.stringify(DEF)),d);return m;}
 }catch(e){}return JSON.parse(JSON.stringify(DEF));}
 let flashT;
-function save(){try{archiveWeeklyGoalV138(S.weeklyMemGoal==null?3:S.weeklyMemGoal);S.updatedAt=Date.now();firstMemDateCacheV111=null;if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));cloudDirtyV151=true;backupScheduleV154();const f=document.getElementById('saveFlash');if(f){f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);}cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
+function save(){try{archiveWeeklyGoalV138(S.weeklyMemGoal==null?3:S.weeklyMemGoal);S.updatedAt=Date.now();firstMemDateCacheV111=null;if(typeof invalidateReviewMap==='function')invalidateReviewMap();localStorage.setItem(KEY,JSON.stringify(S));cloudDirtyV151=true;try{backupScheduleV154();}catch(backupError){console.warn('تعذّر جدولة النسخة الاحتياطية دون التأثير على حفظ البيانات',backupError);}const f=document.getElementById('saveFlash');if(f){f.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>f.classList.remove('show'),1400);}cloudPush();}catch(e){alert("تعذّر الحفظ: "+e.message);}}
 
 /* ============ أدوات ============ */
 const AR_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
