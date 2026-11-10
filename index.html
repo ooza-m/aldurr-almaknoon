@@ -1016,7 +1016,7 @@ window.FIREBASE_CONFIG = {
         </div>
       </div>
       <div class="v71-cal-legend">
-        <span><i class="dot-new"></i>حفظ</span><span><i class="dot-fix"></i>تثبيت</span><span><i class="dot-near"></i>قريبة</span><span><i class="dot-far"></i>بعيدة</span>
+        <span><i class="dot-new"></i>حفظ</span><span><i class="dot-near"></i>قريبة</span><span><i class="dot-far"></i>بعيدة</span>
         <span><i class="dot-tilawa"></i>تلاوة</span><span><i class="dot-tafsir"></i>تفسير</span><span><i class="dot-listen"></i>سماع</span><span><i class="dot-halaqa"></i>حلقة</span>
       </div>
       <div id="calMonth" style="display:none">
@@ -1048,7 +1048,7 @@ window.FIREBASE_CONFIG = {
         <div class="map-filter-title-v96">عرض الأوجه بحسب الحالة</div>
         <div class="map-controls map-filter-strip-v96" aria-label="تصفية أوجه المصحف">
           <button class="btn btn-ghost btn-sm mapfilt on" data-filter="all">الكل</button>
-          <button class="btn btn-ghost btn-sm mapfilt" data-filter="fix">تثبيت</button>
+          
           <button class="btn btn-ghost btn-sm mapfilt" data-filter="partial">جزئي</button>
           <button class="btn btn-ghost btn-sm mapfilt" data-filter="near">قريبة</button>
           <button class="btn btn-ghost btn-sm mapfilt" data-filter="far">بعيدة</button>
@@ -2104,7 +2104,7 @@ function renderHomeV50(){
   const q=TIPS[Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000)%TIPS.length],ht=document.getElementById('homeTipText'),hs=document.getElementById('homeTipSource');
   if(ht)ht.textContent=(q.h?'قال رسول الله ﷺ: ':'')+q.t;if(hs)hs.textContent=q.s||'';
   let mem=0,fix=0,near=0,far=0,weak=0,partial=0,dueNow=0;
-  for(let pg=1;pg<=604;pg++){const m=mapPageMetaV62(pg,null),phase=m.engine&&m.memorized?m.engine.phase:'unseen';if(m.memorized)mem++;if(phase==='fix')fix++;else if(phase==='near')near++;else if(phase==='far')far++;if(m.state==='weak')weak++;if(m.partial)partial++;if(m.engine&&m.engine.due)dueNow++;}
+  for(let pg=1;pg<=604;pg++){const m=mapPageMetaV62(pg,null),phase=m.engine&&m.memorized?m.engine.phase:'unseen';if(m.memorized)mem++;if(phase==='near')near++;else if(phase==='far')far++;if(m.state==='weak')weak++;if(m.partial)partial++;if(m.engine&&m.engine.due)dueNow++;}
   const pct=Math.round(mem/604*100),pr=document.getElementById('homeProgressCard');
   if(pr)pr.innerHTML='<div class="v65-journey"><div class="v65-journey-ring" style="--p:'+pct+'"><b>'+pct+'%</b><small>من المصحف</small></div><div class="v65-journey-main"><div class="v50-kicker">رحلتك في الحفظ</div><h3>'+mem+' وجهًا محفوظًا</h3><p>الخريطة تفصل بين المحفوظ، والتثبيت، والمراجعة، والإتقان.</p><div class="v65-state-row"><span><i class="lg-fix"></i>'+fix+' تثبيت</span><span><i class="lg-near"></i>'+near+' قريبة</span><span><i class="lg-far"></i>'+far+' بعيدة</span><span><i class="lg-weak"></i>'+weak+' متفلّت</span></div><button class="v50-btn soft" data-v50-route="map">عرض خريطة الأوجه</button></div></div>';
   const pin=readingPinV86(),last=pin?.page||lastActivityPageV50(),s=pin?(SURAHS.find(s=>s[0]===+pin.vk.split(':')[0])||surahOfPage(last)):surahOfPage(last),mLast=mapPageMetaV62(last,null),hc=document.getElementById('homeContinueCard'),lf=(S.faceLearning&&S.faceLearning[last])||{},books=lf.tafsir?Object.keys(lf.tafsir).filter(k=>lf.tafsir[k]&&lf.tafsir[k].complete).length:0;
@@ -2846,7 +2846,7 @@ function renderReviewPlansV111(){
   event.preventDefault();
   const v=Object.fromEntries(new FormData(event.currentTarget).entries()),from=+v.from,to=+v.to,dailyPages=+v.dailyPages;
   const duration=v.durationMode==='fixed'?+v.durationDays:null;
-  if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||to<1||from>604||to>604||!Number.isInteger(dailyPages)||dailyPages<1||dailyPages>604||duration!==null&&(!Number.isInteger(duration)||duration<1||duration>3650)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(v.startDate)){
+  if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||to<1||from>604||to>604||!Number.isInteger(dailyPages)||dailyPages<1||dailyPages>604||duration!==null&&(!Number.isInteger(duration)||duration<1||duration>3650)||!/^\d{4}-\d{2}-\d{2}$/.test(v.startDate)){
    document.getElementById('reviewPlanMessageV111').textContent='تحققي من أرقام الأوجه والمدة وتاريخ البدء.';return;
   }
   S.extraReviewPlans=S.extraReviewPlans||[];
@@ -3742,7 +3742,7 @@ function updateMapCount(){
   for(let p=1;p<=604;p++){
     const m=mapPageMetaV62(p,null),phase=m.engine&&m.memorized?m.engine.phase:'unseen';
     if(m.memorized)mem++;
-    if(phase==='fix')fix++;else if(phase==='near')near++;else if(phase==='far')far++;
+    if(phase==='near')near++;else if(phase==='far')far++;
     if(m.state==='fresh'&&phase!=='fix')solid++;
     if(m.state==='weak')weak++;
     if(m.partial)partial++;
