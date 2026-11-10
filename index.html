@@ -1887,7 +1887,23 @@ function farDailyQuotaV111(){
 }
 function readingPinV86(){try{return new DurrReaderUI.Bookmarks(localStorage).latest();}catch(_){return null;}}
 function lastActivityPageV50(){const rs=[...(S.recitationSessions||[])].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0))[0];if(rs&&rs.pages&&rs.pages.length){const p=rs.pages[rs.pages.length-1].page;if(p)return Math.max(1,Math.min(604,+p));}const logs=[...S.logs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));for(const l of logs){const all=[...(l.memList||[]),...(l.revList||[])];for(let i=all.length-1;i>=0;i--){const r=(all[i].from&&all[i].to)?[all[i].from,all[i].to]:pagesOfSurah(all[i].surahId);if(r)return Math.max(1,Math.min(604,r[1]));}}return 1;}
-function nextNewPageV50(){const l=lastActivityPageV50();const dir=S.profile&&S.profile.pathDir==='down'?-1:1;return Math.max(1,Math.min(604,l+dir));}
+function nextNewPageV50(){
+ const dir=S.profile&&S.profile.pathDir==='down'?-1:1;
+ const entries=[];
+ for(const log of S.logs||[])for(const item of log.memList||[]){
+  const range=item.from&&item.to?[Math.min(+item.from,+item.to),Math.max(+item.from,+item.to)]:pagesOfSurah(+item.surahId);
+  if(range&&log.date)entries.push({date:log.date,page:dir===1?range[1]:range[0]});
+ }
+ for(const rs of uniqueRecitationSessionsV163(S.recitationSessions||[])){
+  if(rs.task!=='new')continue;
+  const date=rs.endedAt||rs.startedAt||0;
+  for(const pg of rs.pages||[])if(approvedRecitationFaceV149(rs,pg))entries.push({date:keyOf(new Date(date)),page:+pg.page});
+ }
+ // Never let an unrelated revision or listening session move the next memorization page.
+ entries.sort((a,b)=>b.date.localeCompare(a.date)||dir*(b.page-a.page));
+ const last=entries.length?entries[0].page:lastActivityPageV50();
+ return Math.max(1,Math.min(604,last+dir));
+}
 function priorityV50(){
   const buckets=reviewBucketsV50(),far=taskPagesV60('far'),near=taskPagesV60('near'),fix=taskPagesV60('fix'),fresh=taskPagesV60('new');
   if(far.length){const p=far[0],o=buckets.far.find(x=>x.p===p)||{},s=surahOfPage(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة بعيدة مستحقة اليوم',kind:'بعيدة',taskId:'far'};}
