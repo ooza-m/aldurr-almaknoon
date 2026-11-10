@@ -871,6 +871,21 @@ details[open] .review-roadmap-chevron-v114{transform:rotate(180deg)}
 #tab-more .v70-more-row small,#tab-more .v70-more-list small{color:var(--muted)}
 @media(max-width:380px){.v50-section-head{flex-wrap:wrap}.v50-section-head>div{margin-inline-start:auto}}
 
+
+/* v173 · status bar clearance and dark-mode contrast */
+.v50-page{padding-top:max(74px,calc(env(safe-area-inset-top) + 22px))!important}
+.gate{padding-top:max(78px,calc(env(safe-area-inset-top) + 28px))!important}
+html[data-theme="dark"] .v50-page .v50-glass,html[data-theme="dark"] .v50-page .v50-card,html[data-theme="dark"] .v50-page .v50-priority{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .v50-page .v50-glass b,html[data-theme="dark"] .v50-page .v50-glass h3,html[data-theme="dark"] .v50-page .v50-glass h2{color:var(--ink)!important}
+html[data-theme="dark"] .v50-page small,html[data-theme="dark"] .v50-page .hint{color:var(--muted)!important}
+html[data-theme="dark"] .v70-more-row button,html[data-theme="dark"] .v70-more-list button{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .v70-more-row button small,html[data-theme="dark"] .v70-more-list button small{color:var(--muted)!important}
+html[data-theme="dark"] .bottom-nav{background:var(--surface)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .bottom-nav button{color:var(--ink-2)!important}
+html[data-theme="dark"] .bottom-nav button.active{background:var(--wash)!important;color:var(--accent)!important}
+html[data-theme="dark"] .gate-card,html[data-theme="dark"] .gate-card input{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme="dark"] #todayRefreshV50,html[data-theme="dark"] .v50-section-head [aria-label="تخصيص المهام"]{background:var(--surface)!important;color:var(--ink)!important}
+
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <link rel="stylesheet" href="ward-phase05-home-today.css?v=1" media="not all" data-floral-stylesheet>
