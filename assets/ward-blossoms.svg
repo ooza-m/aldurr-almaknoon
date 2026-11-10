@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="350" viewBox="0 0 620 350" fill="none">
+<defs>
+<radialGradient id="petal" cx="0.35" cy="0.2" r="0.95"><stop stop-color="#FFF0E9"/><stop offset=".52" stop-color="#E9A5AA"/><stop offset="1" stop-color="#C66F87"/></radialGradient>
+<radialGradient id="small" cx=".3" cy=".2" r=".96"><stop stop-color="#FFE9E4"/><stop offset="1" stop-color="#C47C91"/></radialGradient>
+<linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#A5B895"/><stop offset="1" stop-color="#637E69"/></linearGradient>
+<g id="blossom"><ellipse cx="-11" cy="-11" rx="15" ry="24" transform="rotate(-43 -11 -11)" fill="url(#petal)"/><ellipse cx="13" cy="-10" rx="15" ry="23" transform="rotate(37 13 -10)" fill="url(#petal)"/><ellipse cx="19" cy="12" rx="13" ry="19" transform="rotate(95 19 12)" fill="url(#petal)"/><ellipse cx="-13" cy="14" rx="14" ry="22" transform="rotate(-105 -13 14)" fill="url(#petal)"/><ellipse cx="0" cy="0" rx="14" ry="17" fill="#FAD4C8"/><circle r="5" fill="#B87854"/><circle cx="-3" cy="-2" r="1.6" fill="#FBE4A0"/><circle cx="4" cy="2" r="1.6" fill="#FBE4A0"/></g>
+<g id="bud"><ellipse cx="0" cy="0" rx="9" ry="15" transform="rotate(28)" fill="url(#small)"/><path d="M-5 8Q0 16 6 8" stroke="#8B997C" stroke-width="2"/></g>
+<g id="twig"><path d="M0 0 C80 30 123 44 174 87 S240 145 320 183" stroke="#947B6F" stroke-width="5" stroke-linecap="round"/><path d="M107 39 Q132 -2 161 -17 M169 80 Q209 63 221 27 M226 127 Q211 151 208 184 M290 169 Q330 150 357 120" stroke="#A28A79" stroke-width="3" stroke-linecap="round"/>
+<path d="M76 31Q90 0 120 15Q100 39 76 31Z M129 43Q145 16 168 28Q155 50 129 43Z M174 91Q182 115 213 113Q206 88 174 91Z M216 124Q236 97 258 109Q249 130 216 124Z M285 167Q287 140 311 137Q314 163 285 167Z M205 181Q181 171 190 146Q214 158 205 181Z M335 133Q340 108 366 105Q359 128 335 133Z" fill="url(#leaf)" opacity=".87"/>
+<use href="#blossom" x="100" y="38" transform="rotate(-15 100 38) scale(.85)"/>
+<use href="#blossom" x="170" y="82" transform="rotate(16 170 82) scale(.73)"/>
+<use href="#blossom" x="215" y="29" transform="rotate(30 215 29) scale(.63)"/>
+<use href="#blossom" x="254" y="144" transform="rotate(-22 254 144) scale(.9)"/>
+<use href="#blossom" x="352" y="120" transform="rotate(15 352 120) scale(.63)"/>
+<use href="#bud" x="315" y="181"/><use href="#bud" x="155" y="-14"/>
+</g>
+</defs>
+<g transform="translate(-17 -23) rotate(-3 80 40)"><use href="#twig"/></g>
+<g transform="translate(547 7) scale(-.64 .64) rotate(6)"><use href="#twig"/></g>
+<g opacity=".56"><circle cx="305" cy="78" r="3" fill="#C78CA4"/><circle cx="321" cy="52" r="2" fill="#D9A7AB"/><circle cx="420" cy="250" r="2" fill="#B5C3A9"/><circle cx="63" cy="265" r="3" fill="#D6B0AF"/></g>
+</svg>
