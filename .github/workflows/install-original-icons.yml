@@ -29,7 +29,7 @@ jobs:
                   raise SystemExit("Archive must contain only the 12 expected PNG images: "+str(names^set(expected)))
               for name,size in expected.items():
                   data=z.read(name)
-                  if data[:8]!=b"\\x89PNG\\r\\n\\x1a\\n":
+                  if data[:8]!=b"\x89PNG\r\n\x1a\n":
                       raise SystemExit("Not a PNG file: "+name)
                   width,height=struct.unpack(">II",data[16:24])
                   if (width,height)!=(size,size):
