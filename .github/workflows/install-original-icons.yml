@@ -1,0 +1,55 @@
+name: Install original theme app icons
+on:
+  push:
+    branches: [main]
+    paths:
+      - aldurr-original-icons.zip
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify and extract exact original PNG icons
+        run: |
+          python3 - <<'PY'
+          import pathlib, struct, zipfile
+          archive=pathlib.Path("aldurr-original-icons.zip")
+          if not archive.exists():
+              print("No uploaded archive; nothing to install")
+              raise SystemExit(0)
+          expected={f"icons/app-{theme}-{size}.png":size for theme in ("rose","navy","olive","plum") for size in (192,512,1024)}
+          with zipfile.ZipFile(archive) as z:
+              names=set(z.namelist())
+              if names!=set(expected):
+                  raise SystemExit("Archive must contain only the 12 expected PNG images: "+str(names^set(expected)))
+              for name,size in expected.items():
+                  data=z.read(name)
+                  if data[:8]!=b"\\x89PNG\\r\\n\\x1a\\n":
+                      raise SystemExit("Not a PNG file: "+name)
+                  width,height=struct.unpack(">II",data[16:24])
+                  if (width,height)!=(size,size):
+                      raise SystemExit("Wrong PNG dimensions: "+name)
+                  target=pathlib.Path(name); target.parent.mkdir(exist_ok=True,parents=True)
+                  target.write_bytes(data)
+          archive.unlink()
+          PY
+      - name: Commit the original artwork
+        run: |
+          if [ -f aldurr-original-icons.zip ]; then
+            echo "Archive not extracted" >&2
+            exit 1
+          fi
+          git add -A -- icons/app-rose-*.png icons/app-navy-*.png icons/app-olive-*.png icons/app-plum-*.png aldurr-original-icons.zip
+          if git diff --cached --quiet; then
+            echo "No icon changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Install exact original high-resolution theme icons"
+          git push
