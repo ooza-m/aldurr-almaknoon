@@ -21,11 +21,18 @@ css.textContent=`
 .dq-range[hidden]{display:none!important}.dq-range{display:flex;gap:8px;align-items:center}.dq-range input{width:90px;min-width:0;border:1px solid var(--line,#dbc5c9);border-radius:10px;padding:9px;font:inherit;background:var(--surface,#fff);color:var(--ink);text-align:center;direction:ltr}
 .dq-small{font-size:12px;color:var(--muted,#9A8189)}
 body.reciting .dq-toolbar{display:none}
+.dq-overlay{box-sizing:border-box;overflow:hidden}
+.dq-sheet{box-sizing:border-box;max-height:calc(100dvh - max(70px,env(safe-area-inset-top)) - 8px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+html[data-theme="dark"] .dq-sheet{background:var(--page)!important;color:var(--ink)!important}
+html[data-theme="dark"] .dq-options label{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .dq-options label:has(input:checked){background:var(--wash)!important;border-color:var(--accent)!important}
+html[data-theme="dark"] .dq-save{background:var(--accent-2)!important;color:#fff!important}
 @media(min-width:700px){.dq-overlay{align-items:center}.dq-sheet{border-radius:22px}}
 
 `;document.head.appendChild(css);
-const trigger=document.createElement('button');
-trigger.id='quickFaceCompletionBtn';trigger.className='reader-action';trigger.type='button';trigger.textContent='إنجاز';trigger.setAttribute('aria-label','تسجيل الإنجاز');
+const trigger=document.getElementById('readerSimi');
+if(!trigger)return; // The center achievement action already exists in the reader toolbar.
+document.getElementById('quickFaceCompletionBtn')?.remove();
 const overlay=document.createElement('div');overlay.className='dq-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','تسجيل الإنجاز');
 overlay.innerHTML=`<div class="dq-sheet"><div class="dq-head"><strong id="dqTitle">تسجيل الإنجاز</strong><button type="button" class="dq-close" aria-label="إغلاق">×</button></div>
 <form id="dqForm"><div class="dq-field"><label>نوع الإنجاز</label><div class="dq-options">
@@ -39,11 +46,11 @@ overlay.innerHTML=`<div class="dq-sheet"><div class="dq-head"><strong id="dqTitl
 </div></div>
 <p class="dq-hint">تسجيل وجه كامل أو نطاق أوجه. التسجيل الجزئي بالآيات سيضاف بعد التحقق من ربط الآيات. التسجيل اليدوي لا يُعد نتيجة تسميع آلي ولا ينشئ أخطاء غير موثقة.</p>
 <button class="dq-save" type="submit">حفظ إنجاز الوجه</button></form></div>`;
-document.getElementById('readerDock')?.querySelector('.chrome-bot')?.appendChild(trigger) || document.getElementById('readerDock')?.appendChild(trigger);document.body.appendChild(overlay);
+document.body.appendChild(overlay);
 const close=()=>overlay.classList.remove('open');
 const rangeEl=overlay.querySelector('#dqRange');
 overlay.querySelectorAll('input[name="scope"]').forEach(x=>x.addEventListener('change',()=>{rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range'}));
-trigger.addEventListener('click',event=>{event.preventDefault();overlay.querySelector('#dqTitle').textContent='إنجاز الوجه '+cur;overlay.querySelector('#dqFrom').value=cur;overlay.querySelector('#dqTo').value=cur;rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range';overlay.classList.add('open')},true);
+trigger.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();overlay.querySelector('#dqTitle').textContent='إنجاز الوجه '+cur;overlay.querySelector('#dqFrom').value=cur;overlay.querySelector('#dqTo').value=cur;rangeEl.hidden=overlay.querySelector('input[name="scope"]:checked').value!=='range';overlay.classList.add('open')},true);
 overlay.querySelector('.dq-close').addEventListener('click',close);
 overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
