@@ -1,0 +1,89 @@
+/* Ward Phase05 / shared dialogs. Keeps original dialog IDs, form wiring and app state. */
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal).modal-bg{
+ background:rgba(58,38,52,.51);
+ backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+ padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
+ overscroll-behavior:contain;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal)>.modal{
+ background:#fcf8f4;
+ color:#573e4e;border:1px solid #f5e9e8;
+ border-radius:25px;width:min(100%,530px);max-width:530px;
+ max-height:min(90dvh,890px);
+ padding:22px clamp(15px,4.4vw,24px) 26px;
+ box-shadow:0 18px 58px rgba(60,38,53,.26);
+ overscroll-behavior:contain;overflow-x:hidden;overflow-y:auto;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .modal-x{
+ width:44px;height:44px;min-width:44px;min-height:44px;
+ border-radius:14px;
+ border:1px solid #e7d8de;
+ background:#fff9f6;color:#75445b;
+ box-shadow:0 2px 9px rgba(89,51,72,.08);
+ font-size:1.15rem;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .modal>h3{
+ font:700 1.45rem/1.45 "Amiri",serif;
+ color:#6a4055;margin:2px 0 10px;
+ min-height:42px;display:flex;align-items:center;
+ padding-inline-end:43px;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .msub{
+ color:#775e6b;font-size:.77rem;line-height:1.85;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .field{
+ min-width:0;margin-bottom:13px;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .field>label{
+ display:block;font-size:.77rem;color:#684c5c;
+ line-height:1.7;margin-bottom:6px;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) :is(input:not([type=checkbox]):not([type=radio]),select,textarea){
+ min-height:44px;max-width:100%;min-width:0;font:inherit;font-size:16px;
+ color:#523b48;background:#fffdfb;
+ border:1px solid #e5d5dd;border-radius:12px;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .btn{
+ border-radius:12px;min-height:44px;font-family:inherit;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .btn-primary,
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .btn-gold{
+ background:#8b4b65;color:#fff;border-color:#8b4b65;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .btn-ghost{
+ background:#fff7f5;color:#794b61;border-color:#e6d5dc;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) :is(button,input,select,textarea):focus-visible{
+ outline:3px solid #854961;outline-offset:2px;
+}
+:is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .modal-actions{
+ display:flex;flex-wrap:wrap;gap:9px;
+ margin-top:19px;
+}
+#pageModal .pm-layout-v97{max-width:530px}
+#pageModal .pm-summary-v97{
+ background:linear-gradient(130deg,#fffaf8,#f8eef0);
+ border-color:#ecdce1;border-radius:18px;
+}
+#pageModal details,#mapInfoModal .map-guide-v64,#hmInfoModal .v70-heat-guide{
+ border-color:#eadce0;border-radius:16px;
+}
+#errModal textarea{min-height:86px}
+#tafsirModal .row,#rangeModal .row,#errModal .row{gap:9px}
+#pathModal .path-opt{
+ border-radius:16px;background:#fffdfb;border-color:#e7dae0;
+}
+#pathModal .path-opt.selected{background:#f4e6ed;border-color:#ad758d}
+#dayActModal .modal{max-height:min(90dvh,890px)!important}
+#dayActModal #dayActBody{overscroll-behavior:contain}
+@media(max-width:360px){
+ :is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal)>.modal{
+  border-radius:21px;padding:18px 13px 22px;
+ }
+ :is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) .modal-actions .btn{flex:1 1 115px}
+}
+@media(prefers-reduced-motion:reduce){
+ :is(#pageModal,#datePickModal,#hmInfoModal,#rangeModal,#stageModal,#errModal,#tafsirModal,#pathModal,#mapInfoModal,#dayActModal) *{
+  animation:none!important;transition:none!important
+ }
+}
