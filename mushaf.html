@@ -458,9 +458,18 @@ html[data-theme="dark"] .app-bottom-nav button{color:var(--ink-2)!important}
 html[data-theme="dark"] .app-bottom-nav button.active{background:var(--wash)!important;color:var(--accent)!important}
 html[data-theme="dark"] .sheet-wrap input,html[data-theme="dark"] .sheet-wrap select{color:var(--ink);background:var(--surface);border-color:var(--line)}
 
+
+/* v176: sheets are anchored to the actual screen bottom, not the Quran page layout */
+body>.sheet-wrap{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;overflow:hidden!important;z-index:300!important;padding:0!important;margin:0!important}
+body>.sheet-wrap .sheet{position:absolute!important;inset:auto 0 0 0!important;margin:0 auto!important;width:min(100vw,580px)!important;max-width:100%!important;max-height:calc(100dvh - max(60px,env(safe-area-inset-top)) - 12px)!important;overflow-x:hidden!important;overflow-y:auto!important;box-sizing:border-box!important;border-radius:26px 26px 0 0!important;transform:translate3d(0,105%,0)!important;touch-action:pan-y}
+body>.sheet-wrap.open .sheet{transform:translate3d(0,0,0)!important}
+body>.sheet-wrap#audioOptionsWrap #audioForm{position:absolute!important;bottom:0!important;top:auto!important}
+body>.sheet-wrap .sheet-bg{position:absolute;inset:0}
+body>.sbubble.reader-floating-bubble{line-height:1.5!important;padding:8px 14px!important;max-width:calc(100vw - 32px)!important;min-width:0!important;box-sizing:border-box!important}
+
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
-<link rel="stylesheet" href="reader-shell.css?v=175">
+<link rel="stylesheet" href="reader-shell.css?v=176">
 <script src="reader-core.js?v=89"></script>
 <script src="audio-library.js?v=89"></script>
 <script src="reader-audio.js?v=90"></script>
@@ -2298,12 +2307,13 @@ function bubblePos(){
  const bw=Math.min(bubble.offsetWidth||150,window.innerWidth-24);
  const x=rect.right-frac*rect.width;
  const left=Math.max(bw/2+12,Math.min(window.innerWidth-bw/2-12,x));
- const top=Math.max(8,rect.top-(bubble.offsetHeight||56)-22);
+ const safeTop=Math.max(58,Number.parseFloat(getComputedStyle(document.body).getPropertyValue('--reader-safe-top'))||58);
+  const top=Math.max(safeTop+12,Math.min(window.innerHeight-(bubble.offsetHeight||56)-12,rect.top-(bubble.offsetHeight||56)-18));
  bubble.style.left=left+'px';
  bubble.style.top=top+'px';
  bubble.style.right='auto';
 }
-function showBubble(){const v=+slider.value;$('sbSurah').textContent=surahOfPageStart(v)||('وجه '+AR(v));$('sbPage').textContent='وجه '+AR(v)+' · الجزء '+AR(juzOfPage(v));bubblePos();bubble.classList.add('on');}
+function showBubble(){const v=+slider.value;$('sbSurah').textContent=surahOfPageStart(v)||('وجه '+AR(v));$('sbPage').textContent='وجه '+AR(v)+' · الجزء '+AR(juzOfPage(v));bubble.classList.add('on');bubblePos();requestAnimationFrame(bubblePos);}
 slider.addEventListener('input',()=>{showBubble();});
 slider.addEventListener('touchstart',showBubble,{passive:true});
 slider.addEventListener('mousedown',showBubble);
@@ -2561,9 +2571,13 @@ function startFocusedReaderV146(force=false){
 });
 </script>
 <script>
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=175').then(r=>r.update()).catch(()=>{}));}
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=176').then(r=>r.update()).catch(()=>{}));}
 </script>
-<script src="quick-face-completion.js?v=175"></script>
+<script>
+/* Keep all reader sheets in the viewport, outside the overflow-hidden 15-line Quran screen. */
+document.querySelectorAll('.sheet-wrap').forEach(el=>{if(el.parentElement!==document.body)document.body.appendChild(el)});
+</script>
+<script src="quick-face-completion.js?v=176"></script>
 <script src="recitation-diagnostics.js?v=1"></script>
 <script src="recitation-feedback.js?v=1"></script>
 <script src="recitation-feedback-ui.js?v=1"></script>
