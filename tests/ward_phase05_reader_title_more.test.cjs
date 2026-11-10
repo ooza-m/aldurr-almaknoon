@@ -32,9 +32,9 @@ test('Ward More and secondary page stylesheet does not load inside the reader',(
 });
 
 test('latest app-shell cache references the reader CSS and More styles',()=>{
- assert.match(sw,/const CACHE='durr-v107'/);
+ assert.match(sw,/const CACHE='durr-v108'/);
  assert.match(sw,/reader-shell\.css\?v=106/);
  assert.match(sw,/ward-phase05-more-subpages\.css\?v=1/);
- assert.match(reader,/register\('sw\.js\?v=107'\)/);
- assert.match(app,/register\('sw\.js\?v=107'\)/);
+ assert.match(reader,/register\('sw\.js\?v=108'\)/);
+ assert.match(app,/register\('sw\.js\?v=108'\)/);
 });
