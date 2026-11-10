@@ -6188,6 +6188,7 @@ function cloudPush(){
  clearTimeout(pushTimer);
  pushTimer=setTimeout(async()=>{
   if(pullingNow){cloudPush();return;}
+  const syncUid=fbUser.uid;
   const localPayload=JSON.stringify(S),localTimestamp=S.updatedAt||Date.now();
   try{
    const ref=docRef();
@@ -6206,6 +6207,7 @@ function cloudPush(){
     tx.set(ref,{payload:localPayload,updatedAt:localTimestamp});
     return{status:'saved',payload:localPayload};
    });
+   if(fbUser?.uid!==syncUid)return;
    if(outcome.status==='conflict'){void backupAuditV154('تعارض مزامنة');cloudDirtyV151=true;cloudConflictV151();try{const snap=await docRef().get();if(snap.exists)cloudShowConflictV152(snap.data().payload);}catch(_){}return;}
    cloudRememberV151({payload:outcome.payload});void backupAuditV154('مزامنة ناجحة');
    // إذا تغيّر S أثناء انتظار الشبكة، لا تعتبري التغييرات الجديدة متزامنة.
@@ -6266,8 +6268,10 @@ function cloudRemoteAdoptionV164(local,remote,baseline){
 }
 function cloudPull(silent,done){
   if(!cloudReady||!fbUser){if(done)done();return;}
+  const pullUid=fbUser.uid;
   pullingNow=true;
   docRef().get().then(snap=>{
+    if(fbUser?.uid!==pullUid){pullingNow=false;return;}
     if(snap.exists){
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
       let cloudS=null;try{cloudS=JSON.parse(d.payload);}catch(e){}
@@ -6320,7 +6324,7 @@ function cloudPull(silent,done){
     pullingNow=false;
     if(done)done();
     maybeAskPath();
-  }).catch(e=>{pullingNow=false;if(done)done();});
+  }).catch(e=>{if(fbUser?.uid!==pullUid)return;pullingNow=false;if(done)done();});
 }
 /* ---- المزامنة الحيّة (تحديث فوري عبر الأجهزة) ---- */
 let cloudUnsub=null;
@@ -6339,8 +6343,10 @@ function reRenderAll(){
 function cloudListen(){
   if(!cloudReady||!fbUser)return;
   cloudUnlisten(); // أغلق أي مستمع سابق
+  const listenUid=fbUser.uid;
   try{
     cloudUnsub=docRef().onSnapshot(snap=>{
+      if(fbUser?.uid!==listenUid)return;
       // تجاهل التغييرات المحليّة التي لم تُرفع بعد (كتاباتنا نحن)
       if(snap.metadata.hasPendingWrites)return;
       if(!snap.exists)return;
