@@ -100,9 +100,9 @@ test('showing an audio session reveals the dock once; later progress does not re
 test('main navigation keeps Mushaf central while the reader has only its persistent home exit',()=>{
   for(const [file,selector,attr] of [['index.html','#bottomNav','tab']]){
     const dom=new JSDOM(read(file)),buttons=[...dom.window.document.querySelector(selector).children];
-    assert.deepEqual(buttons.map(b=>b.dataset[attr]),['home','today','mushaf','calendar','more']);assert.ok(buttons[2].classList.contains('nav-mushaf'));dom.window.close();
+    assert.deepEqual(buttons.map(b=>b.dataset[attr]),['home','today','mushaf','calendar','map']);assert.ok(buttons[2].classList.contains('nav-mushaf'));dom.window.close();
   }
-  const dom=new JSDOM(read('index.html'));assert.ok(dom.window.document.querySelector('#tab-more [data-v50-route=map]'));dom.window.close();
+  const dom=new JSDOM(read('index.html'));assert.ok(dom.window.document.querySelector('#tab-map'));dom.window.close();
   const reader=new JSDOM(read('mushaf.html'));assert.equal(reader.window.document.querySelector('#appBottomNav'),null);assert.equal(reader.window.document.querySelector('#btnFocus'),null);assert.equal(reader.window.document.querySelector('#btnBack').getAttribute('aria-label'),'العودة للرئيسية');reader.window.close();
 });
 test('reader boots without missing/duplicate IDs or JavaScript errors',async t=>{
@@ -215,8 +215,8 @@ test('reader controls and recitation UI overlay the large fixed reading area',as
   assert.equal(w.getComputedStyle($('screen')).position,'relative');
   assert.equal(w.getComputedStyle($('readerTopTools')).position,'absolute');assert.equal(w.getComputedStyle($('readerDock')).position,'absolute');assert.equal(w.getComputedStyle($('btnBack')).position,'absolute');
   assert.equal(w.getComputedStyle($('readerTopTools')).visibility,'hidden');assert.equal(w.getComputedStyle($('readerDock')).pointerEvents,'none');
-  assert.equal(w.getComputedStyle($('btnBack')).visibility,'visible');assert.equal($('btnBack').closest('[inert]'),null);
-  $('track').click();assert.equal(w.getComputedStyle($('readerTopTools')).visibility,'visible');assert.equal(w.getComputedStyle($('readerDock')).pointerEvents,'auto');
+  assert.equal(w.getComputedStyle($('btnBack')).visibility,'hidden');assert.equal($('btnBack').closest('[inert]'),null);
+  $('track').click();assert.equal(w.getComputedStyle($('readerTopTools')).visibility,'visible');assert.equal(w.getComputedStyle($('readerDock')).pointerEvents,'auto');assert.equal(w.getComputedStyle($('btnBack')).visibility,'visible');
   w.document.body.classList.add('face-listening');assert.equal(w.getComputedStyle($('faceListenBar')).position,'relative');assert.equal(w.getComputedStyle($('faceListenBar')).display,'flex');
   assert.equal($('faceListenBar').parentElement.id,'screen');
   await w.readerTest.enterRecite();assert.equal($('recBar').parentElement.id,'screen');assert.equal($('recEngine').parentElement.id,'mushafStatusV148');assert.equal($('recSessionChip').parentElement.id,'mushafStatusV148');
