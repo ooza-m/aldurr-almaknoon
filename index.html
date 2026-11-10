@@ -6271,7 +6271,7 @@ function cloudPull(silent,done){
   const pullUid=fbUser.uid;
   pullingNow=true;
   docRef().get().then(snap=>{
-    if(fbUser?.uid!==pullUid){pullingNow=false;return;}
+    if(fbUser?.uid!==pullUid)return;
     if(snap.exists){
       const d=snap.data();const cloudUpdated=d.updatedAt||0;const localUpdated=S.updatedAt||0;
       let cloudS=null;try{cloudS=JSON.parse(d.payload);}catch(e){}
