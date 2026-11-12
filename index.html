@@ -972,6 +972,32 @@ html[data-theme="dark"] #tab-map :is(.mapfilt,.map-jump-v96 select,.map-jump-v96
  background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
 html[data-theme="dark"] #tab-calendar :is(.section-eyebrow,.v67-subpage-head p,.v70-cal-stat small),
 html[data-theme="dark"] #tab-map :is(.map-sum-main small,.map-sum-foot){color:var(--muted)!important}
+
+/* v181: consistent icon navigation and connected memorization milestones. */
+#tab-more .v181-more-content{display:flex;align-items:center;gap:10px;min-width:0;flex:1;text-align:right}
+#tab-more .v181-more-content>span{min-width:0}
+#tab-more .v181-more-icon{height:23px;width:23px;flex:none;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#tab-more .v70-more-row button{display:flex;align-items:center;gap:9px;min-height:69px}
+#tab-more .v70-more-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+#tab-more .v70-more-row button:first-child:last-child{grid-column:1/-1}
+#tab-stages #stageTrack{position:relative;padding:2px 0 8px}
+#tab-stages .v69-stage-row{position:relative;grid-template-columns:43px minmax(0,1fr);gap:13px;padding:9px 0 15px;border-bottom:none;align-items:start;isolation:isolate}
+#tab-stages .v69-stage-row::before{content:"";position:absolute;inset-inline-start:20px;top:23px;bottom:-24px;width:2px;border-radius:3px;background:var(--line);z-index:-1}
+#tab-stages .v69-stage-row.done::before{background:var(--green)}
+#tab-stages .v69-stage-row.current::before{background:linear-gradient(var(--green),var(--line))}
+#tab-stages .v69-stage-row:last-child::before{display:none}
+#tab-stages .v69-stage-index{width:41px;height:41px;border-radius:50%;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-size:.84rem;box-shadow:0 0 0 4px var(--surface);position:relative;z-index:1}
+#tab-stages .v69-stage-row.done .v69-stage-index{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+#tab-stages .v69-stage-row.current .v69-stage-index{border-color:var(--gold);background:var(--gold-soft);color:var(--ink)}
+#tab-stages .v69-stage-copy{min-width:0;border:1px solid var(--line);border-radius:16px;padding:13px;background:var(--surface);box-shadow:0 3px 12px rgba(48,26,39,.035)}
+#tab-stages .v69-stage-row.current .v69-stage-copy{border-color:var(--gold);background:color-mix(in srgb,var(--gold-soft) 24%,var(--surface))}
+#tab-stages .v69-stage-row.done .v69-stage-copy{border-color:color-mix(in srgb,var(--green) 30%,var(--line))}
+#tab-stages .v69-stage-top b{font-size:.85rem}
+#tab-stages .v69-stage-top small{font-size:.65rem}
+#tab-stages .v69-stage-actions button{min-height:32px}
+#tab-today .review-roadmap-fold-v114{margin:18px 0 12px;max-width:100%}
+#tab-today .review-roadmap-body-v114{max-width:100%;overflow:hidden}
+@media(max-width:390px){#tab-stages .v69-stage-row{grid-template-columns:39px minmax(0,1fr);gap:9px}#tab-stages .v69-stage-index{width:37px;height:37px}#tab-stages .v69-stage-row::before{inset-inline-start:18px}#tab-stages .v69-stage-copy{padding:11px}#tab-more .v181-more-icon{width:20px;height:20px}}
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
 <link rel="stylesheet" href="ward-phase05-home-today.css?v=1" media="not all" data-floral-stylesheet>
@@ -1383,23 +1409,23 @@ window.FIREBASE_CONFIG = {
     <div class="v50-page">
       <div class="v50-top"><span style="width:44px"></span><div class="v50-title"><h1>المزيد</h1><p>الصفحات المساندة خارج التنفيذ اليومي</p></div><span style="width:44px"></span></div>
       <div class="v70-more-section"><h3>المتابعة والتحليل</h3><div class="v70-more-row">
-        <button data-v50-route="stats"><b>الإحصاءات</b><small>الأداء والاتجاهات</small></button>
+        <button data-v50-route="stats"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-9M22 20H2"/></svg><span><b>الإحصاءات</b><small>الأداء والاتجاهات</small></span></span></button>
       </div></div>
       <div class="v70-more-section"><h3>المسارات</h3><div class="v70-more-list">
-        <button data-v50-route="khatma"><span><b>الختمة</b><small>التلاوة وخط السير</small></span><i>‹</i></button>
-        <button data-v50-route="tafsir"><span><b>التفسير</b><small>تفسير الأوجه وكتب التفسير</small></span><i>‹</i></button>
-        <button data-v50-route="planning" aria-label="خطة الحفظ"><span style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true" style="flex:none;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;color:var(--accent)"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8.5 10l1.5 1.5 2-2.5M14 10h2.5M8.5 16h8"/></svg><span><b>خطة الحفظ</b><small>الهدف والسرعة والعبء</small></span></span><i>‹</i></button>
-        <button data-v50-route="stages"><span><b>المرحليات</b><small>الاختبارات والمحطات</small></span><i>‹</i></button>
+        <button data-v50-route="khatma"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C7 4 10 4.5 12 6v14c-2-1.5-5-2-8-.5zM12 6c2-1.5 5-2 8-.5v14c-3-1.5-6-1-8 .5zM12 6v14"/></svg><span><b>الختمة</b><small>التلاوة وخط السير</small></span></span><i>‹</i></button>
+        <button data-v50-route="tafsir"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12v16l-6-4-6 4zM8 8h6M8 11h5"/></svg><span><b>التفسير</b><small>تفسير الأوجه وكتب التفسير</small></span></span><i>‹</i></button>
+        <button data-v50-route="planning" aria-label="خطة الحفظ"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v-1h6v1M8 9l1.5 1.5 2-2M14 9h2M8 16h8"/></svg><span><b>خطة الحفظ</b><small>الهدف والسرعة والعبء</small></span></span><i>‹</i></button>
+        <button data-v50-route="stages"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="5" r="2"/><circle cx="17" cy="12" r="2"/><circle cx="7" cy="19" r="2"/><path d="M9 5h6l2 5M15 14l-6 5"/></svg><span><b>المرحليات</b><small>الاختبارات والمحطات</small></span></span><i>‹</i></button>
       </div></div>
       <div class="v70-more-section"><h3>التعلّم والمراجعة</h3><div class="v70-more-row">
-        <button id="moreMutashabihat"><b>المتشابهات</b><small>مواضع التشابه وضبط الفروق</small></button>
-        <button data-v50-route="tajweed"><b>التجويد</b><small>المنهج والدروس</small></button>
-        <button data-v50-route="errors"><b>سجل الأخطاء</b><small>المواضع المتكررة</small></button>
+        <button id="moreMutashabihat"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="8" height="16" rx="1"/><rect x="13" y="4" width="8" height="16" rx="1"/><path d="M5 8h4M15 8h4M5 12h4M15 12h4"/></svg><span><b>المتشابهات</b><small>مواضع التشابه وضبط الفروق</small></span></span></button>
+        <button data-v50-route="tajweed"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c4-1 5-5 8-7s5-3 8-7M5 21c3-1 7-2 10-6"/><circle cx="17" cy="16" r="2"/></svg><span><b>التجويد</b><small>المنهج والدروس</small></span></span></button>
+        <button data-v50-route="errors"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 16H3zM12 9v4M12 16h.01"/></svg><span><b>سجل الأخطاء</b><small>المواضع المتكررة</small></span></span></button>
       </div></div>
       <div class="v70-more-section"><h3>أدوات</h3><div class="v70-more-list">
-        <button data-v50-route="manual"><span><b>التسجيل اليدوي</b><small>للجلسات التي تمت خارج التطبيق</small></span><i>‹</i></button>
-        <button id="freeRecitationReviewBtn" type="button"><span><b>مراجعة ربط التسميع</b><small>الارتباطات المقترحة لجلسات التسميع الحر</small></span><i>‹</i></button>
-        <button id="moreSettingsBtn"><span><b>الإعدادات</b><small>التفضيلات والحساب والنسخ الاحتياطية</small></span><i>‹</i></button>
+        <button data-v50-route="manual"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14M5 16l8-10 4 4-8 10H5zM12 7l4 4M17 4l3 3"/></svg><span><b>التسجيل اليدوي</b><small>للجلسات التي تمت خارج التطبيق</small></span></span><i>‹</i></button>
+        <button id="freeRecitationReviewBtn" type="button"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h13M5 12h13M5 16h8M4 4h16v16H4z"/><path d="m16 16 2 2 3-4"/></svg><span><b>مراجعة ربط التسميع</b><small>الارتباطات المقترحة لجلسات التسميع الحر</small></span></span><i>‹</i></button>
+        <button id="moreSettingsBtn"><span class="v181-more-content"><svg class="v181-more-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span><b>الإعدادات</b><small>التفضيلات والحساب والنسخ الاحتياطية</small></span></span><i>‹</i></button>
       </div></div>
     </div>
   </section>
