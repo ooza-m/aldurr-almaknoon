@@ -17,8 +17,10 @@ test('the roadmap has exactly one color key and one all-parts control',()=>{
  assert.equal(map.querySelectorAll('.map-legend-v64').length,1);
  assert.equal(map.querySelectorAll('#btnToggleAllJuz').length,1);
  assert.equal(map.querySelectorAll('#btnExpandAll,#btnCollapseAll,.map-options-v96').length,0);
- assert.ok(map.querySelector('#wardReviewRoadmap'));
- assert.ok(map.querySelector('#wardReviewTotal'));
+ const today=document.getElementById('tab-today');
+ assert.ok(today.querySelector('#wardReviewRoadmap'));
+ assert.ok(today.querySelector('#wardReviewTotal'));
+ assert.equal(map.querySelector('#wardReviewRoadmap'),null);
 });
 
 test('manual entry and settings preserve their original form identifiers',()=>{
