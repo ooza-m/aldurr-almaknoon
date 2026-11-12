@@ -25,6 +25,11 @@ test('partial contiguous surah runs are concise; missing one surah prevents comp
  const almost=entries(c,78,113);
  assert.doesNotMatch(c.label(pageSet(almost),'مراجعة بعيدة',almost),/الجزء 30/);
 });
+test('incidental adjacent-surah pages do not duplicate complete juz labels',()=>{
+ const c=labelModel(),pages=new Set(Array.from({length:20},(_,i)=>502+i));
+ const items=[...entries(c,46,50),{surahId:51,from:520,to:521}];
+ assert.equal(c.label(pages,'مراجعة بعيدة',items),'مراجعة بعيدة: الجزء 26 · الأحقاف');
+});
 test('compact calendar rows retain full day-specific details only in day modal',()=>{
  const render=html.slice(html.indexOf('function renderWeek(){'));
  assert.match(render,/calendarPageSummaryV111\(f\.groups\.near/);
