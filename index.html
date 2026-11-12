@@ -3832,8 +3832,7 @@ function loadDateEntry(){
   const lbl=document.getElementById('in-date-label');
   if(lbl){if(k){const dt=parseKey(k);const f=fmtD(k);lbl.textContent=`${AR_DOW[dt.getDay()]} · ${f.d} ${f.m} ${f.y}`;}else lbl.textContent='';}
   const ex=S.logs.find(l=>l.date===k)||{};
-  memList=Array.isArray(ex.memList)?ex.memList.map(x=>({...x})):[];
-  revList=Array.isArray(ex.revList)?ex.revList.map(x=>{const y={...x};delete y.type;return y;}):[];
+  memList=mergeSurahEntriesV206(Array.isArray(ex.memList)?ex.memList:[]);revList=mergeSurahEntriesV206(Array.isArray(ex.revList)?ex.revList:[],true);
   renderMemChips();renderRevChips();
 }
 function pageOfItem(it){const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);return r?r[0]:0;}
@@ -3863,13 +3862,7 @@ function renderManualReviewSummaryV196(){
  el.textContent=revList.length?'التصنيف الآلي: '+toAr(x.near)+' وجه قريبة · '+toAr(x.far)+' وجه بعيدة'+(x.extra?' · '+toAr(x.extra)+' خارج خطة الحفظ المسجلة':'')+'.':'يُحدّد التطبيق القريبة والبعيدة من تاريخ حفظ كل وجه ومراجعته.';
 }
 function classifiedManualReviewListV196(items,day){
- const out=[];let current=null;
- for(const page of manualReviewPagesV196(items)){
-  const type=reviewCategoryForDayV196(page,day),surahId=surahOfPage(page)[0];
-  if(current&&current.type===type&&current.surahId===surahId&&current.to===page-1){current.to=page;continue;}
-  current={surahId,from:page,to:page,type};out.push(current);
- }
- return out;
+ const rows=[];for(const it of mergeSurahEntriesV206(items||[])){const rg=entryRange(it);if(!rg)continue;for(let p=rg[0];p<=rg[1];p++)rows.push({surahId:+it.surahId,from:p,to:p,type:reviewCategoryForDayV196(p,day)});}return mergeSurahEntriesV206(rows);
 }
 function renderRevChips(){
   const box=document.getElementById('rev-chips');if(!box)return;
@@ -3915,13 +3908,14 @@ function syncCustomManualReviewsV111(day,items){
 document.getElementById('btnSaveToday').addEventListener('click',()=>{
   const k=document.getElementById('in-date').value;if(!k){alert("اختاري التاريخ");return;}
   const prev=S.logs.find(l=>l.date===k)||{};
-  const newTxt=memList.map(itemLabel).join('، ');
+  memList=mergeSurahEntriesV206(memList);revList=mergeSurahEntriesV206(revList,true);
+   const newTxt=memList.map(itemLabel).join('، ');
   const classified=classifiedManualReviewListV196(revList,k);
   const nearTxt=classified.filter(x=>x.type==='near').map(itemLabel).join('، ');
   const farTxt=classified.filter(x=>x.type==='far').map(itemLabel).join('، ');
   const extraTxt=classified.filter(x=>x.type==='extra').map(itemLabel).join('، ');
   const revTxt=[nearTxt,farTxt,extraTxt].filter(Boolean).join(' · ');
-  const entry={date:k,new:newTxt,memList:memList.map(x=>({...x})),
+  const entry={...prev,date:k,new:newTxt,memList:memList.map(x=>({...x})),
     rev:revTxt,near:nearTxt,far:farTxt,revList:classified,
     tilawa:prev.tilawa||false,tafsir:prev.tafsir||false,tilawaTxt:prev.tilawaTxt||'',tafsirTxt:prev.tafsirTxt||'',
     halaqa:prev.halaqa||false,mreview:prev.mreview||false};
@@ -4639,6 +4633,20 @@ function calendarCompactGroupsV197(pages,sourceItems=[]){
  }
  return groups.sort((x,y)=>x.start-y.start).map(x=>x.display);
 }
+function calendarSurahFacesV206(pages,sourceItems=[]){
+ const selected=new Set([...pages].map(Number));let rows=[];
+ if(Array.isArray(sourceItems)&&sourceItems.length){
+  for(const source of mergeSurahEntriesV206(sourceItems,true)){
+   const rg=entryRange(source);if(!rg)continue;let from=null,to=null;
+   for(let p=rg[0];p<=rg[1]+1;p++){
+    if(p<=rg[1]&&selected.has(p)){if(from===null)from=p;to=p;}
+    else if(from!==null){rows.push({surahId:source.surahId,from,to});from=to=null;}
+   }
+  }
+ }else for(const p of selected)rows.push({surahId:surahOfPage(p)[0],from:p,to:p});
+ rows=mergeSurahEntriesV206(rows,true);
+ return rows.map(it=>{const sur=SURAHS.find(x=>x[0]===it.surahId);return (sur?sur[1]:'سورة')+' · ص'+it.from+(it.to!==it.from?'–'+it.to:'');}).join('، ');
+}
 function calendarPageSummaryV111(pages,label,sourceItems=[]){
  const parts=calendarCompactGroupsV197(pages,sourceItems);
  return parts.length?label+': '+parts.join('، '):'';
@@ -4838,9 +4846,9 @@ function openDay(k){
   const dt=parseKey(k),dow=dt.getDay(),hal=isHalaqaDay(k,dow),f=fmtD(k),facts=dayFactsV71(k);
   document.getElementById('dayActTitle').textContent=AR_DOW[dow]+' · '+f.d+' '+f.m+' '+f.y;
   const box=document.getElementById('dayActBody');let html='';
-  const groupLine=(label,set,cls,items)=>set.size?'<div class="v71-day-line '+cls+'"><b>'+esc(calendarPageSummaryV111(set,label,items))+'</b><span>'+toAr(set.size)+' وجه</span><details style="grid-column:1/-1"><summary style="cursor:pointer;font-size:.72rem">تفاصيل الأوجه</summary><small>'+[...set].sort((a,b)=>a-b).map(p=>'سورة '+esc(surahOfPage(p)[1])+' · ص'+p).join('، ')+'</small></details></div>':'';
+  const groupLine=(label,set,cls,items)=>set.size?'<div class="v71-day-line '+cls+'"><b>'+esc(calendarPageSummaryV111(set,label,items))+'</b><span>'+toAr(set.size)+' وجه</span><details style="grid-column:1/-1"><summary style="cursor:pointer;font-size:.72rem">تفاصيل السور</summary><small>'+esc(calendarSurahFacesV206(set,items))+'</small></details></div>':'';
   if(facts.active){
-    html+='<div class="v71-day-summary">'+groupLine('حفظ',facts.groups.new,'mem',facts.log?.memList)+groupLine('مراجعة قريبة',facts.groups.near,'near')+groupLine('مراجعة بعيدة',facts.groups.far,'far');
+    html+='<div class="v71-day-summary">'+groupLine('حفظ',facts.groups.new,'mem',facts.log?.memList)+groupLine('مراجعة قريبة',facts.groups.near,'near',facts.log?.revList)+groupLine('مراجعة بعيدة',facts.groups.far,'far',facts.log?.revList);
     for(const x of facts.extraGroups.values())html+=groupLine(x.name||'مراجعة إضافية',x.pages,'near');
     if(facts.tilawa)html+='<button class="v71-day-route" data-day-route="khatma"><b>التلاوة</b><span>'+esc((facts.log&&facts.log.tilawaTxt)||'مسجلة في هذا اليوم')+'</span></button>';
     if(facts.tafsir)html+='<button class="v71-day-route" data-day-route="tafsir"><b>التفسير</b><span>'+toAr(facts.tafsirEvents.length||1)+' نشاط مسجل</span></button>';
@@ -4998,6 +5006,32 @@ const JUZ_NAME_PICK={26:'الأحقاف',27:'الذاريات',28:'المجاد�
 function fillJuzSelect(sel){if(!sel||sel.options.length>1)return;for(let j=1;j<=30;j++){const o=document.createElement('option');o.value=j;o.textContent=`الجزء ${toAr(j)} · ${JUZ_NAME_PICK[j]||JUZ_NAME[j-1]}`;sel.appendChild(o);}}
 // هل يوجد مدخل مطابق تمامًا؟ (منع التكرار)
 function isDuplicate(list,it){return list.some(x=>x.surahId===it.surahId&&(x.from||0)===(it.from||0)&&(x.to||0)===(it.to||0));}
+function mergeSurahEntriesV206(items,ignoreType=false){
+ const buckets=new Map();
+ for(const it of items||[]){
+  const sid=+it.surahId,full=pagesOfSurah(sid);if(!full)continue;
+  let from=it.from!=null?+it.from:full[0],to=it.to!=null?+it.to:full[1];
+  if(!Number.isInteger(from)||!Number.isInteger(to))continue;
+  if(from>to)[from,to]=[to,from];from=Math.max(1,from);to=Math.min(604,to);if(from>to)continue;
+  const type=ignoreType?'':(it.type||''),key=sid+'|'+type;
+  if(!buckets.has(key))buckets.set(key,{sid,type,pages:new Set()});
+  for(let p=from;p<=to;p++)buckets.get(key).pages.add(p);
+ }
+ const out=[];
+ for(const g of buckets.values()){
+  const ps=[...g.pages].sort((a,b)=>a-b);let start=null,end=null;
+  const push=()=>{if(start===null)return;const row={surahId:g.sid,from:start,to:end};if(g.type)row.type=g.type;out.push(row);};
+  for(const p of ps){if(start===null)start=end=p;else if(p===end+1)end=p;else{push();start=end=p;}}push();
+ }
+ return out.sort((a,b)=>a.from-b.from||a.surahId-b.surahId||String(a.type||'').localeCompare(String(b.type||'')));
+}
+function addManualEntriesV206(list,items){
+ const keys=rows=>new Set(rows.flatMap(x=>{const rg=entryRange(x);return rg?Array.from({length:rg[1]-rg[0]+1},(_,i)=>x.surahId+':'+(rg[0]+i)):[];}));
+ const before=keys(list),merged=mergeSurahEntriesV206([...list,...items],true),after=keys(merged),added=after.size-before.size;
+ list.splice(0,list.length,...merged);
+ const total=items.reduce((n,x)=>{const rg=entryRange(x);return n+(rg?rg[1]-rg[0]+1:0);},0);
+ return {added,dup:Math.max(0,total-added)};
+}
 // اكتشاف السور المتضمَّنة في نطاق أوجه، وإرجاع مدخلات مقسّمة بالسورة
 function splitRangeBySurah(from,to,type){
   const out=[];
@@ -5058,14 +5092,14 @@ function splitRangeBySurah(from,to,type){
   document.getElementById('mem-add').addEventListener('click',()=>{
     let added=0,dup=0;
     if(memMode.v==='juz'){const j=+document.getElementById('mem-juz').value||null;if(!j){document.getElementById('mem-info').textContent='اختاري جزءًا أولًا.';return;}
-      const r=pagesOfJuz(j);splitRangeBySurah(r[0],r[1]).forEach(it=>{if(isDuplicate(memList,it))dup++;else{memList.push(it);added++;}});
+      const r=pagesOfJuz(j);{const z=addManualEntriesV206(memList,splitRangeBySurah(r[0],r[1]));added=z.added;dup=z.dup;}
       document.getElementById('mem-juz').value='';
     }else{const surId=+memSel.value||null;
       const from=+document.getElementById('mem-from').value||null,to=+document.getElementById('mem-to').value||null;
       if(!surId&&from&&to&&from<=to){ // نطاق أوجه بلا سورة → اكتشاف تلقائيّ
-        splitRangeBySurah(from,to).forEach(it=>{if(isDuplicate(memList,it))dup++;else{memList.push(it);added++;}});
+        {const z=addManualEntriesV206(memList,splitRangeBySurah(from,to));added=z.added;dup=z.dup;}
       }else if(surId){const it={surahId:surId};if(from&&to&&from<=to){it.from=from;it.to=to;}
-        if(isDuplicate(memList,it))dup++;else{memList.push(it);added++;}
+        {const z=addManualEntriesV206(memList,[it]);added=z.added;dup=z.dup;}
       }else{document.getElementById('mem-info').textContent='اختاري سورة أو أدخلي نطاق أوجه.';return;}
       memSel.value='';document.getElementById('mem-from').value='';document.getElementById('mem-to').value='';
     }
@@ -5096,14 +5130,14 @@ function splitRangeBySurah(from,to,type){
   document.getElementById('rev-add').addEventListener('click',()=>{
     let added=0,dup=0;
     if(revMode.v==='juz'){const j=+document.getElementById('rev-juz').value||null;if(!j){document.getElementById('rev-info').textContent='اختاري جزءًا أولًا.';return;}
-      const r=pagesOfJuz(j);splitRangeBySurah(r[0],r[1]).forEach(it=>{if(isDuplicate(revList,it))dup++;else{revList.push(it);added++;}});
+      const r=pagesOfJuz(j);{const z=addManualEntriesV206(revList,splitRangeBySurah(r[0],r[1]));added=z.added;dup=z.dup;}
       document.getElementById('rev-juz').value='';
     }else{const surId=+revSel.value||null;
       const from=+document.getElementById('rev-from').value||null,to=+document.getElementById('rev-to').value||null;
       if(!surId&&from&&to&&from<=to){
-        splitRangeBySurah(from,to).forEach(it=>{if(isDuplicate(revList,it))dup++;else{revList.push(it);added++;}});
+        {const z=addManualEntriesV206(revList,splitRangeBySurah(from,to));added=z.added;dup=z.dup;}
       }else if(surId){const it={surahId:surId};if(from&&to&&from<=to){it.from=from;it.to=to;}
-        if(isDuplicate(revList,it))dup++;else{revList.push(it);added++;}
+        {const z=addManualEntriesV206(revList,[it]);added=z.added;dup=z.dup;}
       }else{document.getElementById('rev-info').textContent='اختاري سورة أو أدخلي نطاق أوجه.';return;}
       revSel.value='';document.getElementById('rev-from').value='';document.getElementById('rev-to').value='';
     }
