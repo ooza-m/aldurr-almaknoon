@@ -1569,8 +1569,8 @@ window.FIREBASE_CONFIG = {
 
 <div class="modal-bg" id="stageModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('stageModal').classList.remove('open')" aria-label="إغلاق">✕</button>
   <h3 id="stModalTitle">تعديل المرحلية</h3>
-  <p class="msub">عدّلي اسم المرحلية ونطاقها وحالتها وتاريخ اختبارها.</p>
-  <div class="field"><label>اسم المرحلية</label><input type="text" id="stName" placeholder="المرحلية الثالثة"></div>
+  <p class="msub">اسم المرحلية يحدده ترتيبها تلقائيًا؛ عدّلي نطاق الأجزاء والحالة ونتيجة الاختبار.</p>
+  <div class="field"><label>اسم المرحلية</label><input type="text" id="stName" readonly aria-readonly="true" tabindex="-1" style="opacity:.78;cursor:default"></div>
   <div class="field"><label>النطاق</label><input type="text" id="stRange" placeholder="الجزء ٢٥ و٢٦"></div>
   <div class="row">
     <div class="field"><label>تاريخ الاختبار (اختياري)</label><input type="date" id="stDate"></div>
@@ -2134,23 +2134,7 @@ function farDailyQuotaV111(){
 }
 function readingPinV86(){try{return new DurrReaderUI.Bookmarks(localStorage).latest();}catch(_){return null;}}
 function lastActivityPageV50(){const rs=[...(S.recitationSessions||[])].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0))[0];if(rs&&rs.pages&&rs.pages.length){const p=rs.pages[rs.pages.length-1].page;if(p)return Math.max(1,Math.min(604,+p));}const logs=[...S.logs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));for(const l of logs){const all=[...(l.memList||[]),...(l.revList||[])];for(let i=all.length-1;i>=0;i--){const r=(all[i].from&&all[i].to)?[all[i].from,all[i].to]:pagesOfSurah(all[i].surahId);if(r)return Math.max(1,Math.min(604,r[1]));}}return 1;}
-function nextNewPageV50(){
- const dir=S.profile&&S.profile.pathDir==='down'?-1:1;
- const entries=[];
- for(const log of S.logs||[])for(const item of log.memList||[]){
-  const range=item.from&&item.to?[Math.min(+item.from,+item.to),Math.max(+item.from,+item.to)]:pagesOfSurah(+item.surahId);
-  if(range&&log.date)entries.push({date:log.date,page:dir===1?range[1]:range[0]});
- }
- for(const rs of uniqueRecitationSessionsV163(S.recitationSessions||[])){
-  if(rs.task!=='new')continue;
-  const date=rs.endedAt||rs.startedAt||0;
-  for(const pg of rs.pages||[])if(approvedRecitationFaceV149(rs,pg))entries.push({date:keyOf(new Date(date)),page:+pg.page});
- }
- // Never let an unrelated revision or listening session move the next memorization page.
- entries.sort((a,b)=>b.date.localeCompare(a.date)||dir*(b.page-a.page));
- const last=entries.length?entries[0].page:lastActivityPageV50();
- return Math.max(1,Math.min(604,last+dir));
-}
+function nextNewPageV50(){return nextStageNewPagesV177(1)[0]||null;}
 function priorityV50(){
   const buckets=reviewBucketsV50(),far=taskPagesV60('far'),near=taskPagesV60('near'),fresh=taskPagesV60('new');
   if(far.length){const p=far[0],o=buckets.far.find(x=>x.p===p)||{},s=surahOfPage(p);return{page:p,title:'سورة '+s[1]+' · الوجه '+p,sub:o.days?'متأخر عن موعده '+o.days+' يومًا':'مراجعة بعيدة مستحقة اليوم',kind:'بعيدة',taskId:'far'};}
@@ -2273,10 +2257,7 @@ function taskPagesV60(id){
   if(id==='new'){
     const target=weeklyMemorizationV135().dayTarget,legacy=rangeSetV50(log.memList||[]),auto=recitedPagesTodayV51('new');
     const done=new Set([...legacy,...auto]).size,remain=Math.max(0,target-done);
-    const dir=S.profile&&S.profile.pathDir==='down'?-1:1;
-    let p=nextNewPageV50(),out=[];
-    while(out.length<remain&&p>=1&&p<=604){out.push(p);p+=dir;}
-    return out;
+    return nextStageNewPagesV177(remain);
   }
   if(id==='fix')return []; // old fix sessions retained historically, not a current task
   const bucket=reviewBucketsV50();
@@ -5196,6 +5177,28 @@ function renderErrors(){
   list.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{if(confirm('حذف الخطأ نهائيًا؟')){const error=all[+b.dataset.del];if(error?.sessionId&&error.verseKey&&error.wordIndex!=null){try{const ids=JSON.parse(localStorage.getItem('durr-error-dismissals-v86')||'[]'),id=error.sessionId+'|'+error.verseKey+'#'+error.wordIndex;if(!ids.includes(id))ids.push(id);localStorage.setItem('durr-error-dismissals-v86',JSON.stringify(ids.slice(-1500)));}catch(_){}}all.splice(+b.dataset.del,1);save();renderErrors();if(typeof renderMap==='function')try{renderMap();}catch(_){}}}));
 }
 /* ============ المرحليّات ============ */
+/* v177: stage positions determine ordinal titles; tests and memorization records are unchanged. */
+function stageTitleV177(i){return 'المرحلية '+(AR_ORD[i+1]||String(i+1));}
+function normalizeStageNamesV177(){(S.stages||[]).forEach((x,i)=>{if(x)x.name=stageTitleV177(i);});}
+function stageJuzListV177(range){
+ const latin=String(range||'').replace(/[٠-٩]/g,c=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(c))).replace(/[۰-۹]/g,c=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(c)));
+ return [...new Set((latin.match(/\d+/g)||[]).map(Number).filter(x=>x>=1&&x<=30))];
+}
+function nextStageNewPagesV177(count){
+ const limit=Math.max(0,Math.min(604,Math.floor(+count||0))),out=[],seen=new Set(),memorized=firstMemDateMapV50();
+ if(!limit)return out;
+ const stages=Array.isArray(S.stages)&&S.stages.length?S.stages:buildStagePath(S.profile?.pathDir||'up');
+ for(const stage of stages)for(const juz of stageJuzListV177(stage.range)){
+  const bounds=JUZ_RANGE[juz-1];if(!bounds)continue;
+  for(let p=bounds[0];p<=bounds[1];p++){
+   if(seen.has(p))continue;seen.add(p);
+   if(memorized[p])continue;
+   out.push(p);if(out.length===limit)return out;
+  }
+ }
+ return out;
+}
+
 const AR_ORD=["","الأولى","الثانية","الثالثة","الرابعة","الخامسة","السادسة","السابعة","الثامنة","التاسعة","العاشرة","الحادية عشرة","الثانية عشرة","الثالثة عشرة","الرابعة عشرة","الخامسة عشرة"];
 // يبني قائمة المرحليات حسب اتجاه المسار: 'down' من الأسفل (٢٩,٣٠ ثم نزولًا)، 'up' من الأعلى (١,٢ ثم صعودًا)
 function buildStagePath(dir){
@@ -5214,7 +5217,7 @@ function seedStages(){
 }
 function rebuildStagePath(dir){
   S.profile.pathDir=dir;S.profile.pathChosen=true;
-  S.stages=buildStagePath(dir);save();renderStages();
+  S.stages=buildStagePath(dir);normalizeStageNamesV177();save();renderStages();refreshV50();
 }
 /* يعرض نافذة اختيار المسار إذا لم تختره المستخدمة بعد */
 function maybeAskPath(){ /* لم تعد تُستدعى تلقائيًا — انظر askPathOnStages */ }
@@ -5227,7 +5230,7 @@ function askPathOnStages(){
 }
 function choosePath(dir){
   S.profile.pathDir=dir;S.profile.pathChosen=true;
-  S.stages=buildStagePath(dir);save();
+  S.stages=buildStagePath(dir);normalizeStageNamesV177();save();
   const m=document.getElementById('pathModal');if(m)m.classList.remove('open');
   if(typeof renderStages==='function')try{renderStages();}catch(e){}
 }
@@ -5236,9 +5239,9 @@ function renderStages(){
   seedStages();const box=document.getElementById('stageTrack'),sum=document.getElementById('stageSummaryV69');if(!box)return;
   const done=S.stages.filter(s=>s.status==='done').length,currentIdx=Math.max(0,S.stages.findIndex(s=>s.status==='current')>=0?S.stages.findIndex(s=>s.status==='current'):S.stages.findIndex(s=>s.status!=='done'));
   const cur=S.stages[currentIdx]||null,next=S.stages.slice(currentIdx+1).find(s=>s.status!=='done')||null,pct=S.stages.length?Math.round(done/S.stages.length*100):0;
-  if(sum)sum.innerHTML='<div class="v69-stage-hero"><div class="v69-stage-ring" style="--p:'+pct+'"><b>'+toAr(done)+'</b><small>من '+toAr(S.stages.length)+'</small></div><div><span>المرحلية الحالية</span><h2>'+(cur?esc(cur.name):'اكتمل المسار')+'</h2><p>'+(cur?esc(cur.range||''):'لا توجد مرحليات متبقية')+'</p><div class="v69-stage-meta"><span>المسار: '+((S.profile&&S.profile.pathDir)==='down'?'من الأجزاء الأخيرة إلى الأولى':'من الأجزاء الأولى إلى الأخيرة')+'</span>'+(next?'<span>التالي: '+esc(next.name)+'</span>':'')+'</div></div></div>';
+  if(sum)sum.innerHTML='<div class="v69-stage-hero"><div class="v69-stage-ring" style="--p:'+pct+'"><b>'+toAr(done)+'</b><small>من '+toAr(S.stages.length)+'</small></div><div><span>المرحلية الحالية</span><h2>'+(cur?esc(stageTitleV177(currentIdx)):'اكتمل المسار')+'</h2><p>'+(cur?esc(cur.range||''):'لا توجد مرحليات متبقية')+'</p><div class="v69-stage-meta"><span>المسار: '+((S.profile&&S.profile.pathDir)==='down'?'من الأجزاء الأخيرة إلى الأولى':'من الأجزاء الأولى إلى الأخيرة')+'</span>'+(next?'<span>التالي: '+esc(stageTitleV177(S.stages.indexOf(next)))+'</span>':'')+'</div></div></div>';
   box.innerHTML=S.stages.map((s,i)=>{const doneS=s.status==='done',current=s.status==='current',date=s.date||'';
-    return '<article class="v69-stage-row '+(doneS?'done':current?'current':'upcoming')+'"><div class="v69-stage-index">'+(doneS?'✓':toAr(i+1))+'</div><div class="v69-stage-copy"><div class="v69-stage-top"><div><b>'+esc(s.name)+'</b><small>'+esc(s.range||'')+'</small></div><span>'+(doneS?'مجتازة':current?'الحالية':'قادمة')+'</span></div>'+
+    return '<article class="v69-stage-row '+(doneS?'done':current?'current':'upcoming')+'"><div class="v69-stage-index">'+(doneS?'✓':toAr(i+1))+'</div><div class="v69-stage-copy"><div class="v69-stage-top"><div><b>'+esc(stageTitleV177(i))+'</b><small>'+esc(s.range||'')+'</small></div><span>'+(doneS?'مجتازة':current?'الحالية':'قادمة')+'</span></div>'+
       (date?'<p class="v69-stage-date">تاريخ الاختبار: '+DurrPreferences.format(date)+'</p>':'')+(s.note?'<p class="v69-stage-note">'+esc(s.note)+'</p>':'')+
       '<div class="v69-stage-actions"><button data-edit="'+i+'">تعديل</button>'+(!doneS?'<button class="primary" data-done="'+i+'">تسجيل الاجتياز</button>':'')+'</div></div></article>';
   }).join('');
@@ -5255,7 +5258,7 @@ let editingStage=-1;
 function openStageEditor(i){
   editingStage=i;const isNew=(i<0);const s=isNew?{name:'',range:'',date:'',status:'upcoming',note:''}:S.stages[i];
   document.getElementById('stModalTitle').textContent=isNew?'إضافة مرحلية':'تعديل المرحلية';
-  document.getElementById('stName').value=s.name||'';
+  document.getElementById('stName').value=stageTitleV177(isNew?S.stages.length:i);
   document.getElementById('stRange').value=s.range||'';
   setDateInput('stDate',s.date||'');
   document.getElementById('stStatus').value=s.status||'upcoming';
@@ -5268,27 +5271,27 @@ function openStageEditor(i){
 document.getElementById('btnAddStage').addEventListener('click',()=>openStageEditor(-1));
 document.getElementById('stClose').addEventListener('click',()=>document.getElementById('stageModal').classList.remove('open'));
 document.getElementById('stSave').addEventListener('click',()=>{
-  const data={name:val('stName')||'مرحلية',range:val('stRange'),date:document.getElementById('stDate').value,
+  const data={name:stageTitleV177(editingStage<0?S.stages.length:editingStage),range:val('stRange'),date:document.getElementById('stDate').value,
     status:document.getElementById('stStatus').value,note:val('stNote')};
   const wasDone=editingStage>=0&&S.stages[editingStage].status==='done';
   if(editingStage<0)S.stages.push(data);
   else{S.stages[editingStage].name=data.name;S.stages[editingStage].range=data.range;
     S.stages[editingStage].date=data.date;S.stages[editingStage].status=data.status;S.stages[editingStage].note=data.note;}
   if(editingStage>=0&&!wasDone&&data.status==='done'&&S.stages[editingStage+1]?.status==='upcoming')S.stages[editingStage+1].status='current';
-  save();renderStages();document.getElementById('stageModal').classList.remove('open');
+  normalizeStageNamesV177();save();renderStages();refreshV50();document.getElementById('stageModal').classList.remove('open');
 });
 document.getElementById('stUp').addEventListener('click',()=>moveStage(-1));
 document.getElementById('stDown').addEventListener('click',()=>moveStage(1));
 function moveStage(dir){
   const i=editingStage;const j=i+dir;if(j<0||j>=S.stages.length)return;
   const tmp=S.stages[i];S.stages[i]=S.stages[j];S.stages[j]=tmp;
-  editingStage=j;save();renderStages();
+  editingStage=j;normalizeStageNamesV177();save();renderStages();refreshV50();document.getElementById('stName').value=stageTitleV177(j);
   document.getElementById('stPosInfo').textContent=`الموضع الحالي: ${toAr(j+1)} من ${toAr(S.stages.length)}`;
 }
 document.getElementById('stDelete').addEventListener('click',()=>{
   if(editingStage<0)return;
   if(confirm(`حذف «${S.stages[editingStage].name}»؟ لا يمكن التراجع.`)){
-    S.stages.splice(editingStage,1);save();renderStages();document.getElementById('stageModal').classList.remove('open');
+    S.stages.splice(editingStage,1);normalizeStageNamesV177();save();renderStages();refreshV50();document.getElementById('stageModal').classList.remove('open');
   }
 });
 
@@ -6743,7 +6746,7 @@ function changePath(dir){
   S.profile.pathDir=dir;S.profile.pathChosen=true;S.stages=buildStagePath(dir);
   S.stages.forEach(s=>{const old=oldByRange[s.range];if(old){s.date=old.date;s.note=old.note;s.status=old.status==='done'?'done':'upcoming';}});
   const firstPending=S.stages.find(s=>s.status!=='done');if(firstPending)firstPending.status='current';
-  save();renderStages();
+  normalizeStageNamesV177();save();renderStages();refreshV50();
   document.getElementById('set-path-cur').textContent='المسار الحالي: '+(dir==='down'?'من الأجزاء الأخيرة إلى الأولى':'من الأجزاء الأولى إلى الأخيرة');
 }
 document.getElementById('set-path-down').addEventListener('click',()=>changePath('down'));
