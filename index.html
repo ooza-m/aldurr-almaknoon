@@ -2128,10 +2128,33 @@ function reviewBucketsV50(){
  far.sort((a,b)=>Number(b.doneToday)-Number(a.doneToday)||String(a.due).localeCompare(String(b.due))||a.p-b.p);
  return{near,far};
 }
-function farDailyQuotaV111(){
- const count=Object.keys(firstMemDateMapV50()).filter(p=>daysBetween(firstMemDateV62(+p),todayKey())>=30).length;
- return count?Math.ceil(count/farCycleDaysV111()):0;
+/* v177 — far review completion is based on distinct pages within a fixed window. */
+function farCycleStateV177(day=todayKey()){
+ const firsts=firstMemDateMapV50(),duration=farCycleDaysV111();
+ const pool=Object.keys(firsts).map(Number).filter(p=>addDaysKeyV62(firsts[p],30)<=day);
+ if(!pool.length)return {pool:[],covered:new Set(),today:new Set(),remaining:[],todayDone:0,target:0,start:day,end:day,cycleComplete:true};
+ const earliest=pool.map(p=>addDaysKeyV62(firsts[p],30)).sort()[0];
+ const elapsed=Math.max(0,daysBetween(earliest,day)),offset=elapsed%duration;
+ const start=addDaysKeyV62(day,-offset),end=addDaysKeyV62(start,duration-1);
+ const daysLeft=Math.max(1,duration-offset),allowed=new Set(pool),covered=new Set(),today=new Set();
+ const mark=(page,date)=>{
+  const p=+page;if(!allowed.has(p)||date<start||date>day||date<addDaysKeyV62(firsts[p],30))return;
+  covered.add(p);if(date===day)today.add(p);
+ };
+ for(const log of S.logs||[]){
+  if(!log.date||log.date<start||log.date>day)continue;
+  for(const p of rangeSetV50(log.revList||[]))mark(p,log.date);
+ }
+ for(const session of uniqueRecitationSessionsV163(S.recitationSessions||[])){
+  if(!['far','near','fix'].includes(session.task))continue;
+  const stamp=session.endedAt||session.startedAt;if(!stamp)continue;
+  const date=keyOf(new Date(stamp));if(date<start||date>day)continue;
+  for(const page of session.pages||[])if(approvedRecitationFaceV149(session,page))mark(page.page,date);
+ }
+ const remaining=pool.filter(p=>!covered.has(p)),todayDone=today.size;
+ return {pool,covered,today,remaining,todayDone,target:todayDone+Math.ceil(remaining.length/daysLeft),start,end,cycleComplete:!remaining.length};
 }
+function farDailyQuotaV111(){return farCycleStateV177().target;}
 function readingPinV86(){try{return new DurrReaderUI.Bookmarks(localStorage).latest();}catch(_){return null;}}
 function lastActivityPageV50(){const rs=[...(S.recitationSessions||[])].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0))[0];if(rs&&rs.pages&&rs.pages.length){const p=rs.pages[rs.pages.length-1].page;if(p)return Math.max(1,Math.min(604,+p));}const logs=[...S.logs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));for(const l of logs){const all=[...(l.memList||[]),...(l.revList||[])];for(let i=all.length-1;i>=0;i--){const r=(all[i].from&&all[i].to)?[all[i].from,all[i].to]:pagesOfSurah(all[i].surahId);if(r)return Math.max(1,Math.min(604,r[1]));}}return 1;}
 function nextNewPageV50(){return nextStageNewPagesV177(1)[0]||null;}
@@ -2263,11 +2286,11 @@ function taskPagesV60(id){
   const bucket=reviewBucketsV50();
   if(id==='near')return bucket.near.filter(x=>!completeReviewTodayV62(x.p)).map(x=>x.p);
   if(id==='far'){
-    // Fixed user-defined completion window; never cap the far review with an unrelated hard-coded quota.
-    const quota=farDailyQuotaV111();
-    const completed=bucket.far.filter(x=>x.doneToday).length;
-    const remaining=Math.max(0,quota-completed);
-    return bucket.far.filter(x=>!x.doneToday&&x.due<=todayKey()).slice(0,remaining).map(x=>x.p);
+   const cycle=farCycleStateV177(),needed=Math.max(0,cycle.target-cycle.todayDone);
+   return cycle.remaining.slice().sort((a,b)=>{
+    const A=reviewEngineStateV62(a),B=reviewEngineStateV62(b);
+    return (B.overdueDays||0)-(A.overdueDays||0)||a-b;
+   }).slice(0,needed);
   }
   return[];
 }
@@ -2316,12 +2339,12 @@ function tasksV50(){
  const memAuto=recitedPagesTodayV51('new'),completedReview=new Set([...allRev,...recitedPagesTodayV51('fix'),...recitedPagesTodayV51('near'),...recitedPagesTodayV51('far')]);
  const freshDue=taskPagesV60('new'),nearDue=taskPagesV60('near'),farDue=taskPagesV60('far');
  const firsts=firstMemDateMapV50(),nearDone=[...completedReview].filter(p=>firsts[p]&&daysBetween(firsts[p],todayKey())<30).length;
- const farDone=[...completedReview].filter(p=>firsts[p]&&daysBetween(firsts[p],todayKey())>=30).length;
+ const farCycle=farCycleStateV177(),farDone=farCycle.todayDone;
  const newDone=new Set([...memLegacy,...memAuto]).size;
  const result=[
   {id:'new',label:'حفظ جديد',done:newDone,target:weeklyMemorizationV135().dayTarget,pages:freshDue,kind:'book',color:'var(--green)'},
   {id:'near',label:'مراجعة قريبة · أول 30 يومًا',done:nearDone,target:nearDone+nearDue.length,pages:nearDue,kind:'repeat',color:'var(--clay)'},
-  {id:'far',label:'مراجعة بعيدة · دورة '+farCycleDaysV111()+' أيام',done:farDone,target:farDone+farDue.length,pages:farDue,kind:'far',color:'var(--blue)'}
+  {id:'far',label:'مراجعة بعيدة · دورة '+farCycleDaysV111()+' أيام',done:farDone,target:farCycle.target,pages:farDue,kind:'far',color:'var(--blue)'}
  ];
  const opt=optionalDailyItemsV111();
  if(opt.tilawa)result.push({id:'tilawa',label:'ورد التلاوة',done:log.tilawa?1:0,target:1,pages:[S.khatma?Math.max(1,Math.min(604,(S.khatma.current||0)+1)):lastActivityPageV50()],kind:'book',color:'#A68BB7'});
@@ -3089,7 +3112,7 @@ function renderReviewPlansV111(){
  host.innerHTML='<h3 style="margin-bottom:8px">مسارات المراجعة</h3>'+
  '<p class="hint">القريبة: كل وجه لمدة 30 يومًا من تاريخ حفظه، ثم ينتقل تلقائيًا إلى البعيدة.</p>'+
  '<label style="display:grid;gap:6px;margin:12px 0">دورة المراجعة البعيدة (ختم جميع أوجهها كل كم يومًا؟)<input id="farCycleDaysV111" type="number" min="1" max="365" inputmode="numeric" value="'+farCycleDaysV111()+'" style="max-width:145px"></label>'+
- '<p class="hint">النصاب اليومي يُحسب من عدد الأوجه التي انتقلت إلى البعيدة ÷ عدد أيام الدورة، ويُقرّب للأعلى.</p>'+
+ '<p class="hint">تُوزع الأوجه التي لم تُراجع بعد على أيام الدورة المتبقية، ولا يُحسب تكرار الوجه بدل وجه غير مُراجَع.</p>'+
  '<fieldset style="border:1px solid var(--line);padding:12px;border-radius:14px;margin-top:12px"><legend>إظهار الأوراد الاختيارية في مهام اليوم</legend>'+
  '<label style="display:block;margin:7px 0"><input type="checkbox" id="dailyTilawaV111" '+(opt.tilawa?'checked':'')+'> ورد التلاوة</label>'+
  '<label style="display:block;margin:7px 0"><input type="checkbox" id="dailyTafsirV111" '+(opt.tafsir?'checked':'')+'> ورد التفسير</label></fieldset>'+
