@@ -4435,6 +4435,30 @@ function faceMasteryTimelineV131(page){
  const state=last.length>=2&&last.every(good)?'تحسّن مستقر مبدئيًا':last.length>=2&&last.some(good)&&last.some(x=>!good(x))?'ضبط متذبذب':weakCount>=2?'ضعف متكرر':'البيانات غير كافية للحكم على الاستقرار';
  return {events:unique,state,weakCount};
 }
+/* v208: last real activity, not an upcoming scheduled due date. */
+function lastFaceEntryV208(page){
+ const dates=[];
+ const take=v=>{if(typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&v<=todayKey())dates.push(v);};
+ take(lastReviewMap()[page]?.date);
+ const face=S.faceLearning?.[page]||{};
+ take(face.hifz?.last);take(face.hifz?.first);take(face.recite?.last);
+ take(S.pageReviewSched?.[page]?.lastReview);
+ for(const session of uniqueRecitationSessionsV163(S.recitationSessions||[])){
+  if(!(session.pages||[]).some(pg=>+pg.page===+page&&approvedRecitationFaceV149(session,pg)))continue;
+  const date=new Date(session.endedAt||session.startedAt||0);
+  if(!Number.isNaN(date.getTime()))take(keyOf(date));
+ }
+ return dates.length?dates.sort().at(-1):null;
+}
+function elapsedFaceLabelV208(date){
+ if(!date)return 'لم يُسجل بعد';
+ const d=daysBetween(date,todayKey());
+ if(!Number.isFinite(d)||d<0)return 'لم يُسجل بعد';
+ if(d===0)return 'اليوم';
+ if(d===1)return 'منذ يوم';
+ if(d===2)return 'منذ يومين';
+ return 'منذ '+d+(d<=10?' أيام':' يومًا');
+}
 function relativeReviewDateV180(date){
  if(!date||!/^\d{4}-\d{2}-\d{2}$/.test(String(date)))return date||'—';
  const n=daysBetween(date,todayKey());
@@ -4464,8 +4488,8 @@ function renderUnifiedFaceRecordV121(page){
   target.innerHTML='<section aria-label="ملف الوجه الموحّد" style="border:1px solid var(--line);border-radius:14px;padding:12px">'+
     '<b style="display:block;margin-bottom:10px">ملف الوجه · الحفظ والمراجعة</b>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
-    dateCell('أول حفظ',first)+dateCell('آخر مراجعة',relativeReviewDateV180(sched.lastReview))+
-    dateCell('المراجعة القادمة',due)+dateCell('ضبط الوجه',mastery?MASTERY_LEVELS_V116[mastery.level]:'لم يُقيّم')+
+    dateCell('أول حفظ',elapsedFaceLabelV208(first))+dateCell('آخر إدخال',elapsedFaceLabelV208(lastFaceEntryV208(page)))+
+    dateCell('مرحلة المراجعة',status.phase==='far'?'بعيدة':status.phase==='near'?'قريبة':'غير محددة')+dateCell('ضبط الوجه',mastery?MASTERY_LEVELS_V116[mastery.level]:'لم يُقيّم')+
     '</div><div style="font-size:.75rem;color:var(--muted);margin:11px 0 5px">آخر المراجعات المعتمدة</div>'+
     (unique.length?'<div style="max-height:145px;overflow:auto">'+unique.slice(0,8).map(e=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:.77rem"><span>'+esc(e.date)+' · '+(e.task==='new'?'حفظ جديد':e.task==='fix'?'تثبيت':e.task==='far'?'مراجعة بعيدة':'مراجعة قريبة')+'</span><span>'+esc(MASTERY_LEVELS_V116[e.graded]||'دون تقييم')+'</span></div>').join('')+'</div>':'<div style="font-size:.77rem;color:var(--muted)">لا توجد جلسات مراجعة معتمدة من المصحف بعد.</div>')+
     '<div style="font-size:.75rem;color:var(--muted);margin:11px 0 5px">اختبارات المعلمة</div>'+
@@ -4479,7 +4503,7 @@ function openPage(p,surahId){
   curPage=p;curPageSurah=(surahId!=null)?surahId:null;
   const s=(surahId!=null)?(SURAHS.find(x=>x[0]===surahId)||surahOfPage(p)):surahOfPage(p);
   document.getElementById('pmTitle').textContent='الوجه '+toAr(p);
-  document.getElementById('pmSub').textContent='سورة '+s[1]+' · الجزء '+toAr(juzOfPage(p));
+  document.getElementById('pmSub').textContent='سورة '+s[1]+' · الجزء '+toAr(juzOfPage(p,s[0]));
   const m=mapPageMetaV62(p,surahId),eng=m.engine,ri=document.getElementById('pmReviewInfo');
   // الملخص ومؤشرات الاستحقاق ثابتة في المقدمة؛ التفاصيل تبقى قابلة للفتح عند الحاجة.
   const activeErrors=(S.errors||[]).filter(e=>e.page===p&&!e.archived&&(curPageSurah==null||e.surahId===curPageSurah||e.surahId==null)).length;
@@ -4498,10 +4522,10 @@ function openPage(p,surahId){
   if(!m.memorized){
     ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem;color:var(--muted)">لم يُثبت حفظ هذا الوجه بعد.</div>';
   }else if(eng.phase==='near'){
-    ri.innerHTML='<div style="background:var(--gold-soft);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>المراجعة القريبة:</b> اليوم '+toAr(eng.day)+' من 30 · '+(eng.doneToday?'أُنجزت مراجعة اليوم':'مطلوب مراجعته اليوم')+'</div>';
+    ri.innerHTML='<div style="background:var(--gold-soft);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>المراجعة القريبة</b> · آخر إدخال '+esc(elapsedFaceLabelV208(lastFaceEntryV208(p)))+' · اليوم '+toAr(eng.day)+' من 30 · '+(eng.doneToday?'أُنجزت مراجعة اليوم':'مطلوب مراجعته اليوم')+'</div>';
   }else{
-    const phase=eng.phase==='far'?'مراجعة بعيدة':'مراجعة قريبة',due=eng.nextDue?fmtD(eng.nextDue):null;
-    ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>'+phase+'</b>'+(eng.schedule?.lastReview?' · آخر مراجعة '+esc(relativeReviewDateV180(eng.schedule.lastReview)):'')+(due?' · الموعد '+due.d+' '+due.m:'')+(eng.due?' · <span style="color:var(--clay)">مستحقة الآن</span>':'')+(eng.phase==='far'?' · إتمام دورة البعيدة كل '+farCycleDaysV111()+' أيام':'')+'</div>';
+    const phase=eng.phase==='far'?'مراجعة بعيدة':'مراجعة قريبة';
+    ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>'+phase+'</b> · آخر إدخال '+esc(elapsedFaceLabelV208(lastFaceEntryV208(p)))+(eng.due?' · <span style="color:var(--clay)">مستحقة الآن</span>':'')+(eng.phase==='far'?' · دورة البعيدة كل '+farCycleDaysV111()+' أيام':'')+'</div>';
   }
   renderUnifiedFaceRecordV121(p);
   renderPageMasteryV116(p);
