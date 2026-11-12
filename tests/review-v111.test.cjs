@@ -66,7 +66,7 @@ test('calendar labels are compact and preserve full-part names',()=>{
  vm.runInContext(definitions+';this.JUZ_RANGE=JUZ_RANGE;this.SURAHS=SURAHS;'+formatter+';this.format=calendarPageSummaryV111;',sandbox);
  const f=sandbox.format;
  const range=(a,b)=>new Set(Array.from({length:b-a+1},(_,i)=>a+i));
- assert.equal(f(range(1,20),'مراجعة بعيدة'),'مراجعة بعيدة: الجزء 1');
+ assert.equal(f(range(1,21),'مراجعة بعيدة'),'مراجعة بعيدة: الجزء 1');
  assert.equal(f(range(496,499),'حفظ',[{surahId:44,from:496,to:499}]),'حفظ: الدخان');
  assert.equal(f(range(496,497),'حفظ'),'حفظ: الدخان');
  assert.equal(f(range(582,604),'مراجعة قريبة',sandbox.SURAHS.filter(x=>x[0]>=78).map(x=>({surahId:x[0],from:x[2],to:(sandbox.SURAHS.find(y=>y[0]===x[0]+1)||[,,605])[2]-1||604}))),
