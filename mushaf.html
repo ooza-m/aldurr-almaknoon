@@ -271,7 +271,8 @@ body.chrome .chrome-bot{transform:none;opacity:1;pointer-events:auto}
 .simi-item .loc{font-size:.72rem;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;margin-bottom:9px}
 .simi-item .loc .lc{color:var(--accent-2);font-weight:700}
 .simi-item .tx{font-family:"HafsQ",serif;font-size:1.34rem;color:var(--quran);line-height:2;text-align:right}
-.simi-item .tx b{color:var(--accent);font-weight:400;background:var(--wash);border-radius:5px;padding:0 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.simi-item .tx b{color:var(--accent-2);font-weight:700;background:var(--wash);border-radius:5px;padding:0 3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.simi-anchor .tx .simi-match,.ay-simi-preview .simi-match{color:var(--accent-2);font-weight:700;background:var(--wash);border-radius:5px;padding:0 3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .simi-item.off{opacity:.72;cursor:default}
 .simi-item .badge{position:absolute;top:12px;inset-inline-start:16px;font-size:.64rem;color:var(--muted-2);font-weight:700}
 .simi-tag{margin-top:9px;font-size:.64rem;color:var(--accent-2);font-weight:700;background:var(--wash-2);display:inline-block;padding:3px 9px;border-radius:8px}
@@ -634,7 +635,7 @@ body>.sbubble.reader-floating-bubble::after{left:var(--bubble-tip-left,50%)!impo
       <div class="ay-sec">التمييز</div>
       <div class="ay-hl" id="hlRow"></div>
 
-      <div class="ay-sec">في الدرّ</div>
+      <div class="ay-sec">المتشابهات</div>
       <div class="ay-simi-preview" id="aySimiPreview" hidden></div><button class="ay-card ay-wide" id="aySimi"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>المتشابهات</span><svg class="chev" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
       <div class="note">للحفظ والتسميع استخدمي «حفظ وتسميع» في شريط أدوات المصحف.</div>
     </div>
@@ -1131,7 +1132,7 @@ async function openAyah(vk){
   Promise.all([ensureMuta(),ensureSearch()]).then(()=>{if(ayCur!==vk)return;const entries=(MUTA&&MUTA[vk])||[],count=entries.length;
  $('aySimi').style.display=count?'':'none';$('aySimi').querySelector('span').textContent='عرض جميع المتشابهات · '+ARA(count)+' مواضع';
  const preview=$('aySimiPreview');preview.hidden=!count;
- preview.innerHTML=count?'<h3>المواضع المتشابهة · '+ARA(count)+'</h3>'+entries.slice(0,3).map(([other,phrase,,meta])=>{const [sid,aid]=other.split(':').map(Number);return '<div class="ay-simi-snippet"><b>'+esc(surahName(sid))+' · آية '+ARA(aid)+'</b>'+hlPhrase(vtx(other),phrase)+(meta?.r?'<small>ضبط: '+esc(meta.r)+'</small>':'')+'</div>'}).join(''):'';
+ preview.innerHTML=count?'<h3>المواضع المتشابهة · '+ARA(count)+'</h3>'+entries.slice(0,3).map(([other,phrase,,meta])=>{const [sid,aid]=other.split(':').map(Number);return '<div class="ay-simi-snippet"><b>'+esc(surahName(sid))+' · آية '+ARA(aid)+'</b>'+hlPhrase(vtx(other),simiPhraseKeysV191(vtx(vk),vtx(other),phrase))+(meta?.r?'<small>ضبط: '+esc(meta.r)+'</small>':'')+'</div>'}).join(''):'';
 }).catch(()=>{});
   try{await ensureSearch();if(ayCur===vk)$('ayQuote').textContent=vtx(vk)||'نص الآية غير متاح حاليًا.';}catch(_){if(ayCur===vk)$('ayQuote').textContent='تعذّر تحميل نص الآية. تحقّقي من الاتصال.';}
 }
@@ -1149,14 +1150,48 @@ function srcTag(src){return [...new Set((src||'').split(''))].map(c=>SRCNAME[c])
 async function ensureMuta(){if(MUTA)return;try{if(window.__MUTA__){MUTA=window.__MUTA__;}else{const r=await fetch('data/mushaf-mutashabihat.json');MUTA=await r.json();}}catch(e){MUTA={};}}
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 // تظليل العبارة المشتركة داخل نصّ الآية الأصليّ
+/* v191: Quranic Uthmani marks may differ from source phrases; compare normalized words,
+   but always display the untouched original text and highlight only actual shared words. */
+function simiWordsV191(text){
+  const raw=String(text||'').trim().split(/\s+/).filter(Boolean);
+  return raw.map(word=>({raw:word,key:norm(word).replace(/[^\u0621-\u064A]/g,'')})).filter(word=>word.key);
+}
+function simiMatchIndexV191(words,keys){
+  if(!keys.length)return -1;
+  outer:for(let i=0;i+keys.length<=words.length;i++){
+    for(let k=0;k<keys.length;k++)if(words[i+k].key!==keys[k])continue outer;
+    return i;
+  }
+  return -1;
+}
+function simiPhraseKeysV191(anchor,other,phrase){
+  const a=simiWordsV191(anchor),b=simiWordsV191(other),preferred=simiWordsV191(phrase).map(w=>w.key);
+  if(preferred.length&&simiMatchIndexV191(a,preferred)>=0&&simiMatchIndexV191(b,preferred)>=0)return preferred;
+  let best=[],bestScore=-1;
+  const ignored=new Set(['في','من','عن','علي','الي','ما','لا','ان','او','هو','هي','و','ثم','قد','كان','قال','لهم','له','به']);
+  for(let i=0;i<a.length;i++)for(let j=0;j<b.length;j++){
+    let k=0;
+    while(i+k<a.length&&j+k<b.length&&a[i+k].key===b[j+k].key)k++;
+    if(!k)continue;
+    const candidate=a.slice(i,i+k).map(w=>w.key);
+    const meaningful=candidate.filter(w=>w.length>2&&!ignored.has(w)).length;
+    if(!meaningful)continue;
+    const score=k*100+meaningful*10-i;
+    if(score>bestScore){best=candidate;bestScore=score;}
+  }
+  return best;
+}
 function hlPhrase(orig,phrase){
   if(!orig)return '';
-  if(!phrase)return esc(orig);
-  const ow=orig.split(/\s+/),nw=ow.map(norm),pw=phrase.split(' ').filter(Boolean),L=pw.length;
-  for(let i=0;i+L<=nw.length;i++){let ok=true;for(let k=0;k<L;k++){if(nw[i+k]!==pw[k]){ok=false;break;}}
-    if(ok){return esc(ow.slice(0,i).join(' '))+(i?' ':'')+'<b>'+esc(ow.slice(i,i+L).join(' '))+'</b>'+(i+L<ow.length?' ':'')+esc(ow.slice(i+L).join(' '));}}
-  return esc(orig);
+  const words=simiWordsV191(orig),keys=Array.isArray(phrase)?phrase:simiWordsV191(phrase).map(w=>w.key);
+  const at=simiMatchIndexV191(words,keys);
+  if(at<0)return esc(orig);
+  const before=words.slice(0,at).map(w=>w.raw).join(' ');
+  const match=words.slice(at,at+keys.length).map(w=>w.raw).join(' ');
+  const after=words.slice(at+keys.length).map(w=>w.raw).join(' ');
+  return (before?esc(before)+' ':'')+'<b class="simi-match">'+esc(match)+'</b>'+(after?' '+esc(after):'');
 }
+
 let VTXT=null;
 function vtx(vk){ // نصّ الآية للعرض: من الفهرس المحمّل أو من خريطة نصوص المتشابهات
   if(SEARCH&&SEARCH[vk])return SEARCH[vk][1];
@@ -1182,8 +1217,9 @@ function renderSimiV190(vk){
   if(simiTabV190==='links'){$('simiBody').innerHTML='<div class="simi-study"><h3>'+esc(surahName(+si))+' · آية '+ARA(ai)+'</h3><div class="simi-study-verse">'+esc(vtx(vk))+'</div><h3>الربط التسلسلي</h3><p>اربط بداية الآية بما قبلها وخاتمتها بما بعدها، ثم اختبر الانتقال بين الآيات من حفظك.</p><h3>الربط بين المواضع</h3><p>قارن الألفاظ الفارقة في المواضع المتشابهة، واربط كل فرق بسياقه.</p><p><small>مواضع التشابه: '+ARA(list.length)+' · ستُضاف بيانات الربط الموثقة لاحقًا.</small></p></div>';return;}
 
   const anchorTx=vtx(vk);
-  let html=`<div class="simi-anchor"><div class="loc"><span>${surahName(+si)} · آية ${ARA(ai)}</span><span>وجه ${AR(pageOfVk(vk)||'')}</span></div><div class="tx">${esc(anchorTx)}</div></div>`;
-  html+=`<div class="simi-count"><b>${ARA(list.length)}</b> موضعًا مشابهًا في القرآن — العبارة المشتركة مظلّلة</div>`;
+  const anchorMatch=list.map(([ovk,ph])=>simiPhraseKeysV191(anchorTx,vtx(ovk),ph)).find(keys=>keys.length)||[];
+  let html=`<div class="simi-anchor"><div class="loc"><span>${surahName(+si)} · آية ${ARA(ai)}</span><span>وجه ${AR(pageOfVk(vk)||'')}</span></div><div class="tx">${hlPhrase(anchorTx,anchorMatch)}</div></div>`;
+  html+=`<div class="simi-count"><b>${ARA(list.length)}</b> موضعًا مشابهًا في القرآن — تُميَّز الألفاظ المشتركة عند وجودها</div>`;
   const usedSrc=new Set();
   list.forEach(([ovk,ph,src,meta])=>{
     (src||'ع').split('').forEach(c=>usedSrc.add(c));
@@ -1193,7 +1229,7 @@ function renderSimiV190(vk){
     const mono=meta&&meta.t==='mono';
     html+=`<div class="simi-item${nav?'':' off'}${meta&&meta.w?' warn':''}"${nav?` data-vk="${ovk}" data-page="${opg}"`:''}>`
       +`<div class="loc"><span class="lc">${surahName(+osi)} · آية ${ARA(oai)}${mono?' <span class="mono-b">موضع منفرد</span>':''}</span><span>${opg?('وجه '+AR(opg)):''}</span></div>`
-      +`<div class="tx">${hasTx?hlPhrase(otx,ph):'—'}</div>`
+      +`<div class="tx">${hasTx?hlPhrase(otx,simiPhraseKeysV191(anchorTx,otx,ph)):'—'}</div>`
       +(meta&&meta.r?`<div class="simi-rule"><span class="rk">ضبط</span> <b>${esc(meta.r)}</b>${meta.d?' — '+esc(meta.d):''}</div>`:'')
       +(meta&&meta.g?`<div class="simi-guide"><span class="gk">لمسة بيانيّة</span> ${esc(meta.g)}</div>`:'')
       +(meta&&meta.w?`<div class="simi-guide warn"><span class="gk">تنبيه</span> موضع إشكالٍ يخلط بين السياقين؛ راعِ التوجيه أعلاه.</div>`:'')
