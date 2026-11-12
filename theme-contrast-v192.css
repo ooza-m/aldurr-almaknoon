@@ -1,0 +1,90 @@
+/* v192 — shared contrast system for classic and floral skins.
+   Uses live palette tokens from DurrPreferences; no account/state data changes. */
+#tab-home #homeAccountBtn svg,#tab-more #moreAccountBtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+#tab-more .more-account-shortcut-v192{display:inline-grid;place-items:center;min-width:44px;width:44px;height:44px;flex:0 0 44px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:50%;padding:9px}
+#tab-more .more-account-shortcut-v192:hover,#tab-more .more-account-shortcut-v192:focus-visible{background:var(--wash);outline-color:var(--accent)}
+#tab-calendar>.v67-subpage-head{justify-content:flex-start}
+#tab-stages #btnAddStage{background:var(--accent)!important;color:var(--on-accent,#fff)!important;border-color:var(--accent)!important;font-weight:700!important}
+#tab-stages .v69-stage-actions .primary{background:var(--wash)!important;color:var(--ink)!important;border:1px solid var(--line)!important}
+#tab-tafsir #btnAddTafsir{background:var(--accent)!important;color:var(--on-accent,#fff)!important;border-color:var(--accent)!important}
+:root[data-theme=dark] body{background:var(--page)!important;color:var(--ink)!important}
+:root[data-theme=dark] :is(#tab-home,#tab-today,#tab-calendar,#tab-map,#tab-more,#tab-khatma,#tab-tafsir,#tab-planning,#tab-stages,#tab-stats,#tab-tajweed,#tab-errors,#tab-manual){color:var(--ink)!important}
+:root[data-theme=dark] :is(.v50-hero,.v50-top,.v50-page,.v50-title,.v67-subpage-head){color:var(--ink)}
+:root[data-theme=dark] :is(#tab-stats .v67-stat-grid>div,#tab-stats .v67-stats-card,
+#tab-stages .v69-stage-hero,#tab-stages .v69-stage-copy,
+#tab-tajweed .v70-tj-summary,#tab-tajweed .tj-marhala,#tab-tajweed .tj-marhala-head,#tab-tajweed .tj-lesson,#tab-tajweed .tj-lesson-head,#tab-tajweed .tj-content,
+#tab-calendar .v70-cal-summary>div,#tab-calendar .v70-cal-stats>div,#tab-calendar .v70-cal-stat,
+#tab-calendar .card,#tab-map .card,#tab-map .map-summary-v64,#tab-map .map-sum-grid>div,
+#tab-map .juz-block,#tab-map .juz-head,#tab-map .juz-pages,
+#tab-home .v50-glass,#tab-home .v50-card,#tab-home .v50-priority,
+#tab-today .v50-glass,#tab-today .v50-card,#tab-today .v50-priority,#tab-today .review-roadmap-fold-v114,
+#tab-tafsir .v69-tafsir-focus,#tab-tafsir .v69-separation>div,
+#tab-planning .v69-plan-hero,#tab-khatma .v69-kh-hero){
+  background:var(--surface)!important;background-image:none!important;color:var(--ink)!important;border-color:var(--line)!important;
+}
+:root[data-theme=dark] :is(#tab-stats .v67-stat-grid>div,#tab-stats .v67-stats-card,
+#tab-stages .v69-stage-hero,#tab-stages .v69-stage-copy,
+#tab-tajweed .v70-tj-summary,#tab-tajweed .tj-marhala,#tab-tajweed .tj-content,
+#tab-calendar .v70-cal-summary>div,#tab-calendar .card,
+#tab-map .map-summary-v64,#tab-map .juz-block,#tab-map .juz-pages) :is(h1,h2,h3,h4,b,strong,.num,.jt,.tl-title,.tm-title){
+  color:var(--ink)!important;
+}
+:root[data-theme=dark] :is(#tab-stats,#tab-stages,#tab-tajweed,#tab-calendar,#tab-map,#tab-home,#tab-today,#tab-tafsir,#tab-planning,#tab-khatma) :is(.hint,small,.sub,.v67-card-title span,.v69-stage-hero span,.v69-stage-hero p,.v69-stage-top small,.v69-stage-date,.v70-tj-summary span,.v70-tj-summary p,.v70-cal-summary span,.v70-cal-summary small,.js,.pnum,.v50-kicker,.v50-task-sub,.v50-tip-src){
+  color:var(--muted)!important;
+}
+:root[data-theme=dark] #tab-stats .v67-stat-grid>div :is(span,b,small),
+:root[data-theme=dark] #tab-calendar .v70-cal-summary>div :is(span,b,small){
+  color:var(--ink)!important;
+}
+:root[data-theme=dark] #tab-stats .v67-stat-grid>div span,
+:root[data-theme=dark] #tab-stats .v67-stat-grid>div small,
+:root[data-theme=dark] #tab-calendar .v70-cal-summary>div span,
+:root[data-theme=dark] #tab-calendar .v70-cal-summary>div small{color:var(--muted)!important}
+:root[data-theme=dark] :is(#tab-stages .v69-stage-meta span,#tab-tajweed .v70-tj-summary small,#tab-tajweed .v70-current-tag,
+#tab-tajweed .tm-count,#tab-tajweed .v70-tj-filters button,#tab-tajweed .tj-marhala-head,
+#tab-map .map-sum-grid>div,#tab-map .jz-mini-row .jz-mini,
+#tab-home .v65-page-token,#tab-home .v50-task-chip,
+#tab-today .v50-task-chip,#tab-calendar .v71-cal-legend span,
+#tab-calendar .cal-view-toggle button,#tab-calendar .seg button){
+  background:var(--wash2)!important;color:var(--ink)!important;border-color:var(--line)!important;
+}
+:root[data-theme=dark] :is(#tab-stages .v69-stage-hero,#tab-tajweed .v70-tj-summary) :is(.v69-stage-ring,.v70-tj-ring){color:var(--ink)!important}
+:root[data-theme=dark] :is(#tab-stages .v69-stage-ring,#tab-tajweed .v70-tj-ring)::after{background:var(--surface)!important}
+:root[data-theme=dark] :is(#tab-stages .v69-stage-ring,#tab-tajweed .v70-tj-ring) :is(b,small){color:var(--ink)!important}
+:root[data-theme=dark] #tab-stages :is(.v69-stage-index,.v69-stage-top>span,.v69-stage-actions button){
+  background:var(--wash2)!important;color:var(--ink)!important;border-color:var(--line)!important;
+}
+:root[data-theme=dark] #tab-stages .v69-stage-row.done .v69-stage-index,
+:root[data-theme=dark] #tab-tajweed .tj-marhala.done .tm-badge{background:#283c30!important;color:#c4e3b2!important;border-color:#708c65!important}
+:root[data-theme=dark] #tab-stages .v69-stage-row.current .v69-stage-index{border-color:var(--accent)!important;color:var(--accent)!important}
+:root[data-theme=dark] #tab-stages #btnAddStage{background:var(--accent)!important;color:var(--page)!important;border-color:var(--accent)!important}
+:root[data-theme=dark] #tab-tafsir #btnAddTafsir{background:var(--accent)!important;color:var(--page)!important;border-color:var(--accent)!important}
+:root[data-theme=dark] :is(#tab-tajweed .tj-marhala-head,#tab-tajweed .tj-lesson-head,#tab-tajweed .tj-content){border-color:var(--line)!important}
+:root[data-theme=dark] #tab-tajweed .tj-content :is(h3,h4,b,strong,p,li){color:var(--ink)!important}
+:root[data-theme=dark] #tab-tajweed .tj-lesson.done .tl-title{color:var(--muted)!important}
+:root[data-theme=dark] #tab-tajweed .tj-content :is(.todo,.tj-note){background:var(--wash2)!important;color:var(--ink)!important}
+:root[data-theme=dark] #tab-tajweed :is(.v70-tj-filters button.on,.v70-tj-filters button[aria-pressed=true]){background:var(--accent)!important;color:var(--page)!important}
+:root[data-theme=dark] :is(#tab-calendar .cal-view-toggle button.active,#tab-calendar .seg button.on,#tab-map .mapfilt.on,#tab-map .map-filter.active){background:var(--accent)!important;color:var(--page)!important;border-color:var(--accent)!important}
+:root[data-theme=dark] #tab-calendar :is(.cal-cell,.week-day,.week-row button,.cal-day){color:var(--ink);border-color:var(--line)}
+:root[data-theme=dark] #tab-calendar :is(.v71-cal-legend span,.cal-view-toggle,.seg){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme=dark] #tab-calendar :is(.v71-cal-legend span,.cal-view-toggle button):not(.active){color:var(--ink)!important}
+:root[data-theme=dark] #tab-map :is(.juz-badge:not([style*="background"]),.jz-mini){background:var(--wash2)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme=dark] #tab-map .juz-badge[style*="background"]{color:#fff!important}
+:root[data-theme=dark] #tab-map .map-summary-v64 :is(.map-sum-ring,.map-sum-grid>div){background:var(--wash2)!important}
+:root[data-theme=dark] #tab-map .map-sum-ring::after{background:var(--surface)!important}
+:root[data-theme=dark] #tab-map :is(.map-sum-ring,.map-sum-grid>div) :is(b,strong,small,span){color:var(--ink)!important}
+:root[data-theme=dark] :is(#tab-home .v65-hero,#tab-home .v65-page-token,#tab-home .v50-priority,#tab-today .v50-priority){background:var(--surface)!important;color:var(--ink)!important}
+:root[data-theme=dark] :is(#tab-home .v50-priority,#tab-home .v50-glass,#tab-today .v50-priority,#tab-today .v50-glass) :is(h2,h3,b,strong){color:var(--ink)!important}
+:root[data-theme=dark] #tab-home :is(.v65-state-row span,.v50-priority .v50-btn,.v50-task-action,.v50-btn.soft){background:var(--wash2)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme=dark] #tab-home .v65-journey-ring::after{background:var(--surface)!important}
+:root[data-theme=dark] #tab-home :is(.v65-journey-ring,.v65-journey-ring b,.v65-journey-ring small){color:var(--ink)!important}
+:root[data-theme=dark] :is(#tab-home .v50-tip,#tab-home .v50-more-item,#tab-home .v50-continue,#tab-today .v50-task,#tab-today .review-roadmap-body-v114){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme=dark] #tab-home :is(.v50-tip,.v50-continue) :is(b,strong,h2,h3){color:var(--ink)!important}
+:root[data-theme=dark] :is(#tab-home .v50-btn.primary,#tab-today .v50-btn.primary,#tab-today .v50-task-action.primary){background:var(--accent)!important;color:var(--page)!important;border-color:var(--accent)!important}
+:root[data-theme=dark] :is(#tab-home .v50-round,#tab-more #moreAccountBtn){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme=dark] :is(#tab-tafsir .v69-book,#tab-tafsir .v69-book-actions button,#tab-planning .v69-plan-grid .card){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme=dark] :is(#tab-more .v70-more-row button,#tab-more .v70-more-list button){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme=dark] :is(#tab-more .v70-more-row button,#tab-more .v70-more-list button) :is(b,small){color:var(--ink)!important}
+:root[data-theme=dark] #tab-more .v70-more-list button small{color:var(--muted)!important}
+:root[data-theme=dark] :is(#tab-calendar,#tab-map,#tab-stages,#tab-tajweed,#tab-stats) :is(input,select,textarea){background:var(--surface)!important;color:var(--ink)!important;border:1px solid var(--line)!important}
+:root[data-theme=dark] :is(#tab-calendar,#tab-map,#tab-stages,#tab-tajweed,#tab-stats) button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
