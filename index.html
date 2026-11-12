@@ -2271,9 +2271,13 @@ function weeklyMemorizationV135(date=todayKey()){
  });
  const remaining=Math.max(0,goal-completed.size),daysLeft=active.filter(d=>d>=weekday).length;
  const todayDone=todayPages.size;
- const dayTarget=reviewWeekModeV126()==='daily'?Math.max(1,+(S.goal?.pages)||1):
-  (active.includes(weekday)?todayDone+Math.ceil(remaining/Math.max(1,daysLeft)):0);
- return {goal,dayTarget,done:completed.size,todayDone,remaining,start,daysLeft};
+ // v178: the user-selected daily target controls assignments independently
+ // from the separate weekly progress goal.
+ const configuredDaily=Number(S.goal?.pages);
+ const dailyGoal=Number.isInteger(configuredDaily)&&configuredDaily>=1&&configuredDaily<=20?configuredDaily:1;
+ const dayTarget=(reviewWeekModeV126()==='daily'||active.includes(weekday))
+  ?Math.max(todayDone,dailyGoal):0;
+ return {goal,dayTarget,dailyGoal,done:completed.size,todayDone,remaining,start,daysLeft};
 }
 function taskPagesV60(id){
   const log=todayLogV50(),allRev=rangeSetV50(log.revList||[]),nearDone=rangeSetV50(log.revList||[],x=>x.type!=='far'),farDone=rangeSetV50(log.revList||[],x=>x.type==='far');
@@ -3013,7 +3017,7 @@ function renderStudyPlanSettingsV134(){
  '<p class="hint">تُطبّق الإعدادات على الخطة الحالية دون حذف الإنجازات أو تغيير مواعيد الاستحقاق الأصلية.</p>'+
  '<div style="display:grid;gap:11px;margin-top:12px">'+
  '<label style="display:grid;gap:5px">نصاب الحفظ الجديد (وجه/يوم) <input type="number" id="studyNewGoalV134" min="1" max="20" value="'+goal+'" style="width:95px;padding:7px;border:1px solid var(--line);border-radius:9px"></label>'+
- '<label style="display:grid;gap:5px">هدف الحفظ الأسبوعي (وجه) <input type="number" id="studyWeeklyGoalV135" min="0" max="80" value="'+weeklyMemorizationV135().goal+'" style="width:95px;padding:7px;border:1px solid var(--line);border-radius:9px"></label><p class="hint">أُنجز هذا الأسبوع: '+weeklyMemorizationV135().done+' من '+weeklyMemorizationV135().goal+' أوجه · المتبقي '+weeklyMemorizationV135().remaining+' · نصاب اليوم '+weeklyMemorizationV135().dayTarget+'. يُعاد توزيع غير المنجز على أيام الاثنين–الخميس المتبقية.</p>'+
+ '<label style="display:grid;gap:5px">هدف الحفظ الأسبوعي (وجه) <input type="number" id="studyWeeklyGoalV135" min="0" max="80" value="'+weeklyMemorizationV135().goal+'" style="width:95px;padding:7px;border:1px solid var(--line);border-radius:9px"></label><p class="hint">أُنجز هذا الأسبوع: '+weeklyMemorizationV135().done+' من '+weeklyMemorizationV135().goal+' أوجه · المتبقي '+weeklyMemorizationV135().remaining+' · نصاب اليوم '+weeklyMemorizationV135().dayTarget+'. الهدف الأسبوعي للمتابعة فقط، ولا يزيد النصاب اليومي المحدد.</p>'+
  '<label style="display:grid;gap:5px">طاقة المراجعة اليومية '+select('studyCapacityV134',[5,10,15,20,30,40,60].map(n=>[n,n+' وجهًا']),capacity)+'</label>'+
  '<label style="display:grid;gap:5px">نظام الأسبوع '+select('studyWeekV134',[['halaqa','الاثنين–الخميس: حفظ ومراجعة، الجمعة اختبار، السبت والأحد استدراك'],['daily','مراجعة متساوية يوميًا']],mode)+'</label>'+
  '<label style="display:grid;gap:5px">تركيز الأولويات '+select('studyFocusV134',[['balanced','متوازن'],['weak-first','الضعف المتكرر أولًا'],['due-first','المستحق اليوم أولًا']],focus)+'</label>'+
