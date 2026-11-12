@@ -1199,7 +1199,7 @@ window.FIREBASE_CONFIG = {
       </div>
 
       <div class="field">
-        <label>المراجعة <span style="color:var(--muted);font-weight:400">(أضيفي مواضع مراجعتك اليوم)</span></label>
+        <label>المراجعة <span style="color:var(--muted);font-weight:400">(أضيفي ما راجعتِه، ويحدد التطبيق نوعه تلقائيًا)</span></label>
         <div class="seg-toggle" data-seg="rev" style="margin-bottom:8px">
           <button class="seg on" data-mode="surah">سورة</button><button class="seg" data-mode="juz">جزء</button>
         </div>
@@ -1207,15 +1207,14 @@ window.FIREBASE_CONFIG = {
           <div class="field" style="flex:1;min-width:0;margin-bottom:0"><label style="font-size:.76rem" id="rev-sel-label">السورة</label>
             <select id="rev-surah" style="width:100%"><option value="">— اختاري سورة —</option></select>
             <select id="rev-juz" style="display:none;width:100%"><option value="">— اختاري جزءًا —</option></select></div>
-          <div class="field" style="flex:0 0 92px;margin-bottom:0"><label style="font-size:.76rem">النوع</label>
-            <select id="rev-type" style="width:100%"><option value="near">قريبة</option><option value="far">بعيدة</option></select></div>
+          
         </div>
         <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:nowrap">
           <div class="field" style="flex:1;min-width:0;margin-bottom:0"><label style="font-size:.76rem">من وجه <span style="color:var(--muted)">(اختياري)</span></label><input type="number" dir="ltr" inputmode="numeric" id="rev-from" min="1" max="604" placeholder="كل السورة"></div>
           <div class="field" style="flex:1;margin-bottom:0"><label style="font-size:.76rem">إلى وجه</label><input type="number" dir="ltr" inputmode="numeric" id="rev-to" min="1" max="604" placeholder="كل السورة"></div>
           <button class="btn btn-gold btn-sm" id="rev-add" style="flex-shrink:0;margin-bottom:0">+ أضيفي</button>
         </div>
-        <p class="hint" id="rev-info" style="margin:8px 0 0;color:var(--blue)"></p>
+        <p class="hint" id="rev-info" style="margin:8px 0 0;color:var(--blue)"></p><p class="hint" id="rev-auto-summary-v196" aria-live="polite" style="margin:6px 0">تُحسب القريبة والبعيدة تلقائيًا من حفظ كل وجه ومراجعته.</p>
         <button id="rev-chips-toggle" style="display:none;width:100%;background:none;border:none;color:var(--muted);cursor:pointer;font-family:inherit;font-size:.8rem;padding:6px;margin-top:4px">▾ <span>طيّ المُضاف</span></button>
         <div id="rev-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
       </div>
@@ -1316,7 +1315,7 @@ window.FIREBASE_CONFIG = {
         </div>
       </div>
       <div class="map-legend-v64 ward-map-legend" aria-label="مفتاح ألوان الأوجه">
-        <span><i class="lg-near"></i>قريبة · 30 يومًا</span>
+        <span><i class="lg-near"></i>قريبة · 30 مراجعة</span>
         <span><i class="lg-far"></i>بعيدة</span><span><i class="lg-solid"></i>متقن</span>
         <span><i class="lg-weak"></i>متفلّت</span><span><i class="lg-partial"></i>جزئي</span>
         <span><i class="lg-error"></i>خطأ نشط</span>
@@ -2079,25 +2078,6 @@ function firstMemDateMapV50(){
 }
 const NEAR_INTERVALS_V62=[3,7,14],FAR_INTERVALS_V62=[30,60,90,120];
 function addDaysKeyV62(k,n){const d=parseKey(k);d.setDate(d.getDate()+n);return keyOf(d);}
-function completeReviewTodayV62(p,day=todayKey()){
-  // A completed, explicitly scheduled review may come from the mushaf or manual log.
-  // Free recitation alone does not silently complete a scheduled review.
-  const valid=new Set(['fix','near','far']);
-  const completedInMushaf=uniqueRecitationSessionsV163(S.recitationSessions||[]).some(rs=>{
-    if(!valid.has(rs.task))return false;
-    const stamp=rs.endedAt||rs.startedAt;
-    if(!stamp||keyOf(new Date(stamp))!==day)return false;
-    return (rs.pages||[]).some(pg=>+pg.page===+p&&approvedRecitationFaceV149(rs,pg));
-  });
-  if(completedInMushaf)return true;
-  return (S.logs||[]).some(log=>{
-    if(log.date!==day)return false;
-    return (log.revList||[]).some(item=>{
-      const range=item.from&&item.to?[Math.min(+item.from,+item.to),Math.max(+item.from,+item.to)]:pagesOfSurah(+item.surahId);
-      return range&&+p>=range[0]&&+p<=range[1];
-    });
-  });
-}
 function firstMemDateV62(p){
   const f=S.faceLearning&&S.faceLearning[p]&&S.faceLearning[p].hifz;
   const manual=typeof f?.first==='string'&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(f.first)?f.first:null;
@@ -2106,62 +2086,89 @@ function firstMemDateV62(p){
 }
 /* v111: two canonical review tracks. Historical 'fix' logs remain readable. */
 function farCycleDaysV111(){const n=Number(S.farReviewCycleDays);return Number.isInteger(n)&&n>=1&&n<=365?n:7;}
+/* v196: A face stays near until reviewed on 30 distinct days after its first
+   memorization date. Missed days extend the phase; repeat sessions on one day
+   count once. Only explicit manual logs and approved recitation count. */
+let reviewDayIndexCacheV196=null;
+function reviewDayIndexV196(){
+ const logs=S.logs||[],sessions=S.recitationSessions||[],old=reviewDayIndexCacheV196;
+ if(old&&old.state===S&&old.updatedAt===S.updatedAt&&old.logs===logs&&old.sessions===sessions&&old.logCount===logs.length&&old.sessionCount===sessions.length)return old.index;
+ const index={};
+ const put=(page,date)=>{const p=+page;if(!Number.isInteger(p)||p<1||p>604||! /^\d{4}-\d{2}-\d{2}$/.test(date||''))return;(index[p]||(index[p]=new Set())).add(date);};
+ for(const log of logs)if(log&&log.date)for(const p of rangeSetV50(log.revList||[]))put(p,log.date);
+ for(const rs of uniqueRecitationSessionsV163(sessions)){
+  if(!rs||!['fix','near','far'].includes(rs.task))continue;
+  const stamp=rs.endedAt||rs.startedAt;if(!stamp)continue;
+  const date=new Date(stamp);if(Number.isNaN(date.getTime()))continue;
+  for(const pg of rs.pages||[])if(approvedRecitationFaceV149(rs,pg))put(pg.page,keyOf(date));
+ }
+ const sorted={};for(const [p,days] of Object.entries(index))sorted[p]=[...days].sort();
+ reviewDayIndexCacheV196={state:S,updatedAt:S.updatedAt,logs,sessions,logCount:logs.length,sessionCount:sessions.length,index:sorted};
+ return sorted;
+}
+function nearReviewProgressV196(p,day=todayKey()){
+ const first=firstMemDateV62(p);
+ if(!first)return{phase:'unseen',completed:0,remaining:30,firstMemDate:null,doneToday:false,due:false};
+ const age=Math.max(0,daysBetween(first,day));
+ const valid=(reviewDayIndexV196()[+p]||[]).filter(d=>d>first&&d<=day);
+ const completed=Math.min(30,valid.length),completedOn=valid.length>=30?valid[29]:null;
+ const farFrom=completedOn?addDaysKeyV62(completedOn,1):null;
+ const phase=farFrom&&day>=farFrom?'far':'near',doneToday=valid.includes(day);
+ const remaining=30-completed,lastReview=valid[valid.length-1]||null;
+ return{phase,completed,remaining,firstMemDate:first,completedOn,farFrom,doneToday,
+  due:phase==='near'&&age>=1&&!doneToday,
+  missed:Math.max(0,age-valid.length),age,lastReview,
+  projectedCompletion:remaining?addDaysKeyV62(day,remaining):completedOn,
+  overdueDays:age>=1&&!doneToday?Math.max(0,daysBetween(lastReview||first,day)-1):0};
+}
+function completeReviewTodayV62(p,day=todayKey()){return (reviewDayIndexV196()[+p]||[]).includes(day);}
 function ensurePageSchedV62(p){
  S.pageReviewSched=S.pageReviewSched||{};
  const first=firstMemDateV62(p);if(!first)return null;
- let x=S.pageReviewSched[p]||{page:+p,firstMemDate:first,lastReview:null};
- x.firstMemDate=first;
- const age=Math.max(0,daysBetween(first,todayKey()));
- // The thirty-day near stage starts at first memorization and ends after day 30.
- x.phase=age<30?'near':'far';
- if(!x.nextDue)x.nextDue=age<30?addDaysKeyV62(first,1):todayKey();
- S.pageReviewSched[p]=x;
- return x;
+ const progress=nearReviewProgressV196(p);
+ const x=S.pageReviewSched[p]||{page:+p,firstMemDate:first,lastReview:null};
+ x.firstMemDate=first;x.phase=progress.phase;
+ if(!x.nextDue)x.nextDue=progress.phase==='near'?addDaysKeyV62(first,1):todayKey();
+ S.pageReviewSched[p]=x;return x;
 }
 function lastManualReviewDateV111(p,first){
- let latest=null;
- for(const log of S.logs||[]){
-  if(!log.date||log.date<first||log.date>todayKey())continue;
-  if((log.revList||[]).some(it=>{
-   const range=it.from&&it.to?[Math.min(+it.from,+it.to),Math.max(+it.from,+it.to)]:pagesOfSurah(+it.surahId);
-   return range&&+p>=range[0]&&+p<=range[1];
-  })&&(!latest||log.date>latest))latest=log.date;
- }
- return latest;
+ return(reviewDayIndexV196()[+p]||[]).filter(d=>d>=first&&d<=todayKey()).slice(-1)[0]||null;
 }
 function reviewEngineStateV62(p){
- const first=firstMemDateV62(p);if(!first)return{phase:'unseen',due:false,firstMemDate:null};
- const age=Math.max(0,daysBetween(first,todayKey()));
- const x=ensurePageSchedV62(p),doneToday=completeReviewTodayV62(p);
- if(age<30)return{phase:'near',day:Math.min(30,age+1),due:age>=1&&!doneToday,doneToday,firstMemDate:first,nextDue:doneToday?addDaysKeyV62(todayKey(),1):addDaysKeyV62(x.lastReview||first,1),schedule:x};
- const lastManual=lastManualReviewDateV111(p,first);
- const last=lastManual&&(!x.lastReview||lastManual>x.lastReview)?lastManual:x.lastReview;
- const earliest=addDaysKeyV62(first,30);
+ const v=nearReviewProgressV196(p);
+ if(!v.firstMemDate)return{phase:'unseen',due:false,firstMemDate:null};
+ const schedule=ensurePageSchedV62(p);
+ if(v.phase==='near')return{phase:'near',day:v.completed,completed:v.completed,remaining:v.remaining,
+  missed:v.missed,projectedCompletion:v.projectedCompletion,due:v.due,doneToday:v.doneToday,
+  firstMemDate:v.firstMemDate,overdueDays:v.overdueDays,
+  nextDue:v.doneToday?addDaysKeyV62(todayKey(),1):addDaysKeyV62(v.lastReview||v.firstMemDate,1),schedule};
+ const earliest=v.farFrom,last=v.lastReview;
  const nextDue=last&&last>=earliest?addDaysKeyV62(last,farCycleDaysV111()):earliest;
- return{phase:'far',due:!doneToday&&nextDue<=todayKey(),doneToday,firstMemDate:first,nextDue,overdueDays:nextDue<todayKey()?daysBetween(nextDue,todayKey()):0,schedule:x,cycleDays:farCycleDaysV111()};
+ return{phase:'far',completed:30,remaining:0,due:!v.doneToday&&nextDue<=todayKey(),
+  doneToday:v.doneToday,firstMemDate:v.firstMemDate,nextDue,
+  overdueDays:nextDue<todayKey()?daysBetween(nextDue,todayKey()):0,schedule,cycleDays:farCycleDaysV111()};
 }
 function updateReviewEngineV62(p,task,date,pg,sessionId){
  if(!p||!date)return;
  if(sessionId&&S.pageReviewSched?.[p]?.lastSessionId===sessionId)return;
  S.pageReviewSched=S.pageReviewSched||{};
- const first=firstMemDateV62(p)||date,age=Math.max(0,daysBetween(first,date));
- let x=S.pageReviewSched[p]||{page:+p,firstMemDate:first};
- x.firstMemDate=first;x.phase=age<30?'near':'far';
- x.lastReview=date;x.lastCoverage=+(pg&&pg.coverage||0);
+ const first=firstMemDateV62(p)||date,progress=nearReviewProgressV196(p,date);
+ const x=S.pageReviewSched[p]||{page:+p,firstMemDate:first};
+ x.firstMemDate=first;x.phase=progress.phase;x.lastReview=date;x.lastCoverage=+(pg&&pg.coverage||0);
  const manualLevel=pg&&pg.manualMasteryLevel&&MASTERY_LEVELS_V116[pg.manualMasteryLevel];
  if(manualLevel)x.lastManualLevel=pg.manualMasteryLevel;
  x.updatedAt=Date.now();if(sessionId)x.lastSessionId=sessionId;
- x.nextDue=addDaysKeyV62(date,age<30?1:farCycleDaysV111());
+ x.nextDue=addDaysKeyV62(date,progress.phase==='near'?1:farCycleDaysV111());
  S.pageReviewSched[p]=x;
 }
 function fixationPagesV50(){return [];} // legacy name kept for old callers; no third track
 function reviewBucketsV50(){
  const near=[],far=[],firsts=firstMemDateMapV50();
  for(const [key,first] of Object.entries(firsts)){
-  const p=+key,st=reviewEngineStateV62(p),age=daysBetween(first,todayKey());
+  const p=+key,st=reviewEngineStateV62(p);
   const row={p,days:st.overdueDays||0,due:st.nextDue,doneToday:!!st.doneToday};
-  if(age>=1&&age<30&&st.due)near.push(row);
-  else if(age>=30&&(st.due||st.doneToday))far.push(row);
+  if(st.phase==='near'&&st.due)near.push(row);
+  else if(st.phase==='far'&&(st.due||st.doneToday))far.push(row);
  }
  near.sort((a,b)=>b.days-a.days||a.p-b.p);
  // Earliest reviewed first, so the entire far-review pool rotates.
@@ -2171,14 +2178,15 @@ function reviewBucketsV50(){
 /* v177 — far review completion is based on distinct pages within a fixed window. */
 function farCycleStateV177(day=todayKey()){
  const firsts=firstMemDateMapV50(),duration=farCycleDaysV111();
- const pool=Object.keys(firsts).map(Number).filter(p=>addDaysKeyV62(firsts[p],30)<=day);
+ const pool=Object.keys(firsts).map(Number).filter(p=>nearReviewProgressV196(p,day).phase==='far');
  if(!pool.length)return {pool:[],covered:new Set(),today:new Set(),remaining:[],todayDone:0,target:0,start:day,end:day,cycleComplete:true};
- const earliest=pool.map(p=>addDaysKeyV62(firsts[p],30)).sort()[0];
+ const eligible=new Map(pool.map(p=>[p,nearReviewProgressV196(p,day).farFrom]));
+ const earliest=[...eligible.values()].sort()[0];
  const elapsed=Math.max(0,daysBetween(earliest,day)),offset=elapsed%duration;
  const start=addDaysKeyV62(day,-offset),end=addDaysKeyV62(start,duration-1);
  const daysLeft=Math.max(1,duration-offset),allowed=new Set(pool),covered=new Set(),today=new Set();
  const mark=(page,date)=>{
-  const p=+page;if(!allowed.has(p)||date<start||date>day||date<addDaysKeyV62(firsts[p],30))return;
+  const p=+page;if(!allowed.has(p)||date<start||date>day||date<eligible.get(p))return;
   covered.add(p);if(date===day)today.add(p);
  };
  for(const log of S.logs||[]){
@@ -2383,12 +2391,12 @@ function tasksV50(){
  const log=todayLogV50(),memLegacy=rangeSetV50(log.memList||[]),allRev=rangeSetV50(log.revList||[]);
  const memAuto=recitedPagesTodayV51('new'),completedReview=new Set([...allRev,...recitedPagesTodayV51('fix'),...recitedPagesTodayV51('near'),...recitedPagesTodayV51('far')]);
  const freshDue=taskPagesV60('new'),nearDue=taskPagesV60('near'),farDue=taskPagesV60('far');
- const firsts=firstMemDateMapV50(),nearDone=[...completedReview].filter(p=>firsts[p]&&daysBetween(firsts[p],todayKey())<30).length;
+ const firsts=firstMemDateMapV50(),nearDone=[...completedReview].filter(p=>firsts[p]&&nearReviewProgressV196(p).phase==='near').length;
  const farCycle=farCycleStateV177(),farDone=farCycle.todayDone;
  const newDone=new Set([...memLegacy,...memAuto]).size;
  const result=[
   {id:'new',label:'حفظ جديد',done:newDone,target:weeklyMemorizationV135().dayTarget,pages:freshDue,kind:'book',color:'var(--green)'},
-  {id:'near',label:'مراجعة قريبة · أول 30 يومًا',done:nearDone,target:nearDone+nearDue.length,pages:nearDue,kind:'repeat',color:'var(--clay)'},
+  {id:'near',label:'مراجعة قريبة · 30 مراجعة فعلية',done:nearDone,target:nearDone+nearDue.length,pages:nearDue,kind:'repeat',color:'var(--clay)'},
   {id:'far',label:'مراجعة بعيدة · دورة '+farCycleDaysV111()+' أيام',done:farDone,target:farCycle.target,pages:farDue,kind:'far',color:'var(--blue)'}
  ];
  const opt=optionalDailyItemsV111();
@@ -2432,7 +2440,7 @@ function renderHomeV50(){
   const pct=Math.round(mem/604*100),pr=document.getElementById('homeProgressCard');
   if(pr)pr.innerHTML='<div class="v65-journey"><div class="v65-journey-ring" style="--p:'+pct+'"><b>'+pct+'%</b><small>من المصحف</small></div><div class="v65-journey-main"><div class="v50-kicker">رحلتك في الحفظ</div><h3>'+mem+' وجهًا محفوظًا</h3><p>الخريطة تفصل بين المحفوظ، والمراجعة القريبة، والبعيدة، والإتقان.</p><div class="v65-state-row"><span><i class="lg-near"></i>'+near+' قريبة</span><span><i class="lg-far"></i>'+far+' بعيدة</span><span><i class="lg-weak"></i>'+weak+' متفلّت</span></div><button class="v50-btn soft" data-v50-route="map">عرض خريطة الأوجه</button></div></div>';
   const pin=readingPinV86(),last=pin?.page||lastActivityPageV50(),s=pin?(SURAHS.find(s=>s[0]===+pin.vk.split(':')[0])||surahOfPage(last)):surahOfPage(last),mLast=mapPageMetaV62(last,null),hc=document.getElementById('homeContinueCard'),lf=(S.faceLearning&&S.faceLearning[last])||{},books=lf.tafsir?Object.keys(lf.tafsir).filter(k=>lf.tafsir[k]&&lf.tafsir[k].complete).length:0;
-  const phaseTxt=mLast.engine&&mLast.engine.phase==='near'?'مراجعة قريبة · اليوم '+mLast.engine.day+' من 30':mLast.engine&&mLast.engine.phase==='far'?'مراجعة بعيدة':mLast.memorized?'محفوظ':'قراءة';
+  const phaseTxt=mLast.engine&&mLast.engine.phase==='near'?'مراجعة قريبة · '+mLast.engine.completed+' من 30 مراجعة':mLast.engine&&mLast.engine.phase==='far'?'مراجعة بعيدة':mLast.memorized?'محفوظ':'قراءة';
   if(hc)hc.innerHTML='<div class="v50-continue v65-continue"><div class="v65-page-token">'+last+'</div><div class="v65-continue-copy"><div class="v50-kicker">'+(pin?'فاصلك في المصحف':'مواصلة آخر نشاط')+'</div><h3>سورة '+s[1]+'</h3><p>الوجه '+last+' · '+(pin?'فاصل مثبت عند الآية '+toAr(pin.vk.split(':')[1]):phaseTxt)+'</p><div class="v65-learning-dots"><span class="'+(lf.listen?'on':'')+'">سماع</span><span class="'+(books?'on':'')+'">تفسير</span><span class="'+(lf.hifz?'on':'')+'">حفظ</span><span class="'+(lf.recite?'on':'')+'">تسميع</span></div></div><button class="v50-arrow" data-v50-mushaf="'+last+'" data-reading-vk="'+(pin?.vk||'')+'" aria-label="متابعة"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>';
   const tasks=tasksV50(),core=tasks.filter(t=>t.id==='new'||t.id==='near'||t.id==='far'||t.extra),target=core.reduce((n,t)=>n+(t.target||0),0),done=core.reduce((n,t)=>n+Math.min(t.done||0,t.target||0),0),remain=core.reduce((n,t)=>n+(t.pages||[]).length,0),tc=document.getElementById('homeTodayCard'),support=tasks.filter(t=>t.id!=='new'&&t.id!=='near'&&t.id!=='far'&&!t.extra),supportDone=support.filter(t=>t.target>0&&t.done>=t.target).length;
   if(tc)tc.innerHTML='<div class="v72-home-today"><div><div class="v50-kicker">اليوم</div><h3>'+(remain?'بقي '+remain+' وجهًا للحفظ والمراجعة':'اكتملت مهام الحفظ والمراجعة')+'</h3><p>'+done+' من '+target+' من متطلبات الحفظ والمراجعة'+(support.length?' · '+supportDone+' من '+support.length+' من المهام المساندة':'')+'</p></div><button data-v50-route="today">فتح مهام اليوم</button></div>';
@@ -3822,7 +3830,7 @@ function loadDateEntry(){
   if(lbl){if(k){const dt=parseKey(k);const f=fmtD(k);lbl.textContent=`${AR_DOW[dt.getDay()]} · ${f.d} ${f.m} ${f.y}`;}else lbl.textContent='';}
   const ex=S.logs.find(l=>l.date===k)||{};
   memList=Array.isArray(ex.memList)?ex.memList.map(x=>({...x})):[];
-  revList=Array.isArray(ex.revList)?ex.revList.map(x=>({...x})):[];
+  revList=Array.isArray(ex.revList)?ex.revList.map(x=>{const y={...x};delete y.type;return y;}):[];
   renderMemChips();renderRevChips();
 }
 function pageOfItem(it){const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);return r?r[0]:0;}
@@ -3832,17 +3840,43 @@ function renderMemChips(){
   box.innerHTML=memList.map((it,i)=>`<span class="chip-check on" style="cursor:default;background:var(--gold-soft);border-color:var(--gold)">${esc(itemLabel(it))} <button data-rm="${i}" style="background:none;border:none;color:var(--clay);cursor:pointer;font-weight:700;margin-inline-start:4px">×</button></span>`).join('');
   box.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{memList.splice(+b.dataset.rm,1);renderMemChips();}));
 }
+/* Derive near/far from the face's review progress at the START of this date.
+   Previously chosen manual labels are only legacy display data. */
+function reviewCategoryForDayV196(p,day){
+ const first=firstMemDateV62(p);
+ if(!first||day<=first)return'extra';
+ return nearReviewProgressV196(p,day).phase==='far'?'far':'near';
+}
+function manualReviewPagesV196(items){return[...rangeSetV50(items||[])].sort((a,b)=>a-b);}
+function reviewBreakdownV196(items,day){
+ const out={near:0,far:0,extra:0};
+ for(const p of manualReviewPagesV196(items))out[reviewCategoryForDayV196(p,day)]++;
+ return out;
+}
+function renderManualReviewSummaryV196(){
+ const el=document.getElementById('rev-auto-summary-v196');if(!el)return;
+ const date=document.getElementById('in-date')?.value||todayKey();
+ const x=reviewBreakdownV196(revList,date);
+ el.textContent=revList.length?'التصنيف الآلي: '+toAr(x.near)+' وجه قريبة · '+toAr(x.far)+' وجه بعيدة'+(x.extra?' · '+toAr(x.extra)+' خارج خطة الحفظ المسجلة':'')+'.':'يُحدّد التطبيق القريبة والبعيدة من تاريخ حفظ كل وجه ومراجعته.';
+}
+function classifiedManualReviewListV196(items,day){
+ const out=[];let current=null;
+ for(const page of manualReviewPagesV196(items)){
+  const type=reviewCategoryForDayV196(page,day),surahId=surahOfPage(page)[0];
+  if(current&&current.type===type&&current.surahId===surahId&&current.to===page-1){current.to=page;continue;}
+  current={surahId,from:page,to:page,type};out.push(current);
+ }
+ return out;
+}
 function renderRevChips(){
   const box=document.getElementById('rev-chips');if(!box)return;
-  // رتّب: القريبة أولًا (حسب المصحف) ثم البعيدة (حسب المصحف)
-  revList.sort((a,b)=>{const ta=a.type==='far'?1:0,tb=b.type==='far'?1:0;if(ta!==tb)return ta-tb;return pageOfItem(a)-pageOfItem(b);});
-  box.innerHTML=revList.map((it,i)=>{const near=it.type!=='far';
-    const bg=near?'#cfe0c5':'#d3d7ee';const bd=near?'var(--green)':'var(--blue)';const col=near?'#2c4f44':'#3a3f68';
-    return `<span class="chip-check on" style="cursor:default;background:${bg};border-color:${bd};color:${col}">${near?'قريبة':'بعيدة'} · ${esc(itemLabel(it))} <button data-rm="${i}" style="background:none;border:none;color:var(--clay);cursor:pointer;font-weight:700;margin-inline-start:4px">×</button></span>`;}).join('');
+  revList.sort((a,b)=>pageOfItem(a)-pageOfItem(b));
+  box.innerHTML=revList.map((it,i)=>`<span class="chip-check on" style="cursor:default;background:var(--wash2);border-color:var(--line);color:var(--ink)">${esc(itemLabel(it))} <button data-rm="${i}" style="background:none;border:none;color:var(--accent);cursor:pointer;font-weight:700;margin-inline-start:4px">×</button></span>`).join('');
   box.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{revList.splice(+b.dataset.rm,1);renderRevChips();}));
   // سهم الطيّ يظهر فقط عند وجود ٣ مدخلات فأكثر
   const tog=document.getElementById('rev-chips-toggle');
   if(tog)tog.style.display=revList.length>=3?'':'none';
+  renderManualReviewSummaryV196();
 }
 (function(){const tog=document.getElementById('rev-chips-toggle');if(tog)tog.addEventListener('click',()=>{
   const box=document.getElementById('rev-chips');const collapsed=box.style.display==='none';
@@ -3879,11 +3913,13 @@ document.getElementById('btnSaveToday').addEventListener('click',()=>{
   const k=document.getElementById('in-date').value;if(!k){alert("اختاري التاريخ");return;}
   const prev=S.logs.find(l=>l.date===k)||{};
   const newTxt=memList.map(itemLabel).join('، ');
-  const nearTxt=revList.filter(x=>x.type!=='far').map(itemLabel).join('، ');
-  const farTxt=revList.filter(x=>x.type==='far').map(itemLabel).join('، ');
-  const revTxt=[nearTxt,farTxt].filter(Boolean).join(' · ');
+  const classified=classifiedManualReviewListV196(revList,k);
+  const nearTxt=classified.filter(x=>x.type==='near').map(itemLabel).join('، ');
+  const farTxt=classified.filter(x=>x.type==='far').map(itemLabel).join('، ');
+  const extraTxt=classified.filter(x=>x.type==='extra').map(itemLabel).join('، ');
+  const revTxt=[nearTxt,farTxt,extraTxt].filter(Boolean).join(' · ');
   const entry={date:k,new:newTxt,memList:memList.map(x=>({...x})),
-    rev:revTxt,near:nearTxt,far:farTxt,revList:revList.map(x=>({...x})),
+    rev:revTxt,near:nearTxt,far:farTxt,revList:classified,
     tilawa:prev.tilawa||false,tafsir:prev.tafsir||false,tilawaTxt:prev.tilawaTxt||'',tafsirTxt:prev.tafsirTxt||'',
     halaqa:prev.halaqa||false,mreview:prev.mreview||false};
   const isEmpty=!(newTxt||revTxt||entry.tilawa||entry.tafsir||entry.halaqa||entry.mreview);
@@ -3965,7 +4001,7 @@ function mapPageMetaV62(p,sid){
   const first=firstMemDateV62(p),eng=reviewEngineStateV62(p),res=latestPageResultV62(p,sid),base=autoPageInfo(p,sid);
   const partial=!!(res&&res.coverage>0&&!res.complete);
   let state=base.state,color=base.color,label='';
-  if(first&&eng.phase==='near'){state='due';color=base.state==='weak'?base.color:'#C89B3C';label='مراجعة قريبة · اليوم '+eng.day+'/30';}
+  if(first&&eng.phase==='near'){state='due';color=base.state==='weak'?base.color:'#C89B3C';label='مراجعة قريبة · '+eng.completed+'/30 مراجعة';}
   else if(first&&eng.phase==='far'){state=base.state==='weak'?'weak':'fresh';color=base.color;label='مراجعة بعيدة';}
   if(partial)label=(res.followedOnly?'متابعة صوتية غير معتمدة ':'مراجعة غير معتمدة ')+Math.round(res.coverage*100)+'٪';
   return{...base,state,color,label,partial,coverage:res?res.coverage:null,result:res,engine:eng,memorized:!!first};
@@ -4022,7 +4058,7 @@ function wardReviewRoadmapV205(){
  host.innerHTML='<div class="review-overview-v173">'+
   '<div class="review-today-title-v173"><span>مراجعة اليوم</span><strong>'+(remaining?toAr(remaining)+' أوجه متبقية':'اكتملت المهام المحددة لليوم')+'</strong></div>'+
   '<div class="review-stats-v173">'+
-   stat('قريبة',dueNear.length,'خلال أول 30 يومًا')+
+   stat('قريبة',dueNear.length,'حتى إتمام 30 مراجعة')+
    stat('بعيدة',dueFar.length,'وفق نصاب اليوم')+
   '</div>'+
   '<div class="review-today-list-v173">'+(remaining?
@@ -4030,8 +4066,8 @@ function wardReviewRoadmapV205(){
     '<p class="review-empty-v173">لا توجد أوجه مطلوبة حاليًا. يمكنك الاطلاع على بقية الأوجه من التفاصيل أدناه.</p>')+
   '</div></div>'+
   '<div class="review-detail-heading-v173"><strong>تفاصيل المسارين</strong><small>للاطلاع فقط · اضغطي على الوجه لفتحه</small></div>'+
-  details('المراجعة القريبة',near.length,'كل وجه خلال أول 30 يومًا بعد حفظه',near,'لا توجد أوجه في المراجعة القريبة.')+
-  details('المراجعة البعيدة',far.length,'بعد 30 يومًا · الدورة '+toAr(farCycleDaysV111())+' أيام · النصاب '+toAr(farDailyQuotaV111())+' يوميًا',far,'لا توجد أوجه في المراجعة البعيدة.')+
+  details('المراجعة القريبة',near.length,'30 يوم مراجعة فعلية مع تعويض الفائت',near,'لا توجد أوجه في المراجعة القريبة.')+
+  details('المراجعة البعيدة',far.length,'بعد 30 مراجعة · الدورة '+toAr(farCycleDaysV111())+' أيام · النصاب '+toAr(farDailyQuotaV111())+' يوميًا',far,'لا توجد أوجه في المراجعة البعيدة.')+
   '<p class="review-footer-v173">أُنجز اليوم: '+toAr(doneNear.length)+' قريبة · '+toAr(doneFar.length)+' بعيدة. تعرض هذه البطاقة نفس مهام المراجعة الموجودة في «اليوم».</p>';
  host.querySelectorAll('[data-ward-face]').forEach(btn=>btn.addEventListener('click',()=>openPage(+btn.dataset.wardFace)));
 }
@@ -4551,7 +4587,7 @@ function dayFactsV71(k){
   const manualRev=(log&&log.revList)||[];
   manualRev.forEach(it=>expandItemsToPagesV71([it]).forEach(p=>{
     const first=firstMemDateV62(p);
-    const category=first&&daysBetween(first,k)>=30?'far':'near';
+    const category=first&&nearReviewProgressV196(p,k).phase==='far'?'far':'near';
     groups[category].add(p);
   }));
   const sessionPages=[];
@@ -4897,7 +4933,7 @@ function fillSurahSelect(sel){if(sel.options.length>1)return;SURAHS.forEach(s=>{
 const JUZ_NAME_PICK={26:'الأحقاف',27:'الذاريات',28:'المجادلة'};
 function fillJuzSelect(sel){if(!sel||sel.options.length>1)return;for(let j=1;j<=30;j++){const o=document.createElement('option');o.value=j;o.textContent=`الجزء ${toAr(j)} · ${JUZ_NAME_PICK[j]||JUZ_NAME[j-1]}`;sel.appendChild(o);}}
 // هل يوجد مدخل مطابق تمامًا؟ (منع التكرار)
-function isDuplicate(list,it){return list.some(x=>x.surahId===it.surahId&&(x.from||0)===(it.from||0)&&(x.to||0)===(it.to||0)&&(x.type||'')===(it.type||''));}
+function isDuplicate(list,it){return list.some(x=>x.surahId===it.surahId&&(x.from||0)===(it.from||0)&&(x.to||0)===(it.to||0));}
 // اكتشاف السور المتضمَّنة في نطاق أوجه، وإرجاع مدخلات مقسّمة بالسورة
 function splitRangeBySurah(from,to,type){
   const out=[];
@@ -4994,15 +5030,15 @@ function splitRangeBySurah(from,to,type){
   document.getElementById('rev-from').addEventListener('input',()=>{if(revMode.v!=='juz'&&!(+revSel.value))revPreview();});
   document.getElementById('rev-to').addEventListener('input',()=>{if(revMode.v!=='juz'&&!(+revSel.value))revPreview();});
   document.getElementById('rev-add').addEventListener('click',()=>{
-    const type=document.getElementById('rev-type').value;let added=0,dup=0;
+    let added=0,dup=0;
     if(revMode.v==='juz'){const j=+document.getElementById('rev-juz').value||null;if(!j){document.getElementById('rev-info').textContent='اختاري جزءًا أولًا.';return;}
-      const r=pagesOfJuz(j);splitRangeBySurah(r[0],r[1],type).forEach(it=>{if(isDuplicate(revList,it))dup++;else{revList.push(it);added++;}});
+      const r=pagesOfJuz(j);splitRangeBySurah(r[0],r[1]).forEach(it=>{if(isDuplicate(revList,it))dup++;else{revList.push(it);added++;}});
       document.getElementById('rev-juz').value='';
     }else{const surId=+revSel.value||null;
       const from=+document.getElementById('rev-from').value||null,to=+document.getElementById('rev-to').value||null;
       if(!surId&&from&&to&&from<=to){
-        splitRangeBySurah(from,to,type).forEach(it=>{if(isDuplicate(revList,it))dup++;else{revList.push(it);added++;}});
-      }else if(surId){const it={surahId:surId,type};if(from&&to&&from<=to){it.from=from;it.to=to;}
+        splitRangeBySurah(from,to).forEach(it=>{if(isDuplicate(revList,it))dup++;else{revList.push(it);added++;}});
+      }else if(surId){const it={surahId:surId};if(from&&to&&from<=to){it.from=from;it.to=to;}
         if(isDuplicate(revList,it))dup++;else{revList.push(it);added++;}
       }else{document.getElementById('rev-info').textContent='اختاري سورة أو أدخلي نطاق أوجه.';return;}
       revSel.value='';document.getElementById('rev-from').value='';document.getElementById('rev-to').value='';

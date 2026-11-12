@@ -29,7 +29,7 @@ function setup(){
  reviewQueueV123:()=>({selected:[{p:10}]}),farCycleDaysV111:()=>7,
  dayFactsV71:()=>({}),reviewBucketsV50:()=>({near:[{p:10}],far:[]}),ensurePageSchedV62:()=>({phase:'near',nextDue:day}),daysBetween:()=>60,autoPageInfo:()=>({state:'due'})};
  vm.createContext(ctx);
- vm.runInContext(['uniqueRecitationSessionsV163','approvedRecitationFaceV149','completeReviewTodayV62','recitedPagesTodayV51','taskPagesV60','lastManualReviewDateV111','reviewEngineStateV62'].map(extract).join('\n'),ctx);
+ vm.runInContext('let reviewDayIndexCacheV196=null;\n'+['uniqueRecitationSessionsV163','approvedRecitationFaceV149','reviewDayIndexV196','nearReviewProgressV196','completeReviewTodayV62','recitedPagesTodayV51','taskPagesV60','lastManualReviewDateV111','reviewEngineStateV62'].map(extract).join('\n'),ctx);
  return{ctx,S,day,ts};
 }
 test('scheduled Mushaf completion counts once and is no longer due',()=>{

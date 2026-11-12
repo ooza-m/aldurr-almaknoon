@@ -23,7 +23,7 @@ test('after six memorized parts, newly suggested page comes from first unmemoriz
 });
 function reviewHarness(logs,farFirst,recitationSessions=[]){
  const S={logs,recitationSessions};
- const ctx={S,Set,Map,Object,Math,Number,Array,Date,firstMemDateMapV50:()=>farFirst,farCycleDaysV111:()=>7,addDaysKeyV62:add,daysBetween:diff,todayKey:()=> '2026-11-14',
+ const ctx={S,Set,Map,Object,Math,Number,Array,Date,firstMemDateMapV50:()=>farFirst,nearReviewProgressV196:()=>({phase:'far',farFrom:'2026-11-05'}),farCycleDaysV111:()=>7,addDaysKeyV62:add,daysBetween:diff,todayKey:()=> '2026-11-14',
   rangeSetV50:items=>new Set(items.flatMap(x=>Array.from({length:x.to-x.from+1},(_,i)=>x.from+i))),
   uniqueRecitationSessionsV163:x=>x,approvedRecitationFaceV149:(rs,pg)=>pg.complete===true&&pg.manualConfirmed===true&&rs.userReviewed===true,
   keyOf:d=>d.toISOString().slice(0,10)};
