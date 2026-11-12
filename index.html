@@ -1395,7 +1395,7 @@ window.FIREBASE_CONFIG = {
 
   <!-- ===== المرحليات ===== -->
   <section class="tab-panel" id="tab-stages">
-    <div class="v67-subpage-head"><button class="v67-back" type="button" data-stages-back-v190 aria-label="العودة إلى الصفحة السابقة">‹</button><div><span>الاختبارات والمحطات</span><h1>المرحليات</h1><p>سجل مستقل لاجتياز المراحل؛ لا يُدمج تلقائيًا مع ألوان الخريطة.</p></div></div>
+    <div class="v67-subpage-head stage-head-v193"><button class="v67-back" type="button" data-stages-back-v190 aria-label="العودة إلى الصفحة السابقة">‹</button><div><span>الاختبارات والمحطات</span><h1>المرحليات</h1><p>سجل مستقل لاجتياز المراحل؛ لا يُدمج تلقائيًا مع ألوان الخريطة.</p></div><button type="button" id="stagePathCustomizeV193" class="stage-customize-v193" aria-label="تخصيص اتجاه المرحليات" title="تخصيص اتجاه المرحليات"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button></div>
     <div id="stageSummaryV69"></div>
     <div class="card">
       <button id="stagesToggle" class="v69-stage-static" type="button"><span><small>المسار التفصيلي</small><b>جميع المرحليات</b></span><em id="stagesChevron"></em></button>
@@ -1577,7 +1577,7 @@ window.FIREBASE_CONFIG = {
   </div>
   <div class="v70-set-group">
     <h4>المسار والتقويم</h4>
-    <div class="field"><label>اتجاه المرحليات</label><p class="hint">يعيد ترتيب المراحل فقط، ويحتفظ ببيانات المرحلة نفسها بحسب نطاق الأجزاء.</p><div class="v70-set-pair"><button class="btn btn-ghost btn-sm" id="set-path-down">من الأجزاء الأخيرة إلى الأولى</button><button class="btn btn-ghost btn-sm" id="set-path-up">من الأجزاء الأولى إلى الأخيرة</button></div><p class="hint" id="set-path-cur" style="margin:6px 0 0"></p></div>
+    
     <div class="field"><label>بداية الأسبوع</label><div class="check-row" id="weekStartPick"><label class="chip-check" data-ws="0"><input type="radio" name="ws"> الأحد</label><label class="chip-check" data-ws="1"><input type="radio" name="ws"> الاثنين</label></div></div>
     <div class="field"><label>أيام الحلقة</label><p class="hint">تظهر في التقويم لتسجيل الحضور والغياب، ولا تغيّر خطة الحفظ تلقائيًا.</p><div id="halaqaDayPick" class="check-row" style="margin-bottom:10px"></div><button class="btn btn-primary btn-sm" id="halaqaSave" style="width:100%">حفظ أيام الحلقة</button><p class="hint" id="halaqaSaveMsg" style="margin:8px 0 0;color:var(--green)"></p></div>
   </div>
@@ -1588,7 +1588,7 @@ window.FIREBASE_CONFIG = {
     <div class="v70-notif-row"><label class="chip-check"><input type="checkbox" id="ntTafsir"> قراءة التفسير</label><input type="time" id="ntTafsirTime"></div>
     <p class="hint" id="ntStatus" style="margin-top:6px"></p>
   </div>
-  <div class="v70-set-group"><h4>النسخ الاحتياطية</h4><p class="hint">تتضمن بيانات الحفظ والفواصل وتفضيلات العرض. التنزيلات الصوتية تبقى على الجهاز ولا تدخل في ملف النسخة.</p><div style="margin:10px 0 13px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fffdfb)"><b style="font-size:.8rem">التحقق من بيانات Firebase</b><p class="hint" style="margin:4px 0 9px">فحص للقراءة فقط: يوضح وجود السجل السحابي ومحتوياته الرئيسية دون حفظ أو استبدال أي بيانات.</p><button class="btn btn-ghost btn-sm" type="button" id="cloudInspectV108">فحص بيانات الحساب</button><div class="hint" id="cloudInspectStatusV108" role="status" aria-live="polite" style="margin-top:9px;white-space:pre-line"></div></div><div style="margin:10px 0 13px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fffdfb)"><b style="font-size:.8rem">مزامنة الفواصل وتفضيلات القراءة</b><p class="hint" style="margin:4px 0 9px">تُزامن فواصل الآيات وألوانها وتفضيلات العرض مع حسابك، ولا يُستبدل اختلاف بين جهازين تلقائيًا.</p><div class="hint" id="cloudExtrasStatusV109" role="status" aria-live="polite">سجّلي الدخول لفحص المزامنة.</div><div id="cloudExtrasConflictV109" hidden style="margin-top:9px"><p class="hint">احتفظي بكلتا النسختين قبل تسوية اختلافات البيانات.</p><div class="v70-set-pair"><button type="button" class="btn btn-ghost btn-sm" id="cloudExtrasLocalV109">تصدير نسخة الجهاز</button><button type="button" class="btn btn-ghost btn-sm" id="cloudExtrasRemoteV109">تصدير نسخة السحابة</button></div></div></div><div class="v70-set-pair"><button class="btn btn-ghost" type="button" id="settingsBackup">تصدير نسخة</button><button class="btn btn-ghost" type="button" id="settingsRestore">استيراد نسخة</button></div><button class="btn btn-ghost btn-sm" type="button" id="settingsUndoRestore" style="width:100%;margin-top:8px">استرجاع النسخة السابقة لآخر استيراد</button>
+  <details class="v70-set-group backup-fold-v193" id="backupFoldV193"><summary>النسخ الاحتياطية <span aria-hidden="true" class="backup-chevron-v193">⌄</span></summary><div class="backup-fold-content-v193"><p class="hint">تتضمن بيانات الحفظ والفواصل وتفضيلات العرض. التنزيلات الصوتية تبقى على الجهاز ولا تدخل في ملف النسخة.</p><div style="margin:10px 0 13px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fffdfb)"><b style="font-size:.8rem">التحقق من بيانات Firebase</b><p class="hint" style="margin:4px 0 9px">فحص للقراءة فقط: يوضح وجود السجل السحابي ومحتوياته الرئيسية دون حفظ أو استبدال أي بيانات.</p><button class="btn btn-ghost btn-sm" type="button" id="cloudInspectV108">فحص بيانات الحساب</button><div class="hint" id="cloudInspectStatusV108" role="status" aria-live="polite" style="margin-top:9px;white-space:pre-line"></div></div><div style="margin:10px 0 13px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fffdfb)"><b style="font-size:.8rem">مزامنة الفواصل وتفضيلات القراءة</b><p class="hint" style="margin:4px 0 9px">تُزامن فواصل الآيات وألوانها وتفضيلات العرض مع حسابك، ولا يُستبدل اختلاف بين جهازين تلقائيًا.</p><div class="hint" id="cloudExtrasStatusV109" role="status" aria-live="polite">سجّلي الدخول لفحص المزامنة.</div><div id="cloudExtrasConflictV109" hidden style="margin-top:9px"><p class="hint">احتفظي بكلتا النسختين قبل تسوية اختلافات البيانات.</p><div class="v70-set-pair"><button type="button" class="btn btn-ghost btn-sm" id="cloudExtrasLocalV109">تصدير نسخة الجهاز</button><button type="button" class="btn btn-ghost btn-sm" id="cloudExtrasRemoteV109">تصدير نسخة السحابة</button></div></div></div><div class="v70-set-pair"><button class="btn btn-ghost" type="button" id="settingsBackup">تصدير نسخة</button><button class="btn btn-ghost" type="button" id="settingsRestore">استيراد نسخة</button></div><button class="btn btn-ghost btn-sm" type="button" id="settingsUndoRestore" style="width:100%;margin-top:8px">استرجاع النسخة السابقة لآخر استيراد</button>
   <details id="backupHistoryV154" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
     <summary style="cursor:pointer;font-weight:650;font-size:.82rem">النسخ التلقائية وسجل الاستعادة</summary>
     <p class="hint" style="margin:9px 0">يُحتفظ بحد أقصى 5 نسخ يومية على هذا الجهاز فقط. الحذف التلقائي لبيانات المتصفح قد يُزيلها؛ صدّري نسخة إلى ملفات الجهاز احتياطًا.</p>
@@ -1596,7 +1596,7 @@ window.FIREBASE_CONFIG = {
     <div id="backupHistoryListV154"></div>
     <div id="backupAuditV154" style="margin-top:10px"></div>
     <button type="button" class="btn btn-ghost btn-sm" id="backupCreateNowV154">إنشاء نسخة الآن</button>
-  </details></div>
+  </details></div></details>
   <div class="v70-set-danger"><b>مسح بيانات التقدّم</b><p>يمسح السجل والخريطة والأخطاء والختمة والمرحليات. لا يمكن التراجع بعد التأكيد.</p><button class="btn btn-sm" id="set-reset">مسح جميع بيانات التقدّم</button></div>
   <div class="v70-about"><div class="amiri">﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾</div><span>الدُّرُّ المكنون · مصحف المدينة · حفص عن عاصم</span><b>النسخة v89</b></div>
 </div></div>
@@ -1670,19 +1670,19 @@ window.FIREBASE_CONFIG = {
 </div></div>
 
 <div class="modal-bg" id="pathModal"><div class="modal"><button class="modal-x" onclick="document.getElementById('pathModal').classList.remove('open')" aria-label="إغلاق">✕</button>
-  <h3>🛤️ اختاري مسار مرحلياتك</h3>
-  <p class="msub">كيف تحفظين القرآن؟ نبني لك مسار المرحليّات (كل مرحلية جزآن) تلقائيًا حسب اختيارك. يمكنك تغييره لاحقًا من صفحة المرحليّات.</p>
+  <h3>اتجاه المرحليات</h3>
+  <p class="msub">اختاري اتجاه ترتيب المرحليات. تتكون المرحلية عادةً من جزأين، وعند تغيير المسار تُحفظ نتائج المراحل المطابقة لنطاق الأجزاء.</p><p class="msub" id="stagePathCurrentV193"></p>
   <div class="path-choose">
     <div class="path-opt" data-path="down">
-      <h4>من الأسفل ⬆️</h4>
+      <h4>من الأجزاء الأخيرة إلى الأولى</h4>
       <p>أبدأ من الجزء ٣٠ و٢٩ (قصار السور)، ثم أصعد تدريجيًا حتى الجزء الأول.</p>
     </div>
     <div class="path-opt" data-path="up">
-      <h4>من الأعلى ⬇️</h4>
+      <h4>من الأجزاء الأولى إلى الأخيرة</h4>
       <p>أبدأ من الجزء الأول (البقرة)، ثم أتدرّج حتى الجزء الثلاثين.</p>
     </div>
   </div>
-  <p class="msub" style="font-size:.78rem">💡 كثيرات يبدأن من الأسفل لأن قصار السور أسهل، ثم ينتقلن للأعلى.</p>
+  
 </div></div>
 
 <script>
@@ -5317,7 +5317,15 @@ function choosePath(dir){
   const m=document.getElementById('pathModal');if(m)m.classList.remove('open');
   if(typeof renderStages==='function')try{renderStages();}catch(e){}
 }
-document.querySelectorAll('#pathModal .path-opt').forEach(o=>o.addEventListener('click',()=>choosePath(o.dataset.path)));
+function openStagePathCustomizeV193(){
+  if(!S.profile)S.profile={name:'',pathChosen:false,pathDir:'up'};
+  const current=document.getElementById('stagePathCurrentV193');
+  if(current)current.textContent='الاتجاه الحالي: '+(S.profile.pathDir==='down'?'من الأجزاء الأخيرة إلى الأولى':'من الأجزاء الأولى إلى الأخيرة');
+  document.querySelectorAll('#pathModal .path-opt').forEach(o=>{const on=S.profile.pathDir===o.dataset.path;o.classList.toggle('selected-v193',on);o.setAttribute('aria-pressed',String(on));});
+  document.getElementById('pathModal').classList.add('open');
+}
+document.getElementById('stagePathCustomizeV193')?.addEventListener('click',openStagePathCustomizeV193);
+document.querySelectorAll('#pathModal .path-opt').forEach(o=>{o.setAttribute('role','button');o.setAttribute('tabindex','0');const activate=()=>{const dir=o.dataset.path;if(S.profile?.pathChosen){if(changePath(dir))document.getElementById('pathModal').classList.remove('open');}else choosePath(dir);};o.addEventListener('click',activate);o.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate();}});});
 function renderStages(){
   seedStages();const box=document.getElementById('stageTrack'),sum=document.getElementById('stageSummaryV69');if(!box)return;
   const done=S.stages.filter(s=>s.status==='done').length,currentIdx=Math.max(0,S.stages.findIndex(s=>s.status==='current')>=0?S.stages.findIndex(s=>s.status==='current'):S.stages.findIndex(s=>s.status!=='done'));
@@ -6802,7 +6810,6 @@ function openSettings(){
   if(!S.profile)S.profile={name:'',pathChosen:true,pathDir:'up'};
   document.getElementById('set-name').value=S.profile.name||'';
   document.getElementById('set-name-msg').textContent='';
-  document.getElementById('set-path-cur').textContent='المسار الحالي: '+(S.profile.pathDir==='down'?'من الأجزاء الأخيرة إلى الأولى':'من الأجزاء الأولى إلى الأخيرة');
   renderHalaqaPicker();
   // بداية الأسبوع
   const ws=(S.weekStart|0);
@@ -6825,17 +6832,15 @@ document.getElementById('set-name-save').addEventListener('click',()=>{
   const m=document.getElementById('set-name-msg');m.textContent='✓ حُفظ الاسم';setTimeout(()=>m.textContent='',2000);
 });
 function changePath(dir){
-  if(S.profile.pathDir===dir){alert('هذا هو المسار الحالي.');return;}
-  if(!confirm('سيُعاد ترتيب المرحليات وفق الاتجاه الجديد مع الاحتفاظ بما يطابق نطاق كل مرحلة. متابعة؟'))return;
+  if(S.profile.pathDir===dir){return false;}
+  if(!confirm('سيُعاد ترتيب المرحليات وفق الاتجاه الجديد مع الاحتفاظ بما يطابق نطاق كل مرحلة. متابعة؟'))return false;
   const oldByRange={};S.stages.forEach(s=>{oldByRange[s.range]={date:s.date,status:s.status,note:s.note};});
   S.profile.pathDir=dir;S.profile.pathChosen=true;S.stages=buildStagePath(dir);
   S.stages.forEach(s=>{const old=oldByRange[s.range];if(old){s.date=old.date;s.note=old.note;s.status=old.status==='done'?'done':'upcoming';}});
   const firstPending=S.stages.find(s=>s.status!=='done');if(firstPending)firstPending.status='current';
   normalizeStageNamesV177();save();renderStages();refreshV50();
-  document.getElementById('set-path-cur').textContent='المسار الحالي: '+(dir==='down'?'من الأجزاء الأخيرة إلى الأولى':'من الأجزاء الأولى إلى الأخيرة');
+  return true;
 }
-document.getElementById('set-path-down').addEventListener('click',()=>changePath('down'));
-document.getElementById('set-path-up').addEventListener('click',()=>changePath('up'));
 document.getElementById('set-reset').addEventListener('click',()=>{
   if(!confirm(' هل أنتِ متأكدة من مسح جميع بياناتك؟\n\nسيُحذف: السجلّ، خريطة الحفظ، الأخطاء، الختمة، المرحليّات، وكل التقدّم.\n\nلا يمكن استرجاعها بعد الحذف.'))return;
   if(!confirm('تأكيد أخير: هذا الإجراء نهائيّ ولا رجعة فيه. متابعة المسح؟'))return;

@@ -88,3 +88,47 @@
 :root[data-theme=dark] #tab-more .v70-more-list button small{color:var(--muted)!important}
 :root[data-theme=dark] :is(#tab-calendar,#tab-map,#tab-stages,#tab-tajweed,#tab-stats) :is(input,select,textarea){background:var(--surface)!important;color:var(--ink)!important;border:1px solid var(--line)!important}
 :root[data-theme=dark] :is(#tab-calendar,#tab-map,#tab-stages,#tab-tajweed,#tab-stats) button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* v193: unboxed page titles — restore plain backgrounds beneath the heading. */
+#tab-home .v50-page .v50-hero,
+#tab-home .v50-page .v50-top,
+#tab-today .v50-page .v50-top,
+:root[data-theme="dark"] #tab-home .v50-page .v50-hero,
+:root[data-theme="dark"] #tab-home .v50-page .v50-top,
+:root[data-theme="dark"] #tab-today .v50-page .v50-top{
+ background:transparent!important;background-image:none!important;box-shadow:none!important;border:none!important;
+}
+#tab-home .v50-page .v50-hero::after{display:none!important}
+#tab-home .v50-page .v50-hero{border-radius:0!important}
+/* Settings: one collapsed backup entry, with existing backup tools kept intact. */
+#settingsModal .backup-fold-v193{padding-block:0!important}
+#settingsModal .backup-fold-v193>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 9px;cursor:pointer;list-style:none;font-size:.88rem;font-weight:700;color:var(--ink);min-height:51px}
+#settingsModal .backup-fold-v193>summary::-webkit-details-marker{display:none}
+#settingsModal .backup-chevron-v193{display:inline-block;color:var(--muted);font-size:1.2rem;transition:transform .2s ease}
+#settingsModal .backup-fold-v193[open] .backup-chevron-v193{transform:rotate(180deg)}
+#settingsModal .backup-fold-content-v193{padding:5px 8px 16px}
+#settingsModal .backup-fold-v193>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:9px}
+/* Halaqa/week-start are preference selections, not memorization status. */
+#settingsModal #weekStartPick .chip-check.on,
+#settingsModal #halaqaDayPick .chip-check.on{
+ background:var(--accent)!important;
+ border-color:var(--accent)!important;
+ color:var(--on-accent,#fff)!important;
+ box-shadow:0 0 0 1px var(--accent)!important;
+}
+#settingsModal #weekStartPick .chip-check.on *,
+#settingsModal #halaqaDayPick .chip-check.on *{color:inherit!important}
+#settingsModal #weekStartPick .chip-check:not(.on),
+#settingsModal #halaqaDayPick .chip-check:not(.on){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="dark"] #settingsModal #weekStartPick .chip-check.on,
+:root[data-theme="dark"] #settingsModal #halaqaDayPick .chip-check.on{color:var(--page)!important}
+/* Milestones path preference lives on the milestones page. */
+#tab-stages .stage-head-v193{display:flex;align-items:center;gap:12px}
+#tab-stages .stage-head-v193>div{flex:1;min-width:0}
+#tab-stages .stage-customize-v193{margin-inline-start:auto;flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:50%;color:var(--accent);cursor:pointer}
+#tab-stages .stage-customize-v193 svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#pathModal .path-opt.selected-v193{border-color:var(--accent)!important;box-shadow:inset 0 0 0 1px var(--accent)!important}
+#pathModal .path-opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:root[data-theme="dark"] #pathModal .path-opt{background:var(--wash2)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme="dark"] #pathModal .path-opt :is(h4,p){color:var(--ink)!important}
+:root[data-theme="dark"] #tab-stages .stage-customize-v193{background:var(--surface)!important;color:var(--accent)!important;border-color:var(--line)!important}
