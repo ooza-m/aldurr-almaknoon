@@ -2152,7 +2152,8 @@ function farCycleStateV177(day=todayKey()){
   for(const page of session.pages||[])if(approvedRecitationFaceV149(session,page))mark(page.page,date);
  }
  const remaining=pool.filter(p=>!covered.has(p)),todayDone=today.size;
- return {pool,covered,today,remaining,todayDone,target:todayDone+Math.ceil(remaining.length/daysLeft),start,end,cycleComplete:!remaining.length};
+ const coveredBeforeToday=covered.size-todayDone;
+ return {pool,covered,today,remaining,todayDone,target:Math.ceil((pool.length-coveredBeforeToday)/daysLeft),start,end,cycleComplete:!remaining.length};
 }
 function farDailyQuotaV111(){return farCycleStateV177().target;}
 function readingPinV86(){try{return new DurrReaderUI.Bookmarks(localStorage).latest();}catch(_){return null;}}
