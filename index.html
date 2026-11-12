@@ -4606,9 +4606,11 @@ function calendarCompactGroupsV197(pages,sourceItems=[]){
   let all=true;for(let p=rg[0];p<=rg[1];p++)if(!covered.has(p)){all=false;break;}
   if(!all)continue;
   groups.push({start:(surahOfPage(rg[0])||[])[0]||1,display:'الجزء '+j});
+  // Don't repeat a surah simply because it extends beyond the current juz.
+  // Keep it only when this activity really covers pages outside that juz.
   for(const id of [...remaining]){
    const sur=pageRanges.get(id);
-   if(sur&&sur[0]>=rg[0]&&sur[1]<=rg[1])remaining.delete(id);
+   if(sur&&!list.some(p=>p>=sur[0]&&p<=sur[1]&&(p<rg[0]||p>rg[1])))remaining.delete(id);
   }
  }
  const ids=[...remaining].sort((x,y)=>x-y),runs=[];
