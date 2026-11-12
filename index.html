@@ -5041,6 +5041,11 @@ function splitRangeBySurah(from,to,type){
     const sEnd=i<SURAHS.length-1?SURAHS[i+1][2]:604; // نهاية السورة = بداية التالية (قد تُشارك صفحة)
     // تقاطع نطاق السورة [sStart..sEnd] مع [from..to]
     const segStart=Math.max(from,sStart),segEnd=Math.min(to,sEnd);
+    // If the requested range starts exactly with the NEXT surah, do not
+    // import the previous surah merely because its last face is shared.
+    // Example: juz 30 starts at an-Naba (582), not al-Mursalat.
+    const nextStart=i<SURAHS.length-1?SURAHS[i+1][2]:null;
+    if(nextStart===from&&sStart<from&&segStart===segEnd&&segEnd===from)continue;
     if(segStart<=segEnd){const it={surahId:sid,from:segStart,to:segEnd};if(type)it.type=type;out.push(it);}
   }
   return out;
