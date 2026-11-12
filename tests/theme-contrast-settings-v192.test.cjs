@@ -22,7 +22,7 @@ test('Settings uses sliders rather than the previous sun-like shortcut and Tajwe
  assert.match(html,/data-v50-route="tajweed"[\s\S]{0,220}M4 6h16M6 3v6/);
 });
 test('Contrast stylesheet uses dynamic palette tokens on all illustrated screens',()=>{
- assert.match(html,/theme-contrast-v192\.css\?v=192/);
+ assert.match(html,/theme-contrast-v192\.css\?v=19[24]/);
  for(const area of ['#tab-home','#tab-calendar','#tab-map','#tab-stats','#tab-stages','#tab-tajweed','#tab-tafsir','#tab-more']){
    assert.ok(css.includes(area),area+' is covered');
  }

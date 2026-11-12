@@ -29,7 +29,7 @@ test('Tajweed uses a study/checklist icon',()=>{
  assert.match(icon,/m17 17 2 2 3-4/);
 });
 test('dark-mode contrast is token-based across all four palettes and major pages',()=>{
- assert.match(app,/theme-contrast-v192\.css\?v=192/);
+ assert.match(app,/theme-contrast-v192\.css\?v=19[24]/);
  for(const palette of ['rose','olive','navy','plum'])assert.match(prefs,new RegExp(palette+':\\{name:'));
  for(const id of ['tab-home','tab-today','tab-calendar','tab-map','tab-stages','tab-stats','tab-tajweed','tab-tafsir','tab-more'])assert.ok(contrast.includes('#'+id),'missing '+id);
  assert.match(contrast,/:root\[data-theme=dark\]/);

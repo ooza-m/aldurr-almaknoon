@@ -125,3 +125,6 @@ body[data-page="stats"],body[data-page="tajweed"],body[data-page="errors"]{
  transition:none!important;animation:none!important
  }
 }
+
+/* v194: the More title is unboxed in the floral light style as well. */
+#tab-more .v50-top{background:transparent!important;background-image:none!important;border:0!important;box-shadow:none!important}
