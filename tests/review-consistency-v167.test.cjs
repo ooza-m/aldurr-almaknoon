@@ -31,14 +31,16 @@ test('completed far review does not hide another due page before daily quota',()
  const completed=new Set([496]);
  const bucket={far:[{p:496,doneToday:true,due:'2026-11-10'},{p:497,doneToday:false,due:'2026-11-10'},{p:498,doneToday:false,due:'2026-11-10'}],near:[]};
  const ctx={S:{profile:{pathDir:'up'}},todayKey:()=> '2026-11-10',todayLogV50:()=>({memList:[],revList:[]}),rangeSetV50:()=>new Set(),recitedPagesTodayV51:()=>new Set(),reviewBucketsV50:()=>bucket,farDailyQuotaV111:()=>2,completeReviewTodayV62:p=>completed.has(p)};
+ ctx.farCycleStateV177=()=>({remaining:[497,498],todayDone:1,target:2});ctx.reviewEngineStateV62=()=>({overdueDays:0});
  run(taskPagesSource,ctx);
  assert.deepEqual(Array.from(ctx.taskPagesV60('far')),[497]);
 });
-test('far quota never exceeds available pending due pages',()=>{
+test('far quota cannot fabricate missing eligible pages',()=>{
  const bucket={far:[{p:496,doneToday:false,due:'2026-11-10'},{p:497,doneToday:false,due:'2026-11-11'}],near:[]};
  const ctx={S:{profile:{pathDir:'up'}},todayKey:()=> '2026-11-10',todayLogV50:()=>({memList:[],revList:[]}),rangeSetV50:()=>new Set(),recitedPagesTodayV51:()=>new Set(),reviewBucketsV50:()=>bucket,farDailyQuotaV111:()=>3,completeReviewTodayV62:()=>false};
+ ctx.farCycleStateV177=()=>({remaining:[496,497],todayDone:0,target:3});ctx.reviewEngineStateV62=()=>({overdueDays:0});
  run(taskPagesSource,ctx);
- assert.deepEqual(Array.from(ctx.taskPagesV60('far')),[496]);
+ assert.deepEqual(Array.from(ctx.taskPagesV60('far')),[496,497]);
 });
 
 test('memorization stored in face-learning remains visible even without manual logs',()=>{
