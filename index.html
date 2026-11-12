@@ -1746,12 +1746,11 @@ const LAST_SIX_JUZ_V207=[
  {num:29,first:67,last:77,name:'تبارك'},
  {num:30,first:78,last:114,name:'عمّ'}
 ];
-/* The final face of Fussilat (483) stays with part 24, even
-   though it shares that face with the first verses of ash-Shura. */
-JUZ_RANGE[23][1]=483;
+/* Fussilat ends at page 482; ash-Shura begins at 483. */
+JUZ_RANGE[23][1]=482;
 for(const spec of LAST_SIX_JUZ_V207){
  const start=SURAHS.find(x=>x[0]===spec.first)[2],ix=SURAHS.findIndex(x=>x[0]===spec.last);
- JUZ_RANGE[spec.num-1]=[start,ix===SURAHS.length-1?604:SURAHS[ix+1][2]];
+ JUZ_RANGE[spec.num-1]=[start,ix===SURAHS.length-1?604:SURAHS[ix+1][2]-1];
 }
 function juzSurahsV207(j){const x=LAST_SIX_JUZ_V207.find(s=>s.num===+j);return x?SURAHS.filter(s=>s[0]>=x.first&&s[0]<=x.last).map(s=>s[0]):null;}
 function juzEntriesV207(j){const ids=juzSurahsV207(j);if(ids)return ids.map(surahId=>{const [from,to]=pagesOfSurah(surahId);return {surahId,from,to};});const rg=JUZ_RANGE[+j-1];return rg?splitRangeBySurah(rg[0],rg[1]).filter(it=>+j!==24||it.surahId<=41):[];}
@@ -1769,9 +1768,10 @@ function surahsInRange(from,to){return SURAHS.filter(s=>s[2]>=from&&s[2]<=to);}
 // نطاق صفحات سورة: [بداية، نهاية]
 function pagesOfSurah(surahId){
   const idx=SURAHS.findIndex(s=>s[0]===surahId);if(idx<0)return null;
-  const start=SURAHS[idx][2];const end=idx<SURAHS.length-1?SURAHS[idx+1][2]:604;
-  // نهاية السورة = بداية التالية (قد تشترك صفحة) — نأخذ حتى بداية التالية
-  return [start,end];
+  const start=SURAHS[idx][2],next=idx<SURAHS.length-1?SURAHS[idx+1][2]:605;
+  // Never attribute the next surah's first page to the previous surah.
+  // Short surahs with identical start pages legitimately share one page.
+  return [start,Math.max(start,next-1)];
 }
 /* ===== محرّك الأجزاء ↔ السور ↔ الأوجه ===== */
 // نطاق أوجه الجزء
@@ -4141,8 +4141,8 @@ function fillJuzPages(j){
   const [from,to]=JUZ_RANGE[j],cont=document.getElementById('jp-'+j);if(!cont)return;
   const special=juzSurahsV207(j+1),segs=special?juzEntriesV207(j+1).map(it=>({sur:SURAHS.find(x=>x[0]===it.surahId),start:it.from,end:it.to})):[];
   if(!special)for(let i=0;i<SURAHS.length;i++){
-    const sid=SURAHS[i][0],sStart=SURAHS[i][2],sEnd=i<SURAHS.length-1?SURAHS[i+1][2]:604;
-    const segStart=Math.max(from,sStart),segEnd=Math.min(to,sEnd);
+    const sid=SURAHS[i][0],actual=pagesOfSurah(sid);
+    const segStart=Math.max(from,actual[0]),segEnd=Math.min(to,actual[1]);
     if(segStart<=segEnd&&(j!==23||sid<=41))segs.push({sur:SURAHS[i],start:segStart,end:segEnd});
   }
   cont.innerHTML=segs.map(seg=>{
@@ -4577,10 +4577,7 @@ function calendarCompactGroupsV197(pages,sourceItems=[]){
  if(!list.length)return[];
  const covered=new Set(list),fromSources=Array.isArray(sourceItems)&&sourceItems.length>0;
  const complete=new Set(),touched=new Set(),partial=new Set();
- const pageRanges=new Map(SURAHS.map((sur,i)=>{
-  const start=sur[2],next=i<SURAHS.length-1?SURAHS[i+1][2]:605;
-  return[sur[0],[start,Math.max(start,next-1)]];
- }));
+ const pageRanges=new Map(SURAHS.map(sur=>[sur[0],pagesOfSurah(sur[0])]));
  if(fromSources){
   for(const item of sourceItems){
    const id=+item.surahId,rg=pageRanges.get(id);
@@ -5050,21 +5047,13 @@ function addManualEntriesV206(list,items){
 }
 // اكتشاف السور المتضمَّنة في نطاق أوجه، وإرجاع مدخلات مقسّمة بالسورة
 function splitRangeBySurah(from,to,type){
-  const out=[];
-  // مُرّي على كل سورة تتقاطع مع النطاق (يلتقط السور التي تشترك في صفحة واحدة)
-  for(let i=0;i<SURAHS.length;i++){
-    const sid=SURAHS[i][0];const sStart=SURAHS[i][2];
-    const sEnd=i<SURAHS.length-1?SURAHS[i+1][2]:604; // نهاية السورة = بداية التالية (قد تُشارك صفحة)
-    // تقاطع نطاق السورة [sStart..sEnd] مع [from..to]
-    const segStart=Math.max(from,sStart),segEnd=Math.min(to,sEnd);
-    // If the requested range starts exactly with the NEXT surah, do not
-    // import the previous surah merely because its last face is shared.
-    // Example: juz 30 starts at an-Naba (582), not al-Mursalat.
-    const nextStart=i<SURAHS.length-1?SURAHS[i+1][2]:null;
-    if(nextStart===from&&sStart<from&&segStart===segEnd&&segEnd===from)continue;
-    if(segStart<=segEnd){const it={surahId:sid,from:segStart,to:segEnd};if(type)it.type=type;out.push(it);}
-  }
-  return out;
+ const out=[];
+ for(const surah of SURAHS){
+  const rg=pagesOfSurah(surah[0]);if(!rg)continue;
+  const a=Math.max(from,rg[0]),b=Math.min(to,rg[1]);
+  if(a<=b){const item={surahId:surah[0],from:a,to:b};if(type)item.type=type;out.push(item);}
+ }
+ return out;
 }
 (function initSmartNew(){
   const memSel=document.getElementById('mem-surah');if(!memSel)return;
