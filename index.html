@@ -1736,11 +1736,30 @@ const SURAHS = [
 ];
 const JUZ_START = [1,22,42,62,82,102,121,142,162,182,201,222,242,262,282,302,322,342,362,382,402,422,442,462,482,502,522,542,562,582];
 // نطاق كل جزء [بداية, نهاية]
-const JUZ_RANGE = JUZ_START.map((s,i)=>[s, i<29?JUZ_START[i+1]-1:604]);
+const JUZ_RANGE = JUZ_START.map((s,i)=>[s,i<29?JUZ_START[i+1]-1:604]);
+/* Final six parts are assigned by complete surahs, with shared boundary faces. */
+const LAST_SIX_JUZ_V207=[
+ {num:25,first:42,last:45,name:'الشورى'},
+ {num:26,first:46,last:50,name:'الأحقاف'},
+ {num:27,first:51,last:57,name:'الذاريات'},
+ {num:28,first:58,last:66,name:'المجادلة'},
+ {num:29,first:67,last:77,name:'تبارك'},
+ {num:30,first:78,last:114,name:'عمّ'}
+];
+for(const spec of LAST_SIX_JUZ_V207){
+ const start=SURAHS.find(x=>x[0]===spec.first)[2],ix=SURAHS.findIndex(x=>x[0]===spec.last);
+ JUZ_RANGE[spec.num-1]=[start,ix===SURAHS.length-1?604:SURAHS[ix+1][2]];
+}
+function juzSurahsV207(j){const x=LAST_SIX_JUZ_V207.find(s=>s.num===+j);return x?SURAHS.filter(s=>s[0]>=x.first&&s[0]<=x.last).map(s=>s[0]):null;}
+function juzEntriesV207(j){const ids=juzSurahsV207(j);if(ids)return ids.map(surahId=>{const [from,to]=pagesOfSurah(surahId);return {surahId,from,to};});const rg=JUZ_RANGE[+j-1];return rg?splitRangeBySurah(rg[0],rg[1]):[];}
+function juzDisplayPagesV207(j){const set=new Set();for(const x of juzEntriesV207(j))for(let p=x.from;p<=x.to;p++)set.add(p);return [...set].sort((a,b)=>a-b);}
+function juzForSurahV207(sid){const x=LAST_SIX_JUZ_V207.find(v=>sid>=v.first&&sid<=v.last);return x?x.num:null;}
+function juzAvgInfoV207(pages){let seen=0,total=0,allFresh=true;for(const p of pages){const x=autoPageInfo(p);if(x.state==='unseen')continue;seen++;total+=x.days||0;if(x.state!=='fresh')allFresh=false;}return seen?{seen,allFresh,color:colorForDays(Math.round(total/seen))}:{seen:0,allFresh:false,color:'var(--parch-2)'};}
+function juzStateSummaryV207(pages){const o={near:0,far:0,weak:0,partial:0,errors:0,memorized:0};for(const p of pages){const x=mapPageMetaV62(p,null);if(x.memorized)o.memorized++;if(x.engine&&x.engine.phase==='near'&&x.memorized)o.near++;else if(x.engine&&x.engine.phase==='far'&&x.memorized)o.far++;if(x.state==='weak')o.weak++;if(x.partial)o.partial++;if(pageHasActiveErrors(p))o.errors++;}return o;}
 // اسم كل جزء (السورة التي يبدأ بها الجزء تقريبًا) — للعرض
 const JUZ_NAME = ["الفاتحة والبقرة","سيقول السفهاء","تلك الرسل","لن تنالوا","والمحصنات","لا يحب الله","وإذا سمعوا","ولو أننا","قال الملأ","واعلموا","يعتذرون","وما من دابة","ولأمة","ربما","سبحان الذي","قال ألم","اقترب","قد أفلح","وقال الذين","أمّن خلق","اتلُ ما أوحي","ومن يقنت","وما لي","فمن أظلم","إليه يُردّ","حم الأحقاف","قال فما خطبكم","قد سمع الله","تبارك","عمّ"];
 
-function juzOfPage(p){let j=1;for(let i=0;i<JUZ_START.length;i++){if(p>=JUZ_START[i])j=i+1;}return j;}
+function juzOfPage(p,surahId){const x=juzForSurahV207(+surahId||surahOfPage(p)[0]);if(x)return x;let j=1;for(let i=0;i<JUZ_START.length;i++)if(p>=JUZ_START[i])j=i+1;return Math.min(j,24);}
 function surahOfPage(p){let s=SURAHS[0];for(let i=0;i<SURAHS.length;i++){if(SURAHS[i][2]<=p)s=SURAHS[i];}return s;}
 // السور التي تبدأ داخل نطاق صفحات معيّن
 function surahsInRange(from,to){return SURAHS.filter(s=>s[2]>=from&&s[2]<=to);}
@@ -1755,12 +1774,12 @@ function pagesOfSurah(surahId){
 // نطاق أوجه الجزء
 function pagesOfJuz(j){const r=JUZ_RANGE[j-1];return r?[r[0],r[1]]:null;}
 // السور التي يمرّ بها الجزء (تبدأ فيه أو تمتدّ خلاله)
-function surahsOfJuz(j){
+function surahsOfJuz(j){const specific=juzSurahsV207(j);if(specific)return specific;
   const r=JUZ_RANGE[j-1];if(!r)return [];
   return SURAHS.filter(s=>{const ps=pagesOfSurah(s[0]);return ps&&ps[0]<=r[1]&&ps[1]>=r[0];}).map(s=>s[0]);
 }
 // جزء تبدأ فيه السورة
-function juzOfSurah(surahId){const ps=pagesOfSurah(surahId);return ps?juzOfPage(ps[0]):1;}
+function juzOfSurah(surahId){const x=juzForSurahV207(+surahId);if(x)return x;const rg=pagesOfSurah(surahId);return rg?juzOfPage(rg[0],surahId):1;}
 // هل مجموعة السور تُغطّي جزءًا كاملًا؟ تُعيد رقم الجزء أو 0
 function fullJuzFromSurahs(surahIds){
   for(let j=1;j<=30;j++){
@@ -4074,8 +4093,8 @@ function renderMap(){
   if(js.options.length<=1){SURAHS.forEach(s=>{const o=document.createElement('option');o.value=s[2];o.textContent=s[1]+' (ص'+toAr(s[2])+')';js.appendChild(o);});}
   const toOpen=[];
   for(let j=0;j<30;j++){
-    const [from,to]=JUZ_RANGE[j],pagesInJuz=to-from+1,sum=juzStateSummaryV64(from,to);
-    const pct=Math.round(sum.memorized/pagesInJuz*100),avg=juzAvgInfo(from,to),block=document.createElement('div');
+    const [from,to]=JUZ_RANGE[j],displayPages=juzDisplayPagesV207(j+1),pagesInJuz=displayPages.length,sum=juzStateSummaryV207(displayPages);
+    const pct=pagesInJuz?Math.round(sum.memorized/pagesInJuz*100):0,avg=juzAvgInfoV207(displayPages),block=document.createElement('div');
     block.className='juz-block'+(openJuz.has(j)?' open':'');
     const complete=sum.memorized===pagesInJuz&&sum.fix===0&&sum.near===0&&sum.weak===0;
     const badgeStyle=avg.seen?'background:'+(complete?'rgb(74,105,60)':avg.color)+';color:#fff':'';
@@ -4117,8 +4136,8 @@ function renderMap(){
 let mapFilter='all'; // all | partial | near | far | weak | errors
 function fillJuzPages(j){
   const [from,to]=JUZ_RANGE[j],cont=document.getElementById('jp-'+j);if(!cont)return;
-  const segs=[];
-  for(let i=0;i<SURAHS.length;i++){
+  const special=juzSurahsV207(j+1),segs=special?juzEntriesV207(j+1).map(it=>({sur:SURAHS.find(x=>x[0]===it.surahId),start:it.from,end:it.to})):[];
+  if(!special)for(let i=0;i<SURAHS.length;i++){
     const sid=SURAHS[i][0],sStart=SURAHS[i][2],sEnd=i<SURAHS.length-1?SURAHS[i+1][2]:604;
     const segStart=Math.max(from,sStart),segEnd=Math.min(to,sEnd);
     if(segStart<=segEnd)segs.push({sur:SURAHS[i],start:segStart,end:segEnd});
@@ -4202,8 +4221,8 @@ document.querySelectorAll('.mapfilt').forEach(b=>b.addEventListener('click',()=>
   if(mapFilter!=='all'){
     // افتحي فقط الأجزاء التي تحوي أوجهًا مطابقة للبند
     openJuz.clear();
-    for(let j=0;j<30;j++){const [from,to]=JUZ_RANGE[j];
-      for(let p=from;p<=to;p++){
+    for(let j=0;j<30;j++){
+      for(const p of juzDisplayPagesV207(j+1)){
         const m=mapPageMetaV62(p,null),phase=m.engine&&m.memorized?m.engine.phase:'unseen';
         const ok=(mapFilter==='fix'&&phase==='fix')||(mapFilter==='partial'&&m.partial)||(mapFilter==='near'&&phase==='near')||(mapFilter==='far'&&phase==='far')||(mapFilter==='weak'&&m.state==='weak')||(mapFilter==='errors'&&pageHasActiveErrors(p));
         if(ok){openJuz.add(j);break;}
@@ -4549,13 +4568,7 @@ function expandItemsToPagesV71(items){
 /* v111 · readable calendar activity: complete juz, surah, or contiguous face ranges. */
 /* v197: Calendar uses compact titles only. Details remain in openDay(k).
    Final five juz use complete SURAHS as agreed, not strict page-boundary equality. */
-const LAST_JUZ_SURAHS_V197=[
- {num:26,name:'الأحقاف',first:46,last:50},
- {num:27,name:'الذاريات',first:51,last:57},
- {num:28,name:'المجادلة',first:58,last:66},
- {num:29,name:'تبارك',first:67,last:77},
- {num:30,name:'عمّ',first:78,last:114}
-];
+const LAST_JUZ_SURAHS_V197=LAST_SIX_JUZ_V207;
 function calendarCompactGroupsV197(pages,sourceItems=[]){
  const list=[...new Set([...pages].map(Number).filter(p=>p>=1&&p<=604))].sort((x,y)=>x-y);
  if(!list.length)return[];
@@ -4596,7 +4609,7 @@ function calendarCompactGroupsV197(pages,sourceItems=[]){
   for(let id=j.first;id<=j.last;id++)remaining.delete(id);
  }
  // Parts 1–25 still use complete page coverage.
- for(let j=1;j<=25;j++){
+ for(let j=1;j<=24;j++){
   const rg=JUZ_RANGE[j-1];
   if(!rg)continue;
   let all=true;for(let p=rg[0];p<=rg[1];p++)if(!covered.has(p)){all=false;break;}
@@ -5002,7 +5015,7 @@ document.getElementById('tfSave').addEventListener('click',()=>{const t={name:va
 /* ============ الأخطاء ============ */
 function fillSurahSelect(sel){if(sel.options.length>1)return;SURAHS.forEach(s=>{const o=document.createElement('option');o.value=s[0];o.textContent=s[1];sel.appendChild(o);});}
 /* المدخل الذكي للحفظ والمراجعة (سورة أو جزء + أوجه + متعدّد + منع التكرار) */
-const JUZ_NAME_PICK={26:'الأحقاف',27:'الذاريات',28:'المجادلة'};
+const JUZ_NAME_PICK={25:'الشورى',26:'الأحقاف',27:'الذاريات',28:'المجادلة',29:'تبارك',30:'عمّ'};
 function fillJuzSelect(sel){if(!sel||sel.options.length>1)return;for(let j=1;j<=30;j++){const o=document.createElement('option');o.value=j;o.textContent=`الجزء ${toAr(j)} · ${JUZ_NAME_PICK[j]||JUZ_NAME[j-1]}`;sel.appendChild(o);}}
 // هل يوجد مدخل مطابق تمامًا؟ (منع التكرار)
 function isDuplicate(list,it){return list.some(x=>x.surahId===it.surahId&&(x.from||0)===(it.from||0)&&(x.to||0)===(it.to||0));}
@@ -5097,7 +5110,7 @@ function splitRangeBySurah(from,to,type){
   document.getElementById('mem-add').addEventListener('click',()=>{
     let added=0,dup=0;
     if(memMode.v==='juz'){const j=+document.getElementById('mem-juz').value||null;if(!j){document.getElementById('mem-info').textContent='اختاري جزءًا أولًا.';return;}
-      const r=pagesOfJuz(j);{const z=addManualEntriesV206(memList,splitRangeBySurah(r[0],r[1]));added=z.added;dup=z.dup;}
+      const r=pagesOfJuz(j);{const z=addManualEntriesV206(memList,juzEntriesV207(j));added=z.added;dup=z.dup;}
       document.getElementById('mem-juz').value='';
     }else{const surId=+memSel.value||null;
       const from=+document.getElementById('mem-from').value||null,to=+document.getElementById('mem-to').value||null;
@@ -5135,7 +5148,7 @@ function splitRangeBySurah(from,to,type){
   document.getElementById('rev-add').addEventListener('click',()=>{
     let added=0,dup=0;
     if(revMode.v==='juz'){const j=+document.getElementById('rev-juz').value||null;if(!j){document.getElementById('rev-info').textContent='اختاري جزءًا أولًا.';return;}
-      const r=pagesOfJuz(j);{const z=addManualEntriesV206(revList,splitRangeBySurah(r[0],r[1]));added=z.added;dup=z.dup;}
+      const r=pagesOfJuz(j);{const z=addManualEntriesV206(revList,juzEntriesV207(j));added=z.added;dup=z.dup;}
       document.getElementById('rev-juz').value='';
     }else{const surId=+revSel.value||null;
       const from=+document.getElementById('rev-from').value||null,to=+document.getElementById('rev-to').value||null;
@@ -5411,8 +5424,7 @@ function nextStageNewPagesV177(count){
  if(!limit)return out;
  const stages=Array.isArray(S.stages)&&S.stages.length?S.stages:buildStagePath(S.profile?.pathDir||'up');
  for(const stage of stages)for(const juz of stageJuzListV177(stage.range)){
-  const bounds=JUZ_RANGE[juz-1];if(!bounds)continue;
-  for(let p=bounds[0];p<=bounds[1];p++){
+  const bounds=juzDisplayPagesV207(juz);if(!bounds.length)continue;for(const p of bounds){
    if(seen.has(p))continue;seen.add(p);
    if(memorized[p])continue;
    out.push(p);if(out.length===limit)return out;
