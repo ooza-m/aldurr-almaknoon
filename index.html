@@ -1766,6 +1766,14 @@ function surahOfPage(p){let s=SURAHS[0];for(let i=0;i<SURAHS.length;i++){if(SURA
 // السور التي تبدأ داخل نطاق صفحات معيّن
 function surahsInRange(from,to){return SURAHS.filter(s=>s[2]>=from&&s[2]<=to);}
 // نطاق صفحات سورة: [بداية، نهاية]
+function validSurahEntryRangeV208(item){
+ const proper=pagesOfSurah(+item?.surahId);if(!proper)return null;
+ const explicit=item?.from!=null&&item?.to!=null;
+ let a=explicit?Math.min(+item.from,+item.to):proper[0],b=explicit?Math.max(+item.from,+item.to):proper[1];
+ if(!Number.isInteger(a)||!Number.isInteger(b))return null;
+ a=Math.max(proper[0],a);b=Math.min(proper[1],b);
+ return a<=b?[a,b]:null;
+}
 function pagesOfSurah(surahId){
   const idx=SURAHS.findIndex(s=>s[0]===surahId);if(idx<0)return null;
   const start=SURAHS[idx][2],next=idx<SURAHS.length-1?SURAHS[idx+1][2]:605;
@@ -1834,7 +1842,7 @@ function lastReviewMap(){
   const map={}; // page -> {date, type}
   const consider=(items,date,type)=>{
     if(!Array.isArray(items))return;
-    items.forEach(it=>{const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);
+    items.forEach(it=>{const r=validSurahEntryRangeV208(it);
       if(r)for(let p=r[0];p<=r[1]&&p<=604;p++){if(!map[p]||date>map[p].date)map[p]={date,type};}});
   };
   S.logs.forEach(l=>{
@@ -1851,7 +1859,7 @@ function lastReviewMapBySurah(){
     if(!Array.isArray(items))return;
     items.forEach(it=>{
       if(!it.surahId)return;
-      const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);
+      const r=validSurahEntryRangeV208(it);
       if(r)for(let p=r[0];p<=r[1]&&p<=604;p++){const key=p+'|'+it.surahId;if(!map[key]||date>map[key].date)map[key]={date,type};}
     });
   };
@@ -2061,7 +2069,7 @@ function v50Svg(kind){
   };return icons[kind]||icons.book;
 }
 function todayLogV50(){return S.logs.find(l=>l.date===todayKey())||{};}
-function rangeSetV50(items,filter){const set=new Set();(items||[]).filter(x=>!filter||filter(x)).forEach(it=>{const r=(it.from&&it.to)?[Math.min(it.from,it.to),Math.max(it.from,it.to)]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)set.add(p);});return set;}
+function rangeSetV50(items,filter){const set=new Set();for(const it of (items||[]).filter(x=>!filter||filter(x))){const rg=validSurahEntryRangeV208(it);if(rg)for(let p=rg[0];p<=rg[1];p++)set.add(p);}return set;}
 /* v149 · اعتماد الوجه مستقل عن تغطية التتبّع الصوتي. */
 function approvedRecitationFaceV149(rs,pg){
  return !!(rs&&pg&&['new','fix','near','far'].includes(rs.task)&&pg.complete===true&&pg.manualConfirmed===true&&
@@ -2083,7 +2091,7 @@ function firstMemDateMapV50(){
  });
  (S.logs||[]).forEach(log=>{
   (log.memList||[]).forEach(it=>{
-   const range=it.from!=null&&it.to!=null?[Math.min(+it.from,+it.to),Math.max(+it.from,+it.to)]:pagesOfSurah(+it.surahId);
+   const range=validSurahEntryRangeV208(it);
    if(range&&Number.isFinite(range[0])&&Number.isFinite(range[1]))for(let p=Math.max(1,range[0]);p<=Math.min(604,range[1]);p++)record(p,log.date);
   });
  });
@@ -2335,7 +2343,7 @@ function weeklyMemorizationV135(date=todayKey()){
  const active=[1,2,3,4],todayPages=new Set(),completed=new Set();
  const addPage=(p,day)=>{p=+p;if(Number.isInteger(p)&&p>=1&&p<=604){completed.add(p);if(day===date)todayPages.add(p);}};
  (S.logs||[]).filter(x=>x.date>=start&&x.date<=end).forEach(log=>(log.memList||[]).forEach(x=>{
-  const range=x.from!=null&&x.to!=null?[+x.from,+x.to]:pagesOfSurah(+x.surahId);
+  const range=validSurahEntryRangeV208(x);
   if(range)for(let p=Math.max(1,Math.min(...range));p<=Math.min(604,Math.max(...range));p++)addPage(p,log.date);
  }));
  uniqueRecitationSessionsV163(S.recitationSessions||[]).filter(x=>x.task==='new'&&x.endedAt).forEach(rs=>{
@@ -3739,7 +3747,7 @@ function renderSmartReview(){
 /* ===== إحصاءات ملهمة ===== */
 function pagesMemorizedInMonth(){
   const bucket=DurrPreferences.month(new Date()),start=keyOf(bucket.start),end=keyOf(bucket.next),set=new Set(),inMonth=k=>k&&k>=start&&k<end;
-  (S.logs||[]).filter(l=>inMonth(l.date)).forEach(l=>(l.memList||[]).forEach(it=>{const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);if(r)for(let p=r[0];p<=r[1];p++)set.add(+p);}));
+  (S.logs||[]).filter(l=>inMonth(l.date)).forEach(l=>(l.memList||[]).forEach(it=>{const r=validSurahEntryRangeV208(it);if(r)for(let p=r[0];p<=r[1];p++)set.add(+p);}));
   (S.recitationSessions||[]).filter(r=>r&&r.task==='new'&&inMonth(keyOf(new Date(r.endedAt||r.startedAt||0)))).forEach(r=>(r.pages||[]).forEach(p=>{if(approvedRecitationFaceV149(r,p))set.add(+p.page);}));
   return set.size;
 }
@@ -3840,10 +3848,7 @@ function renderToday(){
 let memList=[]; // [{surahId,from,to}]
 let revList=[]; // [{surahId,from,to,type:'near'|'far'}]
 // يحسب نطاق الأوجه لإدخال: صريح أو كامل السورة
-function entryRange(it){
-  if(it.from&&it.to&&it.from<=it.to)return [it.from,it.to];
-  return pagesOfSurah(it.surahId);
-}
+function entryRange(it){return validSurahEntryRangeV208(it);}
 function itemLabel(it){
   const s=SURAHS.find(x=>x[0]===it.surahId);const nm=s?s[1]:'';
   const r=entryRange(it);
@@ -3857,7 +3862,7 @@ function loadDateEntry(){
   memList=mergeSurahEntriesV206(Array.isArray(ex.memList)?ex.memList:[]);revList=mergeSurahEntriesV206(Array.isArray(ex.revList)?ex.revList:[],true);
   renderMemChips();renderRevChips();
 }
-function pageOfItem(it){const r=(it.from&&it.to)?[it.from,it.to]:pagesOfSurah(it.surahId);return r?r[0]:0;}
+function pageOfItem(it){const r=validSurahEntryRangeV208(it);return r?r[0]:0;}
 function renderMemChips(){
   const box=document.getElementById('mem-chips');if(!box)return;
   memList.sort((a,b)=>pageOfItem(a)-pageOfItem(b));
@@ -4565,9 +4570,7 @@ document.getElementById('calNext').addEventListener('click',()=>{if(calMode==='w
  document.getElementById('dpClose').onclick=()=>modal.classList.remove('open');
  modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('open');});
 })();
-function expandItemsToPagesV71(items){
-  const set=new Set();(items||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(+it.from,+it.to),Math.max(+it.from,+it.to)]:pagesOfSurah(+it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)set.add(p);});return set;
-}
+function expandItemsToPagesV71(items){return rangeSetV50(items||[]);}
 /* v111 · readable calendar activity: complete juz, surah, or contiguous face ranges. */
 /* v197: Calendar uses compact titles only. Details remain in openDay(k).
    Final five juz use complete SURAHS as agreed, not strict page-boundary equality. */
@@ -4582,8 +4585,8 @@ function calendarCompactGroupsV197(pages,sourceItems=[]){
   for(const item of sourceItems){
    const id=+item.surahId,rg=pageRanges.get(id);
    if(!rg)continue;
-   const start=item.from!=null?Math.min(+item.from,+item.to):rg[0];
-   const end=item.to!=null?Math.max(+item.from,+item.to):rg[1];
+   const valid=validSurahEntryRangeV208(item);if(!valid)continue;
+   const start=valid[0],end=valid[1];
    if(!Number.isFinite(start)||!Number.isFinite(end))continue;
    if(!list.some(p=>p>=start&&p<=end))continue;
    touched.add(id);
@@ -5025,7 +5028,7 @@ function mergeSurahEntriesV206(items,ignoreType=false){
   const sid=+it.surahId,full=pagesOfSurah(sid);if(!full)continue;
   let from=it.from!=null?+it.from:full[0],to=it.to!=null?+it.to:full[1];
   if(!Number.isInteger(from)||!Number.isInteger(to))continue;
-  if(from>to)[from,to]=[to,from];from=Math.max(1,from);to=Math.min(604,to);if(from>to)continue;
+  if(from>to)[from,to]=[to,from];from=Math.max(full[0],from);to=Math.min(full[1],to);if(from>to)continue;
   const type=ignoreType?'':(it.type||''),key=sid+'|'+type;
   if(!buckets.has(key))buckets.set(key,{sid,type,pages:new Set()});
   for(let p=from;p<=to;p++)buckets.get(key).pages.add(p);
