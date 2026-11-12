@@ -26,7 +26,7 @@ test('partial contiguous surah runs are concise; missing one surah prevents comp
  assert.doesNotMatch(c.label(pageSet(almost),'مراجعة بعيدة',almost),/الجزء 30/);
 });
 test('compact calendar rows retain full day-specific details only in day modal',()=>{
- const render=section('function renderWeek(){','function dayActivity(');
+ const render=html.slice(html.indexOf('function renderWeek(){'));
  assert.match(render,/calendarPageSummaryV111\(f\.groups\.near/);
  assert.match(render,/calendarPageSummaryV111\(f\.groups\.far/);
  assert.match(render,/function openDay\(k\)/);
