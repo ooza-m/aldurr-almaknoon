@@ -34,9 +34,12 @@ test('calendar retains the original elements required for its heatmap, dates and
 test('roadmap retains page lookup, filters, summary and the 30-part container',()=>{
  const map=dom.getElementById('tab-map');
  assert.ok(map);
- for(const id of ['mapInfoBtn','mapCount','jumpSurah','mapPageJumpV96','mapPageNumberV96','mapJumpMsgV96','juzList','btnOpenErrors','btnToggleAllJuz','wardReviewRoadmap','wardReviewTotal']){
+ for(const id of ['mapInfoBtn','mapCount','jumpSurah','mapPageJumpV96','mapPageNumberV96','mapJumpMsgV96','juzList','btnToggleAllJuz']){
   assert.ok(map.querySelector('#'+id),id);
  }
+ assert.ok(dom.getElementById('tab-today').querySelector('#wardReviewRoadmap'));
+ assert.ok(dom.getElementById('tab-today').querySelector('#wardReviewTotal'));
+ assert.equal(map.querySelector('#btnOpenErrors'),null,'error log no longer has a shortcut inside Map');
  assert.equal(map.querySelectorAll('.map-legend-v64').length,1,'one color key');
  assert.equal(map.querySelectorAll('#btnToggleAllJuz').length,1,'one expand/collapse control');
  const page=map.querySelector('#mapPageNumberV96');
