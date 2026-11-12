@@ -4578,8 +4578,9 @@ function calendarCompactGroupsV197(pages,sourceItems=[]){
    const start=item.from!=null?Math.min(+item.from,+item.to):rg[0];
    const end=item.to!=null?Math.max(+item.from,+item.to):rg[1];
    if(!Number.isFinite(start)||!Number.isFinite(end))continue;
+   if(!list.some(p=>p>=start&&p<=end))continue;
    touched.add(id);
-   if(start<=rg[0]&&end>=rg[1])complete.add(id);
+   if(start<=rg[0]&&end>=rg[1]&&Array.from({length:rg[1]-rg[0]+1},(_,i)=>rg[0]+i).every(p=>covered.has(p)))complete.add(id);
    else partial.add(id);
   }
   for(const id of partial)if(!complete.has(id))complete.delete(id);
@@ -4592,11 +4593,12 @@ function calendarCompactGroupsV197(pages,sourceItems=[]){
   }
  }
  // Only recognize a complete part when all of its specified surahs are complete.
- const remaining=new Set(touched),groups=[];
+ const remaining=new Set(touched),groups=[],recognizedRanges=[];
  for(const j of LAST_JUZ_SURAHS_V197){
   let all=true;for(let id=j.first;id<=j.last;id++)if(!complete.has(id)){all=false;break;}
   if(!all)continue;
   groups.push({start:j.first,display:'الجزء '+j.num+' · '+j.name});
+  recognizedRanges.push(JUZ_RANGE[j.num-1]);
   for(let id=j.first;id<=j.last;id++)remaining.delete(id);
  }
  // Parts 1–25 still use complete page coverage.
@@ -4606,12 +4608,25 @@ function calendarCompactGroupsV197(pages,sourceItems=[]){
   let all=true;for(let p=rg[0];p<=rg[1];p++)if(!covered.has(p)){all=false;break;}
   if(!all)continue;
   groups.push({start:(surahOfPage(rg[0])||[])[0]||1,display:'الجزء '+j});
+  recognizedRanges.push(rg);
   // Don't repeat a surah simply because it extends beyond the current juz.
   // Keep it only when this activity really covers pages outside that juz.
   for(const id of [...remaining]){
    const sur=pageRanges.get(id);
    if(sur&&!list.some(p=>p>=sur[0]&&p<=sur[1]&&(p<rg[0]||p>rg[1])))remaining.delete(id);
   }
+ }
+ // A boundary page can contain verses from the adjacent surah.
+ // Suppress only the incidental fragment entirely inside a recognized juz.
+ for(const id of [...remaining]){
+  if(complete.has(id))continue;
+  const hits=fromSources?sourceItems.filter(it=>+it.surahId===id).flatMap(it=>{
+   const rg=pageRanges.get(id);
+   const start=it.from!=null?Math.min(+it.from,+it.to):rg[0];
+   const end=it.to!=null?Math.max(+it.from,+it.to):rg[1];
+   return list.filter(p=>p>=start&&p<=end);
+  }):list.filter(p=>{const rg=pageRanges.get(id);return rg&&p>=rg[0]&&p<=rg[1];});
+  if(hits.length&&hits.every(p=>recognizedRanges.some(rg=>p>=rg[0]&&p<=rg[1])))remaining.delete(id);
  }
  const ids=[...remaining].sort((x,y)=>x-y),runs=[];
  for(const id of ids){
