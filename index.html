@@ -1746,12 +1746,15 @@ const LAST_SIX_JUZ_V207=[
  {num:29,first:67,last:77,name:'تبارك'},
  {num:30,first:78,last:114,name:'عمّ'}
 ];
+/* The final face of Fussilat (483) stays with part 24, even
+   though it shares that face with the first verses of ash-Shura. */
+JUZ_RANGE[23][1]=483;
 for(const spec of LAST_SIX_JUZ_V207){
  const start=SURAHS.find(x=>x[0]===spec.first)[2],ix=SURAHS.findIndex(x=>x[0]===spec.last);
  JUZ_RANGE[spec.num-1]=[start,ix===SURAHS.length-1?604:SURAHS[ix+1][2]];
 }
 function juzSurahsV207(j){const x=LAST_SIX_JUZ_V207.find(s=>s.num===+j);return x?SURAHS.filter(s=>s[0]>=x.first&&s[0]<=x.last).map(s=>s[0]):null;}
-function juzEntriesV207(j){const ids=juzSurahsV207(j);if(ids)return ids.map(surahId=>{const [from,to]=pagesOfSurah(surahId);return {surahId,from,to};});const rg=JUZ_RANGE[+j-1];return rg?splitRangeBySurah(rg[0],rg[1]):[];}
+function juzEntriesV207(j){const ids=juzSurahsV207(j);if(ids)return ids.map(surahId=>{const [from,to]=pagesOfSurah(surahId);return {surahId,from,to};});const rg=JUZ_RANGE[+j-1];return rg?splitRangeBySurah(rg[0],rg[1]).filter(it=>+j!==24||it.surahId<=41):[];}
 function juzDisplayPagesV207(j){const set=new Set();for(const x of juzEntriesV207(j))for(let p=x.from;p<=x.to;p++)set.add(p);return [...set].sort((a,b)=>a-b);}
 function juzForSurahV207(sid){const x=LAST_SIX_JUZ_V207.find(v=>sid>=v.first&&sid<=v.last);return x?x.num:null;}
 function juzAvgInfoV207(pages){let seen=0,total=0,allFresh=true;for(const p of pages){const x=autoPageInfo(p);if(x.state==='unseen')continue;seen++;total+=x.days||0;if(x.state!=='fresh')allFresh=false;}return seen?{seen,allFresh,color:colorForDays(Math.round(total/seen))}:{seen:0,allFresh:false,color:'var(--parch-2)'};}
@@ -4140,7 +4143,7 @@ function fillJuzPages(j){
   if(!special)for(let i=0;i<SURAHS.length;i++){
     const sid=SURAHS[i][0],sStart=SURAHS[i][2],sEnd=i<SURAHS.length-1?SURAHS[i+1][2]:604;
     const segStart=Math.max(from,sStart),segEnd=Math.min(to,sEnd);
-    if(segStart<=segEnd)segs.push({sur:SURAHS[i],start:segStart,end:segEnd});
+    if(segStart<=segEnd&&(j!==23||sid<=41))segs.push({sur:SURAHS[i],start:segStart,end:segEnd});
   }
   cont.innerHTML=segs.map(seg=>{
     let cells='';
