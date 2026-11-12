@@ -2078,25 +2078,6 @@ function firstMemDateMapV50(){
 }
 const NEAR_INTERVALS_V62=[3,7,14],FAR_INTERVALS_V62=[30,60,90,120];
 function addDaysKeyV62(k,n){const d=parseKey(k);d.setDate(d.getDate()+n);return keyOf(d);}
-function completeReviewTodayV62(p,day=todayKey()){
-  // A completed, explicitly scheduled review may come from the mushaf or manual log.
-  // Free recitation alone does not silently complete a scheduled review.
-  const valid=new Set(['fix','near','far']);
-  const completedInMushaf=uniqueRecitationSessionsV163(S.recitationSessions||[]).some(rs=>{
-    if(!valid.has(rs.task))return false;
-    const stamp=rs.endedAt||rs.startedAt;
-    if(!stamp||keyOf(new Date(stamp))!==day)return false;
-    return (rs.pages||[]).some(pg=>+pg.page===+p&&approvedRecitationFaceV149(rs,pg));
-  });
-  if(completedInMushaf)return true;
-  return (S.logs||[]).some(log=>{
-    if(log.date!==day)return false;
-    return (log.revList||[]).some(item=>{
-      const range=item.from&&item.to?[Math.min(+item.from,+item.to),Math.max(+item.from,+item.to)]:pagesOfSurah(+item.surahId);
-      return range&&+p>=range[0]&&+p<=range[1];
-    });
-  });
-}
 function firstMemDateV62(p){
   const f=S.faceLearning&&S.faceLearning[p]&&S.faceLearning[p].hifz;
   const manual=typeof f?.first==='string'&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(f.first)?f.first:null;
@@ -2410,7 +2391,7 @@ function tasksV50(){
  const log=todayLogV50(),memLegacy=rangeSetV50(log.memList||[]),allRev=rangeSetV50(log.revList||[]);
  const memAuto=recitedPagesTodayV51('new'),completedReview=new Set([...allRev,...recitedPagesTodayV51('fix'),...recitedPagesTodayV51('near'),...recitedPagesTodayV51('far')]);
  const freshDue=taskPagesV60('new'),nearDue=taskPagesV60('near'),farDue=taskPagesV60('far');
- const firsts=firstMemDateMapV50(),nearDone=[...completedReview].filter(p=>firsts[p]&&nearReviewProgressV196(p,addDaysKeyV62(todayKey(),-1)).phase==='near').length;
+ const firsts=firstMemDateMapV50(),nearDone=[...completedReview].filter(p=>firsts[p]&&nearReviewProgressV196(p).phase==='near').length;
  const farCycle=farCycleStateV177(),farDone=farCycle.todayDone;
  const newDone=new Set([...memLegacy,...memAuto]).size;
  const result=[
@@ -3864,7 +3845,7 @@ function renderMemChips(){
 function reviewCategoryForDayV196(p,day){
  const first=firstMemDateV62(p);
  if(!first||day<=first)return'extra';
- return nearReviewProgressV196(p,addDaysKeyV62(day,-1)).phase==='far'?'far':'near';
+ return nearReviewProgressV196(p,day).phase==='far'?'far':'near';
 }
 function manualReviewPagesV196(items){return[...rangeSetV50(items||[])].sort((a,b)=>a-b);}
 function reviewBreakdownV196(items,day){
@@ -4606,7 +4587,7 @@ function dayFactsV71(k){
   const manualRev=(log&&log.revList)||[];
   manualRev.forEach(it=>expandItemsToPagesV71([it]).forEach(p=>{
     const first=firstMemDateV62(p);
-    const category=first&&nearReviewProgressV196(p,addDaysKeyV62(k,-1)).phase==='far'?'far':'near';
+    const category=first&&nearReviewProgressV196(p,k).phase==='far'?'far':'near';
     groups[category].add(p);
   }));
   const sessionPages=[];
