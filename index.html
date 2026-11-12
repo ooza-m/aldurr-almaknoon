@@ -1734,6 +1734,17 @@ const SURAHS = [
   [106,"قريش",602],[107,"الماعون",602],[108,"الكوثر",602],[109,"الكافرون",603],[110,"النصر",603],
   [111,"المسد",603],[112,"الإخلاص",604],[113,"الفلق",604],[114,"الناس",604]
 ];
+/* v209 · Verified Madani 604-face layout.
+   A number is listed here only when the NEXT surah begins on a face that
+   ALSO contains the previous surah's final verses. Verified against
+   Quran.com/page/N, not inferred from start pages alone.
+   Equal-start-page short surahs are handled independently. */
+const SURAH_SHARED_START_FACES_V209=new Set([
+ 106,221,235,255,267,293,312,359,385,396,404,434,440,458,467,
+ 489,502,515,520,523,528,531,534,537,545,551,554,564,566,
+ 568,570,575,577,578,580,583,586,589,590,592,593,594,595,
+ 596,597,598,599,600
+]);
 const JUZ_START = [1,22,42,62,82,102,121,142,162,182,201,222,242,262,282,302,322,342,362,382,402,422,442,462,482,502,522,542,562,582];
 // نطاق كل جزء [بداية, نهاية]
 const JUZ_RANGE = JUZ_START.map((s,i)=>[s,i<29?JUZ_START[i+1]-1:604]);
@@ -1750,7 +1761,7 @@ const LAST_SIX_JUZ_V207=[
 JUZ_RANGE[23][1]=482;
 for(const spec of LAST_SIX_JUZ_V207){
  const start=SURAHS.find(x=>x[0]===spec.first)[2],ix=SURAHS.findIndex(x=>x[0]===spec.last);
- JUZ_RANGE[spec.num-1]=[start,ix===SURAHS.length-1?604:SURAHS[ix+1][2]-1];
+ JUZ_RANGE[spec.num-1]=[start,pagesOfSurah(spec.last)[1]];
 }
 function juzSurahsV207(j){const x=LAST_SIX_JUZ_V207.find(s=>s.num===+j);return x?SURAHS.filter(s=>s[0]>=x.first&&s[0]<=x.last).map(s=>s[0]):null;}
 function juzEntriesV207(j){const ids=juzSurahsV207(j);if(ids)return ids.map(surahId=>{const [from,to]=pagesOfSurah(surahId);return {surahId,from,to};});const rg=JUZ_RANGE[+j-1];return rg?splitRangeBySurah(rg[0],rg[1]).filter(it=>+j!==24||it.surahId<=41):[];}
@@ -1777,9 +1788,12 @@ function validSurahEntryRangeV208(item){
 function pagesOfSurah(surahId){
   const idx=SURAHS.findIndex(s=>s[0]===surahId);if(idx<0)return null;
   const start=SURAHS[idx][2],next=idx<SURAHS.length-1?SURAHS[idx+1][2]:605;
-  // Never attribute the next surah's first page to the previous surah.
-  // Short surahs with identical start pages legitimately share one page.
-  return [start,Math.max(start,next-1)];
+  // Explicitly shared first faces belong to BOTH consecutive surahs.
+  // Otherwise, a new surah's first face excludes the previous surah.
+  // If two or more short surahs begin on the same face, all own that face.
+  const end=next===start?start:
+    SURAH_SHARED_START_FACES_V209.has(next)?next:next-1;
+  return [start,Math.min(604,Math.max(start,end))];
 }
 /* ===== محرّك الأجزاء ↔ السور ↔ الأوجه ===== */
 // نطاق أوجه الجزء
