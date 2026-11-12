@@ -58,17 +58,19 @@ test('recently reviewed far face is not re-scheduled before cycle elapses',()=>{
  assert.equal(model.reviewEngineStateV62(1).nextDue,'2026-11-16');
  assert.match(html,/cycle\.remaining\.slice\(\)\.sort/);
 });
-test('calendar labels a complete juz, a complete surah, and a page range',()=>{
- const SURAHS=[[44,'الدخان',496],[45,'الجاثية',499],[46,'الأحقاف',502]];
- const JUZ_RANGE=[[1,20],[21,40]];
- const sandbox={SURAHS,JUZ_RANGE,Set,Array,Math,Number,Map};
- sandbox.surahOfPage=p=>{let s=SURAHS[0];for(const item of SURAHS)if(item[2]<=p)s=item;return s;};
- sandbox.pagesOfSurah=id=>id===44?[496,499]:id===45?[499,502]:[502,604];
- vm.runInNewContext(section('function calendarPageSummaryV111','function dayFactsV71')+';this.format=calendarPageSummaryV111;',sandbox);
- const format=sandbox.format;
- assert.equal(format(new Set(Array.from({length:20},(_,i)=>i+1)),'مراجعة بعيدة'),'مراجعة بعيدة: الجزء 1');
- assert.equal(format(new Set([496,497,498,499]),'حفظ',[{surahId:44,from:496,to:499}]),'حفظ سورة الدخان');
- assert.equal(format(new Set([496,497]),'حفظ'),'حفظ سورة الدخان: ص496–497');
+test('calendar labels are compact and preserve full-part names',()=>{
+ const sandbox={Set,Array,Math,Number,Map,toAr:String};
+ vm.createContext(sandbox);
+ const definitions=section('const SURAHS = [','// تحويل قائمة إدخالات (سور/أوجه)');
+ const formatter=section('/* v197: Calendar uses compact titles','function dayFactsV71');
+ vm.runInContext(definitions+';this.JUZ_RANGE=JUZ_RANGE;this.SURAHS=SURAHS;'+formatter+';this.format=calendarPageSummaryV111;',sandbox);
+ const f=sandbox.format;
+ const range=(a,b)=>new Set(Array.from({length:b-a+1},(_,i)=>a+i));
+ assert.equal(f(range(1,21),'مراجعة بعيدة'),'مراجعة بعيدة: الجزء 1');
+ assert.equal(f(range(496,499),'حفظ',[{surahId:44,from:496,to:499}]),'حفظ: الدخان');
+ assert.equal(f(range(496,497),'حفظ'),'حفظ: الدخان');
+ assert.equal(f(range(582,604),'مراجعة قريبة',sandbox.SURAHS.filter(x=>x[0]>=78).map(x=>({surahId:x[0],from:x[2],to:(sandbox.SURAHS.find(y=>y[0]===x[0]+1)||[,,605])[2]-1||604}))),
+ 'مراجعة قريبة: الجزء 30 · عمّ');
 });
 test('today has no smart or fixation as a separate current task',()=>{
  const tasks=section('function tasksV50(){','function taskTotalsV50(){');

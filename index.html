@@ -2111,13 +2111,16 @@ function nearReviewProgressV196(p,day=todayKey()){
  if(!first)return{phase:'unseen',completed:0,remaining:30,firstMemDate:null,doneToday:false,due:false};
  const age=Math.max(0,daysBetween(first,day));
  const valid=(reviewDayIndexV196()[+p]||[]).filter(d=>d>first&&d<=day);
+ // Legacy memorization: already-established faces recorded before this feature
+ // are treated as having completed their near stage, without fabricating logs.
+ const legacyGraduated=day>='2026-11-12'&&first<='2026-10-12';
  const completed=Math.min(30,valid.length),completedOn=valid.length>=30?valid[29]:null;
- const farFrom=completedOn?addDaysKeyV62(completedOn,1):null;
+ const farFrom=completedOn?addDaysKeyV62(completedOn,1):(legacyGraduated?'2026-11-12':null);
  const phase=farFrom&&day>=farFrom?'far':'near',doneToday=valid.includes(day);
- const remaining=30-completed,lastReview=valid[valid.length-1]||null;
- return{phase,completed,remaining,firstMemDate:first,completedOn,farFrom,doneToday,
+ const remaining=legacyGraduated?0:30-completed,lastReview=valid[valid.length-1]||null;
+ return{phase,completed,remaining,firstMemDate:first,completedOn,farFrom,doneToday,legacyGraduated,
   due:phase==='near'&&age>=1&&!doneToday,
-  missed:Math.max(0,age-valid.length),age,lastReview,
+  missed:legacyGraduated?0:Math.max(0,age-valid.length),age,lastReview,
   projectedCompletion:remaining?addDaysKeyV62(day,remaining):completedOn,
   overdueDays:age>=1&&!doneToday?Math.max(0,daysBetween(lastReview||first,day)-1):0};
 }
@@ -2144,7 +2147,7 @@ function reviewEngineStateV62(p){
   nextDue:v.doneToday?addDaysKeyV62(todayKey(),1):addDaysKeyV62(v.lastReview||v.firstMemDate,1),schedule};
  const earliest=v.farFrom,last=v.lastReview;
  const nextDue=last&&last>=earliest?addDaysKeyV62(last,farCycleDaysV111()):earliest;
- return{phase:'far',completed:30,remaining:0,due:!v.doneToday&&nextDue<=todayKey(),
+ return{phase:'far',completed:v.completed,legacyGraduated:v.legacyGraduated,remaining:0,due:!v.doneToday&&nextDue<=todayKey(),
   doneToday:v.doneToday,firstMemDate:v.firstMemDate,nextDue,
   overdueDays:nextDue<todayKey()?daysBetween(nextDue,todayKey()):0,schedule,cycleDays:farCycleDaysV111()};
 }
@@ -4550,34 +4553,95 @@ function expandItemsToPagesV71(items){
   const set=new Set();(items||[]).forEach(it=>{const r=(it.from&&it.to)?[Math.min(+it.from,+it.to),Math.max(+it.from,+it.to)]:pagesOfSurah(+it.surahId);if(r)for(let p=r[0];p<=r[1]&&p<=604;p++)set.add(p);});return set;
 }
 /* v111 · readable calendar activity: complete juz, surah, or contiguous face ranges. */
-function calendarPageSummaryV111(pages,label,sourceItems=[]){
- const list=[...new Set([...pages].map(Number).filter(p=>p>=1&&p<=604))].sort((a,b)=>a-b);
- if(!list.length)return'';
- // If the manual record explicitly covers a complete surah, retain its name,
- // including boundary pages shared with the next surah.
- if(Array.isArray(sourceItems)&&sourceItems.length===1){
-  const item=sourceItems[0],range=pagesOfSurah(+item?.surahId);
-  if(range){
-   const a=item.from&&item.to?Math.min(+item.from,+item.to):range[0];
-   const b=item.from&&item.to?Math.max(+item.from,+item.to):range[1];
-   if(a===range[0]&&b===range[1]&&list[0]===a&&list.at(-1)===b&&list.length===b-a+1){
-    const sur=SURAHS.find(x=>x[0]===+item.surahId);
-    if(sur)return label+' سورة '+sur[1];
-   }
+/* v197: Calendar uses compact titles only. Details remain in openDay(k).
+   Final five juz use complete SURAHS as agreed, not strict page-boundary equality. */
+const LAST_JUZ_SURAHS_V197=[
+ {num:26,name:'الأحقاف',first:46,last:50},
+ {num:27,name:'الذاريات',first:51,last:57},
+ {num:28,name:'المجادلة',first:58,last:66},
+ {num:29,name:'تبارك',first:67,last:77},
+ {num:30,name:'عمّ',first:78,last:114}
+];
+function calendarCompactGroupsV197(pages,sourceItems=[]){
+ const list=[...new Set([...pages].map(Number).filter(p=>p>=1&&p<=604))].sort((x,y)=>x-y);
+ if(!list.length)return[];
+ const covered=new Set(list),fromSources=Array.isArray(sourceItems)&&sourceItems.length>0;
+ const complete=new Set(),touched=new Set(),partial=new Set();
+ const pageRanges=new Map(SURAHS.map((sur,i)=>{
+  const start=sur[2],next=i<SURAHS.length-1?SURAHS[i+1][2]:605;
+  return[sur[0],[start,Math.max(start,next-1)]];
+ }));
+ if(fromSources){
+  for(const item of sourceItems){
+   const id=+item.surahId,rg=pageRanges.get(id);
+   if(!rg)continue;
+   const start=item.from!=null?Math.min(+item.from,+item.to):rg[0];
+   const end=item.to!=null?Math.max(+item.from,+item.to):rg[1];
+   if(!Number.isFinite(start)||!Number.isFinite(end))continue;
+   if(!list.some(p=>p>=start&&p<=end))continue;
+   touched.add(id);
+   if(start<=rg[0]&&end>=rg[1]&&Array.from({length:rg[1]-rg[0]+1},(_,i)=>rg[0]+i).every(p=>covered.has(p)))complete.add(id);
+   else partial.add(id);
+  }
+  for(const id of partial)if(!complete.has(id))complete.delete(id);
+ }else{
+  for(const [id,rg] of pageRanges){
+   const hits=list.filter(p=>p>=rg[0]&&p<=rg[1]);
+   if(!hits.length)continue;
+   touched.add(id);
+   if(hits.length===rg[1]-rg[0]+1)complete.add(id);
   }
  }
- const wholeJuz=JUZ_RANGE.findIndex(range=>list.length===range[1]-range[0]+1&&list[0]===range[0]&&list.at(-1)===range[1]&&list.every((p,i)=>p===range[0]+i));
- if(wholeJuz>=0)return label+': الجزء '+(wholeJuz+1);
- const grouped=[],bySurah=new Map();
- for(const p of list){const sur=surahOfPage(p),id=sur[0];if(!bySurah.has(id))bySurah.set(id,{sur,arr:[]});bySurah.get(id).arr.push(p);}
- for(const {sur,arr} of bySurah.values()){
-  const rg=pagesOfSurah(sur[0]),last=rg?Math.max(rg[0],rg[1]-(sur[0]===114?0:1)):null,whole=rg&&arr.length===last-rg[0]+1&&arr[0]===rg[0]&&arr.at(-1)===last;
-  if(whole){grouped.push('سورة '+sur[1]);continue;}
-  const ranges=[];let a=arr[0],prev=a;
-  for(let i=1;i<=arr.length;i++){const p=arr[i];if(i===arr.length||p!==prev+1){ranges.push(a===prev?'ص'+a:'ص'+a+'–'+prev);a=p;}prev=p;}
-  grouped.push('سورة '+sur[1]+': '+ranges.join('، '));
+ // Only recognize a complete part when all of its specified surahs are complete.
+ const remaining=new Set(touched),groups=[],recognizedRanges=[];
+ for(const j of LAST_JUZ_SURAHS_V197){
+  let all=true;for(let id=j.first;id<=j.last;id++)if(!complete.has(id)){all=false;break;}
+  if(!all)continue;
+  groups.push({start:j.first,display:'الجزء '+j.num+' · '+j.name});
+  recognizedRanges.push(JUZ_RANGE[j.num-1]);
+  for(let id=j.first;id<=j.last;id++)remaining.delete(id);
  }
- return label+' '+grouped.join(' · ');
+ // Parts 1–25 still use complete page coverage.
+ for(let j=1;j<=25;j++){
+  const rg=JUZ_RANGE[j-1];
+  if(!rg)continue;
+  let all=true;for(let p=rg[0];p<=rg[1];p++)if(!covered.has(p)){all=false;break;}
+  if(!all)continue;
+  groups.push({start:(surahOfPage(rg[0])||[])[0]||1,display:'الجزء '+j});
+  recognizedRanges.push(rg);
+  // Don't repeat a surah simply because it extends beyond the current juz.
+  // Keep it only when this activity really covers pages outside that juz.
+  for(const id of [...remaining]){
+   const sur=pageRanges.get(id);
+   if(sur&&!list.some(p=>p>=sur[0]&&p<=sur[1]&&(p<rg[0]||p>rg[1])))remaining.delete(id);
+  }
+ }
+ // A boundary page can contain verses from the adjacent surah.
+ // Suppress only the incidental fragment entirely inside a recognized juz.
+ for(const id of [...remaining]){
+  if(complete.has(id))continue;
+  const hits=fromSources?sourceItems.filter(it=>+it.surahId===id).flatMap(it=>{
+   const rg=pageRanges.get(id);
+   const start=it.from!=null?Math.min(+it.from,+it.to):rg[0];
+   const end=it.to!=null?Math.max(+it.from,+it.to):rg[1];
+   return list.filter(p=>p>=start&&p<=end);
+  }):list.filter(p=>{const rg=pageRanges.get(id);return rg&&p>=rg[0]&&p<=rg[1];});
+  if(hits.length&&hits.every(p=>recognizedRanges.some(rg=>p>=rg[0]&&p<=rg[1])))remaining.delete(id);
+ }
+ const ids=[...remaining].sort((x,y)=>x-y),runs=[];
+ for(const id of ids){
+  if(runs.length&&runs[runs.length-1].at(-1)===id-1)runs[runs.length-1].push(id);
+  else runs.push([id]);
+ }
+ for(const run of runs){
+  const first=SURAHS.find(x=>x[0]===run[0]),last=SURAHS.find(x=>x[0]===run[run.length-1]);
+  if(first&&last)groups.push({start:run[0],display:run.length>1?first[1]+' - '+last[1]:first[1]});
+ }
+ return groups.sort((x,y)=>x.start-y.start).map(x=>x.display);
+}
+function calendarPageSummaryV111(pages,label,sourceItems=[]){
+ const parts=calendarCompactGroupsV197(pages,sourceItems);
+ return parts.length?label+': '+parts.join('، '):'';
 }
 function dayFactsV71(k){
   const log=(S.logs||[]).find(x=>x.date===k)||null;
@@ -4758,8 +4822,8 @@ function renderWeek(){
     const d=new Date(sun);d.setDate(sun.getDate()+i);const k=keyOf(d),f=dayFactsV71(k),hal=isHalaqaDay(k,d.getDay()),mrev=isManualReviewDay(k),att=attStatus(k);let tags='';
     const tag=(cls,txt)=>'<span class="tag '+cls+'">'+txt+'</span>';
     if(f.groups.new.size)tags+=tag('new',esc(calendarPageSummaryV111(f.groups.new,'حفظ',f.log?.memList)));
-    if(f.groups.near.size)tags+=tag('near',esc(calendarPageSummaryV111(f.groups.near,'مراجعة قريبة')));
-    if(f.groups.far.size)tags+=tag('far',esc(calendarPageSummaryV111(f.groups.far,'مراجعة بعيدة')));
+    if(f.groups.near.size)tags+=tag('near',esc(calendarPageSummaryV111(f.groups.near,'مراجعة قريبة',f.log?.revList?.filter(it=>[...expandItemsToPagesV71([it])].some(p=>f.groups.near.has(p))))));
+    if(f.groups.far.size)tags+=tag('far',esc(calendarPageSummaryV111(f.groups.far,'مراجعة بعيدة',f.log?.revList?.filter(it=>[...expandItemsToPagesV71([it])].some(p=>f.groups.far.has(p))))));
     for(const x of f.extraGroups.values())if(x.pages.size)tags+=tag('near',esc(calendarPageSummaryV111(x.pages,x.name||'مراجعة إضافية')));
     if(f.tilawa)tags+=tag('tilawa','تلاوة');if(f.tafsir)tags+=tag('tafsir','تفسير');if(f.listen)tags+=tag('v71-listen','سماع');
     if(f.errors.length)tags+=tag('v71-error','أخطاء · '+toAr(f.errors.length));
