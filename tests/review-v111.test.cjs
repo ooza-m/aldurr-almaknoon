@@ -15,7 +15,7 @@ function makeReviewModel(firsts,day='2026-11-10',cycle=7,completed=[]){
  const daysBetween=(a,b)=>Math.round((kDate(b)-kDate(a))/86400000);
  const addDaysKeyV62=(k,n)=>new Date(kDate(k).getTime()+86400000*n).toISOString().slice(0,10);
  const completedSet=new Set(completed);
- const sandbox={S,todayKey:()=>day,firstMemDateV62:p=>firsts[p]||null,firstMemDateMapV50:()=>firsts,completeReviewTodayV62:p=>completedSet.has(+p),daysBetween,addDaysKeyV62,pagesOfSurah:()=>[1,604],Date,Number,Math,Set,Object,String,Array};
+ const sandbox={S,todayKey:()=>day,firstMemDateV62:p=>firsts[p]||null,firstMemDateMapV50:()=>firsts,completeReviewTodayV62:p=>completedSet.has(+p),daysBetween,addDaysKeyV62,pagesOfSurah:()=>[1,604],uniqueRecitationSessionsV163:()=>[],rangeSetV50:()=>new Set(),Date,Number,Math,Set,Object,String,Array};
  const src=section('function farCycleDaysV111','function readingPinV86');
  vm.runInNewContext(src+';this.review={reviewEngineStateV62,reviewBucketsV50,farDailyQuotaV111}',sandbox);
  return{S,model:sandbox.review,completedSet};
@@ -45,7 +45,7 @@ test('a recently completed far face is not re-scheduled before cycle elapses',()
  assert.equal(rows.length,0,'Future-due faces do not appear in today\'s far-review bucket');
  assert.equal(model.reviewEngineStateV62(1).nextDue,'2026-11-16');
  const app=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
- assert.match(app,/bucket\.far\.filter\(x=>!x\.doneToday&&x\.due<=todayKey\(\)\)/);
+ assert.match(app,/cycle\.remaining\.slice\(\)\.sort/);
 });
 test('calendar labels a complete juz, a complete surah, and a page range',()=>{
  const SURAHS=[[44,'الدخان',496],[45,'الجاثية',499],[46,'الأحقاف',502]];
