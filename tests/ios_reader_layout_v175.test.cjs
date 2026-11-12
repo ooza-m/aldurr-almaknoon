@@ -15,7 +15,9 @@ test('reader options anchor to actual bottom and hide conflicting bottom navigat
 });
 test('page bubble is viewport-clamped outside scrolling toolbar',()=>{
  assert.match(html,/document\.body\.appendChild\(bubble\)/);
- assert.match(html,/Math\.max\(bw\/2\+12,Math\.min\(window\.innerWidth-bw\/2-12,x\)\)/);
+ assert.match(html,/Math\.max\(bw\/2\+16,Math\.min\(window\.innerWidth-bw\/2-16,x\)\)/);
+ assert.match(html,/--bubble-tip-left/);
+ assert.match(html,/transform:translateX\(-50%\)!important/);
  assert.match(reader,/body>\.sbubble\.reader-floating-bubble\{position:fixed!important/);
 });
 test('all secondary pages reserve iOS status space and Continue points left',()=>{
