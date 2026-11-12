@@ -771,7 +771,7 @@ main{padding-top:0!important}
 [data-focused-add-v143],[data-focused-session-v145],[data-focused-action-v143],[data-focused-mushaf-v146]{display:none!important}
 
 /* v114: responsive review controls, accessible contrast and collapsible roadmap */
-#tab-map .review-roadmap-fold-v114{display:block;max-width:100%;margin:22px 0 16px;padding:0;overflow:hidden;background:var(--surface,#fff);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+#tab-today .review-roadmap-fold-v114{display:block;max-width:100%;margin:22px 0 16px;padding:0;overflow:hidden;background:var(--surface,#fff);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
 .review-roadmap-summary-v114{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;padding:17px 18px;min-height:82px}
 .review-roadmap-summary-v114::-webkit-details-marker{display:none}
 .review-roadmap-summary-title-v114{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -808,10 +808,10 @@ details[open] .review-roadmap-chevron-v114{transform:rotate(180deg)}
 #reviewPlansV111 form#createExtraReviewV111 button[type=submit]{background:var(--accent);color:var(--on-accent,#fff);border-color:var(--accent)}
 #reviewPlansV111 #reviewPlanListV111>div{min-width:0;overflow-wrap:anywhere}
 #reviewPlansV111 #reviewPlanListV111 button{min-height:42px;max-width:100%;margin-top:7px}
-#tab-map .review-roadmap-summary-v114{min-width:0}
-#tab-map .review-roadmap-summary-stat-v114 b{font-size:.75rem;max-width:150px;white-space:normal;text-align:left;line-height:1.5}
-#tab-map .review-roadmap-body-v114{min-width:0}
-@media(max-width:380px){#reviewPlansV111 form#createExtraReviewV111>div{gap:8px!important}#reviewPlansV111 form#createExtraReviewV111 label{font-size:.77rem}#tab-map .review-roadmap-summary-v114{padding:14px 12px;gap:8px}#tab-map .review-roadmap-summary-stat-v114 b{max-width:104px}}
+#tab-today .review-roadmap-summary-v114{min-width:0}
+#tab-today .review-roadmap-summary-stat-v114 b{font-size:.75rem;max-width:150px;white-space:normal;text-align:left;line-height:1.5}
+#tab-today .review-roadmap-body-v114{min-width:0}
+@media(max-width:380px){#reviewPlansV111 form#createExtraReviewV111>div{gap:8px!important}#reviewPlansV111 form#createExtraReviewV111 label{font-size:.77rem}#tab-today .review-roadmap-summary-v114{padding:14px 12px;gap:8px}#tab-today .review-roadmap-summary-stat-v114 b{max-width:104px}}
 /* v170: theme-aware help action, readable focus state */
 #hmInfoBtn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 #hmScroll{scrollbar-width:thin;scrollbar-color:var(--gold-soft) transparent}
@@ -822,42 +822,42 @@ details[open] .review-roadmap-chevron-v114{transform:rotate(180deg)}
 #tab-settings #set-name-save,#reviewPlansV111 form#createExtraReviewV111 button[type=submit]{-webkit-tap-highlight-color:transparent}
 
 /* v173: practical review roadmap; concise daily tasks first, full history optional. */
-#tab-map .review-roadmap-body-v114{padding:14px;overflow:hidden}
-#tab-map #wardReviewRoadmap{display:grid;gap:12px;min-width:0}
-#tab-map .review-overview-v173{display:grid;gap:12px}
-#tab-map .review-today-title-v173{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
-#tab-map .review-today-title-v173>span{font-size:.78rem;color:var(--muted);font-weight:700}
-#tab-map .review-today-title-v173>strong{font-size:.93rem;color:var(--text)}
-#tab-map .review-stats-v173{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-#tab-map .review-stat-v173{background:var(--wash-2);border:1px solid var(--line);border-radius:13px;padding:12px;display:grid;gap:2px;min-width:0}
-#tab-map .review-stat-v173>span{font-size:.73rem;color:var(--muted);font-weight:700}
-#tab-map .review-stat-v173>strong{font-size:1.45rem;line-height:1.3;color:var(--accent)}
-#tab-map .review-stat-v173>small{font-size:.67rem;color:var(--ink-2);line-height:1.55}
-#tab-map .review-section-label-v173{font-size:.75rem;font-weight:700;color:var(--text);padding:0 2px 7px}
-#tab-map .review-today-list-v173{display:grid;gap:4px;max-height:320px;overflow:auto;overscroll-behavior:contain}
-#tab-map .review-face-v173{box-sizing:border-box;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:11px;display:flex;align-items:center;gap:9px;padding:9px 10px;text-align:right;min-height:52px;color:var(--text)}
-#tab-map .review-face-v173:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-#tab-map .review-face-number-v173{display:grid;place-items:center;min-width:39px;min-height:35px;padding:2px 6px;border-radius:9px;color:var(--accent);background:var(--wash);font-weight:800;font-size:.81rem}
-#tab-map .review-face-copy-v173{min-width:0;flex:1;display:grid;gap:1px}
-#tab-map .review-face-copy-v173 strong{font-size:.76rem;overflow-wrap:anywhere}
-#tab-map .review-face-copy-v173 small{font-size:.65rem;color:var(--muted)}
-#tab-map .review-face-arrow-v173{font-size:1.3rem;color:var(--muted);flex:none}
-#tab-map .review-empty-v173{padding:14px 11px;border-radius:12px;background:var(--wash-2);font-size:.75rem;line-height:1.8;color:var(--muted)}
-#tab-map .review-detail-heading-v173{display:flex;flex-direction:column;gap:1px;margin-top:3px}
-#tab-map .review-detail-heading-v173 strong{font-size:.87rem}
-#tab-map .review-detail-heading-v173 small{color:var(--muted);font-size:.69rem}
-#tab-map .review-details-v173{border:1px solid var(--line);background:var(--surface);border-radius:13px;overflow:hidden;min-width:0}
-#tab-map .review-details-v173>summary{display:flex;align-items:center;gap:10px;min-height:65px;padding:10px 12px;cursor:pointer;list-style:none}
-#tab-map .review-details-v173>summary::-webkit-details-marker{display:none}
-#tab-map .review-details-v173>summary>span:first-child{display:grid;gap:2px;flex:1;min-width:0}
-#tab-map .review-details-v173>summary strong{font-size:.78rem}
-#tab-map .review-details-v173>summary small{font-size:.66rem;line-height:1.6;color:var(--muted)}
-#tab-map .review-details-v173>summary>b{font-size:1rem;color:var(--accent)}
-#tab-map .review-detail-chevron-v173{font-size:1.1rem;transition:transform .15s}
-#tab-map .review-details-v173[open] .review-detail-chevron-v173{transform:rotate(180deg)}
-#tab-map .review-detail-content-v173{padding:9px;border-top:1px solid var(--line);max-height:320px;overflow:auto;display:grid;gap:5px;overscroll-behavior:contain}
-#tab-map .review-footer-v173{font-size:.69rem;line-height:1.7;color:var(--muted);margin:2px 0 0}
-@media(max-width:380px){#tab-map .review-roadmap-body-v114{padding:10px}#tab-map .review-stat-v173{padding:9px}#tab-map .review-face-v173{padding:8px}}
+#tab-today .review-roadmap-body-v114{padding:14px;overflow:hidden}
+#tab-today #wardReviewRoadmap{display:grid;gap:12px;min-width:0}
+#tab-today .review-overview-v173{display:grid;gap:12px}
+#tab-today .review-today-title-v173{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#tab-today .review-today-title-v173>span{font-size:.78rem;color:var(--muted);font-weight:700}
+#tab-today .review-today-title-v173>strong{font-size:.93rem;color:var(--text)}
+#tab-today .review-stats-v173{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#tab-today .review-stat-v173{background:var(--wash-2);border:1px solid var(--line);border-radius:13px;padding:12px;display:grid;gap:2px;min-width:0}
+#tab-today .review-stat-v173>span{font-size:.73rem;color:var(--muted);font-weight:700}
+#tab-today .review-stat-v173>strong{font-size:1.45rem;line-height:1.3;color:var(--accent)}
+#tab-today .review-stat-v173>small{font-size:.67rem;color:var(--ink-2);line-height:1.55}
+#tab-today .review-section-label-v173{font-size:.75rem;font-weight:700;color:var(--text);padding:0 2px 7px}
+#tab-today .review-today-list-v173{display:grid;gap:4px;max-height:320px;overflow:auto;overscroll-behavior:contain}
+#tab-today .review-face-v173{box-sizing:border-box;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:11px;display:flex;align-items:center;gap:9px;padding:9px 10px;text-align:right;min-height:52px;color:var(--text)}
+#tab-today .review-face-v173:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#tab-today .review-face-number-v173{display:grid;place-items:center;min-width:39px;min-height:35px;padding:2px 6px;border-radius:9px;color:var(--accent);background:var(--wash);font-weight:800;font-size:.81rem}
+#tab-today .review-face-copy-v173{min-width:0;flex:1;display:grid;gap:1px}
+#tab-today .review-face-copy-v173 strong{font-size:.76rem;overflow-wrap:anywhere}
+#tab-today .review-face-copy-v173 small{font-size:.65rem;color:var(--muted)}
+#tab-today .review-face-arrow-v173{font-size:1.3rem;color:var(--muted);flex:none}
+#tab-today .review-empty-v173{padding:14px 11px;border-radius:12px;background:var(--wash-2);font-size:.75rem;line-height:1.8;color:var(--muted)}
+#tab-today .review-detail-heading-v173{display:flex;flex-direction:column;gap:1px;margin-top:3px}
+#tab-today .review-detail-heading-v173 strong{font-size:.87rem}
+#tab-today .review-detail-heading-v173 small{color:var(--muted);font-size:.69rem}
+#tab-today .review-details-v173{border:1px solid var(--line);background:var(--surface);border-radius:13px;overflow:hidden;min-width:0}
+#tab-today .review-details-v173>summary{display:flex;align-items:center;gap:10px;min-height:65px;padding:10px 12px;cursor:pointer;list-style:none}
+#tab-today .review-details-v173>summary::-webkit-details-marker{display:none}
+#tab-today .review-details-v173>summary>span:first-child{display:grid;gap:2px;flex:1;min-width:0}
+#tab-today .review-details-v173>summary strong{font-size:.78rem}
+#tab-today .review-details-v173>summary small{font-size:.66rem;line-height:1.6;color:var(--muted)}
+#tab-today .review-details-v173>summary>b{font-size:1rem;color:var(--accent)}
+#tab-today .review-detail-chevron-v173{font-size:1.1rem;transition:transform .15s}
+#tab-today .review-details-v173[open] .review-detail-chevron-v173{transform:rotate(180deg)}
+#tab-today .review-detail-content-v173{padding:9px;border-top:1px solid var(--line);max-height:320px;overflow:auto;display:grid;gap:5px;overscroll-behavior:contain}
+#tab-today .review-footer-v173{font-size:.69rem;line-height:1.7;color:var(--muted);margin:2px 0 0}
+@media(max-width:380px){#tab-today .review-roadmap-body-v114{padding:10px}#tab-today .review-stat-v173{padding:9px}#tab-today .review-face-v173{padding:8px}}
 
 /* v173 · iOS safe area, task action icons and high-contrast navigation */
 .v50-page{padding-top:calc(max(22px,env(safe-area-inset-top)) + 18px)!important}
@@ -1114,6 +1114,16 @@ window.FIREBASE_CONFIG = {
       <div class="v50-section-head"><h2>مهام اليوم</h2><div style="display:flex;align-items:center;gap:8px"><button type="button" class="btn btn-ghost btn-sm" data-v50-route="planning" aria-label="تخصيص المهام" title="تخصيص المهام"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="m7.5 9 1.5 1.5L11.5 8M14 9h3M8 15h3m3 0h3"/></svg></button><button type="button" id="todayRefreshV50" aria-label="تحديث المهام" title="تحديث المهام"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5"/><path d="M5.7 9a7 7 0 0 1 12-2L20 11M4 13l2.3 4a7 7 0 0 0 12-2"/></svg></button></div></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
+      <details class="ward-review-roadmap review-roadmap-fold-v114" aria-labelledby="wardReviewHeading">
+        <summary class="review-roadmap-summary-v114">
+          <span class="review-roadmap-summary-title-v114"><span class="review-roadmap-eyebrow-v114">مراجعاتك</span><strong id="wardReviewHeading">مسار المراجعة</strong><small>ما يلزم اليوم وتفاصيل المسارين</small></span>
+          <span class="review-roadmap-summary-stat-v114"><b id="wardReviewTotal" aria-live="polite"></b><span aria-hidden="true" class="review-roadmap-chevron-v114">⌄</span></span>
+        </summary>
+        <div class="review-roadmap-body-v114">
+          <div id="wardReviewRoadmap" aria-label="ملخص مهام المراجعة وتفاصيل القريبة والبعيدة"></div>
+        </div>
+      </details>
+
     </div>
     
   </section>
@@ -1284,16 +1294,6 @@ window.FIREBASE_CONFIG = {
         </button>
       </div>
       <div id="juzList"></div>
-      <details class="ward-review-roadmap review-roadmap-fold-v114" aria-labelledby="wardReviewHeading">
-        <summary class="review-roadmap-summary-v114">
-          <span class="review-roadmap-summary-title-v114"><span class="review-roadmap-eyebrow-v114">مراجعاتك</span><strong id="wardReviewHeading">مسار المراجعة</strong><small>ما يلزم اليوم وتفاصيل المسارين</small></span>
-          <span class="review-roadmap-summary-stat-v114"><b id="wardReviewTotal" aria-live="polite"></b><span aria-hidden="true" class="review-roadmap-chevron-v114">⌄</span></span>
-        </summary>
-        <div class="review-roadmap-body-v114">
-          <div id="wardReviewRoadmap" aria-label="ملخص مهام المراجعة وتفاصيل القريبة والبعيدة"></div>
-        </div>
-      </details>
-      <button class="btn btn-ghost btn-sm" id="btnOpenErrors" style="width:100%;margin-top:14px">سجلّ الأخطاء</button>
     </div>
   </section>
 
@@ -1343,10 +1343,10 @@ window.FIREBASE_CONFIG = {
     <div class="card v67-info-card" id="planningSummary"></div>
     <div id="planningRealityV69"></div>
     <div class="card v69-calc-card">
-      <div id="calcHead" class="v69-card-head" style="cursor:pointer">
-        <div><span>حاسبة مستقلة</span><b>جرّبي أي كمية ومدّة</b></div><span id="calcChev" class="v69-chevron">⌃</span>
+      <div id="calcHead" class="v69-card-head" style="cursor:pointer" role="button" tabindex="0" aria-expanded="false" aria-controls="calcBody">
+        <div><span>حاسبة مستقلة</span><b>جرّبي أي كمية ومدّة</b></div><span id="calcChev" class="v69-chevron">⌄</span>
       </div>
-      <div id="calcBody" style="display:block;margin-top:12px">
+      <div id="calcBody" style="display:none;margin-top:12px">
         <p class="hint" id="calcHint">هذه الحاسبة لا تغيّر خطتك إلا إذا عدّلتِ الهدف اليومي من البطاقة أعلاه.</p>
         <div class="row-3">
           <div class="field"><label>الوحدة</label><select id="cUnit"><option value="pages">أوجه</option><option value="juz">أجزاء</option></select></div>
@@ -1383,7 +1383,6 @@ window.FIREBASE_CONFIG = {
     <div class="v50-page">
       <div class="v50-top"><span style="width:44px"></span><div class="v50-title"><h1>المزيد</h1><p>الصفحات المساندة خارج التنفيذ اليومي</p></div><span style="width:44px"></span></div>
       <div class="v70-more-section"><h3>المتابعة والتحليل</h3><div class="v70-more-row">
-        <button data-v50-route="map"><b>خريطة الأوجه</b><small>الحفظ والمراجعة على امتداد المصحف</small></button>
         <button data-v50-route="stats"><b>الإحصاءات</b><small>الأداء والاتجاهات</small></button>
       </div></div>
       <div class="v70-more-section"><h3>المسارات</h3><div class="v70-more-list">
@@ -1983,7 +1982,7 @@ document.addEventListener('focusin',e=>{
 });
 /* التنقّل بين الخريطة وسجلّ الأخطاء (الأخطاء مخفيّة من الشريط) */
 function showPanel(name){switchTab(name);}
-document.getElementById('btnOpenErrors').addEventListener('click',()=>{showPanel('errors');renderErrors();});
+{const mapErrors=document.getElementById('btnOpenErrors');if(mapErrors)mapErrors.addEventListener('click',()=>{showPanel('errors');renderErrors();});}
 document.getElementById('btnBackToMap').addEventListener('click',()=>{showPanel('map');renderMap();});
 
 
@@ -4334,6 +4333,16 @@ function faceMasteryTimelineV131(page){
  const state=last.length>=2&&last.every(good)?'تحسّن مستقر مبدئيًا':last.length>=2&&last.some(good)&&last.some(x=>!good(x))?'ضبط متذبذب':weakCount>=2?'ضعف متكرر':'البيانات غير كافية للحكم على الاستقرار';
  return {events:unique,state,weakCount};
 }
+function relativeReviewDateV180(date){
+ if(!date||!/^\d{4}-\d{2}-\d{2}$/.test(String(date)))return date||'—';
+ const n=daysBetween(date,todayKey());
+ if(!Number.isFinite(n))return date;
+ if(n<0)return 'بعد '+toAr(-n)+' يوم';
+ if(n===0)return 'اليوم';
+ if(n===1)return 'منذ يوم';
+ if(n===2)return 'منذ يومين';
+ return 'منذ '+toAr(n)+' يوم';
+}
 function renderUnifiedFaceRecordV121(page){
   const target=document.getElementById('pmFaceRecord');if(!target)return;
   const first=firstMemDateV62(page),status=reviewEngineStateV62(page);
@@ -4353,7 +4362,7 @@ function renderUnifiedFaceRecordV121(page){
   target.innerHTML='<section aria-label="ملف الوجه الموحّد" style="border:1px solid var(--line);border-radius:14px;padding:12px">'+
     '<b style="display:block;margin-bottom:10px">ملف الوجه · الحفظ والمراجعة</b>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
-    dateCell('أول حفظ',first)+dateCell('آخر مراجعة',sched.lastReview)+
+    dateCell('أول حفظ',first)+dateCell('آخر مراجعة',relativeReviewDateV180(sched.lastReview))+
     dateCell('المراجعة القادمة',due)+dateCell('ضبط الوجه',mastery?MASTERY_LEVELS_V116[mastery.level]:'لم يُقيّم')+
     '</div><div style="font-size:.75rem;color:var(--muted);margin:11px 0 5px">آخر المراجعات المعتمدة</div>'+
     (unique.length?'<div style="max-height:145px;overflow:auto">'+unique.slice(0,8).map(e=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:.77rem"><span>'+esc(e.date)+' · '+(e.task==='new'?'حفظ جديد':e.task==='fix'?'تثبيت':e.task==='far'?'مراجعة بعيدة':'مراجعة قريبة')+'</span><span>'+esc(MASTERY_LEVELS_V116[e.graded]||'دون تقييم')+'</span></div>').join('')+'</div>':'<div style="font-size:.77rem;color:var(--muted)">لا توجد جلسات مراجعة معتمدة من المصحف بعد.</div>')+
@@ -4390,7 +4399,7 @@ function openPage(p,surahId){
     ri.innerHTML='<div style="background:var(--gold-soft);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>المراجعة القريبة:</b> اليوم '+toAr(eng.day)+' من 30 · '+(eng.doneToday?'أُنجزت مراجعة اليوم':'مطلوب مراجعته اليوم')+'</div>';
   }else{
     const phase=eng.phase==='far'?'مراجعة بعيدة':'مراجعة قريبة',due=eng.nextDue?fmtD(eng.nextDue):null;
-    ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>'+phase+'</b>'+(eng.schedule?.lastReview?' · آخر مراجعة '+esc(eng.schedule.lastReview):'')+(due?' · الموعد '+due.d+' '+due.m:'')+(eng.due?' · <span style="color:var(--clay)">مستحقة الآن</span>':'')+(eng.phase==='far'?' · إتمام دورة البعيدة كل '+farCycleDaysV111()+' أيام':'')+'</div>';
+    ri.innerHTML='<div style="background:var(--parch-2);border-radius:12px;padding:11px 14px;font-size:.86rem"><b>'+phase+'</b>'+(eng.schedule?.lastReview?' · آخر مراجعة '+esc(relativeReviewDateV180(eng.schedule.lastReview)):'')+(due?' · الموعد '+due.d+' '+due.m:'')+(eng.due?' · <span style="color:var(--clay)">مستحقة الآن</span>':'')+(eng.phase==='far'?' · إتمام دورة البعيدة كل '+farCycleDaysV111()+' أيام':'')+'</div>';
   }
   renderUnifiedFaceRecordV121(p);
   renderPageMasteryV116(p);
@@ -5954,8 +5963,9 @@ PLAN_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.addEventL
 /* حاسبة الحفظ */
 (function(){const h=document.getElementById('calcHead');if(h)h.addEventListener('click',()=>{
   const b=document.getElementById('calcBody'),c=document.getElementById('calcChev');
-  const open=b.style.display!=='none';b.style.display=open?'none':'';c.style.transform=open?'rotate(0)':'rotate(180deg)';
+  const open=b.style.display!=='none';b.style.display=open?'none':'block';c.style.transform=open?'rotate(0)':'rotate(180deg)';h.setAttribute('aria-expanded',String(!open));
 });})();
+{const ch=document.getElementById('calcHead');if(ch)ch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();ch.click();}});}
 document.getElementById('cCalc').addEventListener('click',()=>{
   const unit=document.getElementById('cUnit').value;
   const amount=+document.getElementById('cAmount').value||0;
