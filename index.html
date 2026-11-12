@@ -1239,6 +1239,7 @@ window.FIREBASE_CONFIG = {
       </div>
       <div id="calWeek" class="week-row"></div>
     </div>
+    <button type="button" class="btn btn-ghost" data-v50-route="stages" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0 15px;padding:13px 15px;text-align:right;border:1px solid var(--line);border-radius:14px;background:var(--surface)"><span style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" style="stroke:var(--accent);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round"><path d="M5 4h14v16H5zM8 8h8M8 12h5M8 16h3"/><path d="m14 16 2 2 4-4"/></svg><b>المرحليات والاختبارات</b></span><span aria-hidden="true">‹</span></button>
     
   </section>
 
@@ -1388,7 +1389,7 @@ window.FIREBASE_CONFIG = {
       <div class="v70-more-section"><h3>المسارات</h3><div class="v70-more-list">
         <button data-v50-route="khatma"><span><b>الختمة</b><small>التلاوة وخط السير</small></span><i>‹</i></button>
         <button data-v50-route="tafsir"><span><b>التفسير</b><small>تفسير الأوجه وكتب التفسير</small></span><i>‹</i></button>
-        <button data-v50-route="planning"><span><b>خطة الحفظ</b><small>الهدف والسرعة والعبء</small></span><i>‹</i></button>
+        <button data-v50-route="planning" aria-label="خطة الحفظ"><span style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true" style="flex:none;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;color:var(--accent)"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8.5 10l1.5 1.5 2-2.5M14 10h2.5M8.5 16h8"/></svg><span><b>خطة الحفظ</b><small>الهدف والسرعة والعبء</small></span></span><i>‹</i></button>
         <button data-v50-route="stages"><span><b>المرحليات</b><small>الاختبارات والمحطات</small></span><i>‹</i></button>
       </div></div>
       <div class="v70-more-section"><h3>التعلّم والمراجعة</h3><div class="v70-more-row">
@@ -3113,6 +3114,7 @@ function renderReviewPlansV111(){
  if(!parent)return;
  let host=document.getElementById('reviewPlansV111');
  if(!host){host=document.createElement('section');host.id='reviewPlansV111';host.className='card';host.style.cssText='margin:14px 0;padding:18px';const real=document.getElementById('planningRealityV69');if(real)real.after(host);else parent.appendChild(host);}
+ const extraWasOpen=host.querySelector('#extraReviewFoldV179')?.open===true;
  const opt=optionalDailyItemsV111(),plans=Array.isArray(S.extraReviewPlans)?S.extraReviewPlans:[];
  host.innerHTML='<h3 style="margin-bottom:8px">مسارات المراجعة</h3>'+
  '<p class="hint">القريبة: كل وجه لمدة 30 يومًا من تاريخ حفظه، ثم ينتقل تلقائيًا إلى البعيدة.</p>'+
@@ -3122,7 +3124,7 @@ function renderReviewPlansV111(){
  '<label style="display:block;margin:7px 0"><input type="checkbox" id="dailyTilawaV111" '+(opt.tilawa?'checked':'')+'> ورد التلاوة</label>'+
  '<label style="display:block;margin:7px 0"><input type="checkbox" id="dailyTafsirV111" '+(opt.tafsir?'checked':'')+'> ورد التفسير</label></fieldset>'+
  '<button class="btn btn-primary btn-sm" type="button" id="saveReviewSettingsV111" style="margin:12px 0">حفظ إعدادات المسارات</button>'+
- '<h3 style="margin:17px 0 5px">مراجعات إضافية</h3><p class="hint">أنشئي مراجعة مستقلة من الأعلى أو الأسفل، لمدة محددة أو بصورة مستمرة. لا تغيّر خطة القريبة والبعيدة.</p>'+
+ '<details id="extraReviewFoldV179" '+(extraWasOpen?'open':'')+' style="margin:18px 0 0;border-top:1px solid var(--line);padding-top:12px"><summary style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:10px;font-weight:700;font-size:.88rem"><span>المراجعات الإضافية · '+plans.length+'</span><span aria-hidden="true" style="color:var(--accent)">⌄</span></summary><div style="margin-top:12px"><p class="hint">أنشئي مراجعة مستقلة من الأعلى أو الأسفل، لمدة محددة أو بصورة مستمرة. لا تغيّر خطة القريبة والبعيدة.</p>'+
  '<div id="reviewPlanListV111" style="display:grid;gap:8px;margin:12px 0">'+(plans.length?plans.map(p=>'<div style="padding:11px;border:1px solid var(--line);border-radius:12px"><b>'+esc(p.name||'مراجعة إضافية')+'</b><small style="display:block;color:var(--muted)">الأوجه '+p.from+'–'+p.to+' · '+p.dailyPages+' وجه/يوم · '+(p.direction==='down'?'من الأسفل':'من الأعلى')+' · '+(p.durationDays?p.durationDays+' يومًا':'مستمرة')+'</small><button class="btn btn-ghost btn-sm" type="button" data-extra-toggle-v111="'+esc(p.id)+'">'+(p.active===false?'تفعيل':'إيقاف مؤقت')+'</button> <button class="btn btn-ghost btn-sm" type="button" data-extra-delete-v111="'+esc(p.id)+'">حذف المسار</button></div>').join(''):'<p class="hint">لا توجد مراجعات إضافية بعد.</p>')+'</div>'+
  '<form id="createExtraReviewV111" style="display:grid;gap:9px;border-top:1px solid var(--line);padding-top:12px">'+
  '<label>الاسم (اختياري)<input name="reviewName" maxlength="60" placeholder="مثال: مراجعة من آخر المصحف"></label>'+
@@ -3132,7 +3134,7 @@ function renderReviewPlansV111(){
  '<label>المدة<select name="durationMode" id="extraDurationModeV111"><option value="ongoing">مستمرة</option><option value="fixed">محددة بالأيام</option></select></label>'+
  '<label id="extraDurationDaysWrapV111" hidden>عدد الأيام<input name="durationDays" type="number" min="1" max="3650" value="60"></label>'+
  '<label>تاريخ البدء<input name="startDate" type="date" dir="ltr" lang="en" value="'+todayKey()+'" required></label>'+
- '<button type="submit" class="btn btn-primary">إضافة المراجعة</button></form><p id="reviewPlanMessageV111" class="hint" role="status"></p>';
+ '<button type="submit" class="btn btn-primary">إضافة المراجعة</button></form><p id="reviewPlanMessageV111" class="hint" role="status"></p></div></details>';
  document.getElementById('saveReviewSettingsV111').onclick=()=>{
   const days=Number(document.getElementById('farCycleDaysV111').value);
   if(!Number.isInteger(days)||days<1||days>365){document.getElementById('reviewPlanMessageV111').textContent='دورة البعيدة يجب أن تكون بين 1 و365 يومًا.';return;}
@@ -4580,13 +4582,15 @@ function renderHeatmap(){
   const box=document.getElementById('heatmap');if(!box)return;
   const yEl=document.getElementById('hmYear');if(yEl)yEl.textContent=toAr(DurrPreferences.parts(new Date()).year);
   const today=new Date();today.setHours(0,0,0,0);
-  // نعرض آخر ٢٦ أسبوعًا (نصف سنة) لتناسب شاشة الجوال
-  const WEEKS=26;
-  const end=new Date(today);
-  // ابدأ من السبت قبل ٢٦ أسبوعًا (أعمدة أسابيع، صفوف أيام)
-  const start=new Date(today);start.setDate(start.getDate()-(WEEKS*7-1));
-  const ws=(S.weekStart|0); // ٠=الأحد، ١=الاثنين
-  // اضبط البداية على بداية الأسبوع المختارة (فيصبح أوّل صفٍّ هو اليوم المختار)
+  // v179: show the current year; trim only fully inactive months before the first entry.
+  const yearStart=new Date(today.getFullYear(),0,1);
+  let firstActive=null;
+  for(let scan=new Date(yearStart);scan<=today;scan.setDate(scan.getDate()+1)){
+    if(dayActivity(keyOf(scan))>0){firstActive=new Date(scan);break;}
+  }
+  const visibleStart=firstActive?new Date(today.getFullYear(),firstActive.getMonth(),1):yearStart;
+  const ws=(S.weekStart|0);
+  const start=new Date(visibleStart);
   start.setDate(start.getDate()-((start.getDay()-ws+7)%7));
   // v172: five theme-sensitive steps; the maximum uses a vivid palette accent,
   // never blends with dark ink. Preserve the other four shades.
@@ -4604,7 +4608,7 @@ function renderHeatmap(){
   for(let w=0;w<nCols;w++){
     let cells='';let colMonth=-1;
     for(let d=0;d<7;d++){
-      const k=keyOf(cur);const inRange=cur<=today;
+      const k=keyOf(cur);const inRange=cur>=visibleStart&&cur<=today;
       const act=inRange?dayActivity(k):-1;
       // توزيع الدرجات على عتبة ٦ نقاط (البنود كثيرة): ٠ / ١-٢ / ٣ / ٤-٥ / ٦+
       let lvl=0;
@@ -4613,7 +4617,7 @@ function renderHeatmap(){
       const isToday=k===todayKey();
       // النموذج (ب): خلفية باهتة خلف خانات الويكند (السبت/الأحد) — تمييز لطيف
       cells+=`<div class="hm-cell" ${inRange?`data-date="${k}"`:''} title="${inRange?DurrPreferences.format(k):''}" style="width:11px;height:11px;border-radius:3px;background:${bg};${inRange?'cursor:pointer;':''}${isToday?'outline:2px solid var(--accent);outline-offset:1px':''}"></div>`;
-      if(DurrPreferences.parts(cur).day<=7&&colMonth<0)colMonth=DurrPreferences.parts(cur).month-1;
+      if(inRange&&DurrPreferences.parts(cur).day<=7&&colMonth<0)colMonth=DurrPreferences.parts(cur).month-1;
       cur.setDate(cur.getDate()+1);
     }
     cols+=`<div style="display:grid;grid-template-rows:repeat(7,11px);gap:3px">${cells}</div>`;
