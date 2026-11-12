@@ -465,7 +465,19 @@ body>.sheet-wrap .sheet{position:absolute!important;inset:auto 0 0 0!important;m
 body>.sheet-wrap.open .sheet{transform:translate3d(0,0,0)!important}
 body>.sheet-wrap#audioOptionsWrap #audioForm{position:absolute!important;bottom:0!important;top:auto!important}
 body>.sheet-wrap .sheet-bg{position:absolute;inset:0}
-body>.sbubble.reader-floating-bubble{line-height:1.5!important;padding:8px 14px!important;max-width:calc(100vw - 32px)!important;min-width:0!important;box-sizing:border-box!important}
+body>.sbubble.reader-floating-bubble{line-height:1.6!important;padding:8px 14px!important;width:max-content!important;max-width:calc(100vw - 32px)!important;min-width:0!important;box-sizing:border-box!important;transform:translateX(-50%)!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;direction:rtl!important}
+body>.sbubble.reader-floating-bubble .bs{display:block;line-height:1.5}
+body>.sbubble.reader-floating-bubble .bp{display:block;white-space:nowrap}
+body>.sbubble.reader-floating-bubble::after{left:var(--bubble-tip-left,50%)!important;transform:translateX(-50%)!important}
+.ay-simi-preview{margin:8px 0 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.ay-simi-preview[hidden]{display:none!important}.ay-simi-preview h3{font-size:.8rem;color:var(--accent-2);margin-bottom:8px}
+.ay-simi-snippet{padding:7px 0;border-top:1px solid var(--line);font-size:.76rem;line-height:1.8}.ay-simi-snippet b{display:block;color:var(--accent);font-size:.72rem}
+.simi-sections{display:flex;gap:6px;margin:10px 16px;padding:4px;border-radius:14px;background:var(--wash)}
+.simi-sections button{flex:1;min-height:44px;border:0;border-radius:11px;background:transparent;color:var(--ink);font:inherit;font-size:.8rem}
+.simi-sections button[aria-selected=true]{background:var(--surface);color:var(--accent-2);font-weight:700}
+.simi-study{margin:14px 16px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--surface);line-height:1.9}
+.simi-study h3{font-size:.96rem;margin:12px 0 8px}.simi-study p{font-size:.82rem;color:var(--ink-2);margin:8px 0}
+.simi-study .simi-study-verse{font-family:'Amiri',serif;font-size:1.35rem;color:var(--quran);line-height:2}
 
 </style>
 <link rel="stylesheet" href="app-navigation.css?v=89">
@@ -553,7 +565,7 @@ body>.sbubble.reader-floating-bubble{line-height:1.5!important;padding:8px 14px!
   <!-- المتشابهات -->
   <div class="ov" id="simiOv">
     <div class="ov-top"><button class="ov-x" id="simiBack" aria-label="رجوع"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><div class="ov-title">المتشابهات</div><button class="ov-x" data-close aria-label="إغلاق"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="ov-body" id="simiBody"></div>
+    <div class="simi-sections" role="tablist"><button type="button" data-simi-tab="similar" role="tab" aria-selected="true">المتشابهات</button><button type="button" data-simi-tab="links" role="tab" aria-selected="false">الربط للحفظ</button></div><div class="ov-body" id="simiBody"></div>
   </div>
 
   <!-- شريط التسميع على الوجه (على غرار ترتيل) -->
@@ -623,7 +635,7 @@ body>.sbubble.reader-floating-bubble{line-height:1.5!important;padding:8px 14px!
       <div class="ay-hl" id="hlRow"></div>
 
       <div class="ay-sec">في الدرّ</div>
-      <button class="ay-card ay-wide" id="aySimi"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>المتشابهات</span><svg class="chev" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div class="ay-simi-preview" id="aySimiPreview" hidden></div><button class="ay-card ay-wide" id="aySimi"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>المتشابهات</span><svg class="chev" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
       <div class="note">للحفظ والتسميع استخدمي «حفظ وتسميع» في شريط أدوات المصحف.</div>
     </div>
   </div>
@@ -1115,8 +1127,12 @@ function buildHlRow(){
 async function openAyah(vk){
   closeSheets();ayCur=vk;const[si,ai]=vk.split(':');window.getSelection()?.removeAllRanges();
   $('ayTitle').textContent=surahName(+si)+'، '+ARA(ai);$('ayQuote').textContent=vtx(vk)||'جارٍ تحميل الآية…';
-  readerToolsV86?.paintBookmarks();buildHlRow();$('aySimi').style.display='none';$('ayahWrap').classList.add('open');loadTafsir(vk);
-  ensureMuta().then(()=>{if(ayCur!==vk)return;const count=(MUTA&&MUTA[vk]||[]).length;$('aySimi').style.display=count?'':'none';$('aySimi').querySelector('span').textContent='المتشابهات · '+ARA(count)+' مواضع';}).catch(()=>{});
+  readerToolsV86?.paintBookmarks();buildHlRow();$('aySimi').style.display='none';$('aySimiPreview').hidden=true;$('aySimiPreview').innerHTML='';$('ayahWrap').classList.add('open');loadTafsir(vk);
+  Promise.all([ensureMuta(),ensureSearch()]).then(()=>{if(ayCur!==vk)return;const entries=(MUTA&&MUTA[vk])||[],count=entries.length;
+ $('aySimi').style.display=count?'':'none';$('aySimi').querySelector('span').textContent='عرض جميع المتشابهات · '+ARA(count)+' مواضع';
+ const preview=$('aySimiPreview');preview.hidden=!count;
+ preview.innerHTML=count?'<h3>المواضع المتشابهة · '+ARA(count)+'</h3>'+entries.slice(0,3).map(([other,phrase,,meta])=>{const [sid,aid]=other.split(':').map(Number);return '<div class="ay-simi-snippet"><b>'+esc(surahName(sid))+' · آية '+ARA(aid)+'</b>'+hlPhrase(vtx(other),phrase)+(meta?.r?'<small>ضبط: '+esc(meta.r)+'</small>':'')+'</div>'}).join(''):'';
+}).catch(()=>{});
   try{await ensureSearch();if(ayCur===vk)$('ayQuote').textContent=vtx(vk)||'نص الآية غير متاح حاليًا.';}catch(_){if(ayCur===vk)$('ayQuote').textContent='تعذّر تحميل نص الآية. تحقّقي من الاتصال.';}
 }
 function closeSheets(){
@@ -1152,11 +1168,19 @@ function pageOfVk(vk){
   if(VTXT&&VTXT[vk]&&VTXT[vk][0]!==undefined)return VTXT[vk][0];
   return null;
 }
+let simiCurrentVerseV190='',simiTabV190='similar';
+document.querySelectorAll('[data-simi-tab]').forEach(b=>b.addEventListener('click',()=>{simiTabV190=b.dataset.simiTab;document.querySelectorAll('[data-simi-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));if(simiCurrentVerseV190)renderSimiV190(simiCurrentVerseV190)}));
 async function openSimi(vk){
   await ensureMuta();await ensureSearch();
   if(!VTXT&&window.__VTXT__)VTXT=window.__VTXT__;
+  simiCurrentVerseV190=vk;simiTabV190='similar';document.querySelectorAll('[data-simi-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.simiTab==='similar')));
+  renderSimiV190(vk);closeAll();$('simiOv').classList.add('open');$('simiBody').scrollTop=0;
+}
+function renderSimiV190(vk){
   const list=(MUTA&&MUTA[vk])||[];
   const[si,ai]=vk.split(':');
+  if(simiTabV190==='links'){$('simiBody').innerHTML='<div class="simi-study"><h3>'+esc(surahName(+si))+' · آية '+ARA(ai)+'</h3><div class="simi-study-verse">'+esc(vtx(vk))+'</div><h3>الربط التسلسلي</h3><p>اربط بداية الآية بما قبلها وخاتمتها بما بعدها، ثم اختبر الانتقال بين الآيات من حفظك.</p><h3>الربط بين المواضع</h3><p>قارن الألفاظ الفارقة في المواضع المتشابهة، واربط كل فرق بسياقه.</p><p><small>مواضع التشابه: '+ARA(list.length)+' · ستُضاف بيانات الربط الموثقة لاحقًا.</small></p></div>';return;}
+
   const anchorTx=vtx(vk);
   let html=`<div class="simi-anchor"><div class="loc"><span>${surahName(+si)} · آية ${ARA(ai)}</span><span>وجه ${AR(pageOfVk(vk)||'')}</span></div><div class="tx">${esc(anchorTx)}</div></div>`;
   html+=`<div class="simi-count"><b>${ARA(list.length)}</b> موضعًا مشابهًا في القرآن — العبارة المشتركة مظلّلة</div>`;
@@ -1182,7 +1206,6 @@ async function openSimi(vk){
     const p=+el.dataset.page,tv=el.dataset.vk;closeAll();
     settle(p).then(()=>{flashPane();setTimeout(()=>flashVerse(tv),320);});
   }));
-  closeAll();$('simiOv').classList.add('open');$('simiBody').scrollTop=0;
 }
 
 /* ===== التفسير (تحميلٌ عند الطلب من مصدرٍ مرخَّص) =====
@@ -2304,9 +2327,10 @@ document.body.appendChild(bubble);
 function bubblePos(){
  const min=+slider.min,max=+slider.max,v=+slider.value;
  const frac=(v-min)/Math.max(1,max-min),rect=slider.getBoundingClientRect();
- const bw=Math.min(bubble.offsetWidth||150,window.innerWidth-24);
+ const bw=Math.min(bubble.getBoundingClientRect().width||150,window.innerWidth-32);
  const x=rect.right-frac*rect.width;
- const left=Math.max(bw/2+12,Math.min(window.innerWidth-bw/2-12,x));
+ const left=Math.max(bw/2+16,Math.min(window.innerWidth-bw/2-16,x));
+ bubble.style.setProperty('--bubble-tip-left',Math.max(13,Math.min(bw-13,x-(left-bw/2)))+'px');
  const safeTop=Math.max(58,Number.parseFloat(getComputedStyle(document.body).getPropertyValue('--reader-safe-top'))||58);
   const top=Math.max(safeTop+12,Math.min(window.innerHeight-(bubble.offsetHeight||56)-12,rect.top-(bubble.offsetHeight||56)-18));
  bubble.style.left=left+'px';
