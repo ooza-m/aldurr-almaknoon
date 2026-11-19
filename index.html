@@ -4142,9 +4142,9 @@ function wardReviewRoadmapV205(){
   event.preventDefault();
   const data=new FormData(form),days=Number(data.get('days')),date=String(data.get('start')||'');
   const status=host.querySelector('#wardReviewCycleStatusV210');
-  if(!Number.isInteger(days)||days<1||days>365||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||Number.isNaN(parseKey(date).getTime())||keyOf(parseKey(date))!==date){status.textContent='تحققي من مدة الدورة وتاريخ البداية.';return;}
+  if(!Number.isInteger(days)||days<1||days>365||!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(parseKey(date).getTime())||keyOf(parseKey(date))!==date){status.textContent='تحققي من مدة الدورة وتاريخ البداية.';return;}
   const prior=cycle,oldDays=farCycleDaysV111(),effective=date>todayKey()?'سيستمر الجدول الحالي حتى تاريخ البداية.':'ستُحتسب دورة جديدة بدءًا من التاريخ المحدد.';
-  const message='الدورة الحالية: '+oldDays+' أيام، من '+prior.start+' إلى '+prior.end+'.\\nالدورة المقترحة: '+days+' أيام تبدأ '+date+' وتنتهي '+addDaysKeyV62(date,days-1)+'.\\n'+effective+'\\nلن تُحذف أي سجلات سابقة. هل تعتمدين التغيير؟';
+  const message='الدورة الحالية: '+oldDays+' أيام، من '+prior.start+' إلى '+prior.end+'.\nالدورة المقترحة: '+days+' أيام تبدأ '+date+' وتنتهي '+addDaysKeyV62(date,days-1)+'.\n'+effective+'\nلن تُحذف أي سجلات سابقة. هل تعتمدين التغيير؟';
   if(!window.confirm(message)){status.textContent='لم يُغيّر الجدول.';return;}
   S.farReviewCycleDays=days;S.farReviewCycleStartDate=date;save();refreshV50();wardReviewRoadmapV205();
  };
