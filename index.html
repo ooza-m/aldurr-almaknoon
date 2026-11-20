@@ -824,6 +824,13 @@ details[open] .review-roadmap-chevron-v114{transform:rotate(180deg)}
 /* v173: practical review roadmap; concise daily tasks first, full history optional. */
 #tab-today .review-roadmap-body-v114{padding:14px;overflow:hidden}
 #tab-today #wardReviewRoadmap{display:grid;gap:12px;min-width:0}
+
+/* v210 · Today review dialogs: responsive, non-destructive presentation. */
+#tab-today [data-review-track-v210]{cursor:pointer}#tab-today [data-review-track-v210]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.ward-review-dialog-v210{position:fixed;inset:auto 0 0;margin:auto;width:min(100%,550px);max-width:550px;max-height:min(88dvh,850px);border:1px solid var(--line);border-radius:22px 22px 0 0;background:var(--surface);color:var(--text);box-shadow:0 15px 55px rgba(30,18,26,.23);padding:0;overflow:hidden;direction:rtl}
+.ward-review-dialog-v210::backdrop{background:rgba(33,24,32,.55)}.ward-review-dialog-header-v210{padding:17px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.ward-review-dialog-header-v210 small{display:block;font-size:.7rem;color:var(--muted)}.ward-review-dialog-header-v210 h2{font-size:1.1rem;margin:0}.ward-review-dialog-header-v210 button{border:0;border-radius:50%;width:36px;height:36px;background:var(--wash-2);color:var(--text);font-size:1.6rem;cursor:pointer}.ward-review-dialog-content-v210{overflow:auto;max-height:calc(88dvh - 75px);padding:15px;display:grid;gap:14px;overscroll-behavior:contain}
+.ward-review-metrics-v210{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.ward-review-metric-v210{padding:11px 7px;background:var(--wash-2);border-radius:12px;display:grid;gap:2px;text-align:center}.ward-review-metric-v210 small{font-size:.65rem;color:var(--muted)}.ward-review-metric-v210 strong{font-size:1.3rem;color:var(--accent)}.ward-review-metric-v210 span{font-size:.6rem;color:var(--muted)}.ward-review-guidance-v210,.ward-review-overdue-v210{font-size:.75rem;line-height:1.85;padding:10px 12px;background:var(--wash-2);border-radius:11px}.ward-review-overdue-v210{color:var(--clay)}.ward-review-pane-v210{display:grid;gap:7px}.ward-review-pane-v210 h3{font-size:.86rem}.ward-review-pane-v210>small{font-size:.7rem;color:var(--muted);line-height:1.7}.ward-review-cycle-v210{display:grid;gap:8px}.ward-review-cycle-v210>div:first-child{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:.8rem}.ward-review-cycle-v210 small{font-size:.69rem;color:var(--muted)}.ward-review-progress-v210{height:8px;border-radius:9px;background:var(--wash-2);overflow:hidden}.ward-review-progress-v210 i{display:block;height:100%;border-radius:9px;background:var(--green)}.ward-review-all-v210,.ward-review-advanced-v210{border:1px solid var(--line);border-radius:12px;overflow:hidden}.ward-review-all-v210>summary,.ward-review-advanced-v210>summary{cursor:pointer;padding:12px;font-size:.76rem;font-weight:700;list-style-position:inside}.ward-review-scroll-v210{padding:8px;max-height:275px;overflow:auto;display:grid;gap:5px}.ward-review-advanced-v210 form{padding:12px;display:grid;gap:11px;border-top:1px solid var(--line)}.ward-review-advanced-v210 label{display:grid;gap:4px;font-size:.74rem}.ward-review-advanced-v210 input{width:100%;min-height:42px;border:1px solid var(--line);border-radius:9px;padding:8px;background:var(--surface);color:var(--text);font:inherit}.ward-review-advanced-v210 p{font-size:.7rem;line-height:1.7;color:var(--muted)}.ward-review-dialog-content-v210 .review-face-v173{width:100%;margin:3px 0}.ward-review-dialog-content-v210 .review-empty-v173{font-size:.75rem}
+@media(min-width:650px){.ward-review-dialog-v210{inset:0;border-radius:20px;max-height:80dvh}.ward-review-dialog-content-v210{max-height:calc(80dvh - 75px)}}
 #tab-today .review-overview-v173{display:grid;gap:12px}
 #tab-today .review-today-title-v173{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
 #tab-today .review-today-title-v173>span{font-size:.78rem;color:var(--muted);font-weight:700}
@@ -1148,15 +1155,10 @@ window.FIREBASE_CONFIG = {
       <div class="v50-section-head"><h2>مهام اليوم</h2><div style="display:flex;align-items:center;gap:8px"><button type="button" class="btn btn-ghost btn-sm" data-v50-route="planning" aria-label="تخصيص المهام" title="تخصيص المهام"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="m7.5 9 1.5 1.5L11.5 8M14 9h3M8 15h3m3 0h3"/></svg></button><button type="button" id="todayRefreshV50" aria-label="تحديث المهام" title="تحديث المهام"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5"/><path d="M5.7 9a7 7 0 0 1 12-2L20 11M4 13l2.3 4a7 7 0 0 0 12-2"/></svg></button></div></div>
       <div class="v50-task-list" id="todayTasksV50"></div>
       <div class="v72-manual-secondary"><span>أنجزتِ حفظًا أو مراجعة خارج التطبيق؟</span><button id="btnManualEntryV50" data-v50-route="manual">تسجيل يدوي</button></div>
-      <details class="ward-review-roadmap review-roadmap-fold-v114" aria-labelledby="wardReviewHeading">
-        <summary class="review-roadmap-summary-v114">
-          <span class="review-roadmap-summary-title-v114"><span class="review-roadmap-eyebrow-v114">مراجعاتك</span><strong id="wardReviewHeading">مسار المراجعة</strong><small>ما يلزم اليوم وتفاصيل المسارين</small></span>
-          <span class="review-roadmap-summary-stat-v114"><b id="wardReviewTotal" aria-live="polite"></b><span aria-hidden="true" class="review-roadmap-chevron-v114">⌄</span></span>
-        </summary>
-        <div class="review-roadmap-body-v114">
-          <div id="wardReviewRoadmap" aria-label="ملخص مهام المراجعة وتفاصيل القريبة والبعيدة"></div>
-        </div>
-      </details>
+      <dialog id="wardReviewTrackDialogV210" class="ward-review-dialog-v210" aria-labelledby="wardReviewTrackTitleV210">
+        <div class="ward-review-dialog-header-v210"><div><small>رحلتك مع المحفوظ</small><h2 id="wardReviewTrackTitleV210"></h2></div><button id="wardReviewTrackCloseV210" type="button" aria-label="إغلاق نافذة المراجعة">×</button></div>
+        <div id="wardReviewRoadmap" class="ward-review-dialog-content-v210" aria-live="polite"></div>
+      </dialog>
 
     </div>
     
@@ -2229,7 +2231,10 @@ function farCycleStateV177(day=todayKey()){
  if(!pool.length)return {pool:[],covered:new Set(),today:new Set(),remaining:[],todayDone:0,target:0,start:day,end:day,cycleComplete:true};
  const eligible=new Map(pool.map(p=>[p,nearReviewProgressV196(p,day).farFrom]));
  const earliest=[...eligible.values()].sort()[0];
- const elapsed=Math.max(0,daysBetween(earliest,day)),offset=elapsed%duration;
+ // A new cycle anchor changes scheduling only, never historical review records.
+ const configured=S.farReviewCycleStartDate;
+ const anchor=typeof configured==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(configured)&&configured<=day&&configured>earliest?configured:earliest;
+ const elapsed=Math.max(0,daysBetween(anchor,day)),offset=elapsed%duration;
  const start=addDaysKeyV62(day,-offset),end=addDaysKeyV62(start,duration-1);
  const daysLeft=Math.max(1,duration-offset),allowed=new Set(pool),covered=new Set(),today=new Set();
  const mark=(page,date)=>{
@@ -3189,7 +3194,19 @@ function renderTodayV50(){
   let pausedPlan=null;
   try{pausedPlan=JSON.parse(localStorage.getItem('durr-active-task-session')||'null');}catch(_){}
   if(list)list.innerHTML=tasks.map(t=>{const done=t.target>0&&t.done>=t.target,remain=(t.pages||[]).length,rec=['new','fix','near','far'].includes(t.id),first=t.page,loc=first?surahOfPage(first):null,
-    resume=rec&&remain&&pausedPlan?.task===t.id&&pausedPlan?.date===todayKey()&&Array.isArray(pausedPlan.pages)&&pausedPlan.pages.length;let sub=t.target===0?'لا يوجد مطلوب اليوم':done?'مكتمل لليوم':rec?(remain+' وجه'+(first?' · التالي: '+(loc?loc[1]+' · ':'')+first:'')):(t.done+' من '+t.target),action='';if(t.id==='halaqa')action='<button class="v50-task-action" data-v50-halaqa="1">'+(done?'مكتمل':'تسجيل الحضور')+'</button>';else if(t.extra)action='<button class="v50-task-action" data-extra-review-open-v111="'+esc(t.planId)+'" '+(!remain?'disabled':'')+'>'+(done?'مكتمل':'عرض الأوجه')+'</button>';else if(t.id==='tilawa'&&!S.khatma)action='<button class="v50-task-action" data-v50-route="khatma">إعداد الختمة</button>';else if(rec)action='<button class="v50-task-action" '+(remain?'data-v60-session="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':resume?'استئناف الجلسة':t.done?'أكملي الجلسة':t.id==='new'?'ابدئي الحفظ':'ابدئي المراجعة')+'</button>';else action='<button class="v50-task-action" '+(first?'data-v50-mushaf="'+first+'" data-mode="'+(t.id==='tafsir'?'tafsir':'')+'" data-task="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':t.id==='tafsir'?'فتح التفسير':'فتح المصحف')+'</button>';const progress=t.target?Math.min(100,Math.round((t.done/t.target)*100)):0;return '<div class="v50-glass v50-task v60-task'+(done?' done':'')+'"><div class="v50-task-icon" style="color:'+t.color+'">'+v50Svg(t.kind)+'</div><div class="v50-task-main"><b>'+t.label+'</b><small>'+sub+(t.id==='fix'&&t.target?' · يوميًا خلال مرحلة التثبيت':'')+'</small><div class="v60-mini-progress"><i style="width:'+progress+'%;background:'+t.color+'"></i></div></div>'+action+'</div>';}).join('');
+    resume=rec&&remain&&pausedPlan?.task===t.id&&pausedPlan?.date===todayKey()&&Array.isArray(pausedPlan.pages)&&pausedPlan.pages.length;let sub=t.target===0?'لا يوجد مطلوب اليوم':done?'مكتمل لليوم':rec?(remain+' وجه'+(first?' · التالي: '+(loc?loc[1]+' · ':'')+first:'')):(t.done+' من '+t.target),action='';if(t.id==='halaqa')action='<button class="v50-task-action" data-v50-halaqa="1">'+(done?'مكتمل':'تسجيل الحضور')+'</button>';else if(t.extra)action='<button class="v50-task-action" data-extra-review-open-v111="'+esc(t.planId)+'" '+(!remain?'disabled':'')+'>'+(done?'مكتمل':'عرض الأوجه')+'</button>';else if(t.id==='tilawa'&&!S.khatma)action='<button class="v50-task-action" data-v50-route="khatma">إعداد الختمة</button>';else if(rec)action='<button class="v50-task-action" '+(remain?'data-v60-session="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':resume?'استئناف الجلسة':t.done?'أكملي الجلسة':t.id==='new'?'ابدئي الحفظ':'ابدئي المراجعة')+'</button>';else action='<button class="v50-task-action" '+(first?'data-v50-mushaf="'+first+'" data-mode="'+(t.id==='tafsir'?'tafsir':'')+'" data-task="'+t.id+'"':'disabled')+'>'+(done?'مكتمل':t.id==='tafsir'?'فتح التفسير':'فتح المصحف')+'</button>';const progress=t.target?Math.min(100,Math.round((t.done/t.target)*100)):0;return '<div class="v50-glass v50-task v60-task'+(done?' done':'')+'"'+(['near','far'].includes(t.id)?' data-review-track-v210="'+t.id+'" role="button" tabindex="0" aria-label="تفاصيل '+t.label+'"':'')+'><div class="v50-task-icon" style="color:'+t.color+'">'+v50Svg(t.kind)+'</div><div class="v50-task-main"><b>'+t.label+'</b><small>'+sub+(t.id==='fix'&&t.target?' · يوميًا خلال مرحلة التثبيت':'')+'</small><div class="v60-mini-progress"><i style="width:'+progress+'%;background:'+t.color+'"></i></div></div>'+action+'</div>';}).join('');
+  if(list){
+   list.onclick=event=>{
+    if(event.target.closest('button,a,input,select'))return;
+    const card=event.target.closest('[data-review-track-v210]');
+    if(card)openWardReviewTrackV210(card.dataset.reviewTrackV210);
+   };
+   list.onkeydown=event=>{
+    if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-review-track-v210]')){
+     event.preventDefault();openWardReviewTrackV210(event.target.dataset.reviewTrackV210);
+    }
+   };
+  }
 }
 function renderTafsirSummaryV67(){
   const box=document.getElementById('tafsirAutoSummary');if(!box)return;
@@ -4071,44 +4088,68 @@ function juzStateSummaryV64(from,to){
   }
   return o;
 }
-function wardReviewRoadmapV205(){
- const host=document.getElementById('wardReviewRoadmap'),count=document.getElementById('wardReviewTotal');
- if(!host)return;
- // This view is informational only. Today's assigned pages come from the same
- // canonical task engine used by the Today tab, never a second quota calculation.
- const near=[],far=[],todayNear=new Set(taskPagesV60('near')),todayFar=new Set(taskPagesV60('far'));
- for(let p=1;p<=604;p++){
-  const first=firstMemDateV62(p);if(!first)continue;
-  const state=reviewEngineStateV62(p),data={p,name:'سورة '+surahOfPage(p)[1],state};
-  if(state.phase==='near')near.push(data);
-  else if(state.phase==='far')far.push(data);
- }
- near.sort((a,b)=>a.state.day-b.state.day||a.p-b.p);
- far.sort((a,b)=>String(a.state.nextDue).localeCompare(String(b.state.nextDue))||a.p-b.p);
- const dueNear=near.filter(x=>todayNear.has(x.p)),dueFar=far.filter(x=>todayFar.has(x.p));
- const doneNear=near.filter(x=>x.state.doneToday),doneFar=far.filter(x=>x.state.doneToday);
- const remaining=dueNear.length+dueFar.length;
- if(count)count.textContent=remaining?toAr(remaining)+' أوجه اليوم':'لا مراجعات متبقية اليوم';
- const face=x=>'<button type="button" class="review-face-v173" data-ward-face="'+x.p+'"><span class="review-face-number-v173">'+toAr(x.p)+'</span><span class="review-face-copy-v173"><strong>'+esc(x.name)+'</strong><small>'+(x.state.doneToday?'أُنجز اليوم':x.state.phase==='near'?'اليوم '+toAr(x.state.day)+' من 30':'الموعد '+esc(x.state.nextDue||'—'))+'</small></span><span class="review-face-arrow-v173" aria-hidden="true">‹</span></button>';
- const list=(rows,empty)=>rows.length?rows.map(face).join(''):'<p class="review-empty-v173">'+empty+'</p>';
- const stat=(label,number,note)=>'<div class="review-stat-v173"><span>'+label+'</span><strong>'+toAr(number)+'</strong><small>'+note+'</small></div>';
- const details=(title,number,description,rows,empty)=>'<details class="review-details-v173"><summary><span><strong>'+title+'</strong><small>'+description+'</small></span><b>'+toAr(number)+'</b><span class="review-detail-chevron-v173" aria-hidden="true">⌄</span></summary><div class="review-detail-content-v173">'+list(rows,empty)+'</div></details>';
- host.innerHTML='<div class="review-overview-v173">'+
-  '<div class="review-today-title-v173"><span>مراجعة اليوم</span><strong>'+(remaining?toAr(remaining)+' أوجه متبقية':'اكتملت المهام المحددة لليوم')+'</strong></div>'+
-  '<div class="review-stats-v173">'+
-   stat('قريبة',dueNear.length,'حتى إتمام 30 مراجعة')+
-   stat('بعيدة',dueFar.length,'وفق نصاب اليوم')+
-  '</div>'+
-  '<div class="review-today-list-v173">'+(remaining?
-    '<div class="review-section-label-v173">الأوجه المطلوبة الآن</div>'+list([...dueNear,...dueFar],''):
-    '<p class="review-empty-v173">لا توجد أوجه مطلوبة حاليًا. يمكنك الاطلاع على بقية الأوجه من التفاصيل أدناه.</p>')+
-  '</div></div>'+
-  '<div class="review-detail-heading-v173"><strong>تفاصيل المسارين</strong><small>للاطلاع فقط · اضغطي على الوجه لفتحه</small></div>'+
-  details('المراجعة القريبة',near.length,'30 يوم مراجعة فعلية مع تعويض الفائت',near,'لا توجد أوجه في المراجعة القريبة.')+
-  details('المراجعة البعيدة',far.length,'بعد 30 مراجعة · الدورة '+toAr(farCycleDaysV111())+' أيام · النصاب '+toAr(farDailyQuotaV111())+' يوميًا',far,'لا توجد أوجه في المراجعة البعيدة.')+
-  '<p class="review-footer-v173">أُنجز اليوم: '+toAr(doneNear.length)+' قريبة · '+toAr(doneFar.length)+' بعيدة. تعرض هذه البطاقة نفس مهام المراجعة الموجودة في «اليوم».</p>';
- host.querySelectorAll('[data-ward-face]').forEach(btn=>btn.addEventListener('click',()=>openPage(+btn.dataset.wardFace)));
+/* v210: details live in each Today review task, with a single shared dialog. */
+let wardReviewTrackActiveV210=null;
+function openWardReviewTrackV210(track){
+ if(!['near','far'].includes(track))return;
+ wardReviewTrackActiveV210=track;
+ wardReviewRoadmapV205();
+ const dialog=document.getElementById('wardReviewTrackDialogV210');
+ if(!dialog)return;
+ if(!dialog.open&&typeof dialog.showModal==='function')dialog.showModal();
+ else if(!dialog.open)dialog.setAttribute('open','');
 }
+function wardReviewRoadmapV205(){
+ const host=document.getElementById('wardReviewRoadmap'),dialog=document.getElementById('wardReviewTrackDialogV210');
+ if(!host||!dialog)return;
+ const close=document.getElementById('wardReviewTrackCloseV210');
+ if(close&&!close.dataset.bound){close.dataset.bound='1';close.addEventListener('click',()=>{if(dialog.close)dialog.close();else dialog.removeAttribute('open');wardReviewTrackActiveV210=null;});}
+ if(!dialog.dataset.bound){dialog.dataset.bound='1';dialog.addEventListener('close',()=>{wardReviewTrackActiveV210=null;});}
+ if(!wardReviewTrackActiveV210)return;
+ const track=wardReviewTrackActiveV210,near=[],far=[];
+ const due=new Set(taskPagesV60(track));
+ for(let p=1;p<=604;p++){
+  if(!firstMemDateV62(p))continue;
+  const state=reviewEngineStateV62(p);
+  const row={p,state,name:surahOfPage(p)[1]};
+  if(state.phase==='near')near.push(row);
+  else if(state.phase==='far')far.push(row);
+ }
+ const all=track==='near'?near:far;
+ const ordered=all.slice().sort((a,b)=>track==='near'?(b.state.completed||0)-(a.state.completed||0)||a.p-b.p:String(a.state.nextDue||'').localeCompare(String(b.state.nextDue||''))||a.p-b.p);
+ const pending=ordered.filter(x=>due.has(x.p)),done=ordered.filter(x=>x.state.doneToday),overdue=pending.filter(x=>(x.state.overdueDays||0)>0);
+ const cycle=track==='far'?farCycleStateV177():null;
+ document.getElementById('wardReviewTrackTitleV210').textContent=track==='near'?'المراجعة القريبة':'المراجعة البعيدة';
+ const metric=(name,value,sub)=>'<div class="ward-review-metric-v210"><small>'+name+'</small><strong>'+toAr(value)+'</strong><span>'+sub+'</span></div>';
+ const face=(x)=>'<button type="button" data-ward-face="'+x.p+'" class="review-face-v173"><span class="review-face-number-v173">'+toAr(x.p)+'</span><span class="review-face-copy-v173"><strong>سورة '+esc(x.name)+'</strong><small>ص '+toAr(x.p)+' · '+(x.state.doneToday?'أُنجز اليوم':track==='near'?toAr(x.state.completed||0)+' / ٣٠ مراجعة':x.state.nextDue?'موعد الاستحقاق '+esc(x.state.nextDue):'في الدورة الحالية')+'</small></span><span aria-hidden="true">‹</span></button>';
+ const faceList=(rows,msg)=>rows.length?rows.map(face).join(''):'<p class="review-empty-v173">'+msg+'</p>';
+ const summary=track==='near'?
+  '<div class="ward-review-metrics-v210">'+metric('مطلوب اليوم',pending.length,'وجه مستحق')+metric('أُنجز اليوم',done.length,'وجه تمت مراجعته')+metric('في المسار',near.length,'وجه قيد التثبيت')+'</div>'+
+  '<p class="ward-review-guidance-v210">لكل وجه ثلاثون مراجعة في أيام فعلية مختلفة. لا تُحتسب الأيام الفائتة ولا تكرارات اليوم الواحد ضمن العدد، وتبقى المراجعات السابقة محفوظة.</p>':
+  '<div class="ward-review-metrics-v210">'+metric('مطلوب اليوم',pending.length,'وجه متبقٍ')+metric('أُنجز اليوم',done.length,'وجه تمت مراجعته')+metric('باقي الدورة',cycle.remaining.length,'من '+toAr(cycle.pool.length)+' وجه')+'</div>'+
+  '<div class="ward-review-cycle-v210"><div><b>الدورة الحالية · '+toAr(farCycleDaysV111())+' أيام</b><small>'+esc(cycle.start)+' — '+esc(cycle.end)+'</small></div><div class="ward-review-progress-v210"><i style="width:'+Math.round((cycle.covered.size/Math.max(1,cycle.pool.length))*100)+'%"></i></div><small>أُنجز '+toAr(cycle.covered.size)+' من '+toAr(cycle.pool.length)+' وجهًا في هذه الدورة. تُحتسب الأوجه المختلفة لا عدد التكرارات.</small></div>';
+ const nearNext=ordered.filter(x=>x.state.remaining>0).slice(0,8);
+ const advanced=track==='far'?'<details class="ward-review-advanced-v210"><summary>خيارات متقدمة · تغيير بداية الدورة أو مدتها</summary><form id="wardReviewCycleFormV210"><label>مدة الدورة بالأيام<input name="days" type="number" min="1" max="365" required value="'+farCycleDaysV111()+'"></label><label>بداية دورة جديدة<input name="start" type="date" required value="'+esc(S.farReviewCycleStartDate||todayKey())+'"></label><p>يُعاد توزيع الأوجه ابتداءً من التاريخ المختار دون حذف سجل أي مراجعة أو تسميع. يُعرض التأثير قبل التأكيد.</p><button type="submit" class="v50-btn soft">معاينة واعتماد التغيير</button><p id="wardReviewCycleStatusV210" role="status"></p></form></details>':'';
+ host.innerHTML=summary+
+  '<section class="ward-review-pane-v210"><h3>أوجه اليوم</h3><small>'+(pending.length?'ابدئي بالأوجه المتأخرة، ثم استكملي نصاب اليوم.':'اكتملت المهام المستحقة حاليًا.')+'</small>'+faceList([...overdue,...pending.filter(x=>!overdue.includes(x))],'لا أوجه متبقية اليوم.')+'</section>'+
+  (overdue.length?'<p class="ward-review-overdue-v210">تحتاج إلى استدراك: '+toAr(overdue.length)+' وجه. لا تُعد متروكة أو منجزة تلقائيًا.</p>':'')+
+  (track==='near'?'<section class="ward-review-pane-v210"><h3>الأقرب إلى إتمام المرحلة</h3><small>أوجه اقتربت من المراجعة الثلاثين والانتقال إلى البعيدة.</small>'+faceList(nearNext,'لا توجد أوجه تنتظر انتقالًا حاليًا.')+'</section>':
+   '<section class="ward-review-pane-v210"><h3>ماذا بعد اليوم؟</h3><small>المتبقي في الدورة الحالية: '+toAr(cycle.remaining.length)+' وجهًا. موعد الإتمام المتوقع: '+esc(cycle.end)+'. يُعاد ضبط نصاب اليوم بحسب ما أُنجز فعليًا.</small></section>')+
+  '<details class="ward-review-all-v210"><summary>جميع أوجه المسار · '+toAr(ordered.length)+'</summary><div class="ward-review-scroll-v210">'+faceList(ordered,'لا توجد أوجه في هذا المسار.')+'</div></details>'+advanced;
+ host.querySelectorAll('[data-ward-face]').forEach(b=>b.addEventListener('click',()=>{const p=+b.dataset.wardFace;if(dialog.close)dialog.close();else dialog.removeAttribute('open');openPage(p);}));
+ const form=host.querySelector('#wardReviewCycleFormV210');
+ if(form)form.onsubmit=event=>{
+  event.preventDefault();
+  const data=new FormData(form),days=Number(data.get('days')),date=String(data.get('start')||'');
+  const status=host.querySelector('#wardReviewCycleStatusV210');
+  if(!Number.isInteger(days)||days<1||days>365||!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(parseKey(date).getTime())||keyOf(parseKey(date))!==date){status.textContent='تحققي من مدة الدورة وتاريخ البداية.';return;}
+  const prior=cycle,oldDays=farCycleDaysV111(),effective=date>todayKey()?'سيستمر الجدول الحالي حتى تاريخ البداية.':'ستُحتسب دورة جديدة بدءًا من التاريخ المحدد.';
+  const message='الدورة الحالية: '+oldDays+' أيام، من '+prior.start+' إلى '+prior.end+'.\nالدورة المقترحة: '+days+' أيام تبدأ '+date+' وتنتهي '+addDaysKeyV62(date,days-1)+'.\n'+effective+'\nلن تُحذف أي سجلات سابقة. هل تعتمدين التغيير؟';
+  if(!window.confirm(message)){status.textContent='لم يُغيّر الجدول.';return;}
+  S.farReviewCycleDays=days;S.farReviewCycleStartDate=date;save();refreshV50();wardReviewRoadmapV205();
+ };
+}
+
 function renderMap(){
   const box=document.getElementById('juzList');box.innerHTML='';
   const js=document.getElementById('jumpSurah');
